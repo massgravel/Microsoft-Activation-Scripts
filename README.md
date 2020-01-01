@@ -17,7 +17,7 @@
    * Easy to use.
 
    **Homepages:**<br/>
-   Discussion Forum: https://www.nsaneforums.com/topic/316668-microsoft-activation-scripts/<br/>
+   NsaneForums: (Login Required) https://www.nsaneforums.com/topic/316668-microsoft-activation-scripts/<br/>
    GitLab: https://gitlab.com/massgrave/microsoft-activation-scripts<br/>
    
    **Downloads:** <br/>
@@ -64,5 +64,20 @@ Online KMS         -  Windows / Server / Office  -  For 180 Days, renewal task n
    [**Credits:**](https://gitlab.com/massgrave/microsoft-activation-scripts/raw/master/MAS_1.2/Separate-Files-Version/Credits.txt)
 
    [**Changelog:**](https://pastebin.com/raw/nghFEt3W)
-   
-   
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+HWID/KMS38 activation's various methods:
+
+by @mspaintmsi and *Anonymous, Original (co)authors of HWID/KMS38 Activation.
+
+https://gitlab.com/massgrave/massgrave<br/>
+https://www.nsaneforums.com/topic/316668--/?do=findComment&comment=1497887
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+For any queries feel free to mail me at, windowsaddict@protonmail.com
+
+
+
+Made with Love ❤️
