@@ -20,7 +20,7 @@
    NsaneForums: (Login Required) https://www.nsaneforums.com/topic/316668-microsoft-activation-scripts/<br/>
    GitLab: https://gitlab.com/massgrave/microsoft-activation-scripts<br/>
    
-   **Downloads:** <br/>
+  # **Downloads:** <br/>
    https://gitlab.com/massgrave/microsoft-activation-scripts/-/releases
 
 <br/> 
@@ -36,7 +36,7 @@ Online KMS         -  Windows / Server / Office  -  For 180 Days, renewal task n
 
 ----------------------------------------------------------------------------------------------</span></pre>
 
-   **ReadMe:**
+  # **ReadMe:**
    
 <p>
 <details>
@@ -61,9 +61,9 @@ Online KMS         -  Windows / Server / Office  -  For 180 Days, renewal task n
 </details>
 </p>  
 
-   [**Credits:**](https://gitlab.com/massgrave/microsoft-activation-scripts/raw/master/MAS_1.2/Separate-Files-Version/Credits.txt)
+  # [**Credits:**](https://gitlab.com/massgrave/microsoft-activation-scripts/raw/master/MAS_1.2/Separate-Files-Version/Credits.txt)
 
-   [**Changelog:**](https://pastebin.com/raw/nghFEt3W)
+  # [**Changelog:**](https://pastebin.com/raw/nghFEt3W)
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
