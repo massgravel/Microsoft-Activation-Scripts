@@ -1,4 +1,4 @@
-   Microsoft Activation Scripts (MAS):
+   **Microsoft Activation Scripts (MAS):**
 
    It is a collection of scripts for activating Microsoft products, these scripts are mostly a fork
    of other honourable developer's tools and scripts.
@@ -16,8 +16,12 @@
    * Clean from antivirus detections (*As much as possible, but it's not completely clean).
    * Easy to use.
 
-   Homepages:-
-   Discussion Forum: https://www.nsaneforums.com/topic/316668-microsoft-activation-scripts/
-   GitLab: https://gitlab.com/massgrave/microsoft-activation-scripts
+   Homepages:-<br/>
+   Discussion Forum: https://www.nsaneforums.com/topic/316668-microsoft-activation-scripts/<br/>
+   GitLab: https://gitlab.com/massgrave/microsoft-activation-scripts<br/>
 
-   Maintained by @WindowsAddict
+   Maintained by @Windows_Addict
+   
+   
+   **Downloads:** <br/>
+   https://gitlab.com/massgrave/microsoft-activation-scripts/-/releases
