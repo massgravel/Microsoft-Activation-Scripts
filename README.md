@@ -24,8 +24,6 @@
    https://gitlab.com/massgrave/microsoft-activation-scripts/-/releases
 
 <br/> 
-<hr />
-<p>&nbsp;</p>
 
 <pre class="ipsCode prettyprint lang-html prettyprinted"><span class="pln">----------------------------------------------------------------------------------------------
 Activation Type       Supported Product             Activation Period
@@ -64,7 +62,7 @@ Online KMS         -  Windows / Server / Office  -  For 180 Days, renewal task n
 </p>  
 
    [**Credits:**](https://gitlab.com/massgrave/microsoft-activation-scripts/raw/master/MAS_1.2/Separate-Files-Version/Credits.txt)
-<br/>
+
    [**Changelog:**](https://pastebin.com/raw/nghFEt3W)
    
    
