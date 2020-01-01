@@ -16,7 +16,7 @@
    * Clean from antivirus detections (*As much as possible, but it's not completely clean).
    * Easy to use.
 
-   Homepages:-<br/>
+   **Homepages:**<br/>
    Discussion Forum: https://www.nsaneforums.com/topic/316668-microsoft-activation-scripts/<br/>
    GitLab: https://gitlab.com/massgrave/microsoft-activation-scripts<br/>
 
