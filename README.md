@@ -6,9 +6,10 @@
    **Homepages:**<br/>
    NsaneForums: (Login Required) https://www.nsaneforums.com/topic/316668-microsoft-activation-scripts/<br/>
    GitLab: https://gitlab.com/massgrave/microsoft-activation-scripts<br/>
+   GitHub: https://github.com/massgravel/Microsoft-Activation-Scripts/<br/>
    
   # **Downloads:** <br/>
-   https://gitlab.com/massgrave/microsoft-activation-scripts/-/releases
+   https://github.com/massgravel/Microsoft-Activation-Scripts/releases
 
 <br/> 
 
