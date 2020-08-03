@@ -39,19 +39,7 @@ Online KMS         -  Windows / Server / Office  -  For 180 Days, renewal task n
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
-HWID/KMS38 activation's various methods:
-
-by @mspaintmsi and *Anonymous, Original co-authors of HWID/KMS38 Activation.
-
-https://gitlab.com/massgrave/massgrave<br/>
-https://github.com/massgravel/MASSGRAVE<br/>
-https://discord.gg/EcENUnq<br/>
-https://www.nsaneforums.com/topic/316668--/?do=findComment&comment=1497887<br/>
-
--------------------------------------------------------------------------------------------------------------------------------------------------
-
 For any queries feel free to mail me at, windowsaddict@protonmail.com
-
 
 
 Made with Love ❤️
