@@ -1,4 +1,11 @@
-   **Microsoft Activation Scripts (MAS):**
+  **Update: Windows 10 LTSC 2019 - HWID (Digital License) Activation Method**
+  
+  Detailed manual steps:
+  https://pastebin.com/raw/n6VVXBkb
+  
+  <hr />
+  
+  **Microsoft Activation Scripts (MAS):**
 
    A collection of scripts for activating Microsoft products using HWID / KMS38 / Online KMS activation methods 
    with a focus on open-source code, less antivirus detection and user-friendliness.
