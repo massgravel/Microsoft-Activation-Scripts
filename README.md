@@ -10,7 +10,10 @@
    GitLab: https://gitlab.com/massgrave/microsoft-activation-scripts<br/>
    GitHub: https://github.com/massgravel/Microsoft-Activation-Scripts/<br/>
    
-  # **Downloads:** <br/>
+   Latest Version: 1.4<br/>
+   Release date: 14-aug-2020<br/>
+
+   **Downloads:** <br/>
    https://github.com/massgravel/Microsoft-Activation-Scripts/releases
 
 <br/> 
@@ -26,7 +29,7 @@ Online KMS         -  Windows / Server / Office  -  For 180 Days, renewal task n
 
 ----------------------------------------------------------------------------------------------</span></pre>
 
-  # **ReadMe:**
+   **ReadMe:**
    
 <p>
 <details>
@@ -35,9 +38,9 @@ Online KMS         -  Windows / Server / Office  -  For 180 Days, renewal task n
 <a href="https://github.com/massgravel/Microsoft-Activation-Scripts/raw/master/MAS_1.4/Separate-Files-Version/Activators/HWID-KMS38_Activation/ReadMe_HWID.txt">Digital License (HWID) Activation</a> <br /> <a href="https://github.com/massgravel/Microsoft-Activation-Scripts/raw/master/MAS_1.4/Separate-Files-Version/Activators/HWID-KMS38_Activation/ReadMe_KMS38.txt">KMS38 Activation</a> <br /> <a href="https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS_1.4/Separate-Files-Version/Extras/KMS38_Protection/ReadMe.txt">KMS38_Protection</a> <br /> <a href="https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS_1.4/Separate-Files-Version/Activators/Online_KMS_Activation/_ReadMe.txt">Online KMS Activation</a> <br /> <a href="https://pastebin.com/raw/7Xyaf15Z" target="_blank" rel="nofollow noreferrer noopener">Activation Methods info and faqs</a> <br /> <a href="https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS_1.4/Separate-Files-Version/Extras/Extract_OEM_Folder/ReadMe.txt">$OEM$ Folders (Windows Pre-Activation)</a> <br /> <a href="https://pastebin.com/raw/DdM34pr5" target="_blank" rel="nofollow noreferrer noopener">Big Blocks of text in the script</a> <br /> <a href="https://pastebin.com/raw/jduBSazJ" target="_blank" rel="nofollow noreferrer noopener">Download Genuine Installation Media</a>
   </details></p> 
 
-  # [*Credits:*](https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS_1.4/Separate-Files-Version/Credits.txt)
+   [*Credits:*](https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS_1.4/Separate-Files-Version/Credits.txt)
 
-  # [*Changelog:*](https://pastebin.com/raw/nghFEt3W)
+   [*Changelog:*](https://pastebin.com/raw/nghFEt3W)
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
