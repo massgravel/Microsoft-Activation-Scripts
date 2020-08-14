@@ -3325,11 +3325,13 @@ exit /b
 :EnterpriseS
 if "%winbuild%" EQU "10240" set "key=FWN7H-PF93Q-4GGP8-M8RF3-MDWWW"
 if "%winbuild%" EQU "14393" set "key=NK96Y-D9CD8-W44CQ-R8YTK-DYJWX"
+if "%winbuild%" EQU "17763" set "key=43TBQ-NH92J-XKTM7-KT3KK-P39PB"
 exit /b
 
 :EnterpriseSN
 if "%winbuild%" EQU "10240" set "key=8V8WN-3GXBH-2TCMG-XHRX3-9766K"
 if "%winbuild%" EQU "14393" set "key=2DBW3-N2PJG-MVHW3-G7TDK-9HKR4"
+if "%winbuild%" EQU "17763" set "key=2D7NQ-3MDXF-9WTDT-X9CCP-CKD8V"
 exit /b
 
 :Professional
