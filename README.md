@@ -1,9 +1,5 @@
-  **Help Needed:**<br/>
-  If you can and willing to test an updated version of slc.dll for **ARM64 Windows 10** HWID/KMS38 activation, <br/> then please send an email to windowsaddict@protonmail.com
-  <br/>Thanks a lot. 
-  <hr />
-  
-  **Microsoft Activation Scripts (MAS):**
+
+   **Microsoft Activation Scripts (MAS):**
 
    A collection of scripts for activating Microsoft products using HWID / KMS38 / Online KMS activation methods 
    with a focus on open-source code, less antivirus detection and user-friendliness.
