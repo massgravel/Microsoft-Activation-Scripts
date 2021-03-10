@@ -1,0 +1,101 @@
+Programmers spend a lot of time on the command line, and all of us have our favorite Linux shells, or debate the merits of MS-DOS vs. PowerShell (hint: use PowerShell), but there is a niche area in the open source community dedicated to building better terminal emulators with bells, whistles, and plugins, and some of them can change the way you approach command line interfaces.
+
+Many months ago I came across Hyper, which is a fully extensible terminal emulator written in Electron by the same people who brought you Zeit. It is built on open standards, you can customize key mappings, colors, and behaviors, and you can even install plugins for added bells and whistles. It also allows for multiple tabs.
+
+Hyper lets you pick between DOS, PowerShell, and Bash (which includes Bash on Windows), but you need to select your shell in the configuration file. There currently isn't a way to switch shells easily and intuitively, and one of the most requested features is to be able to choose your shell per tab, so you can have multiple tabs open, but with different shells.
+
+Luckily, there's a script for that. GitHub user legowerewolf put together a batch script that can be used in conjunction with Hyper in order to prompt the user for their preferred shell on a per window/per tab basis.
+
+@ECHO off
+:top
+CLS
+ECHO Choose a shell:
+ECHO [1] cmd
+ECHO [2] bash
+ECHO [3] PowerShell
+ECHO [4] Python
+ECHO.
+ECHO [5] restart elevated
+ECHO [6] exit
+ECHO.
+
+CHOICE /N /C:123456 /M "> "
+CLS
+IF ERRORLEVEL ==6 GOTO end
+IF ERRORLEVEL ==5 powershell -Command "Start-Process hyper -Verb RunAs"
+IF ERRORLEVEL ==4 python
+IF ERRORLEVEL ==3 powershell
+IF ERRORLEVEL ==2 bash
+IF ERRORLEVEL ==1 cmd
+
+CLS
+ECHO Switch or exit?
+ECHO [1] Switch
+ECHO [2] Exit
+
+CHOICE /N /C:12 /D 2 /T 5 /M "> "
+IF ERRORLEVEL ==2 GOTO end
+IF ERRORLEVEL ==1 GOTO top
+
+:end
+view rawhyperstart.bat hosted with ? by GitHub
+$knownshells = @(
+    @{
+        Name       = "CMD"
+        Executable = "$env:SystemRoot\System32\cmd.exe"
+    },
+    @{
+        Name       = "Powershell 5.1"
+        Executable = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+    },
+    @{
+        Name       = "Powershell 6 (Core)"
+        Executable = "$env:ProgramFiles\PowerShell\6\pwsh.exe"
+    },
+    @{
+        Name       = "Powershell 7 (Core)"
+        Executable = "$env:ProgramFiles\PowerShell\7\pwsh.exe"
+    },
+    @{
+        Name       = "Bash on Ubuntu"
+        Executable = "$env:ProgramFiles\WindowsApps\CanonicalGroupLimited.UbuntuonWindows_1804.2020.5.0_x64__79rhkp1fndgsc\ubuntu.exe"
+    },
+    @{
+        Name       = "Git Bash"
+        Executable = "$env:ProgramFiles\Git\git-bash.exe"
+    }
+) | Where-Object { Test-Path -Path $_.Executable }
+
+"Choose a shell:"
+
+$index = 1; $teststring = ""
+foreach ($shell in $knownshells) {
+    "[$index] $($shell.Name)"
+    $teststring += $index++
+}
+
+""
+
+do { $keyPress = [System.Console]::ReadKey() } until ($teststring.Contains($keyPress.Key));
+
+$choice = $knownshells[($keyPress.KeyChar.ToString() -as [int]) - 1]
+
+Start-Process -Path $choice.Executable -NoNewWindow -Wait -ArgumentList $choice.ArgumentList
+
+exit
+view rawhyperstart.ps1 hosted with ? by GitHub
+Hyperstart
+Short script for Windows that allows you to select which shell you want when Hyper starts. As flexible as the windows command line.
+
+Install
+Grab the script from below.
+Save it wherever you want.
+Set your shell to '' (meaning CMD on Windows) and your shellArgs to ["/C", "path\\to\\your\\hyperstart.bat"]
+Additional steps
+To enable the "launch elevated" line, Hyper needs to be on the PATH.
+Customize
+Add a shell
+Add another ECHO line with a new number: ECHO [4] Python
+Add the corresponding number to the CHOICE line: CHOICE /N /C:1234
+Add the corresponding IF ERRORLEVEL line below the CLS line: IF ERRORLEVEL ==4 python
+Fix up the other numbers, if necessary.
