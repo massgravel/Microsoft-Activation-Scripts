@@ -1,7 +1,9 @@
 **Note:**<br/>
-Explanation and proposed fix for Office 2019 'Get genuine' banner:<br/>
+Explanation and proposed fix for Office 2019 **Get genuine** banner:<br/>
 https://github.com/massgravel/Microsoft-Activation-Scripts/issues/20
-<br/>
+
+<hr>
+
 
    **Microsoft Activation Scripts (MAS):**
 
