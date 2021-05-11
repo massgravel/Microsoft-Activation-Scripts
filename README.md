@@ -1,6 +1,6 @@
 **Note:**<br/>
-Explanation and proposed fix for Office 2019 **Get genuine** banner:<br/>
-https://github.com/massgravel/Microsoft-Activation-Scripts/issues/20
+**Proposed** explanation and fix for Office C2R **Get genuine** banner:<br/>
+https://pastebin.com/raw/p8hUeDDX
 
 <hr>
 
