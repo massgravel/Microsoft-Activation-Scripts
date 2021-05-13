@@ -486,7 +486,7 @@ goto :testserv
 
 :testserv
 set /a server_num+=1
-%_psc% "$t = New-Object Net.Sockets.TcpClient;try{$t.Connect("""%KMS_IP%""", 1688)}catch{};$t.Connected" | findstr /i true 1>nul
+pathping -h 1 -n -p 1 -q 1 -w 1 %KMS_IP% 1>nul Net.Sockets.TcpClient;try{$t.Connect("""%KMS_IP%""", 1688)}catch{};$t.Connected" | findstr /i true 1>nul
 if %errorlevel% NEQ 0 (
 goto :server
 ) else (
@@ -2385,3 +2385,4 @@ if %Unattend% EQU 0 echo Press any key to exit.
 exit /b 0
 
 ::========================================================================================================================================
+
