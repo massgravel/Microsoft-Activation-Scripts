@@ -2,6 +2,13 @@
 **Proposed** explanation and fix for Office C2R **Get genuine** banner:<br/>
 https://pastebin.com/raw/p8hUeDDX
 
+
+**
+## Sponsors 
+
+- [Paypal](https://www.paypal.com/donate?business=RBHMVN4AQGQE2&item_name=Donation&currency_code=BRL)
+
+
 <hr>
 
 
