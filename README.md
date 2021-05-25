@@ -1,6 +1,6 @@
 **Note:**<br/>
 **Proposed** explanation and fix for Office C2R **Get genuine** banner:<br/>
-https://pastebin.com/raw/p8hUeDDX
+https://infohost.github.io/office-license-is-not-genuine
 
 <hr>
 
