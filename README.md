@@ -1,3 +1,15 @@
+# __***Development Temporarily Suspended***__
+
+For now, please use the following replacements:
+ - **HWID** (Windows) - https://github.com/luzeadev/winactivate
+ - **KMS** (Windows/Office) - https://github.com/abbodi1406/KMS_VL_ALL_AIO
+
+For an unspecified period no official support will be provided and no development will be done.
+
+We apologize for the inconvenience and hope the project can come back soon.
+
+---
+
 **Note:**<br/>
 **Proposed** explanation and fix for Office C2R **Get genuine** banner:<br/>
 https://infohost.github.io/office-license-is-not-genuine
