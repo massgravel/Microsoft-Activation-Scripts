@@ -1,10 +1,15 @@
-**Note:**<br/>
+**Note: Work in progress**<br/>
+
+If you are facing isssues with scripts, then please use below alternatives.
+ - **HWID** (Windows) - https://github.com/luzeadev/winactivate
+ - **KMS** (Windows/Office) - https://github.com/abbodi1406/KMS_VL_ALL_AIO
+
+
 **Proposed** explanation and fix for Office C2R **Get genuine** banner:<br/>
 https://infohost.github.io/office-license-is-not-genuine
 <br/>
 __
 
-Scripts are working fine for Windows 11.
 
 <hr>
 
