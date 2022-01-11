@@ -1,4 +1,4 @@
-  # **Download Link: https://github.com/massgravel/Microsoft-Activation-Scripts/releases** <br/>
+  # **[Download Link](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)** <br/>
    
    **Homepage:**&nbsp; https://windowsaddict.ml/ <br/>
    **Discussion:**&nbsp;&nbsp; https://discord.gg/gjJEfq7ux8<br/>
