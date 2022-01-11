@@ -1,64 +1,68 @@
-**Note: Work in progress**<br/>
+  # **[Download Link](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)** <br/>
+   
+   **Homepage:**&nbsp; https://windowsaddict.ml/ <br/>
+   **Discussion:**&nbsp;&nbsp; https://discord.gg/gjJEfq7ux8<br/>
 
-If you are facing isssues with scripts, then please use below alternatives.
- - **HWID** (Windows) - https://github.com/luzeadev/winactivate
- - **KMS** (Windows/Office) - https://github.com/abbodi1406/KMS_VL_ALL_AIO
+ 
+  **Latest Version: 1.5**<br/>
+  **Release date: 11-Jan-2022**
+<br/> 
+<hr />
 
-
-**Proposed** explanation and fix for Office C2R **Get genuine** banner:<br/>
-https://infohost.github.io/office-license-is-not-genuine
-<br/>
-__
-
-
-<hr>
-
-
-   **Microsoft Activation Scripts (MAS):**
+  **Microsoft Activation Scripts (MAS):**
 
    A collection of scripts for activating Microsoft products using HWID / KMS38 / Online KMS activation methods 
    with a focus on open-source code, less antivirus detection and user-friendliness.
+ 
+  **Features:**
+  - HWID Activation       [Downlevel & Lockbox Method]
+  - KMS38 Activation      [With protection & Uninstallation option]
+  - Online KMS Activation [Batch file based, no KMS related .dll .exe required]<br/>
+  - $OEM$ Folder For Preactivation
+  - Activation Troubleshoot
+  - Insert Windows 10-11 HWID Key
+  - Change Windows 10-11 Edition
+  - Available in All In One & Separate Files Version
+  - Fully Open Source
 
-   **Homepages:**<br/>
-   NsaneForums: (Login Required) https://www.nsaneforums.com/topic/316668-microsoft-activation-scripts/<br/>
-   GitLab: https://gitlab.com/massgrave/microsoft-activation-scripts<br/>
-   GitHub: https://github.com/massgravel/Microsoft-Activation-Scripts/<br/>
-   
-   Latest Version: 1.4<br/>
-   Release date: 14-aug-2020<br/>
+  <br/>
 
-   **Downloads:** <br/>
-   https://github.com/massgravel/Microsoft-Activation-Scripts/releases
+**Activations Summary:**
+```
+===========================================================================================
+   Activation Type     Supported Product         Activation Period
+===========================================================================================
 
+   HWID             -  Windows 10-11          -  Permanent
+   KMS38            -  Windows 10-11-Server   -  Until the year 2038
+   Online KMS       -  Windows / Office       -  For 180 Days, renewal task needs to be 
+                                                 created for lifetime auto-activation.
+
+   * For more details, use the respective activations read me.
+
+===========================================================================================
+```
+
+  # **ReadMe**
+
+[HWID Activation](https://windowsaddict.ml/readme-hwid.html)<br/> 
+[KMS38 Activation](https://windowsaddict.ml/readme-kms38.html)<br/> 
+[Online KMS Activation](https://windowsaddict.ml/readme-online-kms.html)<br/> 
 <br/> 
-
-<pre class="ipsCode prettyprint lang-html prettyprinted"><span class="pln">----------------------------------------------------------------------------------------------
-Activation Type       Supported Product             Activation Period
-----------------------------------------------------------------------------------------------
-
-Digital License    -  Windows 10                 -  Permanent
-KMS38              -  Windows 10 / Server        -  Until the year 2038
-Online KMS         -  Windows / Server / Office  -  For 180 Days, renewal task needs to be 
-                                                    created for lifetime auto activation.
-
-----------------------------------------------------------------------------------------------</span></pre>
-
-   **ReadMe:**
-   
-<p>
-<details>
-<summary>Click me to collapse/fold.</summary>
+[HWID KMS38 Files Info](https://windowsaddict.ml/readme-hwid-kms38-files.html) <br/> 
+[Online KMS Files Info](https://windowsaddict.ml/readme-online-kms-files.html)<br/> 
 <br/> 
-<a href="https://github.com/massgravel/Microsoft-Activation-Scripts/raw/master/MAS_1.4/Separate-Files-Version/Activators/HWID-KMS38_Activation/ReadMe_HWID.txt" target="_blank" rel="nofollow noreferrer noopener">Digital License (HWID) Activation</a> <br /> <a href="https://github.com/massgravel/Microsoft-Activation-Scripts/raw/master/MAS_1.4/Separate-Files-Version/Activators/HWID-KMS38_Activation/ReadMe_KMS38.txt" target="_blank">KMS38 Activation</a> <br /> <a href="https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS_1.4/Separate-Files-Version/Extras/KMS38_Protection/ReadMe.txt" target="_blank">KMS38_Protection</a> <br /> <a href="https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS_1.4/Separate-Files-Version/Activators/Online_KMS_Activation/_ReadMe.txt" target="_blank">Online KMS Activation</a> <br /> <a href="https://pastebin.com/raw/7Xyaf15Z" target="_blank">Activation Methods info and faqs</a> <br /> <a href="https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS_1.4/Separate-Files-Version/Extras/Extract_OEM_Folder/ReadMe.txt" target="_blank">$OEM$ Folders (Windows Pre-Activation)</a> <br /> <a href="https://pastebin.com/raw/DeXr99bc" target="_blank">Big Blocks of text in the script</a> <br /> <a href="https://pastebin.com/raw/jduBSazJ" target="_blank" rel="nofollow noreferrer noopener">Download Genuine Installation Media</a>
-  </details></p> 
+[Activation FAQ's](https://windowsaddict.ml/readme-activation-faq.html)<br/> 
+[Extract $OEM$ Folder For Preactivation](https://windowsaddict.ml/readme-oem-folder.html)<br/> 
+[Genuine Installation Media Links](https://windowsaddict.ml/readme-genuine-installation-media.html)<br/> 
+[Office License Is Not Genuine Banner](https://windowsaddict.ml/office-license-is-not-genuine.html)<br/> 
+[What are those big blocks of Unreadable Codes In MAS AIO Version](https://windowsaddict.ml/readme-unreadable-codes-in-mas-aio.html)<br/> 
+<br/>
+[Troubleshoot HWID](https://windowsaddict.ml/readme-troubleshoot-hwid.html)<br/>
+[Troubleshoot KMS38](https://windowsaddict.ml/readme-troubleshoot-kms38.html)<br/>
+[Troubleshoot Online KMS](https://windowsaddict.ml/readme-troubleshoot-onlinekms.html)<br/>
 
-   [**Credits:**](https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS_1.4/Separate-Files-Version/Credits.txt)
-
-   [**Changelog:**](https://pastebin.com/raw/nghFEt3W)
-
-<hr />
-
-For any queries feel free to mail me at, windowsaddict@protonmail.com
-
+# [Changelog](https://windowsaddict.ml/readme-mas-changelog.html)<br/> 
+# [Credits](https://windowsaddict.ml/readme-mas-credits.html)<br/> 
 
 Made with Love ❤️
