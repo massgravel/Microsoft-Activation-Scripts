@@ -1,13 +1,14 @@
   # **[Download Link](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)** <br/>
-  
-   
-   **Homepage:**&nbsp; https://windowsaddict.ml/ <br/>
-   **Discussion:**&nbsp;&nbsp; https://discord.gg/gjJEfq7ux8<br/>
 
- 
-  **Latest Version: 1.5**<br/>
-  **Release date: 11-Jan-2022**
-<br/> 
+    Latest Version: 1.5
+    Release date: 11-Jan-2022
+
+   **Homepage:**&nbsp; https://windowsaddict.ml/ <br/>
+
+   <a href="https://discord.gg/gjJEfq7ux8">
+  <img src="https://discordapp.com/api/guilds/746721520931569757/widget.png?style=banner3" />
+</a>
+
 <hr />
 
   **Microsoft Activation Scripts (MAS):**
