@@ -1,6 +1,5 @@
   # **[Download Link](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)** <br/>
   
-![Discord Banner 3](https://discordapp.com/api/guilds/746721520931569757/widget.png?style=banner3)
    
    **Homepage:**&nbsp; https://windowsaddict.ml/ <br/>
    **Discussion:**&nbsp;&nbsp; https://discord.gg/gjJEfq7ux8<br/>
