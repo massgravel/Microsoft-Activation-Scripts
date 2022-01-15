@@ -15,56 +15,121 @@
 
    A collection of scripts for activating Microsoft products using HWID / KMS38 / Online KMS activation methods 
    with a focus on open-source code, less antivirus detection and user-friendliness.
+
  
-  **Features:**
-  - HWID Activation       [Downlevel & Lockbox Method]
-  - KMS38 Activation      [With protection & Uninstallation option]
-  - Online KMS Activation [Batch file based, no KMS related .dll .exe required]<br/>
-  - $OEM$ Folder For Preactivation
-  - Activation Troubleshoot
-  - Insert Windows 10-11 HWID Key
-  - Change Windows 10-11 Edition
-  - Available in All In One & Separate Files Version
-  - Fully Open Source
+ <table border="1" cellpadding="1" cellspacing="0" style="width:486px">
+	<tbody>
+		<tr>
+			<td style="text-align:center; width:478px"><strong>How to use it?</strong></td>
+		</tr>
+		<tr>
+			<td style="width:478px">
+			<ul>
+				<li>Download the file named &#39;MAS_1.5_Password_1234.7z&#39; from <a href="https://github.com/massgravel/Microsoft-Activation-Scripts/releases" target="_blank">here</a></li>
+				<li>Extract this file with a 3rd party archive manager, such as <a href="https://www.7-zip.org/download.html" target="_blank">7zip</a></li>
+				<li>Password is<strong> </strong>1234</li>
+				<li>Go to the folder named &#39;All-In-One-Version&#39;</li>
+				<li>Run the file named &#39;MAS_1.5_AIO_CRC32_21D20776.cmd&#39;</li>
+				<li>You will see the activation options, follow onscreen instructions.</li>
+				<li>That&#39;s all.</li>
+			</ul>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
-  <br/>
+<table border="1" cellpadding="1" cellspacing="0" style="width:558px">
+	<tbody>
+		<tr>
+			<td style="text-align:center; width:550px"><strong>MAS Features:</strong></td>
+		</tr>
+		<tr>
+			<td style="width:550px">
+			<ul>
+				<li style="text-align:justify">HWID Activation&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; [Downlevel &amp; Lockbox Method]</li>
+				<li style="text-align:justify">KMS38 Activation&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; [With protection &amp; Uninstallation option]</li>
+				<li style="text-align:justify">Online KMS Activation&nbsp; [Batch file-based, no KMS related .dll/.exe required]<br />
+				&nbsp;</li>
+				<li style="text-align:justify">$OEM$ Folders For Preactivation</li>
+				<li style="text-align:justify">Activation Troubleshoot</li>
+				<li style="text-align:justify">Insert Windows 10-11 HWID Key</li>
+				<li style="text-align:justify">Change Windows 10-11 Edition</li>
+				<li style="text-align:justify">Check Windows-Office (Including Subscription) Activation Status<br />
+				&nbsp;</li>
+				<li style="text-align:justify">Available in All In One &amp; Separate Files Version</li>
+				<li style="text-align:justify">Fully Open Source</li>
+			</ul>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
-**Activations Summary:**
-```
-===========================================================================================
-   Activation Type     Supported Product         Activation Period
-===========================================================================================
 
-   HWID             -  Windows 10-11          -  Permanent
-   KMS38            -  Windows 10-11-Server   -  Until the year 2038
-   Online KMS       -  Windows / Office       -  For 180 Days, renewal task needs to be 
-                                                 created for lifetime auto-activation.
 
-   * For more details, use the respective activations read me.
-
-===========================================================================================
-```
+<table border="1" cellpadding="1" cellspacing="0" style="width:622px">
+	<tbody>
+		<tr>
+			<td colspan="3" style="text-align:center; width:614px"><strong>Activations Summary</strong></td>
+		</tr>
+		<tr>
+			<td style="text-align:center; width:112px"><strong>Activation Type</strong></td>
+			<td style="text-align:center; width:160px"><strong>Supported Product</strong></td>
+			<td style="text-align:center; width:332px"><strong>Activation Period</strong></td>
+		</tr>
+		<tr>
+			<td style="text-align:center; width:112px">HWID</td>
+			<td style="text-align:center; width:160px">Windows 10-11</td>
+			<td style="text-align:center; width:332px">Permanent</td>
+		</tr>
+		<tr>
+			<td style="text-align:center; width:112px">KMS38</td>
+			<td style="text-align:center; width:160px">Windows 10-11-Server</td>
+			<td style="text-align:center; width:332px">Until the year 2038</td>
+		</tr>
+		<tr>
+			<td style="text-align:center; width:112px">Online KMS</td>
+			<td style="text-align:center; width:160px">Windows / Office</td>
+			<td style="text-align:center; width:332px">180 Days. Lifetime Activation With Renewal Task</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="width:614px">&nbsp;For more details, use the respective activations read me.</td>
+		</tr>
+	</tbody>
+</table>
  
-  # **ReadMe**
+<table border="1" cellpadding="1" cellspacing="0" style="width:658px">
+	<tbody>
+		<tr>
+			<td style="width:650px">Read Me</td>
+		</tr>
+		<tr>
+			<td style="width:650px">
+			<ul>
+				<li><a href="https://windowsaddict.ml/readme-hwid.html" rel="nofollow" target="_blank">HWID Activation</a></li>
+				<li><a href="https://windowsaddict.ml/readme-kms38.html" rel="nofollow" target="_blank">KMS38 Activation</a></li>
+				<li><a href="https://windowsaddict.ml/readme-online-kms.html" rel="nofollow" target="_blank">Online KMS Activation</a><br />
+				&nbsp;</li>
+				<li><a href="https://windowsaddict.ml/readme-hwid-kms38-files.html" rel="nofollow" target="_blank">HWID KMS38 Files Info</a></li>
+				<li><a href="https://windowsaddict.ml/readme-online-kms-files.html" rel="nofollow" target="_blank">Online KMS Files Info</a><br />
+				&nbsp;</li>
+				<li><a href="https://windowsaddict.ml/readme-activation-faq.html" rel="nofollow" target="_blank">Activation FAQ&#39;s</a></li>
+				<li><a href="https://windowsaddict.ml/readme-oem-folder.html" rel="nofollow" target="_blank">Extract $OEM$ Folder For Preactivation</a></li>
+				<li><a href="https://windowsaddict.ml/readme-genuine-installation-media.html" rel="nofollow" target="_blank">Genuine Installation Media Links</a></li>
+				<li><a href="https://windowsaddict.ml/readme-genuine-installation-media.html" rel="nofollow" target="_blank">Office License Is Not Genuine Banner</a></li>
+				<li><a href="https://windowsaddict.ml/readme-unreadable-codes-in-mas-aio.html" rel="nofollow" target="_blank">What are those big blocks of Unreadable Codes In MAS AIO Version</a><br />
+				&nbsp;</li>
+				<li><a href="https://windowsaddict.ml/readme-troubleshoot-hwid.html" rel="nofollow" target="_blank">Troubleshoot HWID</a></li>
+				<li><a href="https://windowsaddict.ml/readme-troubleshoot-kms38.html" rel="nofollow" target="_blank">Troubleshoot KMS38</a></li>
+				<li><a href="https://windowsaddict.ml/readme-troubleshoot-onlinekms.html" rel="nofollow" target="_blank">Troubleshoot Online KMS</a><br />
+				&nbsp;</li>
+				<li><a href="https://windowsaddict.ml/readme-mas-changelog.html" target="_blank">Changelog</a></li>
+				<li><a href="https://windowsaddict.ml/readme-mas-credits.html" target="_blank">Credits</a></li>
+			</ul>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
-[HWID Activation](https://windowsaddict.ml/readme-hwid.html)<br/> 
-[KMS38 Activation](https://windowsaddict.ml/readme-kms38.html)<br/> 
-[Online KMS Activation](https://windowsaddict.ml/readme-online-kms.html)<br/> 
-<br/> 
-[HWID KMS38 Files Info](https://windowsaddict.ml/readme-hwid-kms38-files.html) <br/> 
-[Online KMS Files Info](https://windowsaddict.ml/readme-online-kms-files.html)<br/> 
-<br/> 
-[Activation FAQ's](https://windowsaddict.ml/readme-activation-faq.html)<br/> 
-[Extract $OEM$ Folder For Preactivation](https://windowsaddict.ml/readme-oem-folder.html)<br/> 
-[Genuine Installation Media Links](https://windowsaddict.ml/readme-genuine-installation-media.html)<br/> 
-[Office License Is Not Genuine Banner](https://windowsaddict.ml/office-license-is-not-genuine.html)<br/> 
-[What are those big blocks of Unreadable Codes In MAS AIO Version](https://windowsaddict.ml/readme-unreadable-codes-in-mas-aio.html)<br/> 
-<br/>
-[Troubleshoot HWID](https://windowsaddict.ml/readme-troubleshoot-hwid.html)<br/>
-[Troubleshoot KMS38](https://windowsaddict.ml/readme-troubleshoot-kms38.html)<br/>
-[Troubleshoot Online KMS](https://windowsaddict.ml/readme-troubleshoot-onlinekms.html)<br/>
-
-# [Changelog](https://windowsaddict.ml/readme-mas-changelog.html)<br/> 
-# [Credits](https://windowsaddict.ml/readme-mas-credits.html)<br/> 
-
+ [Issues / To Do List](https://windowsaddict.ml/mas-todo-list.html)
+ 
 Made with Love ❤️
