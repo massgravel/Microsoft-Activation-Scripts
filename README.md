@@ -115,7 +115,7 @@
 				<li><a href="https://windowsaddict.ml/readme-activation-faq.html" rel="nofollow" target="_blank">Activation FAQ&#39;s</a></li>
 				<li><a href="https://windowsaddict.ml/readme-oem-folder.html" rel="nofollow" target="_blank">Extract $OEM$ Folder For Preactivation</a></li>
 				<li><a href="https://windowsaddict.ml/readme-genuine-installation-media.html" rel="nofollow" target="_blank">Genuine Installation Media Links</a></li>
-				<li><a href="https://windowsaddict.ml/readme-genuine-installation-media.html" rel="nofollow" target="_blank">Office License Is Not Genuine Banner</a></li>
+				<li><a href="https://windowsaddict.ml/office-license-is-not-genuine.html" rel="nofollow" target="_blank">Office License Is Not Genuine Banner</a></li>
 				<li><a href="https://windowsaddict.ml/readme-unreadable-codes-in-mas-aio.html" rel="nofollow" target="_blank">What are those big blocks of Unreadable Codes In MAS AIO Version</a><br />
 				&nbsp;</li>
 				<li><a href="https://windowsaddict.ml/readme-troubleshoot-hwid.html" rel="nofollow" target="_blank">Troubleshoot HWID</a></li>
