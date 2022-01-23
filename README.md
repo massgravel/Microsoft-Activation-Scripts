@@ -1,3 +1,6 @@
+   **Note:** LF line ending issue fixed while downloading Raw .cmd files.
+   <hr />
+   
   # **[Download Link](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)** <br/>
 
     Latest Version: 1.5
