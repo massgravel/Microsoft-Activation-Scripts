@@ -1,4 +1,4 @@
-   **Note:** https://windowsaddict.ml/ is replaced with https://massgrave.dev/ because of DNS issue with free domains (.ml .tk etc)
+   **Note:** https://windowsaddict.ml/ is replaced with https://massgrave.dev/ because of DNS issue with free domains.
    <hr />
    
   # **[Download Link](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)** <br/>
