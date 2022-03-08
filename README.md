@@ -1,4 +1,4 @@
-   **Note:** LF line ending issue fixed while downloading Raw .cmd files.
+   **Note:** https://windowsaddict.ml/ is replaced with https://massgrave.dev/ because of DNS issue with free domains (.ml .tk etc)
    <hr />
    
   # **[Download Link](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)** <br/>
@@ -6,7 +6,7 @@
     Latest Version: 1.5
     Release date: 11-Jan-2022
 
-   **Homepage:**&nbsp; https://windowsaddict.ml/ <br/>
+   **Homepage:**&nbsp; https://massgrave.dev/ <br/>
 
    <a href="https://discord.gg/gjJEfq7ux8">
   <img src="https://discordapp.com/api/guilds/746721520931569757/widget.png?style=banner3" />
@@ -108,31 +108,31 @@
 		<tr>
 			<td style="width:650px">
 			<ul>
-				<li><a href="https://windowsaddict.ml/readme-hwid.html" rel="nofollow" target="_blank">HWID Activation</a></li>
-				<li><a href="https://windowsaddict.ml/readme-kms38.html" rel="nofollow" target="_blank">KMS38 Activation</a></li>
-				<li><a href="https://windowsaddict.ml/readme-online-kms.html" rel="nofollow" target="_blank">Online KMS Activation</a><br />
+				<li><a href="https://massgrave.dev/readme-hwid.html" rel="nofollow" target="_blank">HWID Activation</a></li>
+				<li><a href="https://massgrave.dev/readme-kms38.html" rel="nofollow" target="_blank">KMS38 Activation</a></li>
+				<li><a href="https://massgrave.dev/readme-online-kms.html" rel="nofollow" target="_blank">Online KMS Activation</a><br />
 				&nbsp;</li>
-				<li><a href="https://windowsaddict.ml/readme-hwid-kms38-files.html" rel="nofollow" target="_blank">HWID KMS38 Files Info</a></li>
-				<li><a href="https://windowsaddict.ml/readme-online-kms-files.html" rel="nofollow" target="_blank">Online KMS Files Info</a><br />
+				<li><a href="https://massgrave.dev/readme-hwid-kms38-files.html" rel="nofollow" target="_blank">HWID KMS38 Files Info</a></li>
+				<li><a href="https://massgrave.dev/readme-online-kms-files.html" rel="nofollow" target="_blank">Online KMS Files Info</a><br />
 				&nbsp;</li>
-				<li><a href="https://windowsaddict.ml/readme-activation-faq.html" rel="nofollow" target="_blank">Activation FAQ&#39;s</a></li>
-				<li><a href="https://windowsaddict.ml/readme-oem-folder.html" rel="nofollow" target="_blank">Extract $OEM$ Folder For Preactivation</a></li>
-				<li><a href="https://windowsaddict.ml/readme-genuine-installation-media.html" rel="nofollow" target="_blank">Genuine Installation Media Links</a></li>
-				<li><a href="https://windowsaddict.ml/office-license-is-not-genuine.html" rel="nofollow" target="_blank">Office License Is Not Genuine Banner</a></li>
-				<li><a href="https://windowsaddict.ml/readme-unreadable-codes-in-mas-aio.html" rel="nofollow" target="_blank">What are those big blocks of Unreadable Codes In MAS AIO Version</a><br />
+				<li><a href="https://massgrave.dev/readme-activation-faq.html" rel="nofollow" target="_blank">Activation FAQ&#39;s</a></li>
+				<li><a href="https://massgrave.dev/readme-oem-folder.html" rel="nofollow" target="_blank">Extract $OEM$ Folder For Preactivation</a></li>
+				<li><a href="https://massgrave.dev/readme-genuine-installation-media.html" rel="nofollow" target="_blank">Genuine Installation Media Links</a></li>
+				<li><a href="https://massgrave.dev/office-license-is-not-genuine.html" rel="nofollow" target="_blank">Office License Is Not Genuine Banner</a></li>
+				<li><a href="https://massgrave.dev/readme-unreadable-codes-in-mas-aio.html" rel="nofollow" target="_blank">What are those big blocks of Unreadable Codes In MAS AIO Version</a><br />
 				&nbsp;</li>
-				<li><a href="https://windowsaddict.ml/readme-troubleshoot-hwid.html" rel="nofollow" target="_blank">Troubleshoot HWID</a></li>
-				<li><a href="https://windowsaddict.ml/readme-troubleshoot-kms38.html" rel="nofollow" target="_blank">Troubleshoot KMS38</a></li>
-				<li><a href="https://windowsaddict.ml/readme-troubleshoot-onlinekms.html" rel="nofollow" target="_blank">Troubleshoot Online KMS</a><br />
+				<li><a href="https://massgrave.dev/readme-troubleshoot-hwid.html" rel="nofollow" target="_blank">Troubleshoot HWID</a></li>
+				<li><a href="https://massgrave.dev/readme-troubleshoot-kms38.html" rel="nofollow" target="_blank">Troubleshoot KMS38</a></li>
+				<li><a href="https://massgrave.dev/readme-troubleshoot-onlinekms.html" rel="nofollow" target="_blank">Troubleshoot Online KMS</a><br />
 				&nbsp;</li>
-				<li><a href="https://windowsaddict.ml/readme-mas-changelog.html" target="_blank">Changelog</a></li>
-				<li><a href="https://windowsaddict.ml/readme-mas-credits.html" target="_blank">Credits</a></li>
+				<li><a href="https://massgrave.dev/readme-mas-changelog.html" target="_blank">Changelog</a></li>
+				<li><a href="https://massgrave.dev/readme-mas-credits.html" target="_blank">Credits</a></li>
 			</ul>
 			</td>
 		</tr>
 	</tbody>
 </table>
 
- [Issues / To Do List](https://windowsaddict.ml/mas-todo-list.html)
+ [Issues / To Do List](https://massgrave.dev/mas-todo-list.html)
  
 Made with Love ❤️
