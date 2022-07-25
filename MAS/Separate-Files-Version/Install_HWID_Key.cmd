@@ -7,7 +7,7 @@
 ::
 ::   This script is a part of 'Microsoft Activation Scripts' (MAS) project.
 ::
-::   Homepage: windowsaddict.ml
+::   Homepage: massgrave.dev
 ::      Email: windowsaddict@protonmail.com
 ::
 ::============================================================================
@@ -23,33 +23,53 @@
 :: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
 :: or with ARM64 process if it was initiated by x86/ARM32 process on ARM64 Windows
 
-if exist %SystemRoot%\Sysnative\cmd.exe (
 set "_cmdf=%~f0"
+for %%# in (%*) do (
+if /i "%%#"=="r1" set r1=1
+if /i "%%#"=="r2" set r2=1
+)
+
+if exist %SystemRoot%\Sysnative\cmd.exe if not defined r1 (
 setlocal EnableDelayedExpansion
-start %SystemRoot%\Sysnative\cmd.exe /c ""!_cmdf!" %*"
+start %SystemRoot%\Sysnative\cmd.exe /c ""!_cmdf!" %* r1"
 exit /b
 )
 
 :: Re-launch the script with ARM32 process if it was initiated by x64 process on ARM64 Windows
 
-if exist %SystemRoot%\SysArm32\cmd.exe if %PROCESSOR_ARCHITECTURE%==AMD64 (
-set "_cmdf=%~f0"
+if exist %SystemRoot%\SysArm32\cmd.exe if %PROCESSOR_ARCHITECTURE%==AMD64 if not defined r2 (
 setlocal EnableDelayedExpansion
-start %SystemRoot%\SysArm32\cmd.exe /c ""!_cmdf!" %*"
+start %SystemRoot%\SysArm32\cmd.exe /c ""!_cmdf!" %* r2"
 exit /b
 )
 
 ::  Set Path variable, it helps if it is misconfigured in the system
 
-set "SysPath=%SystemRoot%\System32"
-if exist "%SystemRoot%\Sysnative\reg.exe" (set "SysPath=%SystemRoot%\Sysnative")
-set "Path=%SysPath%;%SystemRoot%;%SysPath%\Wbem;%SysPath%\WindowsPowerShell\v1.0\"
+set "PATH=%SystemRoot%\System32;%SystemRoot%\System32\wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
+if exist "%SystemRoot%\Sysnative\reg.exe" (
+set "PATH=%SystemRoot%\Sysnative;%SystemRoot%\Sysnative\wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%PATH%"
+)
+
+::  Check LF line ending
+
+pushd "%~dp0"
+>nul findstr /rxc:".*" "%~nx0"
+if not %errorlevel%==0 (
+echo:
+echo Error: This is not a correct file. It has LF line ending issue.
+echo:
+echo Press any key to exit...
+pause >nul
+popd
+exit /b
+)
+popd
 
 ::========================================================================================================================================
 
 cls
 color 07
-title  Install Windows 10-11 Retail/MAK/OEM Key
+title  Install Windows Retail/OEM/MAK Key
 
 set _args=
 set _elev=
@@ -68,7 +88,7 @@ if /i "%%A"=="/u"  set _unattended=1
 
 set winbuild=1
 set "nul=>nul 2>&1"
-set "_psc=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+set psc=powershell.exe
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 
 set _NCS=1
@@ -90,9 +110,6 @@ set "_Yellow="Black" "Yellow""
 
 set "nceline=echo: &echo ==== ERROR ==== &echo:"
 set "eline=echo: &call :dk_color %Red% "==== ERROR ====" &echo:"
-set slp=SoftwareLicensingProduct
-set sls=SoftwareLicensingService
-set wApp=55c92734-d682-4d71-983e-d6ec3f16059f
 set "line=echo ___________________________________________________________________________________________"
 
 ::========================================================================================================================================
@@ -104,9 +121,9 @@ echo Project is supported for Windows 10/11.
 goto ins_done
 )
 
-if %winbuild% GEQ 22483 if not exist %_psc% (
+for %%# in (powershell.exe) do @if "%%~$PATH:#"=="" (
 %nceline%
-echo Powershell is not installed in the system.
+echo Unable to find powershell.exe in the system.
 goto ins_done
 )
 
@@ -114,10 +131,13 @@ goto ins_done
 
 ::  Fix for the special characters limitation in path name
 
+set "_work=%~dp0"
+if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
+
 set "_batf=%~f0"
 set "_batp=%_batf:'=''%"
 
-set "_PSarg="""%~f0""" -el %_args%"
+set _PSarg="""%~f0""" -el %_args%
 
 set "_ttemp=%temp%"
 
@@ -126,6 +146,7 @@ setlocal EnableDelayedExpansion
 ::========================================================================================================================================
 
 echo "!_batf!" | find /i "!_ttemp!" 1>nul && (
+if /i not "!_work!"=="!_ttemp!" (
 %eline%
 echo Script is launched from the temp folder,
 echo Most likely you are running the script directly from the archive file.
@@ -133,13 +154,14 @@ echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto ins_done
 )
+)
 
 ::========================================================================================================================================
 
 ::  Elevate script as admin and pass arguments and preventing loop
 
 %nul% reg query HKU\S-1-5-19 || (
-if not defined _elev %nul% %_psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
+if not defined _elev %nul% %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %eline%
 echo This script require administrator privileges.
 echo To do so, right click on this script and select 'Run as administrator'.
@@ -148,53 +170,30 @@ goto ins_done
 
 ::========================================================================================================================================
 
-mode 98, 30
-echo:
-echo Initializing...
-
-::  Check WMI and sppsvc Errors
-
-set applist=
-net start sppsvc /y %nul%
-if %winbuild% LSS 22483 set "chkapp=for /f "tokens=2 delims==" %%a in ('"wmic path %slp% where (ApplicationID='%wApp%') get ID /VALUE" 2^>nul')"
-if %winbuild% GEQ 22483 set "chkapp=for /f "tokens=2 delims==" %%a in ('%_psc% "(([WMISEARCHER]'SELECT ID FROM %slp% WHERE ApplicationID=''%wApp%''').Get()).ID ^| %% {echo ('ID='+$_)}" 2^>nul')"
-%chkapp% do (if defined applist (call set "applist=!applist! %%a") else (call set "applist=%%a"))
-
-if not defined applist (
-%eline%
-echo Failed running WMI query check, verify that these services are working correctly
-echo Windows Management Instrumentation [WinMgmt], Software Protection [sppsvc]
-echo:
-echo Script will try to enable these services.
-echo:
-if %_unattended%==0 (
-call :dk_color %_Yellow% "Press any key to continue..."
-pause >nul
-)
-for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\WinMgmt /v Start 2^>nul') do if /i %%b equ 0x4 (sc config WinMgmt start= auto %nul%)
-net start WinMgmt /y %nul%
-net stop sppsvc /y %nul%
-net start sppsvc /y %nul%
 cls
-)
+mode 98, 30
 
-::========================================================================================================================================
-
-::  Refresh license status, it helps to get correct product name in Windows 17134 and later builds
-
-call :dk_refresh
+call :dk_initial
 
 ::  Check product name
 
-set winos=
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName 2^>nul') do set "winos=%%b"
+cls
+call :dk_product
 
 ::========================================================================================================================================
 
-::  Check SKU value
+::  Check SKU value / Check in multiple places to find Edition change corruption
 
 set osSKU=
-for /f "tokens=3 delims=." %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions" /v OSProductPfn 2^>nul') do set "osSKU=%%a"
+set regSKU=
+set wmiSKU=
+
+for /f "tokens=3 delims=." %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions" /v OSProductPfn 2^>nul') do set "regSKU=%%a"
+if %_wmic% EQU 1 for /f "tokens=2 delims==" %%a in ('"wmic Path Win32_OperatingSystem Get OperatingSystemSKU /format:LIST" 2^>nul') do if not errorlevel 1 set "wmiSKU=%%a"
+if %_wmic% EQU 0 for /f "tokens=1" %%a in ('%psc% "([WMI]'Win32_OperatingSystem=@').OperatingSystemSKU" 2^>nul') do if not errorlevel 1 set "wmiSKU=%%a"
+
+set osSKU=%wmiSKU%
+if not defined osSKU set osSKU=%regSKU%
 
 if not defined osSKU (
 %eline%
@@ -207,17 +206,33 @@ goto ins_done
 ::  Detect key
 
 set key=
+set pkey=
 set _chan=
 
 if defined applist call :hwiddata attempt1
 if not defined key call :hwiddata attempt2
 
+set pkey=
+if not defined key call :dk_hwidkey %nul%
+
 if not defined key (
 %eline%
-echo Unable to find Key for [%winos% ^| SKU:%osSKU% ^| %winbuild%]
-if %winbuild% GTR 19044 echo Make sure you are using updated version of the script
+%psc% $ExecutionContext.SessionState.LanguageMode 2>nul | find /i "Full" 1>nul || (
+echo PowerShell is not responding properly.
+echo:
+)
+echo Unable to find HWID key for [%winos% ^| SKU:%osSKU% ^| %winbuild%]
+echo Make sure you are using updated version of the script
+echo:
+if not "%regSKU%"=="%wmiSKU%" (
+echo Difference Found In SKU Value- WMI:%wmiSKU% Reg:%regSKU%
+echo Restart the system and try again.
+)
 goto ins_done
 )
+
+if defined key call :dk_pkeychannel %key%
+if defined pkeychannel set _chan=%pkeychannel% Key
 
 ::========================================================================================================================================
 
@@ -226,10 +241,15 @@ if %_unattended%==1 goto insertkey
 cls
 %line%
 echo:
-echo Install [%winos% ^| SKU:%osSKU% ^| %winbuild%] %_chan% Key
+echo Install [%winos% ^| SKU:%osSKU% ^| %winbuild%] %_chan%
 echo [%key%]
 %line%
 echo:
+if not "%regSKU%"=="%wmiSKU%" (
+echo Note: Difference Found In SKU Value- WMI:%wmiSKU% Reg:%regSKU%
+echo       Restart the system to resolve it
+echo:
+)
 call :dk_color %_Green% "Press [1] to Continue or [2] to Exit"
 choice /C:21 /N
 if %errorlevel%==1 exit /b
@@ -242,23 +262,28 @@ cls
 cls
 %line%
 
-if %winbuild% LSS 22483 wmic path %sls% where __CLASS='%sls%' call InstallProductKey ProductKey="%key%" %nul%
-if %winbuild% GEQ 22483 %_psc% "(([WMISEARCHER]'SELECT Version FROM %sls%').Get()).InstallProductKey('%key%')" %nul%
+if %_wmic% EQU 1 wmic path SoftwareLicensingService where __CLASS='SoftwareLicensingService' call InstallProductKey ProductKey="%key%" %nul%
+if %_wmic% EQU 0 %psc% "(([WMISEARCHER]'SELECT Version FROM SoftwareLicensingService').Get()).InstallProductKey('%key%')" %nul%
 if not %errorlevel%==0 cscript //nologo %windir%\system32\slmgr.vbs /ipk %key% %nul%
 
-if %errorlevel%==0 (
+set error_code=%errorlevel%
+cmd /c exit /b %error_code%
+if %error_code% NEQ 0 set "error_code=[0x%=ExitCode%]"
+
+if %error_code% EQU 0 (
 call :dk_refresh
 echo:
 echo [%winos% ^| SKU:%osSKU% ^| %winbuild%]
-echo Installing %_chan% Key [%key%]
+echo Installing %_chan% [%key%]
 echo:
 call :dk_color %Green% "[Successful]"
 ) else (
 %eline%
 echo [%winos% ^| SKU:%osSKU% ^| %winbuild%]
-echo Installing %_chan% Key [%key%]
+echo Installing %_chan% [%key%]
 echo:
-call :dk_color %Red% "[Unsuccessful]%actidnotfound%"
+call :dk_color %Red% "[Unsuccessful] %error_code%"
+if not defined applist echo Not Respoding: %e_wmispp%
 )
 %line%
 
@@ -278,8 +303,131 @@ exit /b
 
 :dk_refresh
 
-if %winbuild% LSS 22483 wmic path %sls% where __CLASS='%sls%' call RefreshLicenseStatus %nul%
-if %winbuild% GEQ 22483 %_psc% "$null=(([WMICLASS]'%sls%').GetInstances()).RefreshLicenseStatus()" %nul%
+if %_wmic% EQU 1 wmic path SoftwareLicensingService where __CLASS='SoftwareLicensingService' call RefreshLicenseStatus %nul%
+if %_wmic% EQU 0 %psc% "$null=(([WMICLASS]'SoftwareLicensingService').GetInstances()).RefreshLicenseStatus()" %nul%
+exit /b
+
+::  Get Windows Activation IDs
+
+:dk_actids
+
+set applist=
+if %_wmic% EQU 1 set "chkapp=for /f "tokens=2 delims==" %%a in ('"wmic path SoftwareLicensingProduct where (ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f') get ID /VALUE" 2^>nul')"
+if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT ID FROM SoftwareLicensingProduct WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f''').Get()).ID ^| %% {echo ('ID='+$_)}" 2^>nul')"
+%chkapp% do (if defined applist (call set "applist=!applist! %%a") else (call set "applist=%%a"))
+exit /b
+
+::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
+
+:dk_product
+
+set winos=
+set d1=[DllImport(\"winbrand\",CharSet=CharSet.Unicode)]public static extern string BrandingFormatString(string s);
+set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $AP::BrandingFormatString('%%WINDOWS_LONG%%')
+for /f "delims=" %%s in ('"%psc% %d2%"') do if not errorlevel 1 (set winos=%%s)
+echo "%winos%" | find /i "Windows" 1>nul || (
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName 2^>nul') do set "winos=%%b"
+if %winbuild% GEQ 22000 (
+set winos=!winos:Windows 10=Windows 11!
+)
+)
+exit /b
+
+::  Check wmic.exe
+
+:dk_ckeckwmic
+
+set _wmic=0
+for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
+wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul && set _wmic=1
+)
+exit /b
+
+:dk_initial
+
+echo:
+echo Initializing...
+
+::  Check and enable WinMgmt, sppsvc services if required
+
+for %%# in (WinMgmt sppsvc) do (
+for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start 2^>nul') do if /i %%b NEQ 0x2 (
+echo:
+echo Enabling %%# service...
+if /i %%#==sppsvc  sc config %%# start= delayed-auto %nul% || echo Failed
+if /i %%#==WinMgmt sc config %%# start= auto %nul% || echo Failed
+)
+sc start %%# %nul%
+if !errorlevel! NEQ 1056 if !errorlevel! NEQ 0 (
+echo:
+echo Starting %%# service...
+sc start %%#
+echo:
+call :dk_color %Red% "Failed to start [%%#] service, rest of the process may take a long time..."
+)
+)
+
+::  Check WMI and SPP Errors
+
+call :dk_ckeckwmic
+
+set e_wmi=
+set e_wmispp=
+call :dk_actids
+
+if not defined applist (
+net stop sppsvc /y %nul%
+cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
+if !errorlevel! NEQ 0 cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
+call :dk_refresh
+
+if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
+if %_wmic% EQU 0 %psc% "Get-CIMInstance -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" 2>nul | find /i "computersystem" 1>nul
+if !errorlevel! NEQ 0 set e_wmi=1
+
+if defined e_wmi (set e_wmispp=WMI, SPP) else (set e_wmispp=SPP)
+call :dk_actids
+)
+exit /b
+
+::========================================================================================================================================
+
+::  Get Product Key from pkeyhelper.dll for future new editions
+::  It works on Windows 10 1803 (17134) and later builds. (Partially on 1803 & 1809, fully on 1903 and later)
+
+:dk_pkey
+
+set pkey=
+set d1=[DllImport(\"pkeyhelper.dll\",CharSet=CharSet.Unicode)]public static extern int SkuGetProductKeyForEdition(int e, string c, out string k, out string p);
+set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $k=''; $null=$AP::SkuGetProductKeyForEdition(%1, %2, [ref]$k, [ref]$null); $k
+for /f %%a in ('%psc% "%d2%"') do if not errorlevel 1 (set pkey=%%a)
+exit /b
+
+::  Get channel name for the key which was extracted from pkeyhelper.dll
+
+:dk_pkeychannel
+
+set k=%1
+set pkeychannel=
+set p=%SystemRoot%\System32\spp\tokens\pkeyconfig\pkeyconfig.xrm-ms
+set m=[System.Runtime.InteropServices.Marshal]
+set d1=[DllImport(\"PidGenX.dll\",CharSet=CharSet.Unicode)]public static extern int PidGenX(string k,string p,string m,int u,IntPtr i,IntPtr d,IntPtr f);
+set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $k='%k%'; $p='%p%'; $r=[byte[]]::new(0x04F8); $r[0]=0xF8; $r[1]=0x04; $f=%m%::AllocHGlobal(1272); %m%::Copy($r,0,$f,1272);
+set d3=%d2% [void]$AP::PidGenX($k,$p,\"00000\",0,0,0,$f); %m%::Copy($f,$r,0,1272); %m%::FreeHGlobal($f); [System.Text.Encoding]::Unicode.GetString($r, 1016, 128).Replace('0','')
+for /f %%a in ('%psc% "%d3%"') do if not errorlevel 1 (set pkeychannel=%%a)
+exit /b
+
+:dk_hwidkey
+
+for %%# in (pkeyhelper.dll) do @if "%%~$PATH:#"=="" exit /b
+for %%# in (Retail OEM:NONSLP OEM:DM Volume:MAK) do (
+call :dk_pkey %osSKU% '%%#'
+if defined pkey call :dk_pkeychannel !pkey!
+if /i [!pkeychannel!]==[%%#] (
+set key=!pkey!
+exit /b
+)
+)
 exit /b
 
 ::========================================================================================================================================
@@ -289,7 +437,7 @@ exit /b
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
 ) else (
-if not exist %_psc% (echo %~3) else (%_psc% write-host -back '%1' -fore '%2' '%3')
+%psc% write-host -back '%1' -fore '%2' '%3'
 )
 exit /b
 
@@ -305,6 +453,7 @@ exit /b
 ::  Separator  = _
 
 ::  Key preference is in the following order. Retail > OEM:NONSLP > OEM:DM > Volume:MAK
+
 
 :hwiddata
 
@@ -347,17 +496,24 @@ ed655016-a9e8-4434-95d9-4345352c2552_QPM6N-7J2WJ-P88HH-P3YRH-YY74H_191_0_OEM:NON
 d4bdc678-0a4b-4a32-a5b3-aaa24c3b0f24_K9VKN-3BGWV-Y624W-MCRMQ-BHDCD_202_0_____Retail_CloudEditionN
 92fb8726-92a8-4ffc-94ce-f82e07444653_KY7PN-VR6RX-83W6Y-6DDYQ-T6R4W_203_0_____Retail_CloudEdition
 ) do (
-for /f "tokens=1-7 delims=_" %%A in ("%%#") do if %osSKU%==%%C (
+for /f "tokens=1-8 delims=_" %%A in ("%%#") do if %osSKU%==%%C (
 
-if %1==attempt1 if not defined key echo "!applist!" | find /i "%%A" 1>nul && (set "key=%%B" & set "_chan=%%E" & if %%D==1 set notworking=1)
+if %1==attempt1 if not defined key (
+echo "!applist!" | find /i "%%A" 1>nul && (
+set key=%%B
+)
+)
 
 if %1==attempt2 if not defined key (
-set "actidnotfound= [Mismatched Act-ID]"
 set 7th=%%G
 if not defined 7th (
-set "key=%%B" & set "_chan=%%E" & if %%D==1 set notworking=1
+if %winbuild% GTR 19044 call :dk_hwidkey %nul%
+if not defined key set key=%%B
 ) else (
-echo "%winos%" | find "%%G" 1>nul && (set "key=%%B" & set "_chan=%%E" & if %%D==1 set notworking=1)
+echo "%winos%" | find /i "%%G" 1>nul && (
+if %winbuild% GTR 19044 call :dk_hwidkey %nul%
+if not defined key set key=%%B
+)
 )
 )
 )

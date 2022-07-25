@@ -10,22 +10,47 @@
 
 
 
+set _args=
+set _args=%*
+for %%A in (%_args%) do (
+if /i "%%A"=="-wow" set _rel1=1
+if /i "%%A"=="-arm" set _rel2=1
+)
 set "_cmdf=%~f0"
-if exist "%SystemRoot%\Sysnative\cmd.exe" (
+if exist "%SystemRoot%\Sysnative\cmd.exe" if not defined _rel1 (
 setlocal EnableDelayedExpansion
-start %SystemRoot%\Sysnative\cmd.exe /c ""!_cmdf!" "
+start %SystemRoot%\Sysnative\cmd.exe /c ""!_cmdf!" -wow"
 exit /b
 )
-if exist "%SystemRoot%\SysArm32\cmd.exe" if /i %PROCESSOR_ARCHITECTURE%==AMD64 (
+if exist "%SystemRoot%\SysArm32\cmd.exe" if /i %PROCESSOR_ARCHITECTURE%==AMD64 if not defined _rel2 (
 setlocal EnableDelayedExpansion
-start %SystemRoot%\SysArm32\cmd.exe /c ""!_cmdf!" "
+start %SystemRoot%\SysArm32\cmd.exe /c ""!_cmdf!" -arm"
 exit /b
 )
 color 07
 title Check Activation Status [vbs]
 set "SysPath=%SystemRoot%\System32"
-if exist "%SystemRoot%\Sysnative\reg.exe" (set "SysPath=%SystemRoot%\Sysnative")
-set "Path=%SysPath%;%SystemRoot%;%SysPath%\Wbem;%SysPath%\WindowsPowerShell\v1.0\"
+set "Path=%SystemRoot%\System32;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
+if exist "%SystemRoot%\Sysnative\reg.exe" (
+set "SysPath=%SystemRoot%\Sysnative"
+set "Path=%SystemRoot%\Sysnative;%SystemRoot%\Sysnative\Wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%Path%"
+)
+
+::  Check LF line ending
+
+pushd "%~dp0"
+>nul findstr /rxc:".*" "%~nx0"
+if not %errorlevel%==0 (
+echo:
+echo Error: This is not a correct file. It has LF line ending issue.
+echo:
+echo Press any key to exit...
+pause >nul
+popd
+exit /b
+)
+popd
+
 set "_bit=64"
 set "_wow=1"
 if /i "%PROCESSOR_ARCHITECTURE%"=="x86" if "%PROCESSOR_ARCHITEW6432%"=="" set "_wow=0"&set "_bit=32"
