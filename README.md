@@ -6,8 +6,8 @@
 
   **[Download Link](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)** <br/>
 
-    Latest Version: 1.5
-    Release date: 11-Jan-2022
+    Latest Version: 1.6
+    Release date: 25-July-2022
 
    **For more details, check Homepage:**  https://massgrave.dev/ <br/>
 

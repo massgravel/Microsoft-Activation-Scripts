@@ -1,0 +1,22 @@
+=================================================================================
+   File Details:
+=================================================================================
+
+   - ClipUp.exe (x64)
+     SHA-1: 48D928B1BEC25A56FE896C430C2C034B7866AA7A
+
+     Taken from Windows server 2016 x64 ISO
+     https://www.microsoft.com/en-us/evalcenter/
+
+   - gatherosstate.exe (x86)
+     SHA-1: FABB5A0FC1E6A372219711152291339AF36ED0B5
+
+     Taken from Windows 10 Version 1607 ADK (Section: User State Migration Tool)
+     https://go.microsoft.com/fwlink/p/?LinkId=526740
+
+_________________________________________________________________________________
+
+ - All files are original Microsoft's files.
+ - ClipUp.exe is required for KMS38 activation of Server Cor/Acor editions.
+
+=================================================================================

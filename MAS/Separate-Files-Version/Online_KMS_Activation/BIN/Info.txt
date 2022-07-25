@@ -1,0 +1,15 @@
+====================================================================================================
+   File Details:
+====================================================================================================
+
+   cleanosppx64.exe        SHA-1: d30a0e4e5911d3ca705617d17225372731c770e2
+   cleanosppx86.exe        SHA-1: 39ed8659e7ca16aaccb86def94ce6cec4c847dd6
+
+ - These files are used in cleaning office license in C2R Retail office to VL conversion process.
+ - These files are taken from the old version of Microsoft official tool 'O15CTRRemove.diagcab'.
+
+    File: O15CTRRemove.diagcab                           (Digitally Signed)
+    Link: app.box.com/s/n8qpb5ljmv6djp77w5p6fk043dm6s3r1 (Unofficial Link)
+   SHA-1: 56c6ca76993a96cf9a255463b90db96cb9d24464
+
+====================================================================================================
