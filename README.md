@@ -1,7 +1,7 @@
   **Microsoft Activation Scripts (MAS):**
 
    A collection of scripts for activating Microsoft products using HWID / KMS38 / Online KMS activation methods 
-   with a focus on open-source code, less antivirus detection and user-friendliness.
+   with a focus on open-source code, fewer antivirus detection and user-friendliness.
    
 
   **[Download Link](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)** <br/>
