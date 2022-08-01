@@ -10,6 +10,10 @@
     Release date: 25-July-2022
 
    **For more details, check Homepage:**  https://massgrave.dev/ <br/>
+   
+   **Joesandbox virus scan: https://www.joesandbox.com/analysis/677007/0/html**
+   <br>
+   **Cuckoo Sandbox virus scan: https://sandbox.pikker.ee/analysis/3247603/summary**
 
    <a href="https://discord.gg/gjJEfq7ux8">
   <img src="https://discordapp.com/api/guilds/746721520931569757/widget.png?style=banner3" />
