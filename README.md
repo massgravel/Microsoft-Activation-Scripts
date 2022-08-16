@@ -30,6 +30,7 @@ Release date: 25-July-2022
 
 ### For more details, check Homepage:  https://massgrave.dev/
 
+### [Download Original Windows LTSC & Office](https://massgrave.dev/genuine-installation-media.html)
 
    <a href="https://discord.gg/gjJEfq7ux8">
   <img src="https://discordapp.com/api/guilds/746721520931569757/widget.png?style=banner3" />
