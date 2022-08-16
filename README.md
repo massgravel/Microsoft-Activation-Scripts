@@ -2,6 +2,17 @@
 
 A collection of scripts for activating Microsoft products using HWID / KMS38 / Online KMS activation methods with a focus on open-source code, fewer antivirus detections and user-friendliness.
 
+## Download Office ISO
+
+- [Office 2021 Pro EN](https://officecdn.microsoft.com/db/492350F6-3A01-4F97-B9C0-C7C6DDF67D60/media/en-US/Professional2021Retail.img)
+- [Office 2021 Pro Plus EN](https://officecdn.microsoft.com/db/492350F6-3A01-4F97-B9C0-C7C6DDF67D60/media/en-US/ProPlus2021Retail.img)
+- [Office 2021 Home Student EN](https://officecdn.microsoft.com/db/492350F6-3A01-4F97-B9C0-C7C6DDF67D60/media/en-US/HomeStudent2021Retail.img)
+
+- [Office 2021 Pro PL](https://officecdn.microsoft.com/db/492350F6-3A01-4F97-B9C0-C7C6DDF67D60/media/pl-PL/Professional2021Retail.img)
+- [Office 2021 Pro Plus PL](https://officecdn.microsoft.com/db/492350F6-3A01-4F97-B9C0-C7C6DDF67D60/media/pl-PL/ProPlus2021Retail.img)
+- [Office 2021 Home Student PL](https://officecdn.microsoft.com/db/492350F6-3A01-4F97-B9C0-C7C6DDF67D60/media/pl-PL/HomeStudent2021Retail.img)
+
+
 ## Download / How to use it?
 
 ### Method 1 - PowerShell
