@@ -52,7 +52,7 @@ Made with Love ❤️
 
 
 
-# Tags
+# Tags for SEO
 
 ## how to activate windows
 ## windows 10 activator txt
