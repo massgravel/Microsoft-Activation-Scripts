@@ -14,7 +14,7 @@ A Windows and Office activator using HWID / KMS38 / Online KMS activation method
 
 ### Method 2 - Traditional
 
--   Download the file named `MAS_1.6_Password_1234.7z` from [here](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)
+-   Download the file named `MAS_1.7_Password_1234.7z` from [here](https://github.com/massgravel/Microsoft-Activation-Scripts/releases)
 -   Extract this file with a 3rd party archive manager, such as [7zip](https://www.7-zip.org/download.html)
 -   Password is `1234`
 -   In the extracted folder, find the folder named `All-In-One-Version`
@@ -22,10 +22,11 @@ A Windows and Office activator using HWID / KMS38 / Online KMS activation method
 -   You will see the activation options, and follow onscreen instructions.
 -   That's all.
 
+To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches.html)
 
 ```
-Latest Version: 1.6
-Release date: 25-July-2022
+Latest Version: 1.7
+Release date: 7-Nov-2022
 ```
 
 ### For more details, check Homepage:  https://massgrave.dev/
