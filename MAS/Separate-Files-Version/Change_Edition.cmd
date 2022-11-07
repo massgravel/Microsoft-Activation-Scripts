@@ -14,6 +14,10 @@
 
 
 
+::  To stage current edition while changing edition with CBS Upgrade Method, change 0 to 1 in below line
+set _stg=0
+
+
 
 ::========================================================================================================================================
 
@@ -55,8 +59,7 @@ if not %errorlevel%==0 (
 echo:
 echo Error: This is not a correct file. It has LF line ending issue.
 echo:
-echo Press any key to exit...
-pause >nul
+ping 127.0.0.1 -n 6 > nul
 popd
 exit /b
 )
@@ -102,13 +105,23 @@ set "_Yellow="Black" "Yellow""
 set "nceline=echo: &echo ==== ERROR ==== &echo:"
 set "eline=echo: &call :dk_color %Red% "==== ERROR ====" &echo:"
 set "line=echo ___________________________________________________________________________________________"
+if %~z0 GEQ 200000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
 
 ::========================================================================================================================================
 
-if %winbuild% LSS 10240 (
-%eline%
+if %winbuild% LSS 7600 (
+%nceline%
 echo Unsupported OS version detected.
-echo Project is supported for Windows 10/11/Server Build 10240 and later.
+echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalent.
+goto ced_done
+)
+
+if %winbuild% LSS 9200 if not exist "%SystemRoot%\servicing\Packages\Microsoft-Windows-PowerShell-WTR-Package~*.mum" (
+%nceline%
+echo Updated Powershell not found.
+echo:
+echo Download Windows Management Framework 5.1 from below link and install
+echo https://aka.ms/wmf5download
 goto ced_done
 )
 
@@ -151,7 +164,7 @@ goto ced_done
 
 ::  Elevate script as admin and pass arguments and preventing loop
 
-%nul% reg query HKU\S-1-5-19 || (
+>nul fltmc || (
 if not defined _elev %nul% %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %eline%
 echo This script require administrator privileges.
@@ -164,23 +177,39 @@ goto ced_done
 cls
 mode 98, 30
 
-call :dk_initial
+echo:
+echo Initializing...
+echo:
+call :dk_product
+call :dk_ckeckwmic
 
-if not defined applist (
-cls
-%eline%
-echo Not Respoding: !e_wmispp!
-goto ced_done
+::  Show info for potential script stuck scenario
+
+sc start sppsvc %nul%
+if %errorlevel% NEQ 1056 if %errorlevel% NEQ 0 (
+echo:
+echo Error code: %errorlevel%
+call :dk_color %Red% "Failed to start [sppsvc] service, rest of the process may take a long time..."
+echo:
 )
 
 ::========================================================================================================================================
+
+::  Check Activation IDs
+
+call :dk_actids
+
+if not defined applist (
+%eline%
+echo Activation IDs not found. Aborting...
+goto ced_done
+)
 
 ::  Check Windows Edition
 
 set osedition=
 for /f "tokens=3 delims=: " %%a in ('DISM /English /Online /Get-CurrentEdition 2^>nul ^| find /i "Current Edition :"') do set "osedition=%%a"
 
-cls
 if "%osedition%"=="" (
 %eline%
 DISM /English /Online /Get-CurrentEdition %nul%
@@ -189,10 +218,6 @@ echo DISM command failed [Error Code - 0x!=ExitCode!]
 echo OS Edition was not detected properly. Aborting...
 goto ced_done
 )
-
-::  Check product name
-
-call :dk_product
 
 ::  Check SKU value
 
@@ -213,6 +238,9 @@ echo SKU value was not detected properly. Aborting...
 goto ced_done
 )
 
+set branch=
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v BuildBranch 2^>nul') do set "branch=%%b"
+
 ::  Check PowerShell
 
 %psc% $ExecutionContext.SessionState.LanguageMode 2>nul | find /i "Full" 1>nul || (
@@ -221,25 +249,17 @@ echo PowerShell is not responding properly. Aborting...
 goto ced_done
 )
 
-::  Check slmgr /dlv
-
-cscript //nologo %windir%\system32\slmgr.vbs /dlv %nul%
-set error_code=%errorlevel%
-cmd /c exit /b %error_code%
-if %error_code% NEQ 0 set "error_code=[0x%=ExitCode%]"
-if %error_code% NEQ 0 (
-%eline%
-echo slmgr /dlv is not responding %error_code%
-goto ced_done
-)
-
 ::========================================================================================================================================
 
 ::  Get Target editions list
 
 set _target=
+set _dtarget=
+set _ptarget=
 set _ntarget=
-for /f "tokens=4" %%a in ('dism /online /english /Get-TargetEditions ^| findstr /i /c:"Target Edition : "') do (if defined _target (set "_target=!_target! %%a") else (set "_target=%%a"))
+
+if %winbuild% GEQ 10240 for /f "tokens=4" %%a in ('dism /online /english /Get-TargetEditions ^| findstr /i /c:"Target Edition : "') do (if defined _dtarget (set "_dtarget=!_dtarget! %%a") else (set "_dtarget=%%a"))
+for /f "tokens=4" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':cbsxml\:.*';& ([ScriptBlock]::Create($f[1])) -GetTargetEditions;" ^| findstr /i /c:"Target Edition : "') do (if defined _ptarget (set "_ptarget=!_ptarget! %%a") else (set "_ptarget=%%a"))
 
 ::========================================================================================================================================
 
@@ -253,9 +273,13 @@ echo Aborting...
 goto ced_done
 )
 
+for %%# in ( %_dtarget% %_ptarget% ) do (
+echo "!_target!" | find /i " %%# " 1>nul || set "_target=!_target! %%# "
+)
+
 if defined _target (
 for %%# in (%_target%) do (
-echo %%# | findstr /i "CountrySpecific CloudEdition" %nul% || (if defined _ntarget (set "_ntarget=!_ntarget! %%#") else (set "_ntarget=%%#"))
+echo %%# | findstr /i "CountrySpecific CloudEdition" %nul% || (set "_ntarget=!_ntarget! %%#")
 )
 )
 
@@ -275,26 +299,40 @@ goto ced_done
 cls
 mode 98, 30
 set inpt=
+set note=
 set counter=0
 set verified=0
 set targetedition=
 
 %line%
 echo:
-call :dk_color %Gray% "You can change the Current Edition [%osedition%] to one of the following."
+call :dk_color %Gray% "You can change the Edition [%osedition%] [%winbuild%] to one of the following."
 %line%
 echo:
 
 for %%A in (%_ntarget%) do (
 set /a counter+=1
+if %winbuild% GEQ 10240 (
+echo "%_ptarget%" | find /i "%%A" 1>nul && (
+set note=1
+call :dk_color2 %_White% "[!counter!]  " %Magenta% "%%A"
+) || (
 echo [!counter!]  %%A
+)
+) else (
+echo [!counter!]  %%A
+)
 set targetedition!counter!=%%A
 )
 
 %line%
 echo:
-echo [0]  Exit
+echo [0]  %_exitmsg%
 echo:
+if defined note (
+echo Note: CBS Upgrade Method is available for Purple colored editions.
+echo:
+)
 call :dk_color %_Green% "Enter option number in keyboard, and press "Enter":"
 set /p inpt=
 if "%inpt%"=="" goto cedmenu2
@@ -304,6 +342,42 @@ set targetedition=!targetedition%inpt%!
 if %verified%==0 goto cedmenu2
 
 ::========================================================================================================================================
+
+cls
+if %winbuild% GEQ 10240 (
+echo "%_ptarget%" | find /i "%targetedition%" 1>nul && (
+echo "%_dtarget%" | find /i "%targetedition%" 1>nul && (
+echo:
+%line%
+echo:
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
+echo  [1] DISM Method
+) else (
+echo  [1] Changepk Method
+)
+echo:
+echo  [2] CBS Upgrade Method      [Alternative]
+echo:
+echo  [0] Go back
+%line%
+echo:
+echo  Enter a menu option in the Keyboard:
+choice /C:120 /N
+set _el=!errorlevel!
+if !_el!==3 goto :cedmenu2
+if !_el!==2 goto :cbsmethod
+if !_el!==1 REM
+)
+)
+) else (
+goto :cbsmethod
+)
+
+echo "%_ptarget%" | find /i "%targetedition%" 1>nul && (
+echo "%_dtarget%" | find /i "%targetedition%" 1>nul || (
+goto :cbsmethod
+)
+)
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 goto :ced_change_server
@@ -327,7 +401,7 @@ set _changepk=1
 )
 )
 
-if %winbuild% LEQ 19044 call :changeeditiondata
+if %winbuild% LEQ 19045 call :changeeditiondata
 
 if not defined key call :ced_targetSKU %targetedition%
 if not defined key if defined targetSKU call :ced_windowskey
@@ -337,7 +411,8 @@ if not defined key (
 %eline%
 echo [%targetedition% ^| %winbuild%]
 echo Unable to get product key from pkeyhelper.dll
-echo Make sure you are using updated version of the script
+echo Make sure you are using updated version of the script.
+echo https://massgrave.dev
 goto ced_done
 )
 
@@ -348,8 +423,6 @@ goto ced_done
 ::  Changing from Core to Non-Core & Changing editions in Windows build older than 17134 requires "changepk /productkey" method and restart
 ::  In other cases, editions can be changed instantly with "slmgr /ipk"
 
-:ced_loop
-
 cls
 if %_changepk%==1 (
 echo "%_chan%" | find /i "OEM" >NUL && (
@@ -358,10 +431,17 @@ echo [%osedition%] can not be changed to [%targetedition%] Edition due to lack o
 echo Non-OEM keys are required to change from Core to Non-Core Editions.
 goto ced_done
 )
+)
+
+:ced_loop
+
+cls
+if %_changepk%==1 (
 for %%a in (dns.msftncsi.com,www.microsoft.com,one.one.one.one,resolver1.opendns.com) do (
 for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (
 if not [%%#]==[] (
 %eline%
+echo Internet needs to be disconnected to change edition [%osedition%] to [%targetedition%]
 echo Disconnect the Internet and then press any key...
 pause >nul
 goto ced_loop
@@ -375,12 +455,20 @@ echo Changing the Current Edition [%osedition%] to [%targetedition%]
 echo:
 
 if %_changepk%==1 (
-call :dk_color %Green% "You can safely ignore if error appears in the upgrade Window."
-call :dk_color %Red% "But in that case you must manually reboot the system."
+call :dk_color %_Green% "You can safely ignore if error appears in the upgrade Window."
+call :dk_color %_Yellow% "But in that case you must manually reboot the system."
 echo:
+%psc% "$BLinfo = Get-BitLockerVolume -MountPoint "C:";$blinfo.ProtectionStatus" | find /i "On" 1>nul && (
+call :dk_color %Red% "Bitlocker / Device Encryption is On in the system."
+echo:
+echo Either Use alternative CBS upgrade method for edition change
+echo Or     Ensure that you have it's recovery key, you may need it
+echo Or     Turn off Bitlocker / Device Encryption
+echo:
+)
 call :dk_color %Magenta% "Important - Save your work before continue, system will auto reboot."
 echo:
-choice /C:21 /N /M "[1] Continue [2] Exit : "
+choice /C:21 /N /M "[1] Continue [2] %_exitmsg% : "
 if !errorlevel!==1 exit /b
 )
 
@@ -419,6 +507,34 @@ goto ced_done
 
 ::========================================================================================================================================
 
+:cbsmethod
+
+cls
+mode con cols=105 lines=32
+%nul% %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
+
+echo:
+echo Changing the Current Edition [%osedition%] to [%targetedition%]
+echo:
+call :dk_color %Magenta% "Important - Save your work before continue, system will auto reboot."
+if %winbuild% GEQ 17034 if %targetedition%==Professional echo           - Enterprise Key will be installed instead of Pro, you can quickly change to Pro later. 
+echo:
+choice /C:01 /N /M "[1] Continue [0] %_exitmsg% : "
+if %errorlevel%==1 exit /b
+
+echo:
+echo Initializing...
+echo:
+
+if %_stg%==0 (set stage=) else (set stage=-StageCurrent)
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':cbsxml\:.*';& ([ScriptBlock]::Create($f[1])) -SetEdition %targetedition% %stage%;"
+
+echo:
+%line%
+goto ced_done
+
+::========================================================================================================================================
+
 :ced_change_server
 
 cls
@@ -438,7 +554,8 @@ if not defined key (
 %eline%
 echo [%targetedition% ^| %winbuild%]
 echo Unable to get product key from pkeyhelper.dll
-echo Make sure you are using updated version of the script
+echo Make sure you are using updated version of the script.
+echo https://massgrave.dev
 goto ced_done
 )
 
@@ -459,7 +576,7 @@ call :dk_color %Magenta% "Make sure to restart the system."
 :ced_done
 
 echo:
-call :dk_color %_Yellow% "Press any key to exit..."
+call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
 pause >nul
 exit /b
 
@@ -506,53 +623,6 @@ exit /b
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul && set _wmic=1
-)
-exit /b
-
-:dk_initial
-
-echo:
-echo Initializing...
-
-::  Check and enable WinMgmt, sppsvc services if required
-
-for %%# in (WinMgmt sppsvc) do (
-for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start 2^>nul') do if /i %%b NEQ 0x2 (
-echo:
-echo Enabling %%# service...
-if /i %%#==sppsvc  sc config %%# start= delayed-auto %nul% || echo Failed
-if /i %%#==WinMgmt sc config %%# start= auto %nul% || echo Failed
-)
-sc start %%# %nul%
-if !errorlevel! NEQ 1056 if !errorlevel! NEQ 0 (
-echo:
-echo Starting %%# service...
-sc start %%#
-echo:
-call :dk_color %Red% "Failed to start [%%#] service, rest of the process may take a long time..."
-)
-)
-
-::  Check WMI and SPP Errors
-
-call :dk_ckeckwmic
-
-set e_wmi=
-set e_wmispp=
-call :dk_actids
-
-if not defined applist (
-net stop sppsvc /y %nul%
-cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
-if !errorlevel! NEQ 0 cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
-call :dk_refresh
-
-if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
-if %_wmic% EQU 0 %psc% "Get-CIMInstance -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" 2>nul | find /i "computersystem" 1>nul
-if !errorlevel! NEQ 0 set e_wmi=1
-
-if defined e_wmi (set e_wmispp=WMI, SPP) else (set e_wmispp=SPP)
-call :dk_actids
 )
 exit /b
 
@@ -631,6 +701,231 @@ exit /b
 
 ::========================================================================================================================================
 
+::  https://github.com/Gamers-Against-Weed/Set-WindowsCbsEdition
+
+:cbsxml:[
+param (
+    [Parameter()]
+    [String]$SetEdition,
+
+    [Parameter()]
+    [Switch]$GetTargetEditions,
+
+    [Parameter()]
+    [Switch]$StageCurrent
+)
+
+function Get-AssemblyIdentity {
+    param (
+        [String]$PackageName
+    )
+
+    $PackageName = [String]$PackageName
+    $packageData = ($PackageName -split '~')
+
+    if($packageData[3] -eq '') {
+        $packageData[3] = 'neutral'
+    }
+
+    return "<assemblyIdentity name=`"$($packageData[0])`" version=`"$($packageData[4])`" processorArchitecture=`"$($packageData[2])`" publicKeyToken=`"$($packageData[1])`" language=`"$($packageData[3])`" />"
+}
+
+function Get-SxsName {
+    param (
+        [String]$PackageName
+    )
+
+    $name = ($PackageName -replace '[^A-z0-9\-\._]', '')
+
+    if($name.Length -gt 40) {
+        $name = ($name[0..18] -join '') + '\.\.' + ($name[-19..-1] -join '')
+    }
+
+    return $name.ToLower()
+}
+
+function Find-EditionXmlInSxs {
+    param (
+        [String]$Edition
+    )
+
+    $candidates = @($Edition, 'Client', 'Server')
+    $winSxs = $Env:SystemRoot + '\WinSxS'
+    $allInSxs = Get-ChildItem -Path $winSxs | select Name
+
+    foreach($candidate in $candidates) {
+        $name = Get-SxsName -PackageName "Microsoft-Windows-Editions-$candidate"
+        $packages = $allInSxs | where name -Match ('^.*_'+$name+'_31bf3856ad364e35')
+
+        if($packages.Length -eq 0) {
+            continue
+        }
+
+        $package = $packages[-1].Name
+        $testPath = $winSxs + "\$package\" + $Edition + 'Edition.xml'
+
+        if(Test-Path -Path $testPath -PathType Leaf) {
+            return $testPath
+        }
+    }
+
+    return $null
+}
+
+function Find-EditionXml {
+    param (
+        [String]$Edition
+    )
+
+    $servicingEditions = $Env:SystemRoot + '\servicing\Editions'
+    $editionXml = $Edition + 'Edition.xml'
+
+    $editionXmlInServicing = $servicingEditions + '\' + $editionXml
+
+    if(Test-Path -Path $editionXmlInServicing -PathType Leaf) {
+        return $editionXmlInServicing
+    }
+
+    return Find-EditionXmlInSxs -Edition $Edition
+}
+
+function Write-UpgradeCandidates {
+    param (
+        [HashTable]$InstallCandidates
+    )
+
+    $editionCount = 0
+    Write-Host 'Editions that can be upgraded to:'
+    foreach($candidate in $InstallCandidates.Keys) {
+        Write-Host "Target Edition : $candidate"
+        $editionCount++
+    }
+
+    if($editionCount -eq 0) {
+        Write-Host '(no editions are available)'
+    }
+}
+
+function Write-UpgradeXml {
+    param (
+        [Array]$RemovalCandidates,
+        [Array]$InstallCandidates,
+        [Boolean]$Stage
+    )
+
+    $removeAction = 'remove'
+    if($Stage) {
+        $removeAction = 'stage'
+    }
+
+    Write-Output '<?xml version="1.0"?>'
+    Write-Output '<unattend xmlns="urn:schemas-microsoft-com:unattend">'
+    Write-Output '<servicing>'
+
+    foreach($package in $InstallCandidates) {
+        Write-Output '<package action="install">'
+        Write-Output (Get-AssemblyIdentity -PackageName $package)
+        Write-Output '</package>'
+    }
+
+    foreach($package in $RemovalCandidates) {
+        Write-Output "<package action=`"$removeAction`">"
+        Write-Output (Get-AssemblyIdentity -PackageName $package)
+        Write-Output '</package>'
+    }
+
+    Write-Output '</servicing>'
+    Write-Output '</unattend>'
+}
+
+function Write-Usage {
+    Get-Help $PSCommandPath -detailed
+}
+
+$version = '1.0'
+$getTargetsParam = $GetTargetEditions.IsPresent
+$stageCurrentParam = $StageCurrent.IsPresent
+
+if($SetEdition -eq '' -and ($false -eq $getTargetsParam)) {
+    Write-Usage
+    Exit 1
+}
+
+$removalCandidates = @();
+$installCandidates = @{};
+
+$packages = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages' | select Name | where name -Match '^.*\\Microsoft-Windows-.*Edition~'
+foreach($package in $packages) {
+    $state = (Get-ItemProperty -Path "Registry::$($package.Name)").CurrentState
+    $packageName = ($package.Name -split '\\')[-1]
+    $packageEdition = (($packageName -split 'Edition~')[0] -split 'Microsoft-Windows-')[-1]
+
+    if($state -eq 0x40) {
+        if($null -eq $installCandidates[$packageEdition]) {
+            $installCandidates[$packageEdition] = @()
+        }
+
+        if($false -eq ($packageName -in $installCandidates[$packageEdition])) {
+            $installCandidates[$packageEdition] = $installCandidates[$packageEdition] + @($packageName)
+        }
+    }
+
+    if((($state -eq 0x50) -or ($state -eq 0x70)) -and ($false -eq ($packageName -in $removalCandidates))) {
+        $removalCandidates = $removalCandidates + @($packageName)
+    }
+}
+
+if($getTargetsParam) {
+    Write-UpgradeCandidates -InstallCandidates $installCandidates
+    Exit
+}
+
+if($false -eq ($SetEdition -in $installCandidates.Keys)) {
+    Write-Error "The system cannot be upgraded to `"$SetEdition`""
+    Exit 1
+}
+
+$xmlPath = $Env:Temp + '\CbsUpgrade.xml'
+
+Write-UpgradeXml -RemovalCandidates $removalCandidates `
+    -InstallCandidates $installCandidates[$SetEdition] `
+    -Stage $stageCurrentParam >$xmlPath
+
+$editionXml = Find-EditionXml -Edition $SetEdition
+if($null -eq $editionXml) {
+    Write-Warning 'Unable to find edition specific settings XML. Proceeding without it...'
+}
+
+Write-Host 'Starting the upgrade process. This may take a while...'
+
+DISM.EXE /English /NoRestart /Online /Apply-Unattend:$xmlPath
+$dismError = $LASTEXITCODE
+
+Remove-Item -Path $xmlPath -Force
+
+if(($dismError -ne 0) -and ($dismError -ne 3010)) {
+    Write-Error 'Failed to upgrade to the target edition'
+    Exit $dismError
+}
+
+if($null -ne $editionXml) {
+    $destination = $Env:SystemRoot + '\' + $SetEdition + '.xml'
+    Copy-Item -Path $editionXml -Destination $destination
+
+    DISM.EXE /English /NoRestart /Online /Apply-Unattend:$editionXml
+    $dismError = $LASTEXITCODE
+
+    if(($dismError -ne 0) -and ($dismError -ne 3010)) {
+        Write-Error 'Failed to apply edition specific settings'
+        Exit $dismError
+    }
+}
+
+Restart-Computer
+:cbsxml:]
+
+::========================================================================================================================================
+
 ::  1st column = Generic Retail/OEM/MAK/GVLK Key
 ::  2nd column = Key Type
 ::  3rd column = WMI Edition ID
@@ -644,43 +939,45 @@ exit /b
 :changeeditiondata
 
 for %%# in (
-44NYX-TKR9D-CCM2D-V6B8F-HQWWR_Volume:MAK_Enterprise
-D6RD9-D4N8T-RT9QX-YW6YT-FCWWJ_____Retail_Starter
-3V6Q6-NQXCX-V8YXR-9QCYV-QPFCT_Volume:MAK_EnterpriseN
-3NFXW-2T27M-2BDW6-4GHRV-68XRX_____Retail_StarterN
-VK7JG-NPHTM-C97JM-9MPGT-3V66T_____Retail_Professional
-2B87N-8KFHP-DKV6R-Y2C8J-PKCKT_____Retail_ProfessionalN
-4CPRK-NM3K3-X6XXQ-RXX86-WXCHW_____Retail_CoreN
-N2434-X9D7W-8PF6X-8DV9T-8TYMD_____Retail_CoreCountrySpecific
-BT79Q-G7N6G-PGBYW-4YWX6-6F4BT_____Retail_CoreSingleLanguage
-YTMG3-N6DKC-DKB77-7M9GH-8HVX7_____Retail_Core
-XKCNC-J26Q9-KFHD2-FKTHY-KD72Y_OEM:NONSLP_PPIPro
-YNMGQ-8RYV3-4PGQ3-C8XTP-7CFBY_____Retail_Education
-84NGF-MHBT6-FXBX8-QWJK7-DRR8H_____Retail_EducationN
-KCNVH-YKWX8-GJJB9-H9FDT-6F7W2_Volume:MAK_EnterpriseS_2021
-VBX36-N7DDY-M9H62-83BMJ-CPR42_Volume:MAK_EnterpriseS_2019
-PN3KR-JXM7T-46HM4-MCQGK-7XPJQ_Volume:MAK_EnterpriseS_2016
-DVWKN-3GCMV-Q2XF4-DDPGM-VQWWY_Volume:MAK_EnterpriseS_2015
-RQFNW-9TPM3-JQ73T-QV4VQ-DV9PT_Volume:MAK_EnterpriseSN_2021
-M33WV-NHY3C-R7FPM-BQGPT-239PG_Volume:MAK_EnterpriseSN_2019
-2DBW3-N2PJG-MVHW3-G7TDK-9HKR4_Volume:MAK_EnterpriseSN_2016
-NTX6B-BRYC2-K6786-F6MVQ-M7V2X_Volume:MAK_EnterpriseSN_2015
-G3KNM-CHG6T-R36X3-9QDG6-8M8K9_____Retail_ProfessionalSingleLanguage
-HNGCC-Y38KG-QVK8D-WMWRK-X86VK_____Retail_ProfessionalCountrySpecific
-DXG7C-N36C4-C4HTG-X4T3X-2YV77_____Retail_ProfessionalWorkstation
-WYPNQ-8C467-V2W6J-TX4WX-WT2RQ_____Retail_ProfessionalWorkstationN
-8PTT6-RNW4C-6V7J2-C2D3X-MHBPB_____Retail_ProfessionalEducation
-GJTYN-HDMQY-FRR76-HVGC7-QPF8P_____Retail_ProfessionalEducationN
-C4NTJ-CX6Q2-VXDMR-XVKGM-F9DJC_Volume:MAK_EnterpriseG
-46PN6-R9BK9-CVHKB-HWQ9V-MBJY8_Volume:MAK_EnterpriseGN
-NJCF7-PW8QT-3324D-688JX-2YV66_____Retail_ServerRdsh
-V3WVW-N2PV2-CGWC3-34QGF-VMJ2C_____Retail_Cloud
-NH9J3-68WK7-6FB93-4K3DF-DJ4F6_____Retail_CloudN
-2HN6V-HGTM8-6C97C-RK67V-JQPFD_____Retail_CloudE
-XQQYW-NFFMW-XJPBH-K8732-CKFFD_____OEM:DM_IoTEnterprise
-QPM6N-7J2WJ-P88HH-P3YRH-YY74H_OEM:NONSLP_IoTEnterpriseS
-K9VKN-3BGWV-Y624W-MCRMQ-BHDCD_____Retail_CloudEditionN
-KY7PN-VR6RX-83W6Y-6DDYQ-T6R4W_____Retail_CloudEdition
+44NYX-TKR9D-CCM2D-V6B8F-HQWWR__Volume:MAK_Enterprise
+D6RD9-D4N8T-RT9QX-YW6YT-FCWWJ______Retail_Starter
+3V6Q6-NQXCX-V8YXR-9QCYV-QPFCT__Volume:MAK_EnterpriseN
+3NFXW-2T27M-2BDW6-4GHRV-68XRX______Retail_StarterN
+VK7JG-NPHTM-C97JM-9MPGT-3V66T______Retail_Professional
+2B87N-8KFHP-DKV6R-Y2C8J-PKCKT______Retail_ProfessionalN
+4CPRK-NM3K3-X6XXQ-RXX86-WXCHW______Retail_CoreN
+N2434-X9D7W-8PF6X-8DV9T-8TYMD______Retail_CoreCountrySpecific
+BT79Q-G7N6G-PGBYW-4YWX6-6F4BT______Retail_CoreSingleLanguage
+YTMG3-N6DKC-DKB77-7M9GH-8HVX7______Retail_Core
+XKCNC-J26Q9-KFHD2-FKTHY-KD72Y__OEM:NONSLP_PPIPro
+YNMGQ-8RYV3-4PGQ3-C8XTP-7CFBY______Retail_Education
+84NGF-MHBT6-FXBX8-QWJK7-DRR8H______Retail_EducationN
+KCNVH-YKWX8-GJJB9-H9FDT-6F7W2__Volume:MAK_EnterpriseS_VB
+VBX36-N7DDY-M9H62-83BMJ-CPR42__Volume:MAK_EnterpriseS_RS5
+PN3KR-JXM7T-46HM4-MCQGK-7XPJQ__Volume:MAK_EnterpriseS_RS1
+DVWKN-3GCMV-Q2XF4-DDPGM-VQWWY__Volume:MAK_EnterpriseS_TH
+RQFNW-9TPM3-JQ73T-QV4VQ-DV9PT__Volume:MAK_EnterpriseSN_VB
+M33WV-NHY3C-R7FPM-BQGPT-239PG__Volume:MAK_EnterpriseSN_RS5
+2DBW3-N2PJG-MVHW3-G7TDK-9HKR4__Volume:MAK_EnterpriseSN_RS1
+NTX6B-BRYC2-K6786-F6MVQ-M7V2X__Volume:MAK_EnterpriseSN_TH
+G3KNM-CHG6T-R36X3-9QDG6-8M8K9______Retail_ProfessionalSingleLanguage
+HNGCC-Y38KG-QVK8D-WMWRK-X86VK______Retail_ProfessionalCountrySpecific
+DXG7C-N36C4-C4HTG-X4T3X-2YV77______Retail_ProfessionalWorkstation
+WYPNQ-8C467-V2W6J-TX4WX-WT2RQ______Retail_ProfessionalWorkstationN
+8PTT6-RNW4C-6V7J2-C2D3X-MHBPB______Retail_ProfessionalEducation
+GJTYN-HDMQY-FRR76-HVGC7-QPF8P______Retail_ProfessionalEducationN
+C4NTJ-CX6Q2-VXDMR-XVKGM-F9DJC__Volume:MAK_EnterpriseG
+46PN6-R9BK9-CVHKB-HWQ9V-MBJY8__Volume:MAK_EnterpriseGN
+NJCF7-PW8QT-3324D-688JX-2YV66______Retail_ServerRdsh
+V3WVW-N2PV2-CGWC3-34QGF-VMJ2C______Retail_Cloud
+NH9J3-68WK7-6FB93-4K3DF-DJ4F6______Retail_CloudN
+2HN6V-HGTM8-6C97C-RK67V-JQPFD______Retail_CloudE
+XQQYW-NFFMW-XJPBH-K8732-CKFFD______OEM:DM_IoTEnterprise
+QPM6N-7J2WJ-P88HH-P3YRH-YY74H__OEM:NONSLP_IoTEnterpriseS_VB
+KBN8V-HFGQ4-MGXVD-347P6-PDQGT_Volume:GVLK_IoTEnterpriseS_NI
+K9VKN-3BGWV-Y624W-MCRMQ-BHDCD______Retail_CloudEditionN
+KY7PN-VR6RX-83W6Y-6DDYQ-T6R4W______Retail_CloudEdition
+MPB3G-XNBR7-CC43M-FG64B-F9GBK______Retail_IoTEnterpriseSK
 ) do (
 for /f "tokens=1-4 delims=_" %%A in ("%%#") do if /i %targetedition%==%%C (
 
@@ -689,7 +986,7 @@ set 4th=%%D
 if not defined 4th (
 set "key=%%A" & set "_chan=%%B"
 ) else (
-echo "%winos%" | find "%%D" 1>nul && (set "key=%%A" & set "_chan=%%B")
+echo "%branch%" | find "%%D" 1>nul && (set "key=%%A" & set "_chan=%%B")
 )
 )
 )
@@ -701,7 +998,6 @@ exit /b
 :changeeditionserverdata
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*CorEdition~*.mum" (set Cor=Cor) else (set Cor=)
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v BuildBranch 2^>nul') do set "branch=%%b"
 
 ::  Only RS3 and older version keys (GVLK/Generic Retail) are stored here, later ones are extracted from the system itself
 

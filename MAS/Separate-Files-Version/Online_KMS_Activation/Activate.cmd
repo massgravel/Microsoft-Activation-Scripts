@@ -61,8 +61,7 @@ if not %errorlevel%==0 (
 echo:
 echo Error: This is not a correct file. It has LF line ending issue.
 echo:
-echo Press any key to exit...
-pause >nul
+ping 127.0.0.1 -n 6 > nul
 popd
 exit /b
 )
@@ -74,13 +73,15 @@ cls
 color 07
 title  Online KMS Activation
 
+::  You are not supposed to edit anything below this.
+
 set WMI_VBS=0
 set _Debug=0
 set Silent=0
 set Logger=0
 set AutoR2V=1
 set SkipKMS38=1
-
+set vNextOverride=1
 set ActWindows=1
 set ActOffice=1
 
@@ -90,6 +91,7 @@ set _elev=
 set _renetask=
 set _renacttask=
 set _unattended=
+set _unattendedact=
 
 set _args=%*
 if defined _args set _args=%_args:"=%
@@ -99,14 +101,15 @@ if "%_args%"=="-el"  set _unattended=
 
 for %%A in (%_args%) do (
 if /i "%%A"=="-el"  (set _elev=1
-) else if /i "%%A"=="/rt"  (set _renetask=1
-) else if /i "%%A"=="/rat" (set _renacttask=1
-) else if /i "%%A"=="/uni" (set _uni=1
-) else if /i "%%A"=="/w"   (set ActWindows=1&set ActOffice=0
-) else if /i "%%A"=="/o"   (set ActWindows=0&set ActOffice=1
-) else if /i "%%A"=="/wo"  (set ActWindows=1&set ActOffice=1
-) else if /i "%%A"=="/d"   (set _Debug=1
-) else if /i "%%A"=="/l"   (set Logger=1&set Silent=1
+) else if /i "%%A"=="/KMS-RenewalTask"  (set _renetask=1
+) else if /i "%%A"=="/KMS-ActAndRenewalTask" (set _renacttask=1
+) else if /i "%%A"=="/KMS-Uninstall" (set _uni=1
+) else if /i "%%A"=="/KMS-Windows"   (set ActWindows=1&set ActOffice=0&set _unattendedact=1
+) else if /i "%%A"=="/KMS-Office"   (set ActWindows=0&set ActOffice=1&set _unattendedact=1
+) else if /i "%%A"=="/KMS-WindowsOffice"  (set ActWindows=1&set ActOffice=1&set _unattendedact=1
+) else if /i "%%A"=="/KMS-KeepvNext"  (set vNextOverride=0
+) else if /i "%%A"=="/KMS-Debug"   (set _Debug=1
+) else if /i "%%A"=="/KMS-Logger"   (set Logger=1&set Silent=1
 )
 )
 )
@@ -157,6 +160,7 @@ set "_batp=%_batf:'=''%"
 set _PSarg="""%~f0""" -el %_args%
 
 set "_ttemp=%temp%"
+set "_Local=%LocalAppData%"
 
 setlocal EnableDelayedExpansion
 
@@ -177,13 +181,23 @@ goto Done
 
 ::  Elevate script as admin and pass arguments and preventing loop
 
-%nul% reg query HKU\S-1-5-19 || (
+>nul fltmc || (
 if not defined _elev %nul% %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %nceline%
 echo This script require administrator privileges.
 echo To do so, right click on this script and select 'Run as administrator'.
 goto Done
 )
+
+::========================================================================================================================================
+
+if %~z0 GEQ 300000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
+
+::  Check not x86 Windows
+
+set notx86=
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
+if /i not "%arch%"=="x86" set notx86=1
 
 ::========================================================================================================================================
 
@@ -197,6 +211,7 @@ goto Done
 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "ComputerSystem" 1>nul || (
 %nceline%
 echo wmic.exe is not responding in the system.
+echo Check this page for help https://massgrave.dev/troubleshoot
 echo Aborting...
 goto Done
 )
@@ -206,29 +221,20 @@ reg query "HKCU\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled 2>nu
 reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled 2>nul | find /i "0x0" 1>nul && (set _WSH=0)
 
 if %_WSH% EQU 0 (
-%nceline%
-echo Windows Script Host is disabled.
-echo It is required for this script to work.
-echo Aborting...
-goto Done
+reg add "HKLM\Software\Microsoft\Windows Script Host\Settings" /v Enabled /t REG_DWORD /d 1 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows Script Host\Settings" /v Enabled /t REG_DWORD /d 1 /f %nul%
+if defined notx86 reg add "HKLM\Software\Microsoft\Windows Script Host\Settings" /v Enabled /t REG_DWORD /d 1 /f /reg:32 %nul%
 )
-
-::========================================================================================================================================
-
-if %~z0 GEQ 500000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
-
-::  Check not x86 Windows
-
-set notx86=
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
-if /i not "%arch%"=="x86" set notx86=1
 
 ::========================================================================================================================================
 
 if defined _uni goto _Complete_Uninstall
 
-if defined _renacttask set ActTask=1&goto:RenTask
-if defined _renetask set ActTask=&goto:RenTask
+if defined _renetask set ActTask=&call:RenTask&timeout /t 2
+cls
+if defined _renacttask set ActTask=1&call:RenTask&timeout /t 2
+cls
+if defined _unattended if not defined _unattendedact goto Done
 
 ::========================================================================================================================================
 
@@ -236,6 +242,16 @@ set "_title=Online KMS Activation"
 set _gui=
 
 :_KMS_Menu
+
+set sub_next=0
+set sub_o365=0
+set sub_proj=0
+set sub_vsio=0
+set _Identity=0
+set kNext=HKCU\SOFTWARE\Microsoft\Office\16.0\Common\Licensing\LicensingNext
+dir /b /s /a:-d "!_Local!\Microsoft\Office\Licenses\*1*" %nul% && set _Identity=1
+dir /b /s /a:-d "!ProgramData!\Microsoft\Office\Licenses\*1*" %nul% && set _Identity=1
+if %_Identity% EQU 1 reg query %kNext% /v MigrationToV5Done 2>nul | find /i "0x1" %nul% && call :officeSub %nul%
 
 set _tskinstalled=
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "\Activation-Renewal" >nul && (
@@ -251,6 +267,7 @@ set _oldtsk=1
 
 if defined _unattended (
 call :Activation_Start
+timeout /t 2
 goto Done
 )
 
@@ -265,15 +282,9 @@ echo.
 echo.
 echo.       ______________________________________________________________
 echo.
-if %_Debug%==0 (
 echo.              [1] Activate - Windows
 echo.              [2] Activate - Office
 echo.              [3] Activate - All
-) else (
-call :_color2 %_White% "              [1] Activate - Windows        " %_Red% "[Debug Mode]"
-call :_color2 %_White% "              [2] Activate - Office         " %_Red% "[Debug Mode]"
-call :_color2 %_White% "              [3] Activate - All            " %_Red% "[Debug Mode]"
-)
 echo.
 if defined _tskinstalled call :_color2 %_White% "              [4] Install Auto-Renewal      " %_Green% "[Installed]"
 if defined _oldtsk       call :_color2 %_White% "              [4] Install Auto-Renewal      " %_Red% "[Old Installed]"
@@ -281,17 +292,35 @@ if not defined _tskinstalled if not defined _oldtsk echo.              [4] Insta
 echo.              [5] Uninstall
 echo.              _______________________________________________  
 echo.
-echo.              [6] Enable Debug Mode
+if %_Debug%==0 (
+echo.              [6] Enable Debug Mode         [No]
+) else (
+call :_color2 %_White% "              [6] Enable Debug Mode         " %_Red% "[Yes]"
+)
+if %vNextOverride% EQU 1 (
+if %sub_next% EQU 1 (
+call :_color2 %_White% "              [7] Override Office vNext     " %_Red% "[Yes]"
+) else (
+echo               [7] Override Office vNext     [Yes]
+)
+) else (
+if %sub_next% EQU 1 (
+call :_color2 %_White% "              [7] Override Office vNext     " %_Yellow% "[No]"
+) else (
+echo               [7] Override Office vNext     [No]
+)
+)
 echo.              _______________________________________________       
 echo.
-echo.              [7] %_exitmsg%
+echo.              [0] %_exitmsg%
 echo.       ______________________________________________________________
 echo.
-call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,6,7]"
-choice /C:1234567 /N
+call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,6,7,0]"
+choice /C:12345670 /N
 set _el=%errorlevel%
 
-if %_el%==7 exit /b
+if %_el%==8 exit /b
+if %_el%==7 (if %vNextOverride% EQU 0 (set vNextOverride=1) else (set vNextOverride=0))&goto _KMS_Menu
 if %_el%==6 (if %_Debug%==0 (set _Debug=1) else (set _Debug=0)) &goto _KMS_Menu
 if %_el%==5 call:_Complete_Uninstall&cls&goto _KMS_Menu
 if %_el%==4 set ActTask=&call:RenTask&goto _KMS_Menu
@@ -321,6 +350,8 @@ set nil=
 for %%# in (SppE%nil%xtComObj.exe,sppsvc.exe,osppsvc.exe) do (
 reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%nil%ge File Execu%nil%tion Options\%%#" /f %nul%)
 )
+
+call :Clear-KMS-Cache %nul%
 
 set "_Null=1>nul 2>nul"
 set KMS_Port=1688
@@ -364,11 +395,11 @@ set "_mO21c=Detected Office 2021 C2R Retail could not be converted to Volume"
 set "_mO19c=Detected Office 2019 C2R Retail could not be converted to Volume"
 set "_mO16c=Detected Office 2016 C2R Retail could not be converted to Volume"
 set "_mO15c=Detected Office 2013 C2R Retail could not be converted to Volume"
-set "_mO14c=Detected Office 2010 C2R Retail is not supported by KMS_VL_ALL"
-set "_mO14m=Detected Office 2010 MSI Retail is not supported by KMS_VL_ALL"
-set "_mO15m=Detected Office 2013 MSI Retail is not supported by KMS_VL_ALL"
-set "_mO16m=Detected Office 2016 MSI Retail is not supported by KMS_VL_ALL"
-set "_mOuwp=Detected Office 365/2016 UWP is not supported by KMS_VL_ALL"
+set "_mO14c=Detected Office 2010 C2R Retail is not supported by this script"
+set "_mO14m=Detected Office 2010 MSI Retail is not supported by this script"
+set "_mO15m=Detected Office 2013 MSI Retail is not supported by this script"
+set "_mO16m=Detected Office 2016 MSI Retail is not supported by this script"
+set "_mOuwp=Detected Office 365/2016 UWP is not supported by this script"
 set DO16Ids=ProPlus,Standard,Access,SkypeforBusiness,Excel,Outlook,PowerPoint,Publisher,Word
 set LV16Ids=Mondo,ProPlus,ProjectPro,VisioPro,Standard,ProjectStd,VisioStd,Access,SkypeforBusiness,OneNote,Excel,Outlook,PowerPoint,Publisher,Word
 set LR16Ids=%LV16Ids%,Professional,HomeBusiness,HomeStudent,O365Business,O365SmallBusPrem,O365HomePrem,O365EduCloud
@@ -647,7 +678,7 @@ if %ActWindows% EQU 0 (
     echo.&echo %_winos% %nKMS%
     if defined _eval echo %nEval%
     ) else (
-    echo.&echo Failed checking KMS Activation ID^(s^) for Windows.&echo Check Troubleshooting in MAS extras section.&call :CheckWS
+    echo.&echo Failed checking KMS Activation ID^(s^) for Windows.&echo Check this page for help https://massgrave.dev/troubleshoot &call :CheckWS
     exit /b
     )
   )
@@ -707,9 +738,12 @@ if %winbuild% GEQ 9200 (
   )
 if %winbuild% LSS 9200 (if %loc_off14% EQU 0 (echo.&echo No Installed Office %aword% Product Detected...&exit /b))
 )
-set sub_O365=0
+if %vNextOverride% EQU 1 if %AutoR2V% EQU 1 (
+set sub_o365=0
 set sub_proj=0
-set sub_vis=0
+set sub_vsio=0
+if %sub_next% EQU 1 reg delete HKCU\SOFTWARE\Microsoft\Office\16.0\Common\Licensing /f %_Nul3%
+)
 set Off1ce=1
 set _sC2R=sppoff
 set _fC2R=ReturnSPP
@@ -758,7 +792,7 @@ if %sub_proj% EQU 0 for %%a in (ProjectPro,ProjectStd) do find /i "Office21%%a20
   call set /a prr_off21+=1
   find /i "Office21%%a2021VL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off21+=1
   )
-if %sub_vis% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office21%%a2021R" "!_temp!\sppchk.txt" %_Nul1% && (
+if %sub_vsio% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office21%%a2021R" "!_temp!\sppchk.txt" %_Nul1% && (
   call set /a prr_off21+=1
   find /i "Office21%%a2021VL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off21+=1
   )
@@ -783,7 +817,7 @@ if %sub_proj% EQU 0 for %%a in (ProjectPro,ProjectStd) do find /i "Office19%%a20
   call set /a prr_off19+=1
   find /i "Office19%%a2019VL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off19+=1
   )
-if %sub_vis% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office19%%a2019R" "!_temp!\sppchk.txt" %_Nul1% && (
+if %sub_vsio% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office19%%a2019R" "!_temp!\sppchk.txt" %_Nul1% && (
   call set /a prr_off19+=1
   find /i "Office19%%a2019VL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off19+=1
   )
@@ -815,7 +849,7 @@ if %sub_proj% EQU 0 for %%a in (ProjectPro,ProjectStd) do find /i "Office16%%aR"
   if %vol_off16% EQU 0 if %vol_off21% EQU 1 find /i "Office21%%a2021VL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off16+=1
   if %vol_off16% EQU 0 if %vol_off19% EQU 1 find /i "Office19%%a2019VL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off16+=1
   )
-if %sub_vis% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office16%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+if %sub_vsio% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office16%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
   call set /a prr_off16+=1
   if %vol_off16% EQU 1 if %vol_off21% EQU 0 if %vol_off19% EQU 0 find /i "Office16%%aVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off16+=1
   if %vol_off16% EQU 0 if %vol_off21% EQU 1 find /i "Office21%%a2021VL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off16+=1
@@ -824,7 +858,7 @@ if %sub_vis% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office16%%aR" "!_t
 )
 if %loc_off16% EQU 1 if %ret_off16% EQU 1 if %_O16MSI% EQU 0 if defined _C16R if %prv_off16% LSS %prr_off16% (set vol_off16=0&set run_off16=1)
 set "_qr=%_zz1% %spp% %_zz2% %_zz5%ApplicationID='%_oApp%' AND LicenseFamily like 'Office16O365%%' %_zz6% %_zz3% LicenseFamily %_zz4%"
-if %loc_off16% EQU 1 if %run_off16% EQU 0 if %sub_O365% EQU 0 if defined _C16R %_qr% %_Nul2% | find /i "O365" %_Nul1% && (
+if %loc_off16% EQU 1 if %run_off16% EQU 0 if %sub_o365% EQU 0 if defined _C16R %_qr% %_Nul2% | find /i "O365" %_Nul1% && (
 find /i "Office16MondoVL" "!_temp!\sppchk.txt" %_Nul1% || set run_off16=1
 )
 set run_off15=0
@@ -862,7 +896,7 @@ if %loc_off19% EQU 1 if %vol_off19% EQU 0 (
 if %aC2R19% EQU 1 (echo.&echo %_mO19a%) else (echo.&echo %_mO19c%)
 )
 if %loc_off16% EQU 1 if %vol_off16% EQU 0 (
-if defined _C16R (if %aC2R16% EQU 1 (echo.&echo %_mO16a%) else (if %sub_O365% EQU 0 echo.&echo %_mO16c%)) else if %_O16MSI% EQU 1 (if %ret_off16% EQU 1 echo.&echo %_mO16m%)
+if defined _C16R (if %aC2R16% EQU 1 (echo.&echo %_mO16a%) else (if %sub_o365% EQU 0 echo.&echo %_mO16c%)) else if %_O16MSI% EQU 1 (if %ret_off16% EQU 1 echo.&echo %_mO16m%)
 )
 if %loc_off15% EQU 1 if %vol_off15% EQU 0 (
 if defined _C15R (if %aC2R15% EQU 1 (echo.&echo %_mO15a%) else (echo.&echo %_mO15c%)) else if %_O15MSI% EQU 1 (if %ret_off15% EQU 1 echo.&echo %_mO15m%)
@@ -1292,6 +1326,20 @@ if not %xOS%==x86 if exist "%ProgramW6432%\Microsoft Office\Office%1\OSPP.VBS" s
 if not %xOS%==x86 if exist "%ProgramFiles(x86)%\Microsoft Office\Office%1\OSPP.VBS" set loc_off%1=1
 exit /b
 
+:officeSub
+reg query %kNext% | findstr /i /r ".*retail" %_Nul2% | findstr /i /v "project visio" %_Nul2% | find /i "0x2" %_Nul1% && (set sub_o365=1)
+reg query %kNext% | findstr /i /r ".*retail" %_Nul2% | findstr /i /v "project visio" %_Nul2% | find /i "0x3" %_Nul1% && (set sub_o365=1)
+reg query %kNext% | findstr /i /r ".*volume" %_Nul2% | findstr /i /v "project visio" %_Nul2% | find /i "0x2" %_Nul1% && (set sub_o365=1)
+reg query %kNext% | findstr /i /r ".*volume" %_Nul2% | findstr /i /v "project visio" %_Nul2% | find /i "0x3" %_Nul1% && (set sub_o365=1)
+reg query %kNext% | findstr /i /r "project.*" %_Nul2% | find /i "0x2" %_Nul1% && set sub_proj=1
+reg query %kNext% | findstr /i /r "project.*" %_Nul2% | find /i "0x3" %_Nul1% && set sub_proj=1
+reg query %kNext% | findstr /i /r "visio.*" %_Nul2% | find /i "0x2" %_Nul1% && set sub_vsio=1
+reg query %kNext% | findstr /i /r "visio.*" %_Nul2% | find /i "0x3" %_Nul1% && set sub_vsio=1
+if %sub_o365% EQU 1 set sub_next=1
+if %sub_proj% EQU 1 set sub_next=1
+if %sub_vsio% EQU 1 set sub_next=1
+exit /b
+
 :insKey
 set S_OK=1
 echo.
@@ -1609,22 +1657,6 @@ echo Error: %_sps% WMI version is not detected
 call :CheckWS
 goto :%_fC2R%
 )
-set _Identity=0
-set _vNext=0
-dir /b /s /a:-d "!_Local!\Microsoft\Office\Licenses\*1*" %_Nul3% && set _Identity=1
-dir /b /s /a:-d "!ProgramData!\Microsoft\Office\Licenses\*1*" %_Nul3% && set _Identity=1
-set kNext=HKCU\SOFTWARE\Microsoft\Office\16.0\Common\Licensing\LicensingNext
-if %_Identity% EQU 1 reg query %kNext% /v MigrationToV5Done %_Nul2% | find /i "0x1" %_Nul1% && set _vNext=1
-if %_vNext% EQU 1 (
-reg query %kNext% | findstr /i /r ".*retail" %_Nul2% | findstr /i /v "project visio" %_Nul2% | find /i "0x2" %_Nul1% && (set sub_O365=1)
-reg query %kNext% | findstr /i /r ".*retail" %_Nul2% | findstr /i /v "project visio" %_Nul2% | find /i "0x3" %_Nul1% && (set sub_O365=1)
-reg query %kNext% | findstr /i /r ".*volume" %_Nul2% | findstr /i /v "project visio" %_Nul2% | find /i "0x2" %_Nul1% && (set sub_O365=1)
-reg query %kNext% | findstr /i /r ".*volume" %_Nul2% | findstr /i /v "project visio" %_Nul2% | find /i "0x3" %_Nul1% && (set sub_O365=1)
-reg query %kNext% | findstr /i /r "project.*" %_Nul2% | find /i "0x2" %_Nul1% && set sub_proj=1
-reg query %kNext% | findstr /i /r "project.*" %_Nul2% | find /i "0x3" %_Nul1% && set sub_proj=1
-reg query %kNext% | findstr /i /r "visio.*" %_Nul2% | find /i "0x2" %_Nul1% && set sub_vis=1
-reg query %kNext% | findstr /i /r "visio.*" %_Nul2% | find /i "0x3" %_Nul1% && set sub_vis=1
-)
 set _Retail=0
 set "_ocq=ApplicationID='%_oApp%' AND LicenseStatus='1' AND PartialProductKey is not NULL"
 if %WMI_VBS% EQU 0 wmic path %_spp% where (%_ocq%) get Description %_Nul2% |findstr /V /R "^$" >"!_temp!\crvRetail.txt"
@@ -1759,20 +1791,20 @@ find /i "Office16MondoVL_KMS_Client" "!_temp!\crvVolume.txt" %_Nul1% && (
   for %%a in (O365ProPlus,O365Business,O365SmallBusPrem,O365HomePrem,O365EduCloud) do set _%%a=0
   )
 )
-if %sub_O365% EQU 1 (
+if %sub_o365% EQU 1 (
   for %%a in (%_Suites%) do set _%%a=0
 echo.
-echo Microsoft Office is activated with a subscription.
+echo Microsoft Office is activated with a vNext license.
 )
 if %sub_proj% EQU 1 (
   for %%a in (%_PrjSKU%) do set _%%a=0
 echo.
-echo Microsoft Project is activated with a subscription.
+echo Microsoft Project is activated with a vNext license.
 )
-if %sub_vis% EQU 1 (
+if %sub_vsio% EQU 1 (
   for %%a in (%_VisSKU%) do set _%%a=0
 echo.
-echo Microsoft Visio is activated with a subscription.
+echo Microsoft Visio is activated with a vNext license.
 )
 
 for %%a in (%_RetIds%,ProPlus) do if !_%%a! EQU 1 (
@@ -2980,25 +3012,45 @@ exit /b
 
 :_errorinfo
 
-(set msg1=echo Try again and if the issue still persist then either use a^
-&echo different Internet connection or use this offline KMS activator^
-&echo KMS_VL_ALL by @abbodi1406  pastebin.com/raw/cpdmr6HZ
-)
-
 call :CheckFR
 
-if !server_num! GTR %max_servers% (
-ping -n 1 one.one.one.one 1>nul || ping -n 1 resolver1.opendns.com 1>nul || (
-call :_color %_Red% "Unable to test KMS servers due to restricted or no Internet."
-echo.
-%msg1%
-exit /b
-)
+set _intcon=
+for %%a in (dns.msftncsi.com licensing.mp.microsoft.com) do (
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not [%%#]==[] set _intcon=1)
 )
 
-echo Restart the system and try again.
+if not defined _intcon (
+call :_color %_Red% "Internet is not connected."
+exit /b
+)
+
+set _portcon=
+for %%a in (%srvlist%) do if not defined _portcon (
+%psc% "$t = New-Object Net.Sockets.TcpClient;try{$t.Connect("""%%a""", 1688)}catch{};$t.Connected" | findstr /i true 1>nul && set _portcon=1
+)
+
+if not defined _portcon (
+echo Internet is found but failed to connect KMS servers on Port 1688.
+echo.
+echo Make sure restricted Internet [Office/College] is not connected, 
+echo or Port 1688 is not blocked in the firewall.
+echo.
+echo Either use another Internet connection or use offline KMS activator
+echo https://github.com/abbodi1406/KMS_VL_ALL_AIO
+exit /b
+)
+
+if [%ERRORCODE%]==[-1073418124] (
+echo KMS server port 1688 test is passed.
+echo Make sure system files are not blocked in firewall.
+echo.
+echo If the issue persist, try offline KMS activator,
+echo https://github.com/abbodi1406/KMS_VL_ALL_AIO
+echo.
+)
+
 echo KMS server is not an issue in this case.
-echo Check Troubleshooting steps in the ReadMe.
+call :_color2 %Magenta% "Check this page for help" %_Yellow% " https://massgrave.dev/troubleshoot"
 exit /b
 
 ::========================================================================================================================================
@@ -3078,7 +3130,7 @@ if %winbuild% GEQ 9600 (
 %nul% reg query "HKLM\%SPPk%\%_wApp%" && (
 set error_=9
 echo Failed to completely clear KMS Cache.
-reg query "HKLM\%SPPk%\%_wApp%" /s 2>nul | findstr /i "127.0.0.2" >nul && echo Most likely, the KMS38 activation is locked.
+reg query "HKLM\%SPPk%\%_wApp%" /s 2>nul | findstr /i "127.0.0.2" >nul && echo KMS38 activation is locked.
 ) || (
 echo Cleared KMS Cache successfully.
 )
@@ -3158,7 +3210,7 @@ call :_color %Green% "Online KMS Complete Uninstall was done successfully."
 echo __________________________________________________________________________________________
 )
 
-if defined _unattended exit /b
+if defined _unattended timeout /t 2 & exit /b
 
 echo.
 call :_color %_Yellow% "Press any key to go back..."
@@ -3942,7 +3994,7 @@ if not [%KMS_IP%]==[!KMS_IP!] exit /b
 goto :_taskgetserv
 )
 
-:: Ver:1.6
+:: Ver:1.7
 ::========================================================================================================================================
 :_extracttask:
 

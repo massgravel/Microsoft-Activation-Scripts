@@ -72,8 +72,7 @@ if not %errorlevel%==0 (
 echo:
 echo Error: This is not a correct file. It has LF line ending issue.
 echo:
-echo Press any key to exit...
-pause >nul
+ping 127.0.0.1 -n 6 > nul
 popd
 exit /b
 )
@@ -362,7 +361,7 @@ exit /b
 function PrintModePerPridFromRegistry
 {
 	$vNextRegkey = "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Licensing\LicensingNext"
-	$vNextPrids = Get-Item -Path $vNextRegkey -ErrorAction Ignore | Select-Object -ExpandProperty 'property' | Where-Object -FilterScript {$_ -Ne 'InstalledGraceKey' -And $_ -Ne 'MigrationToV5Done' -And $_ -Ne 'test' -And $_ -Ne 'unknown'}
+	$vNextPrids = Get-Item -Path $vNextRegkey -ErrorAction Ignore | Select-Object -ExpandProperty 'property' | Where-Object -FilterScript {$_.ToLower() -like "*retail" -or $_.ToLower() -like "*volume"}
 	If ($vNextPrids -Eq $null)
 	{
 		Write-Host "No registry keys found."
@@ -457,15 +456,20 @@ function PrintLicensesInformation
 		$license = (Get-Content -Encoding Unicode $_.FullName | ConvertFrom-Json).License
 		$decodedLicense = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($license)) | ConvertFrom-Json
 		$licenseType = $decodedLicense.LicenseType
-		$userId = $decodedLicense.Metadata.UserId
-		$identitiesRegkey = Get-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Identity\Identities\${userId}*" -ErrorAction Ignore
+		If ($null -Ne $decodedLicense.ExpiresOn)
+		{
+			$expiry = [DateTime]::Parse($decodedLicense.ExpiresOn, $null, 48)
+		}
+		Else
+		{
+			$expiry = New-Object DateTime
+		}
 		$licenseState = $null
 		If ((Get-Date) -Gt (Get-Date $decodedLicense.MetaData.NotAfter))
 		{
 			$licenseState = "RFM"
 		}
-		ElseIf (($decodedLicense.ExpiresOn -Eq $null) -Or
-			((Get-Date) -Lt (Get-Date $decodedLicense.ExpiresOn)))
+		ElseIf ((Get-Date) -Lt (Get-Date $expiry))
 		{
 			$licenseState = "Licensed"
 		}
@@ -483,11 +487,11 @@ function PrintLicensesInformation
 				Acid = $decodedLicense.Acid;
 				LicenseState = $licenseState;
 				EntitlementStatus = $decodedLicense.Status;
+				EntitlementExpiration = $decodedLicense.ExpiresOn;
 				ReasonCode = $decodedLicense.ReasonCode;
 				NotBefore = $decodedLicense.Metadata.NotBefore;
 				NotAfter = $decodedLicense.Metadata.NotAfter;
 				NextRenewal = $decodedLicense.Metadata.RenewAfter;
-				Expiration = $decodedLicense.ExpiresOn;
 				TenantId = $decodedLicense.Metadata.TenantId;
 			} | ConvertTo-Json
 		}
@@ -502,11 +506,11 @@ function PrintLicensesInformation
 				DeviceId = $decodedLicense.Metadata.DeviceId;
 				LicenseState = $licenseState;
 				EntitlementStatus = $decodedLicense.Status;
+				EntitlementExpiration = $decodedLicense.ExpiresOn;
 				ReasonCode = $decodedLicense.ReasonCode;
 				NotBefore = $decodedLicense.Metadata.NotBefore;
 				NotAfter = $decodedLicense.Metadata.NotAfter;
 				NextRenewal = $decodedLicense.Metadata.RenewAfter;
-				Expiration = $decodedLicense.ExpiresOn;
 				TenantId = $decodedLicense.Metadata.TenantId;
 			} | ConvertTo-Json
 		}

@@ -44,8 +44,7 @@ if not %errorlevel%==0 (
 echo:
 echo Error: This is not a correct file. It has LF line ending issue.
 echo:
-echo Press any key to exit...
-pause >nul
+ping 127.0.0.1 -n 6 > nul
 popd
 exit /b
 )

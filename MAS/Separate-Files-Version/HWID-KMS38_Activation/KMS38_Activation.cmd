@@ -14,27 +14,16 @@
 
 
 
-::  To activate, run the script with /a parameter or change 0 to 1 in below line
-set _acti=0
+::  To activate, run the script with /KMS38 parameter or change 0 to 1 in below line
+set _act=0
 
-::  To activate along with KMS38 protection (from being replaced by 180 days KMS activation), 
-::  run the script with /ap parameter or change 0 to 1 in below line
-set _prot=0
+::  To remove KMS38 protection, run the script with /KMS38-RemoveProtection parameter or change 0 to 1 in below line
+set _rem=0
 
-::  To only generate GenuineTicket.xml, run the script with /g parameter or change 0 to 1 in below line
-set _gent=0
+::  To disable changing edition if current edition doesn't support KMS38 activation, change the value to 1 from 0 or run the script with "/KMS38-NoEditionChange" parameter
+set _NoEditionChange=0
 
-::  To remove KMS38 protection, run the script with /x parameter or change 0 to 1 in below line
-set _unin=0
-
-
-
-::  If value is changed in ABOVE lines or any ABOVE parameter is used then script will run in unattended mode
-::  Incase if more than one options are used then only one option will be applied
-
-
-::  To disable changing edition if current edition doesn't support HWID activation, change the value to 0 from 1 or run the script with /c parameter
-set _chan=1
+::  If value is changed in above lines or parameter is used then script will run in unattended mode
 
 
 
@@ -78,8 +67,7 @@ if not %errorlevel%==0 (
 echo:
 echo Error: This is not a correct file. It has LF line ending issue.
 echo:
-echo Press any key to exit...
-pause >nul
+ping 127.0.0.1 -n 6 > nul
 popd
 exit /b
 )
@@ -99,16 +87,14 @@ set _args=%*
 if defined _args set _args=%_args:"=%
 if defined _args (
 for %%A in (%_args%) do (
-if /i "%%A"=="/a"  set _acti=1
-if /i "%%A"=="/ap" set _prot=1
-if /i "%%A"=="/g"  set _gent=1
-if /i "%%A"=="/x"  set _unin=1
-if /i "%%A"=="/c"  set _chan=0
-if /i "%%A"=="-el" set _elev=1
+if /i "%%A"=="/KMS38"                  set _act=1
+if /i "%%A"=="/KMS38-RemoveProtection" set _rem=1
+if /i "%%A"=="/KMS38-NoEditionChange"  set _NoEditionChange=1
+if /i "%%A"=="-el"                     set _elev=1
 )
 )
 
-for %%A in (%_acti% %_prot% %_gent% %_unin%) do (if "%%A"=="1" set _unattended=1)
+for %%A in (%_act% %_rem% %_NoEditionChange%) do (if "%%A"=="1" set _unattended=1)
 
 ::========================================================================================================================================
 
@@ -143,7 +129,7 @@ set "_Yellow="Black" "Yellow""
 set _k38=
 set "nceline=echo: &echo ==== ERROR ==== &echo:"
 set "eline=echo: &call :dk_color %Red% "==== ERROR ====" &echo:"
-if %~z0 GEQ 500000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
+if %~z0 GEQ 200000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
 set "specific_kms=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\55c92734-d682-4d71-983e-d6ec3f16059f"
 
 ::========================================================================================================================================
@@ -194,7 +180,7 @@ goto dk_done
 
 ::  Elevate script as admin and pass arguments and preventing loop
 
-%nul% reg query HKU\S-1-5-19 || (
+>nul fltmc || (
 if not defined _elev %nul% %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %eline%
 echo This script require administrator privileges.
@@ -204,7 +190,7 @@ goto dk_done
 
 ::========================================================================================================================================
 
-if %_unin%==1 goto :k_uninstall
+if %_rem%==1 goto :k_uninstall
 
 :k_menu
 
@@ -216,77 +202,56 @@ title  KMS38 Activation
 echo:
 echo:
 echo:
+echo:
 echo         ____________________________________________________________
 echo:
 echo                 [1] KMS38 Activation
-echo:
-echo                 [2] KMS38 Activation ^+ Protection
 echo                 ____________________________________________
 echo:
-echo                 [3] Remove Protection
+echo                 [2] Remove KM38 Protection
 echo:
-echo                 [4] %_exitmsg%
+echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
 echo: 
-call :dk_color2 %_White% "              " %_Green% "Enter a menu option in the Keyboard [1,2,3,4]"
-choice /C:1234 /N
+call :dk_color2 %_White% "              " %_Green% "Enter a menu option in the Keyboard [1,2,0]"
+choice /C:120 /N
 set _el=!errorlevel!
-if !_el!==4  exit /b
-if !_el!==3  goto :k_uninstall
-if !_el!==2  (
-cls
-echo:
-call :dk_color2 %_White% " " %_Green% "KMS38 Protection:"
-echo:
-echo  It stops 180 days KMS Activation from replacing KMS38 activation.
-echo  Protection requires permission altering of a registry key.
-echo:
-echo  If you are going to use KMS_VL_ALL or MAS's KMS activation for Office,
-echo  then you don't need to enable this protection.  
-echo  For more info, check readme.
-echo:
-echo:
-choice /C:12 /N /M "> [1] Continue [2] Go back : "
-if errorlevel 2 goto :k_menu
-if errorlevel 1 (set _prot=1&goto :k_menu2)
-)
-if !_el!==1  (set _prot=0&goto :k_menu2)
+if !_el!==3  exit /b
+if !_el!==2  goto :k_uninstall
+if !_el!==1  goto :k_menu2
 goto :k_menu
 )
+
+::========================================================================================================================================
 
 :k_menu2
 
 cls
-mode 102, 34
-if %_gent%==1 (set _title=title  Generate KMS38 GenuineTicket.xml) else (set _title=title  KMS38 Activation)
-%_title%
+mode 102, 33
+title  KMS38 Activation
 
-::========================================================================================================================================
-
-if %_gent%==1 if exist %Systemdrive%\GenuineTicket.xml (
-set _gent=0
-%eline%
-echo File '%Systemdrive%\GenuineTicket.xml' already exist.
-if %_unattended%==0 (
 echo:
-call :dk_color %_Yellow% "Press any key to go back..."
-pause >nul
-goto k_menu
-) else (
-goto dk_done
-)
+echo Initializing...
+call :dk_product
+call :dk_ckeckwmic
+
+::  Show info for potential script stuck scenario
+
+sc start sppsvc %nul%
+if %errorlevel% NEQ 1056 if %errorlevel% NEQ 0 (
+echo:
+echo Error code: %errorlevel%
+call :dk_color %Red% "Failed to start [sppsvc] service, rest of the process may take a long time..."
+echo:
 )
 
 ::========================================================================================================================================
-
-call :dk_initial
 
 ::  Check if system is permanently activated or not
 
-cls
-call :dk_product
 call :dk_checkperm
-if defined _perm if not %_gent%==1 (
+if defined _perm (
+cls
 echo ___________________________________________________________________________________________
 echo:
 call :dk_color2 %_White% "     " %Green% "Checking: %winos% is Permanently Activated."
@@ -294,7 +259,7 @@ call :dk_color2 %_White% "     " %Gray% "Activation is not required."
 echo ___________________________________________________________________________________________
 if %_unattended%==1 goto dk_done
 echo:
-choice /C:12 /N /M ">    [1] Activate [2] %_exitmsg% : "
+choice /C:10 /N /M ">    [1] Activate [0] %_exitmsg% : "
 if errorlevel 2 exit /b
 )
 cls
@@ -317,12 +282,30 @@ echo [%winos% ^| %winbuild%]
 if defined _evalserv (
 echo Server Evaluation cannot be activated. Convert it to full Server OS.
 echo:
-echo Check 'Change Edition Option' in Extras section in MAS.
+echo Check 'Change Edition' Option in MAS.
 ) else (
 echo Evaluation Editions cannot be activated. Download ^& Install full version of Windows OS.
 echo:
 echo https://massgrave.dev/
 )
+goto dk_done
+)
+)
+
+::========================================================================================================================================
+
+:: Check clipup.exe for the detection and activation of server cor and acor editions
+
+set a_cor=
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*CorEdition~*.mum" if not exist "%systemroot%\System32\clipup.exe" set a_cor=1
+
+if defined a_cor (
+if not exist "!_work!\clipup.exe" (
+%eline%
+echo clipup.exe doesn't exist in Server Cor/Acor [No GUI] version.
+echo It's required for KMS38 Activation.
+echo Check below page on how to activate it.
+echo https://massgrave.dev/kms38.html
 goto dk_done
 )
 )
@@ -350,13 +333,47 @@ goto dk_done
 
 ::========================================================================================================================================
 
+set error=
+
+cls
+echo:
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
+echo Checking OS Info                        [%winos% ^| %winbuild% ^| %arch%]
+
+::========================================================================================================================================
+
+::  Check Windows Script Host
+
+set _WSH=1
+reg query "HKCU\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled 2>nul | find /i "0x0" 1>nul && (set _WSH=0)
+reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled 2>nul | find /i "0x0" 1>nul && (set _WSH=0)
+
+if %_WSH% EQU 0 (
+reg add "HKLM\Software\Microsoft\Windows Script Host\Settings" /v Enabled /t REG_DWORD /d 1 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows Script Host\Settings" /v Enabled /t REG_DWORD /d 1 /f %nul%
+if not "%arch%"=="x86" reg add "HKLM\Software\Microsoft\Windows Script Host\Settings" /v Enabled /t REG_DWORD /d 1 /f /reg:32 %nul%
+echo Enabling Windows Script Host            [Successful]
+)
+
+::========================================================================================================================================
+
+echo Initiating Diagnostic Tests...
+
+set "_serv=ClipSVC sppsvc Winmgmt"
+
+::  Client License Service (ClipSVC)
+::  Software Protection
+::  Windows Management Instrumentation
+
+call :dk_errorcheck
+
+::========================================================================================================================================
+
 ::  Check if GVLK (KMS key) is already installed or not
 
 set _gvlk=
 call :dk_channel
 if /i "Volume:GVLK"=="%_channel%" set _gvlk=1
-
-::========================================================================================================================================
 
 ::  Detect Key
 
@@ -370,135 +387,22 @@ set altedition=
 if defined applist call :kms38data getkey
 
 if not defined key call :dk_gvlk %nul%
-
 if defined applist if not defined key call :kms38fallback
+
 if defined altkey (set key=%altkey%&set changekey=1)
 
-::========================================================================================================================================
+if not defined key if defined notfoundaltactID (
+call :dk_color %Red% "Checking Alternate Edition For KMS38    [%altedition% Activation ID Not Found]"
+)
 
 if not defined key if not defined _gvlk (
 %eline%
-%psc% $ExecutionContext.SessionState.LanguageMode 2>nul | find /i "Full" 1>nul || (
-echo PowerShell is not responding properly. Aborting...
-goto dk_done
-)
-if not defined applist (
-echo Failed to get Key due to error in getting Activation IDs. 
-echo:
-echo This error can appear when below services are not properly responding or system have other issues.
-echo Windows Management Instrumentation [WinMgmt], Software Protection Platform [sppsvc]
-echo:
-call :dk_color2 %Red% "Error Found In:" %_White% " %e_wmispp%"
-echo:
-echo Check troubleshooting steps in MAS Extras option.
-goto dk_done
-)
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 echo Unable to find this product in the supported product list.
 echo Make sure you are using updated version of the script.
+echo https://massgrave.dev
 echo:
-if not "%regSKU%"=="%wmiSKU%" (
-echo Difference Found In SKU Value- WMI:%wmiSKU% Reg:%regSKU%
-echo Restart the system and try again.
 goto dk_done
-)
-goto dk_done
-)
-
-::========================================================================================================================================
-
-::  Check files
-
-if not exist "!_work!\BIN\gatherosstate.exe" (
-%eline%
-echo 'gatherosstate.exe' file is missing in 'BIN' folder. Aborting...
-goto dk_done
-)
-
-::  Verify gatherosstate.exe file
-
-set _hash=
-for /f "skip=1 tokens=* delims=" %%# in ('certutil -hashfile "!_work!\BIN\gatherosstate.exe" SHA1^|findstr /i /v CertUtil') do set "_hash=%%#"
-set "_hash=%_hash: =%"
-
-if /i not "%_hash%"=="FABB5A0FC1E6A372219711152291339AF36ED0B5" (
-if /i not "%_hash%"=="3FCCB9C359EDB9527C9F5688683F8B3C5910E75D" (
-%eline%
-echo gatherosstate.exe SHA1 hash mismatch found.
-echo:
-echo Detected: %_hash%
-goto dk_done
-)
-)
-
-::========================================================================================================================================
-
-:: Check clipup.exe for the detection and activation of server cor and acor editions
-
-set a_cor=
-if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*CorEdition~*.mum" if not exist "%systemroot%\System32\clipup.exe" set a_cor=1
-
-if defined a_cor (
-if not exist "!_work!\BIN\clipup.exe" (
-%eline%
-echo 'ClipUp.exe' file is not found in 'BIN' folder.
-goto dk_done
-)
-)
-
-::========================================================================================================================================
-
-set error=
-set activ=
-
-cls
-echo:
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
-echo Checking OS Info                        [%winos% ^| %winbuild% ^| %arch%]
-
-::========================================================================================================================================
-
-set "_serv=ClipSVC sppsvc Winmgmt"
-
-::  Client License Service (ClipSVC)
-::  Software Protection
-::  Windows Management Instrumentation
-
-::  Check disabled services
-
-set serv_ste=
-for %%# in (%_serv%) do (
-set serv_dis=
-reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start %nul% || set serv_dis=1
-for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start 2^>nul') do if /i %%b equ 0x4 set serv_dis=1
-if defined serv_dis (if defined serv_ste (set "serv_ste=!serv_ste! %%#") else (set "serv_ste=%%#"))
-)
-
-::  Change disabled services startup type to default
-
-set serv_csts=
-set serv_cste=
-
-if defined serv_ste (
-for %%# in (%serv_ste%) do (
-if /i %%#==ClipSVC        sc config %%# start= demand %nul%
-if /i %%#==sppsvc         sc config %%# start= delayed-auto %nul%
-if /i %%#==Winmgmt        sc config %%# start= auto %nul%
-if !errorlevel!==0 (
-if defined serv_csts (set "serv_csts=!serv_csts! %%#") else (set "serv_csts=%%#")
-) else (
-set error=1
-if defined serv_cste (set "serv_cste=!serv_cste! %%#") else (set "serv_cste=%%#")
-)
-)
-)
-
-if defined serv_csts echo Enabling Disabled Services              [Successful] [%serv_csts%]
-if defined serv_cste call :dk_color %Red% "Enabling Disabled Services              [Failed] [%serv_cste%]"
-
-if not "%regSKU%"=="%wmiSKU%" (
-set error=1
-call :dk_color %Red% "Checking WMI/REG SKU                    [Difference Found - WMI:%wmiSKU% Reg:%regSKU%] [Restart System]"
 )
 
 ::========================================================================================================================================
@@ -531,6 +435,7 @@ if !error_code! EQU 0 (
 call :dk_refresh
 echo Installing KMS Client Setup Key         [%key%] [Successful]
 ) else (
+set error=1
 call :dk_color %Red% "Installing KMS Client Setup Key         [%key%] [Failed] !error_code!"
 )
 )
@@ -544,7 +449,8 @@ if %_wmic% EQU 1 for /f "tokens=2 delims==" %%a in ('"wmic path SoftwareLicensin
 if %_wmic% EQU 0 for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT ID FROM SoftwareLicensingProduct WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND Description like ''%%KMSCLIENT%%'' AND PartialProductKey IS NOT NULL').Get()).ID | %% {echo ('ID='+$_)}" 2^>nul') do call set "app=%%a"
 
 if not defined app (
-call :dk_color %Red% "Checking Activation ID                  [Failed]"
+call :dk_color %Red% "Checking Installed GVLK Activation ID   [Not Found] Aborting..."
+goto :dk_done
 )
 
 ::========================================================================================================================================
@@ -552,20 +458,16 @@ call :dk_color %Red% "Checking Activation ID                  [Failed]"
 ::  Set specific KMS host to Local Host
 ::  By doing this, global KMS IP can not replace KMS38 activation but can be used with Office and other Windows Editions
 
-set regadd=
-set k_error=
-
-if not %_gent%==1 if defined app (
 echo:
-set regadd=1
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg delete "HKU\S-1-5-20\%specific_kms%" /f
 
 %nul% reg query "HKLM\%specific_kms%" && (
-call :regown "HKLM\%specific_kms%"
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regdel\:.*';iex ($f[1]);"
 %nul% reg delete "HKLM\%specific_kms%" /f
 )
 
+set k_error=
 %nul% reg add "HKLM\%specific_kms%\%app%" /f /v KeyManagementServiceName /t REG_SZ /d "127.0.0.2" || set k_error=1
 %nul% reg add "HKLM\%specific_kms%\%app%" /f /v KeyManagementServicePort /t REG_SZ /d "1688" || set k_error=1
 
@@ -574,36 +476,19 @@ echo Adding Specific KMS Host                [LocalHost 127.0.0.2] [Successful]
 ) else (
 call :dk_color %Red% "Adding Specific KMS Host                [LocalHost 127.0.0.2] [Failed]"
 )
-)
-
-if not %_gent%==1 if not defined app (
-call :dk_color %Red% "Adding Specific KMS Host                [Skipped] [Activation ID Not Found]"
-)
 
 ::========================================================================================================================================
 
-::  Files are copied to temp to generate ticket to avoid possible issues in case the path contains special character or non English names
-
-echo:
-set "temp_=%SystemRoot%\Temp\_Temp"
-set "_clipup=%systemroot%\System32\clipup.exe"
-if exist "%temp_%\.*" rmdir /s /q "%temp_%\" %nul%
-md "%temp_%\" %nul%
-
-pushd "!_work!\BIN\"
-copy /y /b "gatherosstate.exe" "%temp_%\gatherosstate.exe" %nul%
-if defined a_cor copy /y /b "ClipUp.exe" "%_clipup%" %nul%
-popd
-
-if not exist "%temp_%\gatherosstate.exe" (
-call :dk_color %Red% "Copying Required Files to Temp          [%temp_%] [Failed]"
-goto :k_final
-) else (
-echo Copying Required Files to Temp          [%temp_%] [Successful]
-)
+::  Copy clipup.exe to System32 directory to activate Server Cor/Acor editions
 
 if defined a_cor (
-if exist "%_clipup%" (
+set "_clipup=%systemroot%\System32\clipup.exe"
+pushd "!_work!\"
+copy /y /b "ClipUp.exe" "!_clipup!" %nul%
+popd
+
+echo:
+if exist "!_clipup!" (
 echo Copying clipup.exe File to              [%systemroot%\System32\] [Successful]
 ) else (
 call :dk_color %Red% "Copying clipup.exe File to              [%systemroot%\System32\] [Failed] Aborting..."
@@ -613,91 +498,47 @@ goto :k_final
 
 ::========================================================================================================================================
 
-if /i "%_hash%"=="3FCCB9C359EDB9527C9F5688683F8B3C5910E75D" (
-echo Checking gatherosstate.exe              [Already Modified]
-%nul% ren "%temp_%\gatherosstate.exe" "gatherosstatemodified.exe"
-goto :kskipmod
-)
+::  Generate GenuineTicket.xml and apply
+::  Most correct way to apply a ticket is by restarting ClipSVC service but we can not check the log details in this way
+::  To get the log details and also to correctly apply ticket, script will install tickets two times (service restart + clipup -v -o)
 
-::  Modify gatherosstate.exe
+set "tdir=%ProgramData%\Microsoft\Windows\ClipSVC\GenuineTicket"
+if not exist "%tdir%\" md "%tdir%\" %nul%
 
-pushd "%temp_%\"
-%nul% %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':hex\:.*';iex ($f[1]);"
-popd
+if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
+if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
 
-if not exist "%temp_%\gatherosstatemodified.exe" (
-call :dk_color %Red% "Creating Modified Gatherosstate         [Failed] Aborting..."
-goto :k_final
-)
+::  Signature value is as it is, it's not encoded
+::  Session ID is in Base64 encoded format. It's decoded value is "OSMajorVersion=5;OSMinorVersion=1;OSPlatformId=2;PP=0;GVLKExp=2038-01-19T03:14:07Z;DownlevelGenuineState=1;"
+::  Check https://massgrave.dev/kms38.html#Manual_Activation to see how it's generated
 
-set _hash=
-for /f "skip=1 tokens=* delims=" %%# in ('certutil -hashfile "%temp_%\gatherosstatemodified.exe" SHA1^|findstr /i /v CertUtil') do set "_hash=%%#"
-set "_hash=%_hash: =%"
+set "signature=C52iGEoH+1VqzI6kEAqOhUyrWuEObnivzaVjyef8WqItVYd/xGDTZZ3bkxAI9hTpobPFNJyJx6a3uriXq3HVd7mlXfSUK9ydeoUdG4eqMeLwkxeb6jQWJzLOz41rFVSMtBL0e+ycCATebTaXS4uvFYaDHDdPw2lKY8ADj3MLgsA="
+set "sessionId=TwBTAE0AYQBqAG8AcgBWAGUAcgBzAGkAbwBuAD0ANQA7AE8AUwBNAGkAbgBvAHIAVgBlAHIAcwBpAG8AbgA9ADEAOwBPAFMAUABsAGEAdABmAG8AcgBtAEkAZAA9ADIAOwBQAFAAPQAwADsARwBWAEwASwBFAHgAcAA9ADIAMAAzADgALQAwADEALQAxADkAVAAwADMAOgAxADQAOgAwADcAWgA7AEQAbwB3AG4AbABlAHYAZQBsAEcAZQBuAHUAaQBuAGUAUwB0AGEAdABlAD0AMQA7AAAA"
+<nul set /p "=<?xml version="1.0" encoding="utf-8"?><genuineAuthorization xmlns="http://www.microsoft.com/DRM/SL/GenuineAuthorization/1.0"><version>1.0</version><genuineProperties origin="sppclient"><properties>OA3xOriginalProductId=;OA3xOriginalProductKey=;SessionId=%sessionId%;TimeStampClient=2022-10-11T12:00:00Z</properties><signatures><signature name="clientLockboxKey" method="rsa-sha256">%signature%</signature></signatures></genuineProperties></genuineAuthorization>" >"%tdir%\GenuineTicket"
 
-if /i not "%_hash%"=="3FCCB9C359EDB9527C9F5688683F8B3C5910E75D" (
-call :dk_color %Red% "Creating Modified Gatherosstate         [Failed] [Hash Not Matched] Aborting..."
-goto :k_final
-) else (
-echo Creating Modified Gatherosstate         [Successful]
-)
+copy /y /b "%tdir%\GenuineTicket" "%tdir%\GenuineTicket.xml" %nul%
 
-:kskipmod
-
-::========================================================================================================================================
-
-::  Multiple attempts to generate the ticket because in some cases, one attempt is not enough.
-
-set "_noxml=if not exist "%temp_%\GenuineTicket.xml""
-
-"%temp_%/gatherosstatemodified.exe" GVLKExp=2038-01-19T03:14:07Z;DownlevelGenuineState=1
-%_noxml% timeout /t 3 %nul%
-%_noxml% net stop sppsvc /y %nul%
-%_noxml% call "%temp_%/gatherosstatemodified.exe" GVLKExp=2038-01-19T03:14:07Z;DownlevelGenuineState=1
-%_noxml% timeout /t 3 %nul%
-
-%_noxml% (
-call :dk_color %Red% "Generating GenuineTicket.xml            [Failed] Aborting..."
+if not exist "%tdir%\GenuineTicket.xml" (
+call :dk_color %Red% "Generating GenuineTicket.xml            [Failed]"
+if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 goto :k_final
 ) else (
 echo Generating GenuineTicket.xml            [Successful]
 )
 
-::========================================================================================================================================
-
-::  Copy GenuineTicket.xml to the root of C drive and exit if ticket generation option was used in script
-
-if %_gent%==1 (
-echo:
-copy /y /b "%temp_%\GenuineTicket.xml" "%Systemdrive%\GenuineTicket.xml" %nul%
-if not exist "%Systemdrive%\GenuineTicket.xml" (
-call :dk_color %Red% "Copying GenuineTicket.xml to %Systemdrive%\        [Failed]"
-) else (
-call :dk_color %Green% "Copying GenuineTicket.xml to %Systemdrive%\        [Successful]"
-)
-goto :k_final
-)
-
-::========================================================================================================================================
-
-::  clipup -v -o -altto <path> & clipup -v -o both methods may fail if the username have spaces/special characters/non English names
-::  Most correct way to apply a ticket is by restarting ClipSVC service but we can not check the log details in this way
-::  To get the log details and also to correctly apply ticket, script will install tickets two times (service restart + clipup -v -o -altto <path>)
-
-set "tdir=%ProgramData%\Microsoft\Windows\ClipSVC\GenuineTicket"
-if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-if not exist "%tdir%\" md "%tdir%\" %nul%
-copy /y /b "%temp_%\GenuineTicket.xml" "%tdir%\GenuineTicket.xml" %nul%
-
-if not exist "%tdir%\GenuineTicket.xml" (
-call :dk_color %Red% "Copying Ticket to ClipSVC Location      [Failed]"
-)
-
 set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 
-net stop sppsvc /y %nul% || net stop sppsvc /y %nul%
-sc stop sppsvc %nul%
+::  Stop sppsvc
 
-clipup -v -o -altto %temp_%\
+net stop sppsvc /y %nul%
+net stop sppsvc /y %nul%
+net stop sppsvc /y %nul%
+
+sc query sppsvc | find /i "1  STOPPED" %nul% && (
+echo Stopping sppsvc Service                 [Successful]
+) || (
+call :dk_color %Red% "Stopping sppsvc Service                 [Failed]"
+)
 
 %_xmlexist% (
 net stop ClipSVC /y %nul%
@@ -707,9 +548,13 @@ net start ClipSVC /y %nul%
 
 %_xmlexist% (
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipSVC Service Restart Method]"
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipSVC Service Restart, Wait...]"
 )
 )
+
+copy /y /b "%tdir%\GenuineTicket" "%tdir%\GenuineTicket.xml" %nul%
+clipup -v -o
+if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 
 ::==========================================================================================================================================
 
@@ -721,7 +566,6 @@ echo:
 
 call :k_checkexp
 if defined _k38 (
-set activ=1
 call :k_actinfo
 goto :k_final
 )
@@ -736,31 +580,17 @@ echo Applying SKU-ID Rearm                   [Successful]
 ) else (
 call :dk_color %Red% "Applying SKU-ID Rearm                   [Failed]"
 )
+call :dk_refresh
 
 echo:
 call :k_checkexp
 if defined _k38 (
-set activ=1
-call :k_actinfo
-goto :k_final
-)
-
-::  Restart software protection service to refresh itself and run refresh license status and activation commands
-
-net stop sppsvc /y %nul%
-net start sppsvc /y %nul%
-call :dk_refresh
-call :dk_act
-
-call :k_checkexp
-if defined _k38 (
-set activ=1
 call :k_actinfo
 goto :k_final
 )
 
 call :dk_color %Red% "Activation Failed"
-call :dk_color %Magenta% "Restart the system and try again / Check troubleshooting steps in MAS Extras option"
+call :dk_color2 %Magenta% "Check this page for help" %_Yellow% " https://massgrave.dev/troubleshoot"
 
 ::========================================================================================================================================
 
@@ -769,41 +599,31 @@ call :dk_color %Magenta% "Restart the system and try again / Check troubleshooti
 ::  Remove the added Specific KMS Host (Local Host) if activation is not completed
 
 echo:
-set k_error=
-if defined regadd if not defined _k38 (
+if not defined _k38 (
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg delete "HKU\S-1-5-20\%specific_kms%" /f
-%nul% reg query "HKLM\%specific_kms%" && set k_error=1
-%nul% reg query "HKU\S-1-5-20\%specific_kms%" && set k_error=1
-if not defined k_error (
-echo Removing The Added Specific KMS Host    [Successful]
-) else (
+%nul% reg query "HKLM\%specific_kms%" && (
 call :dk_color %Red% "Removing The Added Specific KMS Host    [Failed]"
+) || (
+echo Removing The Added Specific KMS Host    [Successful]
 )
 )
 
 ::  Protect KMS38 if opted by the user and conditions are correct
 
-if defined regadd if defined _k38 if %_prot%==1 (
-%nul% call :regown "HKLM\%specific_kms%" "" S-1-5-32-544 "" Deny "SetValue,Delete"
+if defined _k38 (
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([ScriptBlock]::Create($f[1])) -protect;"
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg query "HKLM\%specific_kms%" && (
-call :dk_color %Gray% "Locking a Registry To Protect KMS38     [Successful]"
+call :dk_color %Magenta% "Protect KMS38 By KMS                    [Successful] [Locked A Registry Key]"
 ) || (
-call :dk_color %Red% "Locking a Registry To Protect KMS38     [Failed]"
+call :dk_color %Red% "Protect KMS38 By KMS                    [Failed To Lock A Registry Key]"
 )
 )
 
 ::  clipup.exe does not exist in server cor and acor editions by default, it was copied there with this script
 
-if exist "%temp_%\.*" rmdir /s /q "%temp_%\" %nul%
 if defined a_cor if exist "%_clipup%" del /f /q "%_clipup%" %nul%
-
-if exist "%temp_%\" (
-call :dk_color %Red% "Cleaning Temp Files                     [Failed]"
-) else (
-echo Cleaning Temp Files                     [Successful]
-)
 
 if defined a_cor (
 if exist "%_clipup%" (
@@ -813,15 +633,7 @@ echo Deleting copied clipup.exe file         [Successful]
 )
 )
 
-if %osSKU%==175 (
-call :dk_color %Red% "ServerRdsh Editon does not officially support activation on non-azure platforms."
-)
-
-if not defined activ call :dk_checkerrors
-
-if not defined activ if not defined error (
-echo Basic Diagnostic Tests                  [Error Not Found]
-)
+if %osSKU%==175 call :dk_color %Red% "ServerRdsh Editon does not officially support activation on non-azure platforms."
 
 goto :dk_done
 
@@ -832,108 +644,53 @@ goto :dk_done
 cls
 mode 99, 28
 title  Remove KMS38 Protection
-set "RegKey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState"
-set "_ident=HKU\S-1-5-19\SOFTWARE\Microsoft\IdentityCRL"
 
-echo:
-call :dk_ckeckwmic
-call :k_checkexp
-
-:: It's better to not clean ClipSVC hence its skipped
-
-REM if defined _k38 (
-REM for %%# in (ClipSVC) do (
-REM sc query %%# | find /i "STOPPED" %nul% || net stop %%# /y %nul%
-REM sc query %%# | find /i "STOPPED" %nul% || sc stop %%# %nul%
-REM )
-
-REM REM  Thanks to @mspaintmsi for informing this command info
-
-REM rundll32 clipc.dll,ClipCleanUpState
-
-REM if exist "%ProgramData%\Microsoft\Windows\ClipSVC\tokens.dat" (
-REM call :dk_color %Red% "Cleaning ClipSVC Licences               [Failed]"
-REM ) else (
-REM echo Cleaning ClipSVC Licences               [Successful]
-REM )
-
-REM REM  Below registry key (Volatile & Protected) gets created after the ClipSVC License cleanup command, and gets automatically deleted after 
-REM REM  system restart. It needs to be deleted to activate the system without restart.
-
-REM call :regown "%RegKey%" %nul%
-REM reg delete "%RegKey%" /f %nul%
-
-REM reg query "%RegKey%" %nul% && (
-REM call :dk_color %Red% "Deleting a Volatile Registry            [Failed]"
-REM call :dk_color %Magenta% "Restart the system, that will delete this registry key automatically"
-REM ) || (
-REM echo Deleting a Volatile Registry            [Successful]
-REM )
-
-REM REM Clear HWID token related registry to fix activation incase if there is any corruption
-
-REM reg delete "%_ident%" /f %nul%
-REM reg query "%_ident%" %nul% && (
-REM call :dk_color %Red% "Deleting a Registry                     [Failed] [%_ident%]"
-REM ) || (
-REM echo Deleting a Registry                     [Successful] [%_ident%]
-REM )
-
-REM for %%# in (ClipSVC wlidsvc LicenseManager sppsvc) do (net stop %%# /y %nul% & net start %%# /y %nul%)
-REM call :dk_refresh
-REM )
-
-set exist_=
-%nul% reg query "HKLM\%specific_kms%" && (
-set exist_=1
 %nul% reg delete "HKLM\%specific_kms%" /f
-)
 %nul% reg delete "HKU\S-1-5-20\%specific_kms%" /f
 
 %nul% reg query "HKLM\%specific_kms%" && (
-%nul% call :regown "HKLM\%specific_kms%"
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regdel\:.*';iex ($f[1]);"
 %nul% reg delete "HKLM\%specific_kms%" /f
 )
 
+echo:
 %nul% reg query "HKLM\%specific_kms%" && (
 call :dk_color %Red% "Removing Specific KMS Host              [Failed]"
 ) || (
-if defined exist_ (
 echo Removing Specific KMS Host              [Successful]
-) else (
-echo Removing Specific KMS Host              [Already Removed]
-)
 )
 
 goto :dk_done
 
 ::========================================================================================================================================
 
-::  A lean and mean snippet to set registry ownership and permission recursively
-::  Written by @AveYo aka @BAU
-::  pastebin.com/XTPt0JSC
+::  This code runs to protect/undo below registry key for KMS38 protection
+::  HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\55c92734-d682-4d71-983e-d6ec3f16059f
 
-::  Modified by @abbodi1406 to make it work in ARM64 Windows 10 (builds older than 21277) where only x86 version of Powershell is installed.
+::  KMS38 protection stops 180 days KMS Activation from replacing KMS38 activation
 
-::  This code runs only if KMS38 protection option or complete uninstall option is used by the user in this script.
+:regdel:
+param (
+    [switch]$protect
+)
 
-:regown
+$SID = New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')
+$Admin = ($SID.Translate([System.Security.Principal.NTAccount])).Value
 
-pushd "!_work!"
-setlocal DisableDelayedExpansion
+if($protect) {
+$ruleArgs = @("$Admin", "Delete, SetValue", "ContainerInherit", "None", "Deny")
+} else {
+$ruleArgs = @("$Admin", "FullControl", "Allow")
+}
 
-set "0=%~nx0"&%psc% $A='%~1','%~2','%~3','%~4','%~5','%~6';iex(([io.file]::ReadAllText($env:0)-split':Own1\:.*')[1])&popd&setlocal EnableDelayedExpansion&exit/b:Own1:
-$D1=[uri].module.gettype('System.Diagnostics.Process')."GetM`ethods"(42) |where {$_.Name -eq 'SetPrivilege'} #`:no-ev-warn
-'SeSecurityPrivilege','SeTakeOwnershipPrivilege','SeBackupPrivilege','SeRestorePrivilege'|foreach {$D1.Invoke($null, @("$_",2))}
-$path=$A[0]; $rk=$path-split'\\',2; switch -regex ($rk[0]){'[mM]'{$hv=2147483650};'[uU]'{$hv=2147483649};default{$hv=2147483648};}
-$HK=[Microsoft.Win32.RegistryKey]::OpenBaseKey($hv, 256); $s=$A[1]; $sps=[Security.Principal.SecurityIdentifier]
-$u=($A[2],'S-1-5-32-544')[!$A[2]];$o=($A[3],$u)[!$A[3]];$w=$u,$o |% {new-object $sps($_)}; $old=!$A[3];$own=!$old; $y=$s-eq'all'
-$rar=new-object Security.AccessControl.RegistryAccessRule( $w[0], ($A[5],'FullControl')[!$A[5]], 1, 0, ($A[4],'Allow')[!$A[4]] )
-$x=$s-eq'none';function Own1($k){$t=$HK.OpenSubKey($k,2,'TakeOwnership');if($t){0,4|%{try{$o=$t.GetAccessControl($_)}catch{$old=0}
-};if($old){$own=1;$w[1]=$o.GetOwner($sps)};$o.SetOwner($w[0]);$t.SetAccessControl($o); $c=$HK.OpenSubKey($k,2,'ChangePermissions')
-$p=$c.GetAccessControl(2);if($y){$p.SetAccessRuleProtection(1,1)};$p.ResetAccessRule($rar);if($x){$p.RemoveAccessRuleAll($rar)}
-$c.SetAccessControl($p);if($own){$o.SetOwner($w[1]);$t.SetAccessControl($o)};if($s){$($subkeys=$HK.OpenSubKey($k).GetSubKeyNames()) 2>$null;
-foreach($n in $subkeys){Own1 "$k\$n"}}}};Own1 $rk[1];if($env:VO){get-acl Registry::$path|fl} #:Own1: lean & mean snippet by AveYo
+$path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\55c92734-d682-4d71-983e-d6ec3f16059f'
+$key = [Microsoft.Win32.RegistryKey]::OpenBaseKey('LocalMachine', 'Registry64').OpenSubKey($path, 'ReadWriteSubTree', 'ChangePermissions')
+$acl = $key.GetAccessControl()
+
+$rule = [System.Security.AccessControl.RegistryAccessRule]::new.Invoke($ruleArgs)
+$acl.ResetAccessRule($rule)
+$key.SetAccessControl($acl)
+:regdel:
 
 ::========================================================================================================================================
 
@@ -980,14 +737,6 @@ if %_wmic% EQU 1 for /f "tokens=2 delims==" %%# in ('wmic path SoftwareLicensing
 if %_wmic% EQU 0 for /f "tokens=2 delims==" %%# in ('%psc% "(([WMISEARCHER]'SELECT ProductKeyChannel FROM SoftwareLicensingProduct WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND PartialProductKey IS NOT NULL').Get()).ProductKeyChannel | %% {echo ('ProductKeyChannel='+$_)}" 2^>nul') do set "_channel=%%#"
 exit /b
 
-::  Activation command
-
-:dk_act
-
-if %_wmic% EQU 1 wmic path SoftwareLicensingProduct where "ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' and PartialProductKey<>null" call Activate %nul%
-if %_wmic% EQU 0 %psc% "(([WMISEARCHER]'SELECT ID FROM SoftwareLicensingProduct WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND PartialProductKey IS NOT NULL').Get()).Activate()" %nul%
-exit /b
-
 ::  Get Windows Activation IDs
 
 :dk_actids
@@ -1021,53 +770,6 @@ exit /b
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul && set _wmic=1
-)
-exit /b
-
-:dk_initial
-
-echo:
-echo Initializing...
-
-::  Check and enable WinMgmt, sppsvc services if required
-
-for %%# in (WinMgmt sppsvc) do (
-for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start 2^>nul') do if /i %%b NEQ 0x2 (
-echo:
-echo Enabling %%# service...
-if /i %%#==sppsvc  sc config %%# start= delayed-auto %nul% || echo Failed
-if /i %%#==WinMgmt sc config %%# start= auto %nul% || echo Failed
-)
-sc start %%# %nul%
-if !errorlevel! NEQ 1056 if !errorlevel! NEQ 0 (
-echo:
-echo Starting %%# service...
-sc start %%#
-echo:
-call :dk_color %Red% "Failed to start [%%#] service, rest of the process may take a long time..."
-)
-)
-
-::  Check WMI and SPP Errors
-
-call :dk_ckeckwmic
-
-set e_wmi=
-set e_wmispp=
-call :dk_actids
-
-if not defined applist (
-net stop sppsvc /y %nul%
-cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
-if !errorlevel! NEQ 0 cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
-call :dk_refresh
-
-if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
-if %_wmic% EQU 0 %psc% "Get-CIMInstance -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" 2>nul | find /i "computersystem" 1>nul
-if !errorlevel! NEQ 0 set e_wmi=1
-
-if defined e_wmi (set e_wmispp=WMI, SPP) else (set e_wmispp=SPP)
-call :dk_actids
 )
 exit /b
 
@@ -1113,7 +815,51 @@ exit /b
 
 ::========================================================================================================================================
 
-:dk_checkerrors
+:dk_errorcheck
+
+::  Check disabled services
+
+set serv_ste=
+for %%# in (%_serv%) do (
+set serv_dis=
+reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start %nul% || set serv_dis=1
+for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start 2^>nul') do if /i %%b equ 0x4 set serv_dis=1
+if defined serv_dis (if defined serv_ste (set "serv_ste=!serv_ste! %%#") else (set "serv_ste=%%#"))
+)
+
+::  Change disabled services startup type to default
+
+set serv_csts=
+set serv_cste=
+
+if defined serv_ste (
+for %%# in (%serv_ste%) do (
+if /i %%#==ClipSVC        (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
+if /i %%#==wlidsvc        sc config %%# start= demand %nul%
+if /i %%#==sppsvc         (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
+if /i %%#==LicenseManager sc config %%# start= demand %nul%
+if /i %%#==Winmgmt        sc config %%# start= auto %nul%
+if /i %%#==wuauserv       sc config %%# start= demand %nul%
+if !errorlevel!==0 (
+if defined serv_csts (set "serv_csts=!serv_csts! %%#") else (set "serv_csts=%%#")
+) else (
+set error=1
+if defined serv_cste (set "serv_cste=!serv_cste! %%#") else (set "serv_cste=%%#")
+)
+)
+)
+
+if defined serv_csts echo Enabling Disabled Services              [Successful] [%serv_csts%]
+
+if defined serv_cste (
+echo %serv_cste% | findstr /i "ClipSVC sppsvc" %nul% && (
+call :dk_color %Red% "Enabling Disabled Services              [Failed] [%serv_cste%] [Restart System]"
+) || (
+call :dk_color %Red% "Enabling Disabled Services              [Failed] [%serv_cste%]"
+)
+)
+
+::========================================================================================================================================
 
 ::  Check if the services are able to run or not
 ::  Workarounds are added to get correct status and error code because sc query doesn't output correct results in some conditions
@@ -1122,11 +868,12 @@ set serv_e=
 for %%# in (%_serv%) do (
 set errorcode=
 set checkerror=
-sc query %%# | find /i ": 4  RUNNING" %nul% || net start %%# /y %nul%
+net start %%# /y %nul%
+sc query %%# | find /i "4  RUNNING" %nul% || set checkerror=1
+
 sc start %%# %nul%
 set errorcode=!errorlevel!
 if !errorcode! NEQ 1056 if !errorcode! NEQ 0 set checkerror=1
-sc query %%# | find /i ": 4  RUNNING" %nul% || set checkerror=1
 if defined checkerror if defined serv_e (set "serv_e=!serv_e!, %%#-!errorcode!") else (set "serv_e=%%#-!errorcode!")
 )
 
@@ -1135,44 +882,70 @@ set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 )
 
+::========================================================================================================================================
+
 ::  Various error checks
 
-set token=0
-if exist %Systemdrive%\Windows\System32\spp\store\2.0\tokens.dat set token=1
-if exist %Systemdrive%\Windows\System32\spp\store_test\2.0\tokens.dat set token=1
-if %token%==0 (
-set error=1
-call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found]"
+for %%# in (wmic.exe) do @if "%%~$PATH:#"=="" (
+call :dk_color %Gray% "Checking WMIC.exe                       [Not Found]"
 )
 
-DISM /English /Online /Get-CurrentEdition %nul%
-set error_code=%errorlevel%
-cmd /c exit /b %error_code%
-if %error_code% NEQ 0 set "error_code=[0x%=ExitCode%]"
-if %error_code% NEQ 0 (
-set error=1
-call :dk_color %Red% "Checking DISM                           [Not Responding] %error_code%"
-)
 
 %psc% $ExecutionContext.SessionState.LanguageMode 2>nul | find /i "Full" 1>nul || (
 set error=1
 call :dk_color %Red% "Checking Powershell                     [Not Responding]"
 )
 
-for %%# in (wmic.exe) do @if "%%~$PATH:#"=="" (
+
+if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
+if %_wmic% EQU 0 %psc% "Get-CIMInstance -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" 2>nul | find /i "computersystem" 1>nul
+if %errorlevel% NEQ 0 (
 set error=1
-call :dk_color %Gray% "Checking WMIC.exe                       [Not Found]"
+call :dk_color %Red% "Checking WMI                            [Not Responding] %_wmic%"
 )
+
+
+if not "%regSKU%"=="%wmiSKU%" (
+set error=1
+call :dk_color %Red% "Checking WMI/REG SKU                    [Difference Found - WMI:%wmiSKU% Reg:%regSKU%]"
+)
+
+
+DISM /English /Online /Get-CurrentEdition %nul%
+set error_code=%errorlevel%
+cmd /c exit /b %error_code%
+if %error_code% NEQ 0 set "error_code=[0x%=ExitCode%]"
+if %error_code% NEQ 0 (
+call :dk_color %Red% "Checking DISM                           [Not Responding] %error_code%"
+)
+
+
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
+call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
+)
+
+
+cscript //nologo %windir%\system32\slmgr.vbs /dlv %nul%
+set error_code=%errorlevel%
+cmd /c exit /b %error_code%
+if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
+if %error_code% NEQ 0 (
+set error=1
+call :dk_color %Red% "Checking slmgr /dlv                     [Not Responding] %error_code%"
+)
+
 
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
 set error=1
 call :dk_color %Red% "Checking Rearm                          [System Restart Is Required]"
 )
 
+
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState" %nul% && (
 set error=1
 call :dk_color %Red% "Checking ClipSVC                        [System Restart Is Required]"
 )
+
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" 2^>nul') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
@@ -1182,39 +955,38 @@ net start sppsvc /y %nul%
 set error=1
 )
 
-set _wsh=1
-reg query "HKCU\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled 2>nul | find /i "0x0" 1>nul && (set _wsh=0)
-reg query "HKLM\SOFTWARE\Microsoft\Windows Script Host\Settings" /v Enabled 2>nul | find /i "0x0" 1>nul && (set _wsh=0)
-if %_wsh% EQU 0 (
-set error=1
-call :dk_color %Gray% "Checking Windows Script Host            [Disabled]"
-)
 
-cscript //nologo %windir%\system32\slmgr.vbs /dlv %nul%
-set error_code=%errorlevel%
-cmd /c exit /b %error_code%
-if %error_code% NEQ 0 set "error_code=[0x%=ExitCode%]"
-if %error_code% NEQ 0 (
-set error=1
-call :dk_color %Red% "Checking slmgr /dlv                     [Not Responding] %error_code%"
-)
-
+call :dk_actids
+if not defined applist (
+net stop sppsvc /y %nul%
+cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
+if !errorlevel! NEQ 0 cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
+call :dk_refresh
+call :dk_actids
 if not defined applist (
 set error=1
-call :dk_color %Red% "Checking WMI/SPP                        [Not Responding] [%e_wmispp%]"
-)
-
-set nil=
-set _sppint=
-if not %_gent%==1 if not defined error (
-for %%# in (SppE%nil%xtComObj.exe,sppsvc.exe) do (
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%nil%ge File Execu%nil%tion Options\%%#" %nul% && set _sppint=1
+call :dk_color %Red% "Checking Activation IDs                 [Not Found]"
 )
 )
 
-if defined _sppint (
-call :dk_color %Red% "Checking SPP Interference In IFEO       [Found] [Uninstall KMS Activator If There Is Any]"
+
+set token=0
+if exist %Systemdrive%\Windows\System32\spp\store\2.0\tokens.dat set token=1
+if exist %Systemdrive%\Windows\System32\spp\store_test\2.0\tokens.dat set token=1
+if %token%==0 (
 set error=1
+call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found]"
+)
+
+if not exist %SystemRoot%\system32\sppsvc.exe (
+set error=1
+call :dk_color %Red% "Checking sppsvc.exe File                [Not Found]"
+)
+
+if /i %error_code% EQU 0xc0000022 (
+echo "%serv_e%" | find /i "sppsvc" %nul% && (
+call :dk_color %Magenta% "Looks like you may have used a Gaming spoofer. Check Activation Troubleshoot option in MAS."
+)
 )
 exit /b
 
@@ -1319,107 +1091,41 @@ exit /b
 ::========================================================================================================================================
 
 ::  Below code is used to get alternate edition name and key if current edition doesn't support KMS38 activation
-
-::  IoTEnterpriseS 2021 won't be converted to EnterpriseS 2021 to enable KMS38 activation because later has 5 years less update support
 ::  ProfessionalCountrySpecific won't be converted because it's not a good idea to change CountrySpecific editions
 
 ::  1st column = Current SKU ID
 ::  2nd column = Current Edition Name
-::  3rd column = Alternate Edition Activation ID
-::  4th column = Alternate Edition GVLK
-::  5th column = Alternate Edition Name
+::  3rd column = Current Edition Activation ID
+::  4th column = Alternate Edition Activation ID
+::  5th column = Alternate Edition GVLK
+::  6th column = Alternate Edition Name
 ::  Separator  = _
 
 
 :kms38fallback
 
-if %_chan%==0 exit /b
+set notfoundaltactID=
+if %_NoEditionChange%==1 exit /b
 
 for %%# in (
-188_IoTEnterprise_______________73111121-5638-40f6-bc11-f1d7b0d64300_NPPR9-FWDCX-D2C8J-H872K-2YT43_Enterprise
-138_ProfessionalSingleLanguage__2de67392-b7a7-462a-b1ca-108dd189f588_W269N-WFGWX-YVC9B-4J6C9-T83GX_Professional
+188_IoTEnterprise_______________8ab9bdd1-1f67-4997-82d9-8878520837d9_73111121-5638-40f6-bc11-f1d7b0d64300_NPPR9-FWDCX-D2C8J-H872K-2YT43_Enterprise
+191_IoTEnterpriseS-2021_________ed655016-a9e8-4434-95d9-4345352c2552_32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee_M7XTQ-FN8P6-TTKYV-9D4CC-J462D_EnterpriseS-2021
+205_IoTEnterpriseSK_____________d4f9b41f-205c-405e-8e08-3d16e88e02be_59eb965c-9150-42b7-a0ec-22151b9897c5_KBN8V-HFGQ4-MGXVD-347P6-PDQGT_IoTEnterpriseS-Win11
+138_ProfessionalSingleLanguage__a48938aa-62fa-4966-9d44-9f04da3f72f2_2de67392-b7a7-462a-b1ca-108dd189f588_W269N-WFGWX-YVC9B-4J6C9-T83GX_Professional
 ) do (
-for /f "tokens=1-5 delims=_" %%A in ("%%#") do if %osSKU%==%%A (
+for /f "tokens=1-6 delims=_" %%A in ("%%#") do if %osSKU%==%%A (
 echo "!applist!" | find /i "%%C" 1>nul && (
-set altkey=%%D
+echo "!applist!" | find /i "%%D" 1>nul && (
+set altkey=%%E
 set curedition=%%B
-set altedition=%%E
+set altedition=%%F
+) || (
+set altedition=%%F
+set notfoundaltactID=1
+)
 )
 )
 )
 exit /b
-
-::========================================================================================================================================
-
-::  Script changes below values in official gatherosstate.exe so that it can generate usable ticket in Windows unlicensed state
-
-:hex:[
-$bytes  = [System.IO.File]::ReadAllBytes("gatherosstate.exe")
-$bytes[320] = 0x9c
-$bytes[321] = 0xfb
-$bytes[322] = 0x05
-$bytes[13672] = 0x25
-$bytes[13674] = 0x73
-$bytes[13676] = 0x3b
-$bytes[13678] = 0x00
-$bytes[13680] = 0x00
-$bytes[13682] = 0x00
-$bytes[13684] = 0x00
-$bytes[32748] = 0xe9
-$bytes[32749] = 0x9e
-$bytes[32750] = 0x00
-$bytes[32751] = 0x00
-$bytes[32752] = 0x00
-$bytes[32894] = 0x8b
-$bytes[32895] = 0x44
-$bytes[32897] = 0x64
-$bytes[32898] = 0x85
-$bytes[32899] = 0xc0
-$bytes[32900] = 0x0f
-$bytes[32901] = 0x85
-$bytes[32902] = 0x1c
-$bytes[32903] = 0x02
-$bytes[32904] = 0x00
-$bytes[32906] = 0xe9
-$bytes[32907] = 0x3c
-$bytes[32908] = 0x01
-$bytes[32909] = 0x00
-$bytes[32910] = 0x00
-$bytes[32911] = 0x85
-$bytes[32912] = 0xdb
-$bytes[32913] = 0x75
-$bytes[32914] = 0xeb
-$bytes[32915] = 0xe9
-$bytes[32916] = 0x69
-$bytes[32917] = 0xff
-$bytes[32918] = 0xff
-$bytes[32919] = 0xff
-$bytes[33094] = 0xe9
-$bytes[33095] = 0x80
-$bytes[33096] = 0x00
-$bytes[33097] = 0x00
-$bytes[33098] = 0x00
-$bytes[33449] = 0x64
-$bytes[33576] = 0x8d
-$bytes[33577] = 0x54
-$bytes[33579] = 0x24
-$bytes[33580] = 0xe9
-$bytes[33581] = 0x55
-$bytes[33582] = 0x01
-$bytes[33583] = 0x00
-$bytes[33584] = 0x00
-$bytes[34189] = 0x59
-$bytes[34190] = 0xeb
-$bytes[34191] = 0x28
-$bytes[34238] = 0xe9
-$bytes[34239] = 0x4f
-$bytes[34240] = 0x00
-$bytes[34241] = 0x00
-$bytes[34242] = 0x00
-$bytes[34346] = 0x24
-$bytes[34376] = 0xeb
-$bytes[34377] = 0x63
-[System.IO.File]::WriteAllBytes("gatherosstatemodified.exe", $bytes)
-:hex:]
 
 ::========================================================================================================================================
