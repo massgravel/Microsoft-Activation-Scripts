@@ -3,7 +3,7 @@
 
 ::  For command line switches, check https://massgrave.dev/
 ::  If you want to better understand script, read from MAS separate files version. 
-
+::
 ::============================================================================
 ::
 ::   This script is a part of 'Microsoft Activation Scripts' (MAS) project.
