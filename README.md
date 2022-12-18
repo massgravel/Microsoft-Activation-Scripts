@@ -40,6 +40,6 @@ Release date: 7-Nov-2022
 
 ---
 
-Made with Love ❤️
+Made with Love ❤️ in India 🇮🇳
 
 
