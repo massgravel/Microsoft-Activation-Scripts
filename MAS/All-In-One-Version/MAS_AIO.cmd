@@ -5270,7 +5270,7 @@ call :_color %Green% "Renewal and Activation Tasks were successfully created."
 call :_color %Green% "Renewal Task was successfully created."
 )
 echo.
-call :_color %Gray% "Make sure to run the Activation from the previous menu atleast once."
+call :_color %Gray% "Make sure to run the Activation from the previous menu at least once."
 echo __________________________________________________________________________________________
 )
 
