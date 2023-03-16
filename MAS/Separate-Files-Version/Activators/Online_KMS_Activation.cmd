@@ -59,7 +59,7 @@ pushd "%~dp0"
 >nul findstr /rxc:".*" "%~nx0"
 if not %errorlevel%==0 (
 echo:
-echo Error: This is not a correct file. It has LF line ending issue.
+echo Error: Script either has LF line ending issue, or it failed to read itself.
 echo:
 ping 127.0.0.1 -n 6 > nul
 popd
@@ -210,9 +210,9 @@ goto Done
 
 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "ComputerSystem" 1>nul || (
 %nceline%
-echo wmic.exe is not responding in the system.
-echo Check this page for help https://massgrave.dev/troubleshoot
-echo Aborting...
+echo WMI is not responding in the system.
+echo:
+echo In MAS, Goto Troubleshoot and run Fix WMI option.
 goto Done
 )
 
@@ -247,20 +247,17 @@ set sub_next=0
 set sub_o365=0
 set sub_proj=0
 set sub_vsio=0
-set _Identity=0
 set kNext=HKCU\SOFTWARE\Microsoft\Office\16.0\Common\Licensing\LicensingNext
-dir /b /s /a:-d "!_Local!\Microsoft\Office\Licenses\*1*" %nul% && set _Identity=1
-dir /b /s /a:-d "!ProgramData!\Microsoft\Office\Licenses\*1*" %nul% && set _Identity=1
-if %_Identity% EQU 1 reg query %kNext% /v MigrationToV5Done 2>nul | find /i "0x1" %nul% && call :officeSub %nul%
+reg query %kNext% /v MigrationToV5Done 2>nul | find /i "0x1" %nul% && call :officeSub %nul%
 
 set _tskinstalled=
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "\Activation-Renewal" >nul && (
-set _tskinstalled=1
+find /i "Ver:1.8" %ProgramData%\Activation-Renewal\Activation_task.cmd %nul% && set _tskinstalled=1
 )
 
 set _oldtsk=
 if not defined _tskinstalled (
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "\Online_KMS_Activation_Script-Renewal" >nul && (
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | findstr /i "\Activation-Renewal \Online_KMS_Activation_Script-Renewal" >nul && (
 set _oldtsk=1
 )
 )
@@ -372,6 +369,7 @@ if /i "%PROCESSOR_ARCHITECTURE%"=="arm64" set "xBit=x86"&set "xOS=A64"
 if /i "%PROCESSOR_ARCHITECTURE%"=="x86" if "%PROCESSOR_ARCHITEW6432%"=="" set "xBit=x86"&set "xOS=x86"&set "_wow=0"&set "_bit=32"
 if /i "%PROCESSOR_ARCHITEW6432%"=="amd64" set "xBit=x64"&set "xOS=x64"
 if /i "%PROCESSOR_ARCHITEW6432%"=="arm64" set "xBit=x86"&set "xOS=A64"
+if not defined xBit set "xBit=x64"&set "xOS=x64"
 
 set _cwmi=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
@@ -400,6 +398,7 @@ set "_mO14m=Detected Office 2010 MSI Retail is not supported by this script"
 set "_mO15m=Detected Office 2013 MSI Retail is not supported by this script"
 set "_mO16m=Detected Office 2016 MSI Retail is not supported by this script"
 set "_mOuwp=Detected Office 365/2016 UWP is not supported by this script"
+set DO15Ids=ProPlus,Standard,Access,Lync,Excel,Groove,InfoPath,OneNote,Outlook,PowerPoint,Publisher,Word
 set DO16Ids=ProPlus,Standard,Access,SkypeforBusiness,Excel,Outlook,PowerPoint,Publisher,Word
 set LV16Ids=Mondo,ProPlus,ProjectPro,VisioPro,Standard,ProjectStd,VisioStd,Access,SkypeforBusiness,OneNote,Excel,Outlook,PowerPoint,Publisher,Word
 set LR16Ids=%LV16Ids%,Professional,HomeBusiness,HomeStudent,O365Business,O365SmallBusPrem,O365HomePrem,O365EduCloud
@@ -678,7 +677,7 @@ if %ActWindows% EQU 0 (
     echo.&echo %_winos% %nKMS%
     if defined _eval echo %nEval%
     ) else (
-    echo.&echo Failed checking KMS Activation ID^(s^) for Windows.&echo Check this page for help https://massgrave.dev/troubleshoot &call :CheckWS
+    echo.&echo Failed checking KMS Activation ID^(s^) for Windows. &call :CheckWS
     exit /b
     )
   )
@@ -747,6 +746,7 @@ if %sub_next% EQU 1 reg delete HKCU\SOFTWARE\Microsoft\Office\16.0\Common\Licens
 set Off1ce=1
 set _sC2R=sppoff
 set _fC2R=ReturnSPP
+
 set vol_off14=0&set vol_off15=0&set vol_off16=0&set vol_off19=0&set vol_off21=0
 set "_qr=%_zz1% %spp% %_zz2% %_zz5%Description like '%%KMSCLIENT%%' AND NOT Name like '%%MondoR_KMS_Automation%%' %_zz6% %_zz3% Name %_zz4%"
 %_qr% > "!_temp!\sppchk.txt" 2>&1
@@ -764,6 +764,7 @@ set "_qr=%_zz1% %spp% %_zz2% "ApplicationID='%_oApp%' AND LicenseFamily like 'Of
 if %vol_off15% EQU 1 find /i "OfficeMondoVL_KMS_Client" "!_temp!\sppchk.txt" %_Nul1% && (
 %_qr% %_Nul2% | find /i "O365" %_Nul1% || (set vol_off15=0)
 )
+
 set ret_off14=0&set ret_off15=0&set ret_off16=0&set ret_off19=0&set ret_off21=0
 set "_qr=%_zz1% %spp% %_zz2% %_zz5%ApplicationID='%_oApp%' AND NOT Name like '%%O365%%' %_zz6% %_zz3% Name %_zz4%"
 %_qr% > "!_temp!\sppchk.txt" 2>&1
@@ -773,6 +774,7 @@ find /i "R_Retail" "!_temp!\sppchk.txt" %_Nul2% | find /i "Office 16" %_Nul1% &&
 find /i "R_Retail" "!_temp!\sppchk.txt" %_Nul2% | find /i "Office 15" %_Nul1% && (set ret_off15=1)
 set "_qr=%_zz1% %spp% %_zz2% %_zz5%ApplicationID='%_oA14%'%_zz6% %_zz3% Description %_zz4%"
 if %winbuild% LSS 9200 if %vol_off14% EQU 0 %_qr% %_Nul2% | findstr /i channel %_Nul1% && (set ret_off14=1)
+
 set run_off21=0&set prr_off21=0&set prv_off21=0
 if %loc_off21% EQU 1 if %ret_off21% EQU 1 if %_O16MSI% EQU 0 if %vol_off21% EQU 0 set run_off21=1
 if %loc_off21% EQU 1 if %ret_off21% EQU 1 if %_O16MSI% EQU 0 if %vol_off21% EQU 1 (
@@ -798,6 +800,7 @@ if %sub_vsio% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office21%%a2021R"
   )
 )
 if %loc_off21% EQU 1 if %ret_off21% EQU 1 if %_O16MSI% EQU 0 if %vol_off21% EQU 1 if %prv_off21% LSS %prr_off21% (set vol_off21=0&set run_off21=1)
+
 set run_off19=0&set prr_off19=0&set prv_off19=0
 if %loc_off19% EQU 1 if %ret_off19% EQU 1 if %_O16MSI% EQU 0 if %vol_off19% EQU 0 set run_off19=1
 if %loc_off19% EQU 1 if %ret_off19% EQU 1 if %_O16MSI% EQU 0 if %vol_off19% EQU 1 (
@@ -823,6 +826,7 @@ if %sub_vsio% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office19%%a2019R"
   )
 )
 if %loc_off19% EQU 1 if %ret_off19% EQU 1 if %_O16MSI% EQU 0 if %vol_off19% EQU 1 if %prv_off19% LSS %prr_off19% (set vol_off19=0&set run_off19=1)
+
 set run_off16=0&set prr_off16=0&set prv_off16=0
 if %loc_off16% EQU 1 if %ret_off16% EQU 1 if %_O16MSI% EQU 0 if defined _C16R (
 for %%a in (%DO16Ids%) do find /i "Office16%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
@@ -861,11 +865,37 @@ set "_qr=%_zz1% %spp% %_zz2% %_zz5%ApplicationID='%_oApp%' AND LicenseFamily lik
 if %loc_off16% EQU 1 if %run_off16% EQU 0 if %sub_o365% EQU 0 if defined _C16R %_qr% %_Nul2% | find /i "O365" %_Nul1% && (
 find /i "Office16MondoVL" "!_temp!\sppchk.txt" %_Nul1% || set run_off16=1
 )
-set run_off15=0
-if %loc_off15% EQU 1 if %ret_off15% EQU 1 if %_O15MSI% EQU 0 (
-set vol_off15=0
-if defined _C15R set run_off15=1
+
+set run_off15=0&set prr_off15=0&set prv_off15=0
+if %loc_off15% EQU 1 if %ret_off15% EQU 1 if %_O15MSI% EQU 0 if %vol_off15% EQU 0 if defined _C15R set run_off15=1
+if %loc_off15% EQU 1 if %ret_off15% EQU 1 if %_O15MSI% EQU 0 if %vol_off15% EQU 1 if defined _C15R (
+for %%a in (%DO15Ids%) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "Office%%aVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
+for %%a in (Professional) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "OfficeProPlusVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
+for %%a in (HomeBusiness,HomeStudent) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "OfficeStandardVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
+if %sub_proj% EQU 0 for %%a in (ProjectPro,ProjectStd) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "Office%%aVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
+if %sub_vsio% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "Office%%aVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
 )
+if %loc_off15% EQU 1 if %ret_off15% EQU 1 if %_O15MSI% EQU 0 if %vol_off15% EQU 1 if defined _C15R if %prv_off15% LSS %prr_off15% (set vol_off15=0&set run_off15=1)
+set "_qr=%_zz1% %spp% %_zz2% %_zz5%ApplicationID='%_oApp%' AND LicenseFamily like 'OfficeO365%%' %_zz6% %_zz3% LicenseFamily %_zz4%"
+if %loc_off15% EQU 1 if %run_off15% EQU 0 if defined _C15R %_qr% %_Nul2% | find /i "O365" %_Nul1% && (
+find /i "OfficeMondoVL" "!_temp!\sppchk.txt" %_Nul1% || set run_off15=1
+)
+
 set vol_offgl=1
 if %vol_off21% EQU 0 if %vol_off19% EQU 0 if %vol_off16% EQU 0 if %vol_off15% EQU 0 (
 if %winbuild% GEQ 9200 set vol_offgl=0
@@ -1480,10 +1510,6 @@ if %WMIe% EQU 1 (
 echo.
 echo %_err%
 echo Failed running WMI query check.
-echo.
-echo Verify that these services are working correctly:
-echo Windows Management Instrumentation [WinMgmt]
-echo Software Protection [sppsvc]
 )
 goto :eof
 
@@ -1549,12 +1575,14 @@ set "_LicensesPath="
 set "_Integrator="
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath" %_Nul6%') do (set "_InstallRoot=%%b\root")
 if not "%_InstallRoot%"=="" (
+  for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath" %_Nul6%') do (set "_OSPPVBS=%%b\Office16\OSPP.VBS")
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v PackageGUID" %_Nul6%') do (set "_GUID=%%b")
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun\Configuration /v ProductReleaseIds" %_Nul6%') do (set "_ProductIds=%%b")
   set "_Config=HKLM\SOFTWARE\Microsoft\Office\ClickToRun\Configuration"
   set "_PRIDs=HKLM\SOFTWARE\Microsoft\Office\ClickToRun\ProductReleaseIDs"
 ) else (
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun /v InstallPath" %_Nul6%') do (set "_InstallRoot=%%b\root")
+  for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun /v InstallPath" %_Nul6%') do (set "_OSPPVBS=%%b\Office16\OSPP.VBS")
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun /v PackageGUID" %_Nul6%') do (set "_GUID=%%b")
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration /v ProductReleaseIds" %_Nul6%') do (set "_ProductIds=%%b")
   set "_Config=HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration"
@@ -1644,10 +1672,12 @@ if %winbuild% GEQ 9200 (
 set _spp=SoftwareLicensingProduct
 set _sps=SoftwareLicensingService
 set "_vbsi=%_SLMGR% /ilc "
+set "_vbsf=%_SLMGR% /ilc "
 ) else (
 set _spp=OfficeSoftwareProtectionProduct
 set _sps=OfficeSoftwareProtectionService
 set _vbsi="!_OSPP15VBS!" /inslic:
+set _vbsf="!_OSPPVBS!" /inslic:
 )
 set "_wmi="
 set "_qr=%_zz7% %_sps% %_zz3% Version %_zz8%"
@@ -1665,38 +1695,10 @@ if %WMI_VBS% NEQ 0 %_qr% %_Nul2% >"!_temp!\crvRetail.txt"
 find /i "RETAIL channel" "!_temp!\crvRetail.txt" %_Nul1% && set _Retail=1
 find /i "RETAIL(MAK) channel" "!_temp!\crvRetail.txt" %_Nul1% && set _Retail=1
 find /i "TIMEBASED_SUB channel" "!_temp!\crvRetail.txt" %_Nul1% && set _Retail=1
-set "_copp="
-if exist "%SysPath%\msvcr100.dll" (
-set _copp=1
-) else if exist "!_InstallRoot!\vfs\System\msvcr100.dll" (
-set _copp="!_InstallRoot!\vfs\System"
-) else if exist "!_Install15Root!\vfs\System\msvcr100.dll" (
-set _copp="!_Install15Root!\vfs\System"
-) else if exist "%SystemRoot%\SysWOW64\msvcr100.dll" (
-set _copp=1
-set xBit=x86
-) else if exist "!_InstallRoot!\vfs\SystemX86\msvcr100.dll" (
-set _copp="!_InstallRoot!\vfs\SystemX86"
-set xBit=x86
-) else if exist "!_Install15Root!\vfs\SystemX86\msvcr100.dll" (
-set _copp="!_Install15Root!\vfs\SystemX86"
-set xBit=x86
-)
-if not exist "!_work!\bin\cleanospp%xBit%.exe" (
-set "_copp="
-)
 set rancopp=0
-if %_Identity% EQU 0 if %_Retail% EQU 0 if %_OMSI% EQU 0 if defined _copp (
+if %_Retail% EQU 0 if %_OMSI% EQU 0 (
 set rancopp=1
-if "!_copp!"=="1" (
-%_Nul3% "!_work!\bin\cleanospp%xBit%.exe" -Licenses
-) else (
-pushd %_copp%
-%_Nul3% copy /y "!_work!\bin\cleanospp%xBit%.exe" cleanospp.exe
-%_Nul3% cleanospp.exe -Licenses
-%_Nul3% del /f /q cleanospp.exe
-popd
-  )
+%_Nul3% powershell "$f=[io.file]::ReadAllText('!_batp!') -split ':cleanlicense\:.*';iex ($f[1]);"
 )
 set _O16O365=0
 set _C16Msg=0
@@ -1815,6 +1817,11 @@ echo.
 echo Converting Office C2R Retail-to-Volume:
 )
 if %_C16Msg% EQU 0 (if %_Office15% EQU 1 (goto :R15V) else (goto :GVLKC2R))
+
+for %%# in ("!_LicensesPath!\client-issuance-*.xrm-ms") do (
+%_cscript% %_vbsf%"!_LicensesPath!\%%~nx#"
+)
+%_cscript% %_vbsf%"!_LicensesPath!\pkeyconfig-office.xrm-ms"
 
 if !_Mondo! EQU 1 (
 call :InsLic Mondo
@@ -1984,11 +1991,6 @@ if !_O365ProPlus! EQU 0 if !_ProPlus2021! EQU 0 if !_ProPlus2019! EQU 0 if !_Pro
 if %_Office15% EQU 1 (goto :R15V) else (goto :GVLKC2R)
 
 :R15V
-for %%# in ("!_Licenses15Path!\client-issuance-*.xrm-ms") do (
-%_cscript% %_vbsi%"!_Licenses15Path!\%%~nx#"
-)
-%_cscript% %_vbsi%"!_Licenses15Path!\pkeyconfig-office.xrm-ms"
-
 set _O15Ids=Standard,ProjectPro,VisioPro,ProjectStd,VisioStd,Access,Lync
 set _A15Ids=Excel,Groove,InfoPath,OneNote,Outlook,PowerPoint,Publisher,Word
 set _R15Ids=SPD,Mondo,%_O15Ids%,%_A15Ids%,Professional,HomeBusiness,HomeStudent,O365ProPlus,O365Business,O365SmallBusPrem,O365HomePrem
@@ -2045,6 +2047,11 @@ echo.
 echo Converting Office C2R Retail-to-Volume:
 )
 if %_C15Msg% EQU 0 goto :GVLKC2R
+
+for %%# in ("!_Licenses15Path!\client-issuance-*.xrm-ms") do (
+%_cscript% %_vbsi%"!_Licenses15Path!\%%~nx#"
+)
+%_cscript% %_vbsi%"!_Licenses15Path!\pkeyconfig-office.xrm-ms"
 
 if !_Mondo! EQU 1 (
 call :Ins15Lic Mondo
@@ -2127,13 +2134,56 @@ goto :GVLKC2R
 
 :InsLic
 set "_ID=%1Volume"
+set "_patt=%1VL_"
 set "_pkey="
+set "_kpey="
 if not "%2"=="" (
 set "_ID=%1Retail"
+set "_patt=%1R_"
 set "_pkey=PidKey=%2"
+set "_kpey=%2"
 )
 reg delete %_Config% /f /v %_ID%.OSPPReady %_Nul3%
 "!_Integrator!" /I /License PRIDName=%_ID%.16 %_pkey% PackageGUID="%_GUID%" PackageRoot="!_InstallRoot!" %_Nul1%
+
+set fallback=0
+set "_qr=wmic path %_spp% where ApplicationID='%_oApp%' get LicenseFamily"
+if %WMI_VBS% NEQ 0 set "_qr=%_csq% %_spp% "ApplicationID='%_oApp%'" LicenseFamily"
+%_qr% %_Nul2% | find /i "%_patt%" %_Nul1% || (set fallback=1)
+if %fallback% equ 0 goto :IntOK
+
+set "_lsfs="
+for %%# in ("!_LicensesPath!\%_patt%*.xrm-ms") do (
+set "_lsfs=!_lsfs! %%~nx#"
+)
+if defined _kpey (
+  for %%# in ("!_LicensesPath!\%1DemoR*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1E5R*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1EDUR*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1MSDNR*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1O365R*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1CO365R*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+)
+for %%# in (!_lsfs!) do (
+%_cscript% %_vbsf%"!_LicensesPath!\%%#"
+)
+set "_qr=wmic path %_sps% where Version='%_wmi%' call InstallProductKey ProductKey="%_kpey%""
+if %WMI_VBS% NEQ 0 set "_qr=%_csp% %_sps% "%_kpey%""
+if defined _kpey %_qr% %_Nul3%
+
+:IntOK
 reg add %_Config% /f /v %_ID%.OSPPReady /t REG_SZ /d 1 %_Nul1%
 reg query %_Config% /v ProductReleaseIds | findstr /I "%_ID%" %_Nul1%
 if %errorlevel% NEQ 0 (
@@ -2185,810 +2235,810 @@ goto :%_sC2R%
 
 :keys
 if "%~1"=="" exit /b
-set hy=-
+set yh=-
 goto :%1 %_Nul2%
 
 :: Windows 11 [Ni]
 :59eb965c-9150-42b7-a0ec-22151b9897c5
-set "_key=KBN8V%hy%HFGQ4%hy%MGXVD%hy%347P6%hy%PDQGT" &:: IoT Enterprise LTSC
+set "_key=KBN8V%yh%HFGQ4%yh%MGXVD%yh%347P6%yh%PDQGT" &:: IoT Enterprise LTSC
 exit /b
 
 :: Windows 11 [Co]
 :ca7df2e3-5ea0-47b8-9ac1-b1be4d8edd69
-set "_key=37D7F%hy%N49CB%hy%WQR8W%hy%TBJ73%hy%FM8RX" &:: SE {Cloud}
+set "_key=37D7F%yh%N49CB%yh%WQR8W%yh%TBJ73%yh%FM8RX" &:: SE {Cloud}
 exit /b
 
 :d30136fc-cb4b-416e-a23d-87207abc44a9
-set "_key=6XN7V%hy%PCBDC%hy%BDBRH%hy%8DQY7%hy%G6R44" &:: SE N {Cloud N}
+set "_key=6XN7V%yh%PCBDC%yh%BDBRH%yh%8DQY7%yh%G6R44" &:: SE N {Cloud N}
 exit /b
 
 :: Windows 10 [RS5]
 :32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee
-set "_key=M7XTQ%hy%FN8P6%hy%TTKYV%hy%9D4CC%hy%J462D" &:: Enterprise LTSC 2019
+set "_key=M7XTQ%yh%FN8P6%yh%TTKYV%yh%9D4CC%yh%J462D" &:: Enterprise LTSC 2019
 exit /b
 
 :7103a333-b8c8-49cc-93ce-d37c09687f92
-set "_key=92NFX%hy%8DJQP%hy%P6BBQ%hy%THF9C%hy%7CG2H" &:: Enterprise LTSC 2019 N
+set "_key=92NFX%yh%8DJQP%yh%P6BBQ%yh%THF9C%yh%7CG2H" &:: Enterprise LTSC 2019 N
 exit /b
 
 :ec868e65-fadf-4759-b23e-93fe37f2cc29
-set "_key=CPWHC%hy%NT2C7%hy%VYW78%hy%DHDB2%hy%PG3GK" &:: Enterprise for Virtual Desktops
+set "_key=CPWHC%yh%NT2C7%yh%VYW78%yh%DHDB2%yh%PG3GK" &:: Enterprise for Virtual Desktops
 exit /b
 
 :0df4f814-3f57-4b8b-9a9d-fddadcd69fac
-set "_key=NBTWJ%hy%3DR69%hy%3C4V8%hy%C26MC%hy%GQ9M6" &:: Lean
+set "_key=NBTWJ%yh%3DR69%yh%3C4V8%yh%C26MC%yh%GQ9M6" &:: Lean
 exit /b
 
 :: Windows 10 [RS3]
 :82bbc092-bc50-4e16-8e18-b74fc486aec3
-set "_key=NRG8B%hy%VKK3Q%hy%CXVCJ%hy%9G2XF%hy%6Q84J" &:: Pro Workstation
+set "_key=NRG8B%yh%VKK3Q%yh%CXVCJ%yh%9G2XF%yh%6Q84J" &:: Pro Workstation
 exit /b
 
 :4b1571d3-bafb-4b40-8087-a961be2caf65
-set "_key=9FNHH%hy%K3HBT%hy%3W4TD%hy%6383H%hy%6XYWF" &:: Pro Workstation N
+set "_key=9FNHH%yh%K3HBT%yh%3W4TD%yh%6383H%yh%6XYWF" &:: Pro Workstation N
 exit /b
 
 :e4db50ea-bda1-4566-b047-0ca50abc6f07
-set "_key=7NBT4%hy%WGBQX%hy%MP4H7%hy%QXFF8%hy%YP3KX" &:: Enterprise Remote Server
+set "_key=7NBT4%yh%WGBQX%yh%MP4H7%yh%QXFF8%yh%YP3KX" &:: Enterprise Remote Server
 exit /b
 
 :: Windows 10 [RS2]
 :e0b2d383-d112-413f-8a80-97f373a5820c
-set "_key=YYVX9%hy%NTFWV%hy%6MDM3%hy%9PT4T%hy%4M68B" &:: Enterprise G
+set "_key=YYVX9%yh%NTFWV%yh%6MDM3%yh%9PT4T%yh%4M68B" &:: Enterprise G
 exit /b
 
 :e38454fb-41a4-4f59-a5dc-25080e354730
-set "_key=44RPN%hy%FTY23%hy%9VTTB%hy%MP9BX%hy%T84FV" &:: Enterprise G N
+set "_key=44RPN%yh%FTY23%yh%9VTTB%yh%MP9BX%yh%T84FV" &:: Enterprise G N
 exit /b
 
 :: Windows 10 [RS1]
 :2d5a5a60-3040-48bf-beb0-fcd770c20ce0
-set "_key=DCPHK%hy%NFMTC%hy%H88MJ%hy%PFHPY%hy%QJ4BJ" &:: Enterprise 2016 LTSB
+set "_key=DCPHK%yh%NFMTC%yh%H88MJ%yh%PFHPY%yh%QJ4BJ" &:: Enterprise 2016 LTSB
 exit /b
 
 :9f776d83-7156-45b2-8a5c-359b9c9f22a3
-set "_key=QFFDN%hy%GRT3P%hy%VKWWX%hy%X7T3R%hy%8B639" &:: Enterprise 2016 LTSB N
+set "_key=QFFDN%yh%GRT3P%yh%VKWWX%yh%X7T3R%yh%8B639" &:: Enterprise 2016 LTSB N
 exit /b
 
 :3f1afc82-f8ac-4f6c-8005-1d233e606eee
-set "_key=6TP4R%hy%GNPTD%hy%KYYHQ%hy%7B7DP%hy%J447Y" &:: Pro Education
+set "_key=6TP4R%yh%GNPTD%yh%KYYHQ%yh%7B7DP%yh%J447Y" &:: Pro Education
 exit /b
 
 :5300b18c-2e33-4dc2-8291-47ffcec746dd
-set "_key=YVWGF%hy%BXNMC%hy%HTQYQ%hy%CPQ99%hy%66QFC" &:: Pro Education N
+set "_key=YVWGF%yh%BXNMC%yh%HTQYQ%yh%CPQ99%yh%66QFC" &:: Pro Education N
 exit /b
 
 :: Windows 10 [TH]
 :58e97c99-f377-4ef1-81d5-4ad5522b5fd8
-set "_key=TX9XD%hy%98N7V%hy%6WMQ6%hy%BX7FG%hy%H8Q99" &:: Home
+set "_key=TX9XD%yh%98N7V%yh%6WMQ6%yh%BX7FG%yh%H8Q99" &:: Home
 exit /b
 
 :7b9e1751-a8da-4f75-9560-5fadfe3d8e38
-set "_key=3KHY7%hy%WNT83%hy%DGQKR%hy%F7HPR%hy%844BM" &:: Home N
+set "_key=3KHY7%yh%WNT83%yh%DGQKR%yh%F7HPR%yh%844BM" &:: Home N
 exit /b
 
 :cd918a57-a41b-4c82-8dce-1a538e221a83
-set "_key=7HNRX%hy%D7KGG%hy%3K4RQ%hy%4WPJ4%hy%YTDFH" &:: Home Single Language
+set "_key=7HNRX%yh%D7KGG%yh%3K4RQ%yh%4WPJ4%yh%YTDFH" &:: Home Single Language
 exit /b
 
 :a9107544-f4a0-4053-a96a-1479abdef912
-set "_key=PVMJN%hy%6DFY6%hy%9CCP6%hy%7BKTT%hy%D3WVR" &:: Home China
+set "_key=PVMJN%yh%6DFY6%yh%9CCP6%yh%7BKTT%yh%D3WVR" &:: Home China
 exit /b
 
 :2de67392-b7a7-462a-b1ca-108dd189f588
-set "_key=W269N%hy%WFGWX%hy%YVC9B%hy%4J6C9%hy%T83GX" &:: Pro
+set "_key=W269N%yh%WFGWX%yh%YVC9B%yh%4J6C9%yh%T83GX" &:: Pro
 exit /b
 
 :a80b5abf-76ad-428b-b05d-a47d2dffeebf
-set "_key=MH37W%hy%N47XK%hy%V7XM9%hy%C7227%hy%GCQG9" &:: Pro N
+set "_key=MH37W%yh%N47XK%yh%V7XM9%yh%C7227%yh%GCQG9" &:: Pro N
 exit /b
 
 :e0c42288-980c-4788-a014-c080d2e1926e
-set "_key=NW6C2%hy%QMPVW%hy%D7KKK%hy%3GKT6%hy%VCFB2" &:: Education
+set "_key=NW6C2%yh%QMPVW%yh%D7KKK%yh%3GKT6%yh%VCFB2" &:: Education
 exit /b
 
 :3c102355-d027-42c6-ad23-2e7ef8a02585
-set "_key=2WH4N%hy%8QGBV%hy%H22JP%hy%CT43Q%hy%MDWWJ" &:: Education N
+set "_key=2WH4N%yh%8QGBV%yh%H22JP%yh%CT43Q%yh%MDWWJ" &:: Education N
 exit /b
 
 :73111121-5638-40f6-bc11-f1d7b0d64300
-set "_key=NPPR9%hy%FWDCX%hy%D2C8J%hy%H872K%hy%2YT43" &:: Enterprise
+set "_key=NPPR9%yh%FWDCX%yh%D2C8J%yh%H872K%yh%2YT43" &:: Enterprise
 exit /b
 
 :e272e3e2-732f-4c65-a8f0-484747d0d947
-set "_key=DPH2V%hy%TTNVB%hy%4X9Q3%hy%TJR4H%hy%KHJW4" &:: Enterprise N
+set "_key=DPH2V%yh%TTNVB%yh%4X9Q3%yh%TJR4H%yh%KHJW4" &:: Enterprise N
 exit /b
 
 :7b51a46c-0c04-4e8f-9af4-8496cca90d5e
-set "_key=WNMTR%hy%4C88C%hy%JK8YV%hy%HQ7T2%hy%76DF9" &:: Enterprise 2015 LTSB
+set "_key=WNMTR%yh%4C88C%yh%JK8YV%yh%HQ7T2%yh%76DF9" &:: Enterprise 2015 LTSB
 exit /b
 
 :87b838b7-41b6-4590-8318-5797951d8529
-set "_key=2F77B%hy%TNFGY%hy%69QQF%hy%B8YKP%hy%D69TJ" &:: Enterprise 2015 LTSB N
+set "_key=2F77B%yh%TNFGY%yh%69QQF%yh%B8YKP%yh%D69TJ" &:: Enterprise 2015 LTSB N
 exit /b
 
 :: Windows Server 2022 [Fe]
 :9bd77860-9b31-4b7b-96ad-2564017315bf
-set "_key=VDYBN%hy%27WPP%hy%V4HQT%hy%9VMD4%hy%VMK7H" &:: Standard
+set "_key=VDYBN%yh%27WPP%yh%V4HQT%yh%9VMD4%yh%VMK7H" &:: Standard
 exit /b
 
 :ef6cfc9f-8c5d-44ac-9aad-de6a2ea0ae03
-set "_key=WX4NM%hy%KYWYW%hy%QJJR4%hy%XV3QB%hy%6VM33" &:: Datacenter
+set "_key=WX4NM%yh%KYWYW%yh%QJJR4%yh%XV3QB%yh%6VM33" &:: Datacenter
 exit /b
 
 :8c8f0ad3-9a43-4e05-b840-93b8d1475cbc
-set "_key=6N379%hy%GGTMK%hy%23C6M%hy%XVVTC%hy%CKFRQ" &:: Azure Core
+set "_key=6N379%yh%GGTMK%yh%23C6M%yh%XVVTC%yh%CKFRQ" &:: Azure Core
 exit /b
 
 :f5e9429c-f50b-4b98-b15c-ef92eb5cff39
-set "_key=67KN8%hy%4FYJW%hy%2487Q%hy%MQ2J7%hy%4C4RG" &:: Standard ACor
+set "_key=67KN8%yh%4FYJW%yh%2487Q%yh%MQ2J7%yh%4C4RG" &:: Standard ACor
 exit /b
 
 :39e69c41-42b4-4a0a-abad-8e3c10a797cc
-set "_key=QFND9%hy%D3Y9C%hy%J3KKY%hy%6RPVP%hy%2DPYV" &:: Datacenter ACor
+set "_key=QFND9%yh%D3Y9C%yh%J3KKY%yh%6RPVP%yh%2DPYV" &:: Datacenter ACor
 exit /b
 
 :: Windows Server 2019 [RS5]
 :de32eafd-aaee-4662-9444-c1befb41bde2
-set "_key=N69G4%hy%B89J2%hy%4G8F4%hy%WWYCC%hy%J464C" &:: Standard
+set "_key=N69G4%yh%B89J2%yh%4G8F4%yh%WWYCC%yh%J464C" &:: Standard
 exit /b
 
 :34e1ae55-27f8-4950-8877-7a03be5fb181
-set "_key=WMDGN%hy%G9PQG%hy%XVVXX%hy%R3X43%hy%63DFG" &:: Datacenter
+set "_key=WMDGN%yh%G9PQG%yh%XVVXX%yh%R3X43%yh%63DFG" &:: Datacenter
 exit /b
 
 :a99cc1f0-7719-4306-9645-294102fbff95
-set "_key=FDNH6%hy%VW9RW%hy%BXPJ7%hy%4XTYG%hy%239TB" &:: Azure Core
+set "_key=FDNH6%yh%VW9RW%yh%BXPJ7%yh%4XTYG%yh%239TB" &:: Azure Core
 exit /b
 
 :73e3957c-fc0c-400d-9184-5f7b6f2eb409
-set "_key=N2KJX%hy%J94YW%hy%TQVFB%hy%DG9YT%hy%724CC" &:: Standard ACor
+set "_key=N2KJX%yh%J94YW%yh%TQVFB%yh%DG9YT%yh%724CC" &:: Standard ACor
 exit /b
 
 :90c362e5-0da1-4bfd-b53b-b87d309ade43
-set "_key=6NMRW%hy%2C8FM%hy%D24W7%hy%TQWMY%hy%CWH2D" &:: Datacenter ACor
+set "_key=6NMRW%yh%2C8FM%yh%D24W7%yh%TQWMY%yh%CWH2D" &:: Datacenter ACor
 exit /b
 
 :034d3cbb-5d4b-4245-b3f8-f84571314078
-set "_key=WVDHN%hy%86M7X%hy%466P6%hy%VHXV7%hy%YY726" &:: Essentials
+set "_key=WVDHN%yh%86M7X%yh%466P6%yh%VHXV7%yh%YY726" &:: Essentials
 exit /b
 
 :8de8eb62-bbe0-40ac-ac17-f75595071ea3
-set "_key=GRFBW%hy%QNDC4%hy%6QBHG%hy%CCK3B%hy%2PR88" &:: ServerARM64
+set "_key=GRFBW%yh%QNDC4%yh%6QBHG%yh%CCK3B%yh%2PR88" &:: ServerARM64
 exit /b
 
 :19b5e0fb-4431-46bc-bac1-2f1873e4ae73
-set "_key=NTBV8%hy%9K7Q8%hy%V27C6%hy%M2BTV%hy%KHMXV" &:: Azure Datacenter %hy% ServerTurbine
+set "_key=NTBV8%yh%9K7Q8%yh%V27C6%yh%M2BTV%yh%KHMXV" &:: Azure Datacenter - ServerTurbine
 exit /b
 
 :: Windows Server 2016 [RS4]
 :43d9af6e-5e86-4be8-a797-d072a046896c
-set "_key=K9FYF%hy%G6NCK%hy%73M32%hy%XMVPY%hy%F9DRR" &:: ServerARM64
+set "_key=K9FYF%yh%G6NCK%yh%73M32%yh%XMVPY%yh%F9DRR" &:: ServerARM64
 exit /b
 
 :: Windows Server 2016 [RS3]
 :61c5ef22-f14f-4553-a824-c4b31e84b100
-set "_key=PTXN8%hy%JFHJM%hy%4WC78%hy%MPCBR%hy%9W4KR" &:: Standard ACor
+set "_key=PTXN8%yh%JFHJM%yh%4WC78%yh%MPCBR%yh%9W4KR" &:: Standard ACor
 exit /b
 
 :e49c08e7-da82-42f8-bde2-b570fbcae76c
-set "_key=2HXDN%hy%KRXHB%hy%GPYC7%hy%YCKFJ%hy%7FVDG" &:: Datacenter ACor
+set "_key=2HXDN%yh%KRXHB%yh%GPYC7%yh%YCKFJ%yh%7FVDG" &:: Datacenter ACor
 exit /b
 
 :: Windows Server 2016 [RS1]
 :8c1c5410-9f39-4805-8c9d-63a07706358f
-set "_key=WC2BQ%hy%8NRM3%hy%FDDYY%hy%2BFGV%hy%KHKQY" &:: Standard
+set "_key=WC2BQ%yh%8NRM3%yh%FDDYY%yh%2BFGV%yh%KHKQY" &:: Standard
 exit /b
 
 :21c56779-b449-4d20-adfc-eece0e1ad74b
-set "_key=CB7KF%hy%BWN84%hy%R7R2Y%hy%793K2%hy%8XDDG" &:: Datacenter
+set "_key=CB7KF%yh%BWN84%yh%R7R2Y%yh%793K2%yh%8XDDG" &:: Datacenter
 exit /b
 
 :3dbf341b-5f6c-4fa7-b936-699dce9e263f
-set "_key=VP34G%hy%4NPPG%hy%79JTQ%hy%864T4%hy%R3MQX" &:: Azure Core
+set "_key=VP34G%yh%4NPPG%yh%79JTQ%yh%864T4%yh%R3MQX" &:: Azure Core
 exit /b
 
 :2b5a1b0f-a5ab-4c54-ac2f-a6d94824a283
-set "_key=JCKRF%hy%N37P4%hy%C2D82%hy%9YXRT%hy%4M63B" &:: Essentials
+set "_key=JCKRF%yh%N37P4%yh%C2D82%yh%9YXRT%yh%4M63B" &:: Essentials
 exit /b
 
 :7b4433f4-b1e7-4788-895a-c45378d38253
-set "_key=QN4C6%hy%GBJD2%hy%FB422%hy%GHWJK%hy%GJG2R" &:: Cloud Storage
+set "_key=QN4C6%yh%GBJD2%yh%FB422%yh%GHWJK%yh%GJG2R" &:: Cloud Storage
 exit /b
 
 :: Windows 8.1
 :fe1c3238-432a-43a1-8e25-97e7d1ef10f3
-set "_key=M9Q9P%hy%WNJJT%hy%6PXPY%hy%DWX8H%hy%6XWKK" &:: Core
+set "_key=M9Q9P%yh%WNJJT%yh%6PXPY%yh%DWX8H%yh%6XWKK" &:: Core
 exit /b
 
 :78558a64-dc19-43fe-a0d0-8075b2a370a3
-set "_key=7B9N3%hy%D94CG%hy%YTVHR%hy%QBPX3%hy%RJP64" &:: Core N
+set "_key=7B9N3%yh%D94CG%yh%YTVHR%yh%QBPX3%yh%RJP64" &:: Core N
 exit /b
 
 :c72c6a1d-f252-4e7e-bdd1-3fca342acb35
-set "_key=BB6NG%hy%PQ82V%hy%VRDPW%hy%8XVD2%hy%V8P66" &:: Core Single Language
+set "_key=BB6NG%yh%PQ82V%yh%VRDPW%yh%8XVD2%yh%V8P66" &:: Core Single Language
 exit /b
 
 :db78b74f-ef1c-4892-abfe-1e66b8231df6
-set "_key=NCTT7%hy%2RGK8%hy%WMHRF%hy%RY7YQ%hy%JTXG3" &:: Core China
+set "_key=NCTT7%yh%2RGK8%yh%WMHRF%yh%RY7YQ%yh%JTXG3" &:: Core China
 exit /b
 
 :ffee456a-cd87-4390-8e07-16146c672fd0
-set "_key=XYTND%hy%K6QKT%hy%K2MRH%hy%66RTM%hy%43JKP" &:: Core ARM
+set "_key=XYTND%yh%K6QKT%yh%K2MRH%yh%66RTM%yh%43JKP" &:: Core ARM
 exit /b
 
 :c06b6981-d7fd-4a35-b7b4-054742b7af67
-set "_key=GCRJD%hy%8NW9H%hy%F2CDX%hy%CCM8D%hy%9D6T9" &:: Pro
+set "_key=GCRJD%yh%8NW9H%yh%F2CDX%yh%CCM8D%yh%9D6T9" &:: Pro
 exit /b
 
 :7476d79f-8e48-49b4-ab63-4d0b813a16e4
-set "_key=HMCNV%hy%VVBFX%hy%7HMBH%hy%CTY9B%hy%B4FXY" &:: Pro N
+set "_key=HMCNV%yh%VVBFX%yh%7HMBH%yh%CTY9B%yh%B4FXY" &:: Pro N
 exit /b
 
 :096ce63d-4fac-48a9-82a9-61ae9e800e5f
-set "_key=789NJ%hy%TQK6T%hy%6XTH8%hy%J39CJ%hy%J8D3P" &:: Pro with Media Center
+set "_key=789NJ%yh%TQK6T%yh%6XTH8%yh%J39CJ%yh%J8D3P" &:: Pro with Media Center
 exit /b
 
 :81671aaf-79d1-4eb1-b004-8cbbe173afea
-set "_key=MHF9N%hy%XY6XB%hy%WVXMC%hy%BTDCT%hy%MKKG7" &:: Enterprise
+set "_key=MHF9N%yh%XY6XB%yh%WVXMC%yh%BTDCT%yh%MKKG7" &:: Enterprise
 exit /b
 
 :113e705c-fa49-48a4-beea-7dd879b46b14
-set "_key=TT4HM%hy%HN7YT%hy%62K67%hy%RGRQJ%hy%JFFXW" &:: Enterprise N
+set "_key=TT4HM%yh%HN7YT%yh%62K67%yh%RGRQJ%yh%JFFXW" &:: Enterprise N
 exit /b
 
 :0ab82d54-47f4-4acb-818c-cc5bf0ecb649
-set "_key=NMMPB%hy%38DD4%hy%R2823%hy%62W8D%hy%VXKJB" &:: Embedded Industry Pro
+set "_key=NMMPB%yh%38DD4%yh%R2823%yh%62W8D%yh%VXKJB" &:: Embedded Industry Pro
 exit /b
 
 :cd4e2d9f-5059-4a50-a92d-05d5bb1267c7
-set "_key=FNFKF%hy%PWTVT%hy%9RC8H%hy%32HB2%hy%JB34X" &:: Embedded Industry Enterprise
+set "_key=FNFKF%yh%PWTVT%yh%9RC8H%yh%32HB2%yh%JB34X" &:: Embedded Industry Enterprise
 exit /b
 
 :f7e88590-dfc7-4c78-bccb-6f3865b99d1a
-set "_key=VHXM3%hy%NR6FT%hy%RY6RT%hy%CK882%hy%KW2CJ" &:: Embedded Industry Automotive
+set "_key=VHXM3%yh%NR6FT%yh%RY6RT%yh%CK882%yh%KW2CJ" &:: Embedded Industry Automotive
 exit /b
 
 :e9942b32-2e55-4197-b0bd-5ff58cba8860
-set "_key=3PY8R%hy%QHNP9%hy%W7XQD%hy%G6DPH%hy%3J2C9" &:: with Bing
+set "_key=3PY8R%yh%QHNP9%yh%W7XQD%yh%G6DPH%yh%3J2C9" &:: with Bing
 exit /b
 
 :c6ddecd6-2354-4c19-909b-306a3058484e
-set "_key=Q6HTR%hy%N24GM%hy%PMJFP%hy%69CD8%hy%2GXKR" &:: with Bing N
+set "_key=Q6HTR%yh%N24GM%yh%PMJFP%yh%69CD8%yh%2GXKR" &:: with Bing N
 exit /b
 
 :b8f5e3a3-ed33-4608-81e1-37d6c9dcfd9c
-set "_key=KF37N%hy%VDV38%hy%GRRTV%hy%XH8X6%hy%6F3BB" &:: with Bing Single Language
+set "_key=KF37N%yh%VDV38%yh%GRRTV%yh%XH8X6%yh%6F3BB" &:: with Bing Single Language
 exit /b
 
 :ba998212-460a-44db-bfb5-71bf09d1c68b
-set "_key=R962J%hy%37N87%hy%9VVK2%hy%WJ74P%hy%XTMHR" &:: with Bing China
+set "_key=R962J%yh%37N87%yh%9VVK2%yh%WJ74P%yh%XTMHR" &:: with Bing China
 exit /b
 
 :e58d87b5-8126-4580-80fb-861b22f79296
-set "_key=MX3RK%hy%9HNGX%hy%K3QKC%hy%6PJ3F%hy%W8D7B" &:: Pro for Students
+set "_key=MX3RK%yh%9HNGX%yh%K3QKC%yh%6PJ3F%yh%W8D7B" &:: Pro for Students
 exit /b
 
 :cab491c7-a918-4f60-b502-dab75e334f40
-set "_key=TNFGH%hy%2R6PB%hy%8XM3K%hy%QYHX2%hy%J4296" &:: Pro for Students N
+set "_key=TNFGH%yh%2R6PB%yh%8XM3K%yh%QYHX2%yh%J4296" &:: Pro for Students N
 exit /b
 
 :: Windows Server 2012 R2
 :b3ca044e-a358-4d68-9883-aaa2941aca99
-set "_key=D2N9P%hy%3P6X9%hy%2R39C%hy%7RTCD%hy%MDVJX" &:: Standard
+set "_key=D2N9P%yh%3P6X9%yh%2R39C%yh%7RTCD%yh%MDVJX" &:: Standard
 exit /b
 
 :00091344-1ea4-4f37-b789-01750ba6988c
-set "_key=W3GGN%hy%FT8W3%hy%Y4M27%hy%J84CP%hy%Q3VJ9" &:: Datacenter
+set "_key=W3GGN%yh%FT8W3%yh%Y4M27%yh%J84CP%yh%Q3VJ9" &:: Datacenter
 exit /b
 
 :21db6ba4-9a7b-4a14-9e29-64a60c59301d
-set "_key=KNC87%hy%3J2TX%hy%XB4WP%hy%VCPJV%hy%M4FWM" &:: Essentials
+set "_key=KNC87%yh%3J2TX%yh%XB4WP%yh%VCPJV%yh%M4FWM" &:: Essentials
 exit /b
 
 :b743a2be-68d4-4dd3-af32-92425b7bb623
-set "_key=3NPTF%hy%33KPT%hy%GGBPR%hy%YX76B%hy%39KDD" &:: Cloud Storage
+set "_key=3NPTF%yh%33KPT%yh%GGBPR%yh%YX76B%yh%39KDD" &:: Cloud Storage
 exit /b
 
 :: Windows 8
 :c04ed6bf-55c8-4b47-9f8e-5a1f31ceee60
-set "_key=BN3D2%hy%R7TKB%hy%3YPBD%hy%8DRP2%hy%27GG4" &:: Core
+set "_key=BN3D2%yh%R7TKB%yh%3YPBD%yh%8DRP2%yh%27GG4" &:: Core
 exit /b
 
 :197390a0-65f6-4a95-bdc4-55d58a3b0253
-set "_key=8N2M2%hy%HWPGY%hy%7PGT9%hy%HGDD8%hy%GVGGY" &:: Core N
+set "_key=8N2M2%yh%HWPGY%yh%7PGT9%yh%HGDD8%yh%GVGGY" &:: Core N
 exit /b
 
 :8860fcd4-a77b-4a20-9045-a150ff11d609
-set "_key=2WN2H%hy%YGCQR%hy%KFX6K%hy%CD6TF%hy%84YXQ" &:: Core Single Language
+set "_key=2WN2H%yh%YGCQR%yh%KFX6K%yh%CD6TF%yh%84YXQ" &:: Core Single Language
 exit /b
 
 :9d5584a2-2d85-419a-982c-a00888bb9ddf
-set "_key=4K36P%hy%JN4VD%hy%GDC6V%hy%KDT89%hy%DYFKP" &:: Core China
+set "_key=4K36P%yh%JN4VD%yh%GDC6V%yh%KDT89%yh%DYFKP" &:: Core China
 exit /b
 
 :af35d7b7-5035-4b63-8972-f0b747b9f4dc
-set "_key=DXHJF%hy%N9KQX%hy%MFPVR%hy%GHGQK%hy%Y7RKV" &:: Core ARM
+set "_key=DXHJF%yh%N9KQX%yh%MFPVR%yh%GHGQK%yh%Y7RKV" &:: Core ARM
 exit /b
 
 :a98bcd6d-5343-4603-8afe-5908e4611112
-set "_key=NG4HW%hy%VH26C%hy%733KW%hy%K6F98%hy%J8CK4" &:: Pro
+set "_key=NG4HW%yh%VH26C%yh%733KW%yh%K6F98%yh%J8CK4" &:: Pro
 exit /b
 
 :ebf245c1-29a8-4daf-9cb1-38dfc608a8c8
-set "_key=XCVCF%hy%2NXM9%hy%723PB%hy%MHCB7%hy%2RYQQ" &:: Pro N
+set "_key=XCVCF%yh%2NXM9%yh%723PB%yh%MHCB7%yh%2RYQQ" &:: Pro N
 exit /b
 
 :a00018a3-f20f-4632-bf7c-8daa5351c914
-set "_key=GNBB8%hy%YVD74%hy%QJHX6%hy%27H4K%hy%8QHDG" &:: Pro with Media Center
+set "_key=GNBB8%yh%YVD74%yh%QJHX6%yh%27H4K%yh%8QHDG" &:: Pro with Media Center
 exit /b
 
 :458e1bec-837a-45f6-b9d5-925ed5d299de
-set "_key=32JNW%hy%9KQ84%hy%P47T8%hy%D8GGY%hy%CWCK7" &:: Enterprise
+set "_key=32JNW%yh%9KQ84%yh%P47T8%yh%D8GGY%yh%CWCK7" &:: Enterprise
 exit /b
 
 :e14997e7-800a-4cf7-ad10-de4b45b578db
-set "_key=JMNMF%hy%RHW7P%hy%DMY6X%hy%RF3DR%hy%X2BQT" &:: Enterprise N
+set "_key=JMNMF%yh%RHW7P%yh%DMY6X%yh%RF3DR%yh%X2BQT" &:: Enterprise N
 exit /b
 
 :10018baf-ce21-4060-80bd-47fe74ed4dab
-set "_key=RYXVT%hy%BNQG7%hy%VD29F%hy%DBMRY%hy%HT73M" &:: Embedded Industry Pro
+set "_key=RYXVT%yh%BNQG7%yh%VD29F%yh%DBMRY%yh%HT73M" &:: Embedded Industry Pro
 exit /b
 
 :18db1848-12e0-4167-b9d7-da7fcda507db
-set "_key=NKB3R%hy%R2F8T%hy%3XCDP%hy%7Q2KW%hy%XWYQ2" &:: Embedded Industry Enterprise
+set "_key=NKB3R%yh%R2F8T%yh%3XCDP%yh%7Q2KW%yh%XWYQ2" &:: Embedded Industry Enterprise
 exit /b
 
 :: Windows Server 2012
 :f0f5ec41-0d55-4732-af02-440a44a3cf0f
-set "_key=XC9B7%hy%NBPP2%hy%83J2H%hy%RHMBY%hy%92BT4" &:: Standard
+set "_key=XC9B7%yh%NBPP2%yh%83J2H%yh%RHMBY%yh%92BT4" &:: Standard
 exit /b
 
 :d3643d60-0c42-412d-a7d6-52e6635327f6
-set "_key=48HP8%hy%DN98B%hy%MYWDG%hy%T2DCC%hy%8W83P" &:: Datacenter
+set "_key=48HP8%yh%DN98B%yh%MYWDG%yh%T2DCC%yh%8W83P" &:: Datacenter
 exit /b
 
 :7d5486c7-e120-4771-b7f1-7b56c6d3170c
-set "_key=HM7DN%hy%YVMH3%hy%46JC3%hy%XYTG7%hy%CYQJJ" &:: MultiPoint Standard
+set "_key=HM7DN%yh%YVMH3%yh%46JC3%yh%XYTG7%yh%CYQJJ" &:: MultiPoint Standard
 exit /b
 
 :95fd1c83-7df5-494a-be8b-1300e1c9d1cd
-set "_key=XNH6W%hy%2V9GX%hy%RGJ4K%hy%Y8X6F%hy%QGJ2G" &:: MultiPoint Premium
+set "_key=XNH6W%yh%2V9GX%yh%RGJ4K%yh%Y8X6F%yh%QGJ2G" &:: MultiPoint Premium
 exit /b
 
 :: Windows 7
 :b92e9980-b9d5-4821-9c94-140f632f6312
-set "_key=FJ82H%hy%XT6CR%hy%J8D7P%hy%XQJJ2%hy%GPDD4" &:: Professional
+set "_key=FJ82H%yh%XT6CR%yh%J8D7P%yh%XQJJ2%yh%GPDD4" &:: Professional
 exit /b
 
 :54a09a0d-d57b-4c10-8b69-a842d6590ad5
-set "_key=MRPKT%hy%YTG23%hy%K7D7T%hy%X2JMM%hy%QY7MG" &:: Professional N
+set "_key=MRPKT%yh%YTG23%yh%K7D7T%yh%X2JMM%yh%QY7MG" &:: Professional N
 exit /b
 
 :5a041529-fef8-4d07-b06f-b59b573b32d2
-set "_key=W82YF%hy%2Q76Y%hy%63HXB%hy%FGJG9%hy%GF7QX" &:: Professional E
+set "_key=W82YF%yh%2Q76Y%yh%63HXB%yh%FGJG9%yh%GF7QX" &:: Professional E
 exit /b
 
 :ae2ee509-1b34-41c0-acb7-6d4650168915
-set "_key=33PXH%hy%7Y6KF%hy%2VJC9%hy%XBBR8%hy%HVTHH" &:: Enterprise
+set "_key=33PXH%yh%7Y6KF%yh%2VJC9%yh%XBBR8%yh%HVTHH" &:: Enterprise
 exit /b
 
 :1cb6d605-11b3-4e14-bb30-da91c8e3983a
-set "_key=YDRBP%hy%3D83W%hy%TY26F%hy%D46B2%hy%XCKRJ" &:: Enterprise N
+set "_key=YDRBP%yh%3D83W%yh%TY26F%yh%D46B2%yh%XCKRJ" &:: Enterprise N
 exit /b
 
 :46bbed08-9c7b-48fc-a614-95250573f4ea
-set "_key=C29WB%hy%22CC8%hy%VJ326%hy%GHFJW%hy%H9DH4" &:: Enterprise E
+set "_key=C29WB%yh%22CC8%yh%VJ326%yh%GHFJW%yh%H9DH4" &:: Enterprise E
 exit /b
 
 :db537896-376f-48ae-a492-53d0547773d0
-set "_key=YBYF6%hy%BHCR3%hy%JPKRB%hy%CDW7B%hy%F9BK4" &:: Embedded POSReady 7
+set "_key=YBYF6%yh%BHCR3%yh%JPKRB%yh%CDW7B%yh%F9BK4" &:: Embedded POSReady 7
 exit /b
 
 :e1a8296a-db37-44d1-8cce-7bc961d59c54
-set "_key=XGY72%hy%BRBBT%hy%FF8MH%hy%2GG8H%hy%W7KCW" &:: Embedded Standard
+set "_key=XGY72%yh%BRBBT%yh%FF8MH%yh%2GG8H%yh%W7KCW" &:: Embedded Standard
 exit /b
 
 :aa6dd3aa-c2b4-40e2-a544-a6bbb3f5c395
-set "_key=73KQT%hy%CD9G6%hy%K7TQG%hy%66MRP%hy%CQ22C" &:: Embedded ThinPC
+set "_key=73KQT%yh%CD9G6%yh%K7TQG%yh%66MRP%yh%CQ22C" &:: Embedded ThinPC
 exit /b
 
 :: Windows Server 2008 R2
 :a78b8bd9-8017-4df5-b86a-09f756affa7c
-set "_key=6TPJF%hy%RBVHG%hy%WBW2R%hy%86QPH%hy%6RTM4" &:: Web
+set "_key=6TPJF%yh%RBVHG%yh%WBW2R%yh%86QPH%yh%6RTM4" &:: Web
 exit /b
 
 :cda18cf3-c196-46ad-b289-60c072869994
-set "_key=TT8MH%hy%CG224%hy%D3D7Q%hy%498W2%hy%9QCTX" &:: HPC
+set "_key=TT8MH%yh%CG224%yh%D3D7Q%yh%498W2%yh%9QCTX" &:: HPC
 exit /b
 
 :68531fb9-5511-4989-97be-d11a0f55633f
-set "_key=YC6KT%hy%GKW9T%hy%YTKYR%hy%T4X34%hy%R7VHC" &:: Standard
+set "_key=YC6KT%yh%GKW9T%yh%YTKYR%yh%T4X34%yh%R7VHC" &:: Standard
 exit /b
 
 :7482e61b-c589-4b7f-8ecc-46d455ac3b87
-set "_key=74YFP%hy%3QFB3%hy%KQT8W%hy%PMXWJ%hy%7M648" &:: Datacenter
+set "_key=74YFP%yh%3QFB3%yh%KQT8W%yh%PMXWJ%yh%7M648" &:: Datacenter
 exit /b
 
 :620e2b3d-09e7-42fd-802a-17a13652fe7a
-set "_key=489J6%hy%VHDMP%hy%X63PK%hy%3K798%hy%CPX3Y" &:: Enterprise
+set "_key=489J6%yh%VHDMP%yh%X63PK%yh%3K798%yh%CPX3Y" &:: Enterprise
 exit /b
 
 :8a26851c-1c7e-48d3-a687-fbca9b9ac16b
-set "_key=GT63C%hy%RJFQ3%hy%4GMB6%hy%BRFB9%hy%CB83V" &:: Itanium
+set "_key=GT63C%yh%RJFQ3%yh%4GMB6%yh%BRFB9%yh%CB83V" &:: Itanium
 exit /b
 
 :f772515c-0e87-48d5-a676-e6962c3e1195
-set "_key=736RG%hy%XDKJK%hy%V34PF%hy%BHK87%hy%J6X3K" &:: MultiPoint Server %hy% ServerEmbeddedSolution
+set "_key=736RG%yh%XDKJK%yh%V34PF%yh%BHK87%yh%J6X3K" &:: MultiPoint Server - ServerEmbeddedSolution
 exit /b
 
 :: Office 2021
 :fbdb3e18-a8ef-4fb3-9183-dffd60bd0984
-set "_key=FXYTK%hy%NJJ8C%hy%GB6DW%hy%3DYQT%hy%6F7TH" &:: Professional Plus
+set "_key=FXYTK%yh%NJJ8C%yh%GB6DW%yh%3DYQT%yh%6F7TH" &:: Professional Plus
 exit /b
 
 :080a45c5-9f9f-49eb-b4b0-c3c610a5ebd3
-set "_key=KDX7X%hy%BNVR8%hy%TXXGX%hy%4Q7Y8%hy%78VT3" &:: Standard
+set "_key=KDX7X%yh%BNVR8%yh%TXXGX%yh%4Q7Y8%yh%78VT3" &:: Standard
 exit /b
 
 :76881159-155c-43e0-9db7-2d70a9a3a4ca
-set "_key=FTNWT%hy%C6WBT%hy%8HMGF%hy%K9PRX%hy%QV9H8" &:: Project Professional
+set "_key=FTNWT%yh%C6WBT%yh%8HMGF%yh%K9PRX%yh%QV9H8" &:: Project Professional
 exit /b
 
 :6dd72704-f752-4b71-94c7-11cec6bfc355
-set "_key=J2JDC%hy%NJCYY%hy%9RGQ4%hy%YXWMH%hy%T3D4T" &:: Project Standard
+set "_key=J2JDC%yh%NJCYY%yh%9RGQ4%yh%YXWMH%yh%T3D4T" &:: Project Standard
 exit /b
 
 :fb61ac9a-1688-45d2-8f6b-0674dbffa33c
-set "_key=KNH8D%hy%FGHT4%hy%T8RK3%hy%CTDYJ%hy%K2HT4" &:: Visio Professional
+set "_key=KNH8D%yh%FGHT4%yh%T8RK3%yh%CTDYJ%yh%K2HT4" &:: Visio Professional
 exit /b
 
 :72fce797-1884-48dd-a860-b2f6a5efd3ca
-set "_key=MJVNY%hy%BYWPY%hy%CWV6J%hy%2RKRT%hy%4M8QG" &:: Visio Standard
+set "_key=MJVNY%yh%BYWPY%yh%CWV6J%yh%2RKRT%yh%4M8QG" &:: Visio Standard
 exit /b
 
 :1fe429d8-3fa7-4a39-b6f0-03dded42fe14
-set "_key=WM8YG%hy%YNGDD%hy%4JHDC%hy%PG3F4%hy%FC4T4" &:: Access
+set "_key=WM8YG%yh%YNGDD%yh%4JHDC%yh%PG3F4%yh%FC4T4" &:: Access
 exit /b
 
 :ea71effc-69f1-4925-9991-2f5e319bbc24
-set "_key=NWG3X%hy%87C9K%hy%TC7YY%hy%BC2G7%hy%G6RVC" &:: Excel
+set "_key=NWG3X%yh%87C9K%yh%TC7YY%yh%BC2G7%yh%G6RVC" &:: Excel
 exit /b
 
 :a5799e4c-f83c-4c6e-9516-dfe9b696150b
-set "_key=C9FM6%hy%3N72F%hy%HFJXB%hy%TM3V9%hy%T86R9" &:: Outlook
+set "_key=C9FM6%yh%3N72F%yh%HFJXB%yh%TM3V9%yh%T86R9" &:: Outlook
 exit /b
 
 :6e166cc3-495d-438a-89e7-d7c9e6fd4dea
-set "_key=TY7XF%hy%NFRBR%hy%KJ44C%hy%G83KF%hy%GX27K" &:: PowerPoint
+set "_key=TY7XF%yh%NFRBR%yh%KJ44C%yh%G83KF%yh%GX27K" &:: PowerPoint
 exit /b
 
 :aa66521f-2370-4ad8-a2bb-c095e3e4338f
-set "_key=2MW9D%hy%N4BXM%hy%9VBPG%hy%Q7W6M%hy%KFBGQ" &:: Publisher
+set "_key=2MW9D%yh%N4BXM%yh%9VBPG%yh%Q7W6M%yh%KFBGQ" &:: Publisher
 exit /b
 
 :1f32a9af-1274-48bd-ba1e-1ab7508a23e8
-set "_key=HWCXN%hy%K3WBT%hy%WJBKY%hy%R8BD9%hy%XK29P" &:: Skype for Business
+set "_key=HWCXN%yh%K3WBT%yh%WJBKY%yh%R8BD9%yh%XK29P" &:: Skype for Business
 exit /b
 
 :abe28aea-625a-43b1-8e30-225eb8fbd9e5
-set "_key=TN8H9%hy%M34D3%hy%Y64V9%hy%TR72V%hy%X79KV" &:: Word
+set "_key=TN8H9%yh%M34D3%yh%Y64V9%yh%TR72V%yh%X79KV" &:: Word
 exit /b
 
 :: Office 2019
 :85dd8b5f-eaa4-4af3-a628-cce9e77c9a03
-set "_key=NMMKJ%hy%6RK4F%hy%KMJVX%hy%8D9MJ%hy%6MWKP" &:: Professional Plus
+set "_key=NMMKJ%yh%6RK4F%yh%KMJVX%yh%8D9MJ%yh%6MWKP" &:: Professional Plus
 exit /b
 
 :6912a74b-a5fb-401a-bfdb-2e3ab46f4b02
-set "_key=6NWWJ%hy%YQWMR%hy%QKGCB%hy%6TMB3%hy%9D9HK" &:: Standard
+set "_key=6NWWJ%yh%YQWMR%yh%QKGCB%yh%6TMB3%yh%9D9HK" &:: Standard
 exit /b
 
 :2ca2bf3f-949e-446a-82c7-e25a15ec78c4
-set "_key=B4NPR%hy%3FKK7%hy%T2MBV%hy%FRQ4W%hy%PKD2B" &:: Project Professional
+set "_key=B4NPR%yh%3FKK7%yh%T2MBV%yh%FRQ4W%yh%PKD2B" &:: Project Professional
 exit /b
 
 :1777f0e3-7392-4198-97ea-8ae4de6f6381
-set "_key=C4F7P%hy%NCP8C%hy%6CQPT%hy%MQHV9%hy%JXD2M" &:: Project Standard
+set "_key=C4F7P%yh%NCP8C%yh%6CQPT%yh%MQHV9%yh%JXD2M" &:: Project Standard
 exit /b
 
 :5b5cf08f-b81a-431d-b080-3450d8620565
-set "_key=9BGNQ%hy%K37YR%hy%RQHF2%hy%38RQ3%hy%7VCBB" &:: Visio Professional
+set "_key=9BGNQ%yh%K37YR%yh%RQHF2%yh%38RQ3%yh%7VCBB" &:: Visio Professional
 exit /b
 
 :e06d7df3-aad0-419d-8dfb-0ac37e2bdf39
-set "_key=7TQNQ%hy%K3YQQ%hy%3PFH7%hy%CCPPM%hy%X4VQ2" &:: Visio Standard
+set "_key=7TQNQ%yh%K3YQQ%yh%3PFH7%yh%CCPPM%yh%X4VQ2" &:: Visio Standard
 exit /b
 
 :9e9bceeb-e736-4f26-88de-763f87dcc485
-set "_key=9N9PT%hy%27V4Y%hy%VJ2PD%hy%YXFMF%hy%YTFQT" &:: Access
+set "_key=9N9PT%yh%27V4Y%yh%VJ2PD%yh%YXFMF%yh%YTFQT" &:: Access
 exit /b
 
 :237854e9-79fc-4497-a0c1-a70969691c6b
-set "_key=TMJWT%hy%YYNMB%hy%3BKTF%hy%644FC%hy%RVXBD" &:: Excel
+set "_key=TMJWT%yh%YYNMB%yh%3BKTF%yh%644FC%yh%RVXBD" &:: Excel
 exit /b
 
 :c8f8a301-19f5-4132-96ce-2de9d4adbd33
-set "_key=7HD7K%hy%N4PVK%hy%BHBCQ%hy%YWQRW%hy%XW4VK" &:: Outlook
+set "_key=7HD7K%yh%N4PVK%yh%BHBCQ%yh%YWQRW%yh%XW4VK" &:: Outlook
 exit /b
 
 :3131fd61-5e4f-4308-8d6d-62be1987c92c
-set "_key=RRNCX%hy%C64HY%hy%W2MM7%hy%MCH9G%hy%TJHMQ" &:: PowerPoint
+set "_key=RRNCX%yh%C64HY%yh%W2MM7%yh%MCH9G%yh%TJHMQ" &:: PowerPoint
 exit /b
 
 :9d3e4cca-e172-46f1-a2f4-1d2107051444
-set "_key=G2KWX%hy%3NW6P%hy%PY93R%hy%JXK2T%hy%C9Y9V" &:: Publisher
+set "_key=G2KWX%yh%3NW6P%yh%PY93R%yh%JXK2T%yh%C9Y9V" &:: Publisher
 exit /b
 
 :734c6c6e-b0ba-4298-a891-671772b2bd1b
-set "_key=NCJ33%hy%JHBBY%hy%HTK98%hy%MYCV8%hy%HMKHJ" &:: Skype for Business
+set "_key=NCJ33%yh%JHBBY%yh%HTK98%yh%MYCV8%yh%HMKHJ" &:: Skype for Business
 exit /b
 
 :059834fe-a8ea-4bff-b67b-4d006b5447d3
-set "_key=PBX3G%hy%NWMT6%hy%Q7XBW%hy%PYJGG%hy%WXD33" &:: Word
+set "_key=PBX3G%yh%NWMT6%yh%Q7XBW%yh%PYJGG%yh%WXD33" &:: Word
 exit /b
 
 :0bc88885-718c-491d-921f-6f214349e79c
-set "_key=VQ9DP%hy%NVHPH%hy%T9HJC%hy%J9PDT%hy%KTQRG" &:: Pro Plus 2019 Preview
+set "_key=VQ9DP%yh%NVHPH%yh%T9HJC%yh%J9PDT%yh%KTQRG" &:: Pro Plus 2019 Preview
 exit /b
 
 :fc7c4d0c-2e85-4bb9-afd4-01ed1476b5e9
-set "_key=XM2V9%hy%DN9HH%hy%QB449%hy%XDGKC%hy%W2RMW" &:: Project Pro 2019 Preview
+set "_key=XM2V9%yh%DN9HH%yh%QB449%yh%XDGKC%yh%W2RMW" &:: Project Pro 2019 Preview
 exit /b
 
 :500f6619-ef93-4b75-bcb4-82819998a3ca
-set "_key=N2CG9%hy%YD3YK%hy%936X4%hy%3WR82%hy%Q3X4H" &:: Visio Pro 2019 Preview
+set "_key=N2CG9%yh%YD3YK%yh%936X4%yh%3WR82%yh%Q3X4H" &:: Visio Pro 2019 Preview
 exit /b
 
 :f3fb2d68-83dd-4c8b-8f09-08e0d950ac3b
-set "_key=HFPBN%hy%RYGG8%hy%HQWCW%hy%26CH6%hy%PDPVF" &:: Pro Plus 2021 Preview
+set "_key=HFPBN%yh%RYGG8%yh%HQWCW%yh%26CH6%yh%PDPVF" &:: Pro Plus 2021 Preview
 exit /b
 
 :76093b1b-7057-49d7-b970-638ebcbfd873
-set "_key=WDNBY%hy%PCYFY%hy%9WP6G%hy%BXVXM%hy%92HDV" &:: Project Pro 2021 Preview
+set "_key=WDNBY%yh%PCYFY%yh%9WP6G%yh%BXVXM%yh%92HDV" &:: Project Pro 2021 Preview
 exit /b
 
 :a3b44174-2451-4cd6-b25f-66638bfb9046
-set "_key=2XYX7%hy%NXXBK%hy%9CK7W%hy%K2TKW%hy%JFJ7G" &:: Visio Pro 2021 Preview
+set "_key=2XYX7%yh%NXXBK%yh%9CK7W%yh%K2TKW%yh%JFJ7G" &:: Visio Pro 2021 Preview
 exit /b
 
 :: Office 2016
 :829b8110-0e6f-4349-bca4-42803577788d
-set "_key=WGT24%hy%HCNMF%hy%FQ7XH%hy%6M8K7%hy%DRTW9" &:: Project Professional C2R%hy%P
+set "_key=WGT24%yh%HCNMF%yh%FQ7XH%yh%6M8K7%yh%DRTW9" &:: Project Professional C2R-P
 exit /b
 
 :cbbaca45-556a-4416-ad03-bda598eaa7c8
-set "_key=D8NRQ%hy%JTYM3%hy%7J2DX%hy%646CT%hy%6836M" &:: Project Standard C2R%hy%P
+set "_key=D8NRQ%yh%JTYM3%yh%7J2DX%yh%646CT%yh%6836M" &:: Project Standard C2R-P
 exit /b
 
 :b234abe3-0857-4f9c-b05a-4dc314f85557
-set "_key=69WXN%hy%MBYV6%hy%22PQG%hy%3WGHK%hy%RM6XC" &:: Visio Professional C2R%hy%P
+set "_key=69WXN%yh%MBYV6%yh%22PQG%yh%3WGHK%yh%RM6XC" &:: Visio Professional C2R-P
 exit /b
 
 :361fe620-64f4-41b5-ba77-84f8e079b1f7
-set "_key=NY48V%hy%PPYYH%hy%3F4PX%hy%XJRKJ%hy%W4423" &:: Visio Standard C2R%hy%P
+set "_key=NY48V%yh%PPYYH%yh%3F4PX%yh%XJRKJ%yh%W4423" &:: Visio Standard C2R-P
 exit /b
 
 :e914ea6e-a5fa-4439-a394-a9bb3293ca09
-set "_key=DMTCJ%hy%KNRKX%hy%26982%hy%JYCKT%hy%P7KB6" &:: MondoR
+set "_key=DMTCJ%yh%KNRKX%yh%26982%yh%JYCKT%yh%P7KB6" &:: MondoR
 exit /b
 
 :9caabccb-61b1-4b4b-8bec-d10a3c3ac2ce
-set "_key=HFTND%hy%W9MK4%hy%8B7MJ%hy%B6C4G%hy%XQBR2" &:: Mondo
+set "_key=HFTND%yh%W9MK4%yh%8B7MJ%yh%B6C4G%yh%XQBR2" &:: Mondo
 exit /b
 
 :d450596f-894d-49e0-966a-fd39ed4c4c64
-set "_key=XQNVK%hy%8JYDB%hy%WJ9W3%hy%YJ8YR%hy%WFG99" &:: Professional Plus
+set "_key=XQNVK%yh%8JYDB%yh%WJ9W3%yh%YJ8YR%yh%WFG99" &:: Professional Plus
 exit /b
 
 :dedfa23d-6ed1-45a6-85dc-63cae0546de6
-set "_key=JNRGM%hy%WHDWX%hy%FJJG3%hy%K47QV%hy%DRTFM" &:: Standard
+set "_key=JNRGM%yh%WHDWX%yh%FJJG3%yh%K47QV%yh%DRTFM" &:: Standard
 exit /b
 
 :4f414197-0fc2-4c01-b68a-86cbb9ac254c
-set "_key=YG9NW%hy%3K39V%hy%2T3HJ%hy%93F3Q%hy%G83KT" &:: Project Professional
+set "_key=YG9NW%yh%3K39V%yh%2T3HJ%yh%93F3Q%yh%G83KT" &:: Project Professional
 exit /b
 
 :da7ddabc-3fbe-4447-9e01-6ab7440b4cd4
-set "_key=GNFHQ%hy%F6YQM%hy%KQDGJ%hy%327XX%hy%KQBVC" &:: Project Standard
+set "_key=GNFHQ%yh%F6YQM%yh%KQDGJ%yh%327XX%yh%KQBVC" &:: Project Standard
 exit /b
 
 :6bf301c1-b94a-43e9-ba31-d494598c47fb
-set "_key=PD3PC%hy%RHNGV%hy%FXJ29%hy%8JK7D%hy%RJRJK" &:: Visio Professional
+set "_key=PD3PC%yh%RHNGV%yh%FXJ29%yh%8JK7D%yh%RJRJK" &:: Visio Professional
 exit /b
 
 :aa2a7821-1827-4c2c-8f1d-4513a34dda97
-set "_key=7WHWN%hy%4T7MP%hy%G96JF%hy%G33KR%hy%W8GF4" &:: Visio Standard
+set "_key=7WHWN%yh%4T7MP%yh%G96JF%yh%G33KR%yh%W8GF4" &:: Visio Standard
 exit /b
 
 :67c0fc0c-deba-401b-bf8b-9c8ad8395804
-set "_key=GNH9Y%hy%D2J4T%hy%FJHGG%hy%QRVH7%hy%QPFDW" &:: Access
+set "_key=GNH9Y%yh%D2J4T%yh%FJHGG%yh%QRVH7%yh%QPFDW" &:: Access
 exit /b
 
 :c3e65d36-141f-4d2f-a303-a842ee756a29
-set "_key=9C2PK%hy%NWTVB%hy%JMPW8%hy%BFT28%hy%7FTBF" &:: Excel
+set "_key=9C2PK%yh%NWTVB%yh%JMPW8%yh%BFT28%yh%7FTBF" &:: Excel
 exit /b
 
 :d8cace59-33d2-4ac7-9b1b-9b72339c51c8
-set "_key=DR92N%hy%9HTF2%hy%97XKM%hy%XW2WJ%hy%XW3J6" &:: OneNote
+set "_key=DR92N%yh%9HTF2%yh%97XKM%yh%XW2WJ%yh%XW3J6" &:: OneNote
 exit /b
 
 :ec9d9265-9d1e-4ed0-838a-cdc20f2551a1
-set "_key=R69KK%hy%NTPKF%hy%7M3Q4%hy%QYBHW%hy%6MT9B" &:: Outlook
+set "_key=R69KK%yh%NTPKF%yh%7M3Q4%yh%QYBHW%yh%6MT9B" &:: Outlook
 exit /b
 
 :d70b1bba-b893-4544-96e2-b7a318091c33
-set "_key=J7MQP%hy%HNJ4Y%hy%WJ7YM%hy%PFYGF%hy%BY6C6" &:: Powerpoint
+set "_key=J7MQP%yh%HNJ4Y%yh%WJ7YM%yh%PFYGF%yh%BY6C6" &:: Powerpoint
 exit /b
 
 :041a06cb-c5b8-4772-809f-416d03d16654
-set "_key=F47MM%hy%N3XJP%hy%TQXJ9%hy%BP99D%hy%8K837" &:: Publisher
+set "_key=F47MM%yh%N3XJP%yh%TQXJ9%yh%BP99D%yh%8K837" &:: Publisher
 exit /b
 
 :83e04ee1-fa8d-436d-8994-d31a862cab77
-set "_key=869NQ%hy%FJ69K%hy%466HW%hy%QYCP2%hy%DDBV6" &:: Skype for Business
+set "_key=869NQ%yh%FJ69K%yh%466HW%yh%QYCP2%yh%DDBV6" &:: Skype for Business
 exit /b
 
 :bb11badf-d8aa-470e-9311-20eaf80fe5cc
-set "_key=WXY84%hy%JN2Q9%hy%RBCCQ%hy%3Q3J3%hy%3PFJ6" &:: Word
+set "_key=WXY84%yh%JN2Q9%yh%RBCCQ%yh%3Q3J3%yh%3PFJ6" &:: Word
 exit /b
 
 :: Office 2013
 :dc981c6b-fc8e-420f-aa43-f8f33e5c0923
-set "_key=42QTK%hy%RN8M7%hy%J3C4G%hy%BBGYM%hy%88CYV" &:: Mondo
+set "_key=42QTK%yh%RN8M7%yh%J3C4G%yh%BBGYM%yh%88CYV" &:: Mondo
 exit /b
 
 :b322da9c-a2e2-4058-9e4e-f59a6970bd69
-set "_key=YC7DK%hy%G2NP3%hy%2QQC3%hy%J6H88%hy%GVGXT" &:: Professional Plus
+set "_key=YC7DK%yh%G2NP3%yh%2QQC3%yh%J6H88%yh%GVGXT" &:: Professional Plus
 exit /b
 
 :b13afb38-cd79-4ae5-9f7f-eed058d750ca
-set "_key=KBKQT%hy%2NMXY%hy%JJWGP%hy%M62JB%hy%92CD4" &:: Standard
+set "_key=KBKQT%yh%2NMXY%yh%JJWGP%yh%M62JB%yh%92CD4" &:: Standard
 exit /b
 
 :4a5d124a-e620-44ba-b6ff-658961b33b9a
-set "_key=FN8TT%hy%7WMH6%hy%2D4X9%hy%M337T%hy%2342K" &:: Project Professional
+set "_key=FN8TT%yh%7WMH6%yh%2D4X9%yh%M337T%yh%2342K" &:: Project Professional
 exit /b
 
 :427a28d1-d17c-4abf-b717-32c780ba6f07
-set "_key=6NTH3%hy%CW976%hy%3G3Y2%hy%JK3TX%hy%8QHTT" &:: Project Standard
+set "_key=6NTH3%yh%CW976%yh%3G3Y2%yh%JK3TX%yh%8QHTT" &:: Project Standard
 exit /b
 
 :e13ac10e-75d0-4aff-a0cd-764982cf541c
-set "_key=C2FG9%hy%N6J68%hy%H8BTJ%hy%BW3QX%hy%RM3B3" &:: Visio Professional
+set "_key=C2FG9%yh%N6J68%yh%H8BTJ%yh%BW3QX%yh%RM3B3" &:: Visio Professional
 exit /b
 
 :ac4efaf0-f81f-4f61-bdf7-ea32b02ab117
-set "_key=J484Y%hy%4NKBF%hy%W2HMG%hy%DBMJC%hy%PGWR7" &:: Visio Standard
+set "_key=J484Y%yh%4NKBF%yh%W2HMG%yh%DBMJC%yh%PGWR7" &:: Visio Standard
 exit /b
 
 :6ee7622c-18d8-4005-9fb7-92db644a279b
-set "_key=NG2JY%hy%H4JBT%hy%HQXYP%hy%78QH9%hy%4JM2D" &:: Access
+set "_key=NG2JY%yh%H4JBT%yh%HQXYP%yh%78QH9%yh%4JM2D" &:: Access
 exit /b
 
 :f7461d52-7c2b-43b2-8744-ea958e0bd09a
-set "_key=VGPNG%hy%Y7HQW%hy%9RHP7%hy%TKPV3%hy%BG7GB" &:: Excel
+set "_key=VGPNG%yh%Y7HQW%yh%9RHP7%yh%TKPV3%yh%BG7GB" &:: Excel
 exit /b
 
 :fb4875ec-0c6b-450f-b82b-ab57d8d1677f
-set "_key=H7R7V%hy%WPNXQ%hy%WCYYC%hy%76BGV%hy%VT7GH" &:: Groove
+set "_key=H7R7V%yh%WPNXQ%yh%WCYYC%yh%76BGV%yh%VT7GH" &:: Groove
 exit /b
 
 :a30b8040-d68a-423f-b0b5-9ce292ea5a8f
-set "_key=DKT8B%hy%N7VXH%hy%D963P%hy%Q4PHY%hy%F8894" &:: InfoPath
+set "_key=DKT8B%yh%N7VXH%yh%D963P%yh%Q4PHY%yh%F8894" &:: InfoPath
 exit /b
 
 :1b9f11e3-c85c-4e1b-bb29-879ad2c909e3
-set "_key=2MG3G%hy%3BNTT%hy%3MFW9%hy%KDQW3%hy%TCK7R" &:: Lync
+set "_key=2MG3G%yh%3BNTT%yh%3MFW9%yh%KDQW3%yh%TCK7R" &:: Lync
 exit /b
 
 :efe1f3e6-aea2-4144-a208-32aa872b6545
-set "_key=TGN6P%hy%8MMBC%hy%37P2F%hy%XHXXK%hy%P34VW" &:: OneNote
+set "_key=TGN6P%yh%8MMBC%yh%37P2F%yh%XHXXK%yh%P34VW" &:: OneNote
 exit /b
 
 :771c3afa-50c5-443f-b151-ff2546d863a0
-set "_key=QPN8Q%hy%BJBTJ%hy%334K3%hy%93TGY%hy%2PMBT" &:: Outlook
+set "_key=QPN8Q%yh%BJBTJ%yh%334K3%yh%93TGY%yh%2PMBT" &:: Outlook
 exit /b
 
 :8c762649-97d1-4953-ad27-b7e2c25b972e
-set "_key=4NT99%hy%8RJFH%hy%Q2VDH%hy%KYG2C%hy%4RD4F" &:: Powerpoint
+set "_key=4NT99%yh%8RJFH%yh%Q2VDH%yh%KYG2C%yh%4RD4F" &:: Powerpoint
 exit /b
 
 :00c79ff1-6850-443d-bf61-71cde0de305f
-set "_key=PN2WF%hy%29XG2%hy%T9HJ7%hy%JQPJR%hy%FCXK4" &:: Publisher
+set "_key=PN2WF%yh%29XG2%yh%T9HJ7%yh%JQPJR%yh%FCXK4" &:: Publisher
 exit /b
 
 :d9f5b1c6-5386-495a-88f9-9ad6b41ac9b3
-set "_key=6Q7VD%hy%NX8JD%hy%WJ2VH%hy%88V73%hy%4GBJ7" &:: Word
+set "_key=6Q7VD%yh%NX8JD%yh%WJ2VH%yh%88V73%yh%4GBJ7" &:: Word
 exit /b
 
 :: Office 2010
 :09ed9640-f020-400a-acd8-d7d867dfd9c2
-set "_key=YBJTT%hy%JG6MD%hy%V9Q7P%hy%DBKXJ%hy%38W9R" &:: Mondo
+set "_key=YBJTT%yh%JG6MD%yh%V9Q7P%yh%DBKXJ%yh%38W9R" &:: Mondo
 exit /b
 
 :ef3d4e49-a53d-4d81-a2b1-2ca6c2556b2c
-set "_key=7TC2V%hy%WXF6P%hy%TD7RT%hy%BQRXR%hy%B8K32" &:: Mondo2
+set "_key=7TC2V%yh%WXF6P%yh%TD7RT%yh%BQRXR%yh%B8K32" &:: Mondo2
 exit /b
 
 :6f327760-8c5c-417c-9b61-836a98287e0c
-set "_key=VYBBJ%hy%TRJPB%hy%QFQRF%hy%QFT4D%hy%H3GVB" &:: Professional Plus
+set "_key=VYBBJ%yh%TRJPB%yh%QFQRF%yh%QFT4D%yh%H3GVB" &:: Professional Plus
 exit /b
 
 :9da2a678-fb6b-4e67-ab84-60dd6a9c819a
-set "_key=V7QKV%hy%4XVVR%hy%XYV4D%hy%F7DFM%hy%8R6BM" &:: Standard
+set "_key=V7QKV%yh%4XVVR%yh%XYV4D%yh%F7DFM%yh%8R6BM" &:: Standard
 exit /b
 
 :df133ff7-bf14-4f95-afe3-7b48e7e331ef
-set "_key=YGX6F%hy%PGV49%hy%PGW3J%hy%9BTGG%hy%VHKC6" &:: Project Professional
+set "_key=YGX6F%yh%PGV49%yh%PGW3J%yh%9BTGG%yh%VHKC6" &:: Project Professional
 exit /b
 
 :5dc7bf61-5ec9-4996-9ccb-df806a2d0efe
-set "_key=4HP3K%hy%88W3F%hy%W2K3D%hy%6677X%hy%F9PGB" &:: Project Standard
+set "_key=4HP3K%yh%88W3F%yh%W2K3D%yh%6677X%yh%F9PGB" &:: Project Standard
 exit /b
 
 :92236105-bb67-494f-94c7-7f7a607929bd
-set "_key=D9DWC%hy%HPYVV%hy%JGF4P%hy%BTWQB%hy%WX8BJ" &:: Visio Premium
+set "_key=D9DWC%yh%HPYVV%yh%JGF4P%yh%BTWQB%yh%WX8BJ" &:: Visio Premium
 exit /b
 
 :e558389c-83c3-4b29-adfe-5e4d7f46c358
-set "_key=7MCW8%hy%VRQVK%hy%G677T%hy%PDJCM%hy%Q8TCP" &:: Visio Professional
+set "_key=7MCW8%yh%VRQVK%yh%G677T%yh%PDJCM%yh%Q8TCP" &:: Visio Professional
 exit /b
 
 :9ed833ff-4f92-4f36-b370-8683a4f13275
-set "_key=767HD%hy%QGMWX%hy%8QTDB%hy%9G3R2%hy%KHFGJ" &:: Visio Standard
+set "_key=767HD%yh%QGMWX%yh%8QTDB%yh%9G3R2%yh%KHFGJ" &:: Visio Standard
 exit /b
 
 :8ce7e872-188c-4b98-9d90-f8f90b7aad02
-set "_key=V7Y44%hy%9T38C%hy%R2VJK%hy%666HK%hy%T7DDX" &:: Access
+set "_key=V7Y44%yh%9T38C%yh%R2VJK%yh%666HK%yh%T7DDX" &:: Access
 exit /b
 
 :cee5d470-6e3b-4fcc-8c2b-d17428568a9f
-set "_key=H62QG%hy%HXVKF%hy%PP4HP%hy%66KMR%hy%CW9BM" &:: Excel
+set "_key=H62QG%yh%HXVKF%yh%PP4HP%yh%66KMR%yh%CW9BM" &:: Excel
 exit /b
 
 :8947d0b8-c33b-43e1-8c56-9b674c052832
-set "_key=QYYW6%hy%QP4CB%hy%MBV6G%hy%HYMCJ%hy%4T3J4" &:: Groove %hy% SharePoint Workspace
+set "_key=QYYW6%yh%QP4CB%yh%MBV6G%yh%HYMCJ%yh%4T3J4" &:: Groove - SharePoint Workspace
 exit /b
 
 :ca6b6639-4ad6-40ae-a575-14dee07f6430
-set "_key=K96W8%hy%67RPQ%hy%62T9Y%hy%J8FQJ%hy%BT37T" &:: InfoPath
+set "_key=K96W8%yh%67RPQ%yh%62T9Y%yh%J8FQJ%yh%BT37T" &:: InfoPath
 exit /b
 
 :ab586f5c-5256-4632-962f-fefd8b49e6f4
-set "_key=Q4Y4M%hy%RHWJM%hy%PY37F%hy%MTKWH%hy%D3XHX" &:: OneNote
+set "_key=Q4Y4M%yh%RHWJM%yh%PY37F%yh%MTKWH%yh%D3XHX" &:: OneNote
 exit /b
 
 :ecb7c192-73ab-4ded-acf4-2399b095d0cc
-set "_key=7YDC2%hy%CWM8M%hy%RRTJC%hy%8MDVC%hy%X3DWQ" &:: Outlook
+set "_key=7YDC2%yh%CWM8M%yh%RRTJC%yh%8MDVC%yh%X3DWQ" &:: Outlook
 exit /b
 
 :45593b1d-dfb1-4e91-bbfb-2d5d0ce2227a
-set "_key=RC8FX%hy%88JRY%hy%3PF7C%hy%X8P67%hy%P4VTT" &:: Powerpoint
+set "_key=RC8FX%yh%88JRY%yh%3PF7C%yh%X8P67%yh%P4VTT" &:: Powerpoint
 exit /b
 
 :b50c4f75-599b-43e8-8dcd-1081a7967241
-set "_key=BFK7F%hy%9MYHM%hy%V68C7%hy%DRQ66%hy%83YTP" &:: Publisher
+set "_key=BFK7F%yh%9MYHM%yh%V68C7%yh%DRQ66%yh%83YTP" &:: Publisher
 exit /b
 
 :2d0882e7-a4e7-423b-8ccc-70d91e0158b1
-set "_key=HVHB3%hy%C6FV7%hy%KQX9W%hy%YQG79%hy%CRY7T" &:: Word
+set "_key=HVHB3%yh%C6FV7%yh%KQX9W%yh%YQG79%yh%CRY7T" &:: Word
 exit /b
 
 :ea509e87-07a1-4a45-9edc-eba5a39f36af
-set "_key=D6QFG%hy%VBYP2%hy%XQHM7%hy%J97RH%hy%VVRCK" &:: Small Business Basics
+set "_key=D6QFG%yh%VBYP2%yh%XQHM7%yh%J97RH%yh%VVRCK" &:: Small Business Basics
 exit /b
 
 :TheEnd
 
 if %act_failed% EQU 1 (
-echo __________________________________________________________________
+echo ____________________________________________________________________
 echo.
 call :_errorinfo
 )
 
-echo.
 if not defined _tskinstalled if not defined _oldtsk (
+echo.
 if %winbuild% GEQ 9200 (
 call :leavenonexistentkms %nul%
 echo Keeping the non-existent IP address 10.0.0.10 as KMS Server.
@@ -2997,12 +3047,14 @@ call :Clear-KMS-Cache
 )
 )
 
-if defined _tskinstalled echo Renewal Task found, keeping the online KMS IP in the system.
-if defined _oldtsk echo Renewal Task found, keeping the online KMS IP in the system.
+if not [%Act_OK%]==[1] (
+echo.
+echo In case of any issues, check https://massgrave.dev/troubleshoot
+)
 
 if defined _unattended exit /b
 
-echo ___________________________________________________________________
+echo ____________________________________________________________________
 echo.
 call :_color %_Yellow% "Press any key to go back..."
 pause >nul
@@ -3015,7 +3067,7 @@ exit /b
 call :CheckFR
 
 set _intcon=
-for %%a in (dns.msftncsi.com licensing.mp.microsoft.com) do (
+for %%a in (l.root-servers.net resolver1.opendns.com download.windowsupdate.com google.com) do if not defined _intcon (
 for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not [%%#]==[] set _intcon=1)
 )
 
@@ -3024,33 +3076,36 @@ call :_color %_Red% "Internet is not connected."
 exit /b
 )
 
+if [%ERRORCODE%]==[-1073418124] (
+echo Checking Port 1688 connection, it may take a while...
+echo.
+
+set /a count=0
 set _portcon=
-for %%a in (%srvlist%) do if not defined _portcon (
+for %%a in (%srvlist%) do if not defined _portcon if !count! LEQ 7 (
+set /a count+=1
 %psc% "$t = New-Object Net.Sockets.TcpClient;try{$t.Connect("""%%a""", 1688)}catch{};$t.Connected" | findstr /i true 1>nul && set _portcon=1
 )
 
 if not defined _portcon (
-echo Internet is found but failed to connect KMS servers on Port 1688.
+call :_color %Red% "Port 1688 is blocked in your Internet connection."
 echo.
-echo Make sure restricted Internet [Office/College] is not connected, 
-echo or Port 1688 is not blocked in the firewall.
+echo Reason:   Probably restricted Internet [Office/College] is connected,
+echo           or Firewall is blocking the connection.
 echo.
-echo Either use another Internet connection or use offline KMS activator
+echo Solution: Either use another Internet connection or use offline KMS
+echo           https://github.com/abbodi1406/KMS_VL_ALL_AIO
+) else (
+echo Port 1688 connection test is passed.
+echo.
+echo Make sure system files are not blocked by your firewall.
+echo If the issue persists, try offline KMS
 echo https://github.com/abbodi1406/KMS_VL_ALL_AIO
-exit /b
 )
-
-if [%ERRORCODE%]==[-1073418124] (
-echo KMS server port 1688 test is passed.
-echo Make sure system files are not blocked in firewall.
-echo.
-echo If the issue persist, try offline KMS activator,
-echo https://github.com/abbodi1406/KMS_VL_ALL_AIO
 echo.
 )
 
 echo KMS server is not an issue in this case.
-call :_color2 %Magenta% "Check this page for help" %_Yellow% " https://massgrave.dev/troubleshoot"
 exit /b
 
 ::========================================================================================================================================
@@ -3062,9 +3117,9 @@ exit /b
 set srvlist=
 set -=
 
-set "srvlist=win.km%-%s.pub xincheng213%-%618.cn kms.six%-%yin.com kms.moec%-%lub.org kms.cgts%-%oft.com"
-set "srvlist=%srvlist% kms.03%-%k.org kms.moey%-%uuko.com kms.lol%-%i.best kms.zhuxi%-%aole.org kms.ca%-%tqu.com"
-set "srvlist=%srvlist% kms.lol%-%i.beer kms.ca%-%ry.tech kms.wx%-%lost.com kms.moeyu%-%uko.top kms.ghp%-%ym.com"
+set "srvlist=kms.zhu%-%xiaole.org kms-default.cangs%-%hui.net kms.six%-%yin.com kms.moe%-%club.org kms.cgt%-%soft.com"
+set "srvlist=%srvlist% kms.id%-%ina.cn kms.moe%-%yuuko.com xinch%-%eng213618.cn kms.wl%-%rxy.cn kms.ca%-%tqu.com"
+set "srvlist=%srvlist% kms.0%-%t.net.cn kms.its%-%jzx.com kms.wx%-%lost.com kms.moe%-%yuuko.top kms.gh%-%pym.com"
 
 set n=1
 for %%a in (%srvlist%) do (set %%a=&set server!n!=%%a&set /a n+=1)
@@ -3309,7 +3364,7 @@ if defined ActTask (s%nil%cht%nil%asks /cre%nil%ate /tn "Activation-Run_Once" /r
 if exist "%_temp%\.*" rmdir /s /q "%_temp%\" %nul%
 
 call :createInfo.txt
-call :RenExport _extracttask "%_dest%\Activation_task.cmd" ASCII
+%nul% %psc% "$f=[io.file]::ReadAllText('!_batp!') -split \":_extracttask\:.*`r`n\"; [io.file]::WriteAllText('%_dest%\Activation_task.cmd', '@REM Dummy ' + '%random%' + [Environment]::NewLine + $f[1].Trim(), [System.Text.Encoding]::ASCII);"
 title  Install Activation Auto-Renewal
 
 ::========================================================================================================================================
@@ -3351,6 +3406,7 @@ echo ___________________________________________________________________________
 echo.
 echo Info:
 echo Activation will be renewed every week if the Internet connection is found.
+echo It'll only renew installed KMS licenses. It won't convert any license to KMS.
 echo __________________________________________________________________________________________
 echo.
 if defined ActTask (
@@ -3359,7 +3415,7 @@ call :_color %Green% "Renewal and Activation Tasks were successfully created."
 call :_color %Green% "Renewal Task was successfully created."
 )
 echo.
-call :_color %Gray% "Make sure to run the Activation from the previous menu atleast once."
+call :_color %Gray% "Make sure you have run the Activation option at least once."
 echo __________________________________________________________________________________________
 )
 
@@ -3379,7 +3435,7 @@ exit /b
 :createInfo.txt
 
 (
-echo   The use of this script is to activate/renew your Windows/Office license using online KMS.
+echo   The use of this script is to renew your Windows/Office KMS license using online KMS.
 echo:
 echo   If renewal/activation Scheduled tasks were created then following would exist,
 echo:
@@ -3411,7 +3467,7 @@ exit /b
     <Date>1999-01-01T12:00:00.34375</Date>
     <Author>WindowsAddict</Author>
     <Version>1.0</Version>
-    <Description>Online_K-M-S_Activation-Renewal - Weekly Task</Description>
+    <Description>Online K-M-S Activation-Renewal - Weekly Task</Description>
     <URI>\Activation-Renewal</URI>
     <SecurityDescriptor>D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FRFX;;;LS)(A;;FRFW;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)(A;;FR;;;S-1-5-4)</SecurityDescriptor>
   </RegistrationInfo>
@@ -3475,7 +3531,7 @@ exit /b
     <Date>1999-01-01T12:00:00.34375</Date>
     <Author>WindowsAddict</Author>
     <Version>1.0</Version>
-    <Description>Online_K-M-S_Activation-Run_Once - Run and Delete itself on first Internet Contact</Description>
+    <Description>Online K-M-S Activation Run Once - Run and Delete itself on first Internet Contact</Description>
     <URI>\Activation-Run_Once</URI>
     <SecurityDescriptor>D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FRFX;;;LS)(A;;FRFW;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)(A;;FR;;;S-1-5-4)</SecurityDescriptor>
   </RegistrationInfo>
@@ -3568,11 +3624,12 @@ if exist "%SystemRoot%\Sysnative\reg.exe" (
 set "PATH=%SystemRoot%\Sysnative;%SystemRoot%\Sysnative\wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%PATH%"
 )
 
-reg query HKU\S-1-5-19 1>nul 2>nul || exit /b
+>nul fltmc || exit /b
 
 ::========================================================================================================================================
 
 set _tserror=
+set winbuild=1
 set "nul=>nul 2>&1"
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 set psc=powershell.exe
@@ -3877,7 +3934,6 @@ exit /b
 if %errorcode% EQU -1073417728 (
 echo Product Activation Failed: 0xC004F200
 echo Windows needs to rebuild the activation-related files.
-echo See KB2736303 for details.
 set _tserror=1
 exit /b
 )
@@ -3945,9 +4001,6 @@ exit /b
 %nul% reg add "HKLM\%SPPk%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%"
 %nul% reg add "HKLM\%OPPk%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%"
 
-::  Thanks to @dialmak for Office non-genuine banner solution
-::  forum.ru-board.com/topic.cgi?forum=35&topic=81283&start=6080#19
-
 if %winbuild% GEQ 9200 (
 %nul% reg add "HKLM\%SPPk%\%_oApp%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%"
 if defined notx86 (
@@ -3966,9 +4019,9 @@ exit /b
 set srvlist=
 set -=
 
-set "srvlist=win.km%-%s.pub xincheng213%-%618.cn kms.six%-%yin.com kms.moec%-%lub.org kms.cgts%-%oft.com"
-set "srvlist=%srvlist% kms.03%-%k.org kms.moey%-%uuko.com kms.lol%-%i.best kms.zhuxi%-%aole.org kms.ca%-%tqu.com"
-set "srvlist=%srvlist% kms.lol%-%i.beer kms.ca%-%ry.tech kms.wx%-%lost.com kms.moeyu%-%uko.top kms.ghp%-%ym.com"
+set "srvlist=kms.zhu%-%xiaole.org kms-default.cangs%-%hui.net kms.six%-%yin.com kms.moe%-%club.org kms.cgt%-%soft.com"
+set "srvlist=%srvlist% kms.id%-%ina.cn kms.moe%-%yuuko.com xinch%-%eng213618.cn kms.wl%-%rxy.cn kms.ca%-%tqu.com"
+set "srvlist=%srvlist% kms.0%-%t.net.cn kms.its%-%jzx.com kms.wx%-%lost.com kms.moe%-%yuuko.top kms.gh%-%pym.com"
 
 set n=1
 for %%a in (%srvlist%) do (set %%a=&set server!n!=%%a&set /a n+=1)
@@ -3994,7 +4047,7 @@ if not [%KMS_IP%]==[!KMS_IP!] exit /b
 goto :_taskgetserv
 )
 
-:: Ver:1.7
+:: Ver:1.8
 ::========================================================================================================================================
 :_extracttask:
 
@@ -4101,5 +4154,42 @@ set  "_White="07""
 set "_Yellow="0E""
 
 exit /b
+
+::========================================================================================================================================
+
+::  https://gist.github.com/ave9858/9fff6af726ba3ddc646285d1bbf37e71
+::  This code is used to clean Office licenses
+
+:cleanlicense:
+function UninstallLicenses($DllPath) {
+    $AssemblyBuilder = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1)
+    $ModuleBuilder = $AssemblyBuilder.DefineDynamicModule(2, $False)
+    $TypeBuilder = $ModuleBuilder.DefineType(0)
+    
+    [void]$TypeBuilder.DefinePInvokeMethod('SLOpen', $DllPath, 'Public, Static', 1, [int], @([IntPtr].MakeByRefType()), 1, 3)
+    [void]$TypeBuilder.DefinePInvokeMethod('SLGetSLIDList', $DllPath, 'Public, Static', 1, [int],
+        @([IntPtr], [int], [Guid].MakeByRefType(), [int], [int].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+    [void]$TypeBuilder.DefinePInvokeMethod('SLUninstallLicense', $DllPath, 'Public, Static', 1, [int], @([IntPtr], [IntPtr]), 1, 3)
+
+    $SPPC = $TypeBuilder.CreateType()
+    $Handle = 0
+    [void]$SPPC::SLOpen([ref]$Handle)
+    $pnReturnIds = 0
+    $ppReturnIds = 0
+
+    if (!$SPPC::SLGetSLIDList($Handle, 0, [ref][Guid]"0ff1ce15-a989-479d-af46-f275c6370663", 6, [ref]$pnReturnIds, [ref]$ppReturnIds)) {
+        foreach ($i in 0..($pnReturnIds - 1)) {
+            [void]$SPPC::SLUninstallLicense($Handle, [Int64]$ppReturnIds + [Int64]16 * $i)
+        }    
+    }
+}
+
+$OSPP = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform" -ErrorAction SilentlyContinue).Path
+if ($OSPP) {
+    Write-Output "Found Office Software Protection installed, cleaning"
+    UninstallLicenses($OSPP + "osppc.dll")
+}
+UninstallLicenses("sppc.dll")
+:cleanlicense:
 
 ::========================================================================================================================================

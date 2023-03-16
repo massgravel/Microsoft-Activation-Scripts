@@ -1,9 +1,9 @@
 @setlocal DisableDelayedExpansion
 @echo off
 
-::  For command line switches, check https://massgrave.dev/
+::  For command line switches, check https://massgrave.dev/command_line_switches.html
 ::  If you want to better understand script, read from MAS separate files version. 
-::
+
 ::============================================================================
 ::
 ::   This script is a part of 'Microsoft Activation Scripts' (MAS) project.
@@ -54,7 +54,7 @@ pushd "%~dp0"
 >nul findstr /rxc:".*" "%~nx0"
 if not %errorlevel%==0 (
 echo:
-echo Error: This is not a correct file. It has LF line ending issue.
+echo Error: Script either has LF line ending issue, or it failed to read itself.
 echo:
 popd
 ping 127.0.0.1 -n 6 > nul
@@ -66,7 +66,7 @@ popd
 
 cls
 color 07
-title  Microsoft Activation Scripts AIO
+title  Microsoft Activation Scripts
 
 set _args=
 set _elev=
@@ -190,7 +190,7 @@ setlocal EnableDelayedExpansion
 
 cls
 color 07
-title  Microsoft Activation Scripts AIO 1.7
+title  Microsoft Activation Scripts 1.8
 mode 76, 30
 set "mastemp=%SystemRoot%\Temp\__MAS"
 if exist "%mastemp%\.*" rmdir /s /q "%mastemp%\" %nul%
@@ -210,18 +210,20 @@ echo:             [3] Online KMS  ^|  Windows / Office  ^|    180 Days
 echo:             __________________________________________________      
 echo:
 echo:             [4] Activation Status
-echo:             [5] Extras
-echo:             [6] Help
-echo:             [0] Exit                                   
+echo:             [5] Troubleshoot
+echo:             [6] Extras
+echo:             [7] Help
+echo:             [0] Exit
 echo:       ______________________________________________________________
 echo:
-call :_color2 %_White% "          " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,6,0] :"
-choice /C:1234560 /N
+call :_color2 %_White% "          " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,6,7,0] :"
+choice /C:12345670 /N
 set _erl=%errorlevel%
 
-if %_erl%==7 exit /b
-if %_erl%==6 start https://massgrave.dev & goto :MainMenu
-if %_erl%==5 goto:Extras
+if %_erl%==8 exit /b
+if %_erl%==7 start https://massgrave.dev & goto :MainMenu
+if %_erl%==6 goto:Extras
+if %_erl%==5 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
 if %_erl%==4 setlocal & call :_Check_Status_wmi & cls & endlocal & goto :MainMenu
 if %_erl%==3 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
 if %_erl%==2 setlocal & call :KMS38Activation   & cls & endlocal & goto :MainMenu
@@ -240,29 +242,28 @@ echo:
 echo:
 echo:
 echo:
+echo:
 echo:       ______________________________________________________________
 echo:
-echo:             [1] Activation Troubleshoot
-echo:             [2] Change Windows Edition
+echo:             [1] Change Windows Edition
 echo:
-echo:             [3] Extract $OEM$ Folder
-echo:             [4] Insert Windows HWID Key
-echo:             [5] Activation Status [vbs]
+echo:             [2] Extract $OEM$ Folder
+echo:             [3] Insert Windows HWID Key
+echo:             [4] Activation Status [vbs]
 echo:             __________________________________________________      
 echo:                                                                     
 echo:             [0] Go to Main Menu
 echo:       ______________________________________________________________
 echo:
-call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,0] :"
-choice /C:123450 /N
+call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,0] :"
+choice /C:12340 /N
 set _erl=%errorlevel%
 
-if %_erl%==6 goto :MainMenu
-if %_erl%==5 setlocal & call :_Check_Status_vbs & cls & endlocal & goto :Extras
-if %_erl%==4 setlocal & call :insert_hwidkey    & cls & endlocal & goto :Extras
-if %_erl%==3 goto:Extract$OEM$
-if %_erl%==2 setlocal & call :change_edition    & cls & endlocal & goto :Extras
-if %_erl%==1 setlocal & call :troubleshoot      & cls & endlocal & goto :Extras
+if %_erl%==5 goto :MainMenu
+if %_erl%==4 setlocal & call :_Check_Status_vbs & cls & endlocal & goto :Extras
+if %_erl%==3 setlocal & call :insert_hwidkey    & cls & endlocal & goto :Extras
+if %_erl%==2 goto:Extract$OEM$
+if %_erl%==1 setlocal & call :change_edition    & cls & endlocal & goto :Extras
 goto :Extras
 
 ::========================================================================================================================================
@@ -350,7 +351,6 @@ echo ^(goto^) 2^>nul ^& ^(if "%%~dp0"=="%%SystemRoot%%\Setup\Scripts\" rd /s /q 
 set _error=
 if not exist "!_dir!\MAS_AIO.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
-
 
 if defined _error (
 %eline%
@@ -448,14 +448,15 @@ if %~z0 GEQ 200000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
 if %winbuild% LSS 10240 (
 %eline%
 echo Unsupported OS version detected.
-echo Project is supported for Windows 10/11.
+echo HWID Activation is supported only for Windows 10/11.
+echo Use Online KMS Activation option.
 goto dk_done
 )
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 %eline%
 echo HWID Activation is not supported for Windows Server.
-echo Use KMS38 or KMS Activation.
+echo Use KMS38 or Online KMS Activation option.
 goto dk_done
 )
 
@@ -478,7 +479,7 @@ setlocal EnableDelayedExpansion
 ::========================================================================================================================================
 
 cls
-mode 102, 33
+mode 102, 34
 title  HWID Activation
 
 echo:
@@ -523,9 +524,12 @@ if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID 2>nul | find /i "Eval" 1>nul && (
 %eline%
 echo [%winos% ^| %winbuild%]
-echo Evaluation Editions cannot be activated. Download ^& Install full version of Windows OS.
 echo:
-echo https://massgrave.dev/
+echo Evaluation Editions cannot be activated. 
+echo You need to install full version of %winos%
+echo:
+echo Download it from here,
+echo https://massgrave.dev/genuine-installation-media.html
 goto dk_done
 )
 )
@@ -555,27 +559,28 @@ goto dk_done
 
 set error=
 
-::  Check Internet connection
-
 cls
 echo:
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
 echo Checking OS Info                        [%winos% ^| %winbuild% ^| %arch%]
 
-set _intcon=
-for /f "delims=[] tokens=2" %%# in ('ping -n 1 licensing.mp.microsoft.com') do if not [%%#]==[] set _intcon=1
+::  Check Internet connection
 
-%psc% "$t = New-Object Net.Sockets.TcpClient;try{$t.Connect("""licensing.mp.microsoft.com""", 443)}catch{};$t.Connected" | findstr /i true 1>nul
-if %errorlevel% EQU 0 (
+set _int=
+for %%a in (l.root-servers.net resolver1.opendns.com download.windowsupdate.com google.com) do if not defined _int (
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not [%%#]==[] set _int=1)
+)
+
+if not defined _int (
+%psc% "If([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]'{DCB00C01-570F-4A9B-8D69-199FDBA5723B}')).IsConnectedToInternet){Exit 0}Else{Exit 1}"
+if !errorlevel!==0 set _int=1
+)
+
+if defined _int (
 echo Checking Internet Connection            [Connected]
 ) else (
 set error=1
-if defined _intcon (
-call :dk_color %Red% "Checking Internet Connection            [Internet Found But Cant Connect licensing.mp.microsoft.com]"
-call :dk_color %Magenta% "Make sure restricted Internet [Office/College] is not connected and URL is not blocked in the system"
-) else (
 call :dk_color %Red% "Checking Internet Connection            [Not Connected]"
-)
 )
 
 ::========================================================================================================================================
@@ -597,16 +602,41 @@ echo Enabling Windows Script Host            [Successful]
 
 echo Initiating Diagnostic Tests...
 
-set "_serv=ClipSVC wlidsvc sppsvc LicenseManager Winmgmt wuauserv"
+set "_serv=ClipSVC wlidsvc sppsvc KeyIso LicenseManager Winmgmt wuauserv"
 
 ::  Client License Service (ClipSVC)
 ::  Microsoft Account Sign-in Assistant
 ::  Software Protection
+::  CNG Key Isolation
 ::  Windows License Manager Service
 ::  Windows Management Instrumentation
 ::  Windows Update
 
 call :dk_errorcheck
+
+::  Check Windows updates and store app blockers
+
+set updatesblock=
+echo: %serv_ste% | findstr /i "wuauserv" %nul% && set updatesblock=1
+for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\UsoSvc /v Start 2^>nul') do if /i %%b equ 0x4 set updatesblock=1
+if exist "%SystemRoot%\System32\WaaSMedicSvc.dll" (
+for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\WaaSMedicSvc /v Start 2^>nul') do if /i %%b equ 0x4 set updatesblock=1
+)
+
+reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer /v SettingsPageVisibility 2>nul | find /i "windowsupdate" %nul% && set updatesblock=1
+reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdateSysprepInProgress %nul% && set updatesblock=1
+reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate /s 2>nul | findstr /i "NoAutoUpdate DisableWindowsUpdateAccess" %nul% && set updatesblock=1
+
+if defined updatesblock (
+call :dk_color %Gray% "Checking Windows Update Blockers        [Found]"
+if defined applist echo: %serv_e% | find /i "wuauserv" %nul% && (
+call :dk_color %Magenta% "Windows Update Service [wuauserv] is not working. Enable it incase if you have disabled it."
+)
+)
+
+reg query "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v DisableStoreApps 2>nul | find /i "0x1" %nul% && (
+call :dk_color %Gray% "Checking Store App Blocker              [Found]"
+)
 
 ::========================================================================================================================================
 
@@ -633,7 +663,8 @@ if defined altkey (set key=%altkey%&set changekey=1&set notworking=)
 if defined notworking if defined notfoundaltactID (
 call :dk_color %Red% "Checking Alternate Edition For HWID     [%altedition% Activation ID Not Found]"
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
-call :dk_color %Magenta% "Evaluation Windows Found. Install Full version of Windows. https://massgrave.dev/"
+call :dk_color %Magenta% "Evaluation Windows Found. Install Full version of %winos%"
+call :dk_color %Magenta% "Download it from https://massgrave.dev/genuine-installation-media.html"
 )
 )
 
@@ -646,6 +677,8 @@ echo https://massgrave.dev
 echo:
 goto dk_done
 )
+
+if defined notworking set error=1
 
 ::========================================================================================================================================
 
@@ -668,9 +701,13 @@ if %errorcode% EQU 0 (
 call :dk_refresh
 echo Installing Generic Product Key          [%key%] [Successful]
 ) else (
-set error=1
 call :dk_color %Red% "Installing Generic Product Key          [%key%] [Failed] %errorcode%"
-if defined applist if defined actidnotfound call :dk_color %Red% "Activation ID not found for this key. Make sure you are using updated version of MAS."
+if not defined error (
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
+if defined actidnotfound call :dk_color %Red% "Activation ID not found for this key. Make sure you are using updated version of MAS."
+set showfix=1
+)
+set error=1
 )
 
 ::========================================================================================================================================
@@ -683,7 +720,7 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKCU\Control Panel\International\G
 set regionchange=
 if not "%name%"=="US" (
 set regionchange=1
-%psc% Set-WinHomeLocation -GeoId 244
+%psc% "Set-WinHomeLocation -GeoId 244" %nul%
 if !errorlevel! EQU 0 (
 echo Changing Windows Region To USA          [Successful]
 ) else (
@@ -694,14 +731,15 @@ call :dk_color %Red% "Changing Windows Region To USA          [Failed]"
 ::==========================================================================================================================================
 
 ::  Generate GenuineTicket.xml and apply
-::  Most correct way to apply a ticket is by restarting ClipSVC service but we can not check the log details in this way
-::  To get the log details and also to correctly apply ticket, script will install tickets two times (service restart + clipup -v -o)
+::  In some cases clipup -v -o method fails and in some cases service restart method fails as well
+::  To maximize success rate and get better error details, script will install tickets two times (service restart + clipup -v -o)
 
 set "tdir=%ProgramData%\Microsoft\Windows\ClipSVC\GenuineTicket"
 if not exist "%tdir%\" md "%tdir%\" %nul%
 
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
+if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*" del /f /q "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*" %nul%
 
 call :hwiddata ticket
 
@@ -725,6 +763,7 @@ net start ClipSVC /y %nul%
 %_xmlexist% timeout /t 2 %nul%
 
 %_xmlexist% (
+set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
 call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipSVC Service Restart, Wait...]"
 )
@@ -732,6 +771,26 @@ call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipS
 
 copy /y /b "%tdir%\GenuineTicket" "%tdir%\GenuineTicket.xml" %nul%
 clipup -v -o
+
+set rebuildinfo=
+
+%_xmlexist% (
+set error=1
+set rebuildinfo=1
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With clipup -v -o]"
+)
+
+if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*.xml" (
+set error=1
+set rebuildinfo=1
+call :dk_color %Red% "Checking Ticket Migration               [Failed]"
+)
+
+if defined applist if not defined showfix if defined rebuildinfo (
+set showfix=1
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
+)
+
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 
 ::==========================================================================================================================================
@@ -740,20 +799,50 @@ call :dk_product
 
 echo:
 echo Activating...
-echo:
 
 call :dk_act
 call :dk_checkperm
 if defined _perm (
-call :dk_color %Green% "%winos% is permanently activated."
+echo:
+call :dk_color %Green% "%winos% is permanently activated with a digital license."
 goto :dl_final
 )
 
+::  Extended licensing servers tests incase error not found and activation failed
 
+set resfail=
 if not defined error (
 
-REM Clear store ID related registry to fix activation incase if there is any corruption
+ipconfig /flushdns %nul%
+set "tls=$Tls12 = [Enum]::ToObject([System.Net.SecurityProtocolType], 3072); [System.Net.ServicePointManager]::SecurityProtocol = $Tls12;"
 
+for %%# in (
+login.live.com/ppsecure/deviceaddcredential.srf
+purchase.mp.microsoft.com/v7.0/users/me/orders
+) do if not defined resfail (
+set "d1=Add-Type -AssemblyName System.Net.Http;"
+set "d1=!d1! $client = [System.Net.Http.HttpClient]::new();"
+set "d1=!d1! $response = $client.GetAsync('https://%%#').GetAwaiter().GetResult();"
+set "d1=!d1! $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()"
+%psc% "!tls! !d1!" 2>nul | findstr /i "PurchaseFD DeviceAddResponse" 1>nul || set resfail=1
+)
+
+if not defined resfail (
+%psc% "!tls! irm https://licensing.mp.microsoft.com/v7.0/licenses/content -Method POST" | find /i "traceId" 1>nul || set resfail=1
+)
+
+if defined resfail (
+set error=1
+echo:
+call :dk_color %Red% "Checking Licensing Servers              [Failed To Connect]"
+call :dk_color2 %Magenta% "Check this page for help" %_Yellow% " https://massgrave.dev/licensing-servers-issue"
+)
+)
+
+::  Clear store ID related registry to fix activation incase error not found
+
+if not defined error (
+echo:
 set "_ident=HKU\S-1-5-19\SOFTWARE\Microsoft\IdentityCRL"
 reg delete "!_ident!" /f %nul%
 reg query "!_ident!" %nul% && (
@@ -770,13 +859,16 @@ call :dk_act
 call :dk_checkperm
 )
 
+echo:
 if defined _perm (
-call :dk_color %Green% "%winos% is permanently activated."
+call :dk_color %Green% "%winos% is permanently activated with a digital license."
 ) else (
 call :dk_color %Red% "Activation Failed %error_code%"
 if defined notworking (
 call :dk_color %Magenta% "At the time of writing this, HWID Activation was not supported for this product."
+call :dk_color %Magenta% "Use KMS38 Activation option."
 ) else (
+if not defined error call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
 call :dk_color2 %Magenta% "Check this page for help" %_Yellow% " https://massgrave.dev/troubleshoot"
 )
 )
@@ -788,15 +880,15 @@ call :dk_color2 %Magenta% "Check this page for help" %_Yellow% " https://massgra
 echo:
 
 if defined regionchange (
-%psc% Set-WinHomeLocation -GeoId %nation%
+%psc% "Set-WinHomeLocation -GeoId %nation%" %nul%
 if !errorlevel! EQU 0 (
 echo Restoring Windows Region                [Successful]
 ) else (
-call :dk_color %Red% "Restoring Windows Region                [Failed] [%name%-%nation%]"
+call :dk_color %Red% "Restoring Windows Region                [Failed] [%name% - %nation%]"
 )
 )
 
-if %osSKU%==175 call :dk_color %Red% "ServerRdsh Editon does not officially support activation on non-azure platforms."
+if %osSKU%==175 call :dk_color %Red% "%winos% does not support activation on non-azure platforms."
 
 goto :dk_done
 
@@ -841,22 +933,6 @@ if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISE
 %chkapp% do (if defined applist (call set "applist=!applist! %%a") else (call set "applist=%%a"))
 exit /b
 
-::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
-
-:dk_product
-
-set winos=
-set d1=[DllImport(\"winbrand\",CharSet=CharSet.Unicode)]public static extern string BrandingFormatString(string s);
-set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $AP::BrandingFormatString('%%WINDOWS_LONG%%')
-for /f "delims=" %%s in ('"%psc% %d2%"') do if not errorlevel 1 (set winos=%%s)
-echo "%winos%" | find /i "Windows" 1>nul || (
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName 2^>nul') do set "winos=%%b"
-if %winbuild% GEQ 22000 (
-set winos=!winos:Windows 10=Windows 11!
-)
-)
-exit /b
-
 ::  Check wmic.exe
 
 :dk_ckeckwmic
@@ -865,6 +941,34 @@ set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul && set _wmic=1
 )
+exit /b
+
+::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
+
+:dk_product
+
+call :dk_reflection
+
+set d1=%ref% $meth = $TypeBuilder.DefinePInvokeMethod('BrandingFormatString', 'winbrand.dll', 'Public, Static', 1, [String], @([String]), 1, 3);
+set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%')
+
+set winos=
+for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set winos=%%s)
+echo "%winos%" | find /i "Windows" 1>nul || (
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName 2^>nul') do set "winos=%%b"
+if %winbuild% GEQ 22000 (
+set winos=!winos:Windows 10=Windows 11!
+)
+)
+exit /b
+
+::  Common lines used in PowerShell reflection code
+
+:dk_reflection
+
+set ref=$AssemblyBuilder = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1);
+set ref=%ref% $ModuleBuilder = $AssemblyBuilder.DefineDynamicModule(2, $False);
+set ref=%ref% $TypeBuilder = $ModuleBuilder.DefineType(0);
 exit /b
 
 ::========================================================================================================================================
@@ -876,8 +980,11 @@ exit /b
 set serv_ste=
 for %%# in (%_serv%) do (
 set serv_dis=
-reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start %nul% || set serv_dis=1
+reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v ImagePath %nul% || set serv_dis=1
 for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start 2^>nul') do if /i %%b equ 0x4 set serv_dis=1
+sc start %%# %nul%
+if !errorlevel! EQU 1058 set serv_dis=1
+sc query %%# %nul% || set serv_dis=1
 if defined serv_dis (if defined serv_ste (set "serv_ste=!serv_ste! %%#") else (set "serv_ste=%%#"))
 )
 
@@ -891,26 +998,23 @@ for %%# in (%serv_ste%) do (
 if /i %%#==ClipSVC        (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
 if /i %%#==wlidsvc        sc config %%# start= demand %nul%
 if /i %%#==sppsvc         (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
+if /i %%#==KeyIso         sc config %%# start= demand %nul%
 if /i %%#==LicenseManager sc config %%# start= demand %nul%
 if /i %%#==Winmgmt        sc config %%# start= auto %nul%
 if /i %%#==wuauserv       sc config %%# start= demand %nul%
 if !errorlevel!==0 (
 if defined serv_csts (set "serv_csts=!serv_csts! %%#") else (set "serv_csts=%%#")
 ) else (
-set error=1
 if defined serv_cste (set "serv_cste=!serv_cste! %%#") else (set "serv_cste=%%#")
 )
 )
 )
 
-if defined serv_csts echo Enabling Disabled Services              [Successful] [%serv_csts%]
+if defined serv_csts call :dk_color %Gray% "Enabling Disabled Services              [Successful] [%serv_csts%]"
 
 if defined serv_cste (
-echo %serv_cste% | findstr /i "ClipSVC sppsvc" %nul% && (
-call :dk_color %Red% "Enabling Disabled Services              [Failed] [%serv_cste%] [Restart System]"
-) || (
+set error=1
 call :dk_color %Red% "Enabling Disabled Services              [Failed] [%serv_cste%]"
-)
 )
 
 ::========================================================================================================================================
@@ -923,22 +1027,43 @@ for %%# in (%_serv%) do (
 set errorcode=
 set checkerror=
 net start %%# /y %nul%
+set errorcode=!errorlevel!
 sc query %%# | find /i "4  RUNNING" %nul% || set checkerror=1
 
 sc start %%# %nul%
-set errorcode=!errorlevel!
-if !errorcode! NEQ 1056 if !errorcode! NEQ 0 set checkerror=1
+if !errorlevel! NEQ 1056 if !errorlevel! NEQ 0 (set errorcode=!errorlevel!&set checkerror=1)
 if defined checkerror if defined serv_e (set "serv_e=!serv_e!, %%#-!errorcode!") else (set "serv_e=%%#-!errorcode!")
 )
 
 if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
+echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
+call :dk_color %Magenta% "Restart the system to fix disabled service error 1058."
+)
 )
 
 ::========================================================================================================================================
 
 ::  Various error checks
+
+if defined safeboot_option (
+set error=1
+call :dk_color2 %Red% "Checking Boot Mode                      " %Magenta% "[System is running in safe mode. Run in normal mode.]"
+)
+
+
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" 2>nul | find /i "IMAGE_STATE_COMPLETE" 1>nul || (
+set error=1
+call :dk_color2 %Red% "Checking Audit Mode                     " %Magenta% "[System is running in Audit mode. Run in normal mode.]"
+)
+
+
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WinPE" /v InstRoot %nul% && (
+set error=1
+call :dk_color2 %Red% "Checking WinPE                          " %Magenta% "[System is running in WinPE mode. Run in normal mode.]"
+)
+
 
 for %%# in (wmic.exe) do @if "%%~$PATH:#"=="" (
 call :dk_color %Gray% "Checking WMIC.exe                       [Not Found]"
@@ -951,16 +1076,18 @@ call :dk_color %Red% "Checking Powershell                     [Not Responding]"
 )
 
 
+set wmifailed=
 if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
 if %_wmic% EQU 0 %psc% "Get-CIMInstance -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" 2>nul | find /i "computersystem" 1>nul
 if %errorlevel% NEQ 0 (
 set error=1
+set wmifailed=1
 call :dk_color %Red% "Checking WMI                            [Not Responding] %_wmic%"
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix WMI option."
 )
 
 
 if not "%regSKU%"=="%wmiSKU%" (
-set error=1
 call :dk_color %Red% "Checking WMI/REG SKU                    [Difference Found - WMI:%wmiSKU% Reg:%regSKU%]"
 )
 
@@ -975,6 +1102,7 @@ call :dk_color %Red% "Checking DISM                           [Not Responding] %
 
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
+set error=1
 call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
 )
 
@@ -991,13 +1119,13 @@ call :dk_color %Red% "Checking slmgr /dlv                     [Not Responding] %
 
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
 set error=1
-call :dk_color %Red% "Checking Rearm                          [System Restart Is Required]"
+call :dk_color2 %Red% "Checking Rearm                          " %Magenta% "[System Restart Is Required]"
 )
 
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState" %nul% && (
 set error=1
-call :dk_color %Red% "Checking ClipSVC                        [System Restart Is Required]"
+call :dk_color2 %Red% "Checking ClipSVC                        " %Magenta% "[System Restart Is Required]"
 )
 
 
@@ -1006,6 +1134,12 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPla
 call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found, Changing To 0]"
 net stop sppsvc /y %nul%
 net start sppsvc /y %nul%
+set error=1
+)
+
+
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
+call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set error=1
 )
 
@@ -1024,24 +1158,69 @@ call :dk_color %Red% "Checking Activation IDs                 [Not Found]"
 )
 
 
-set token=0
-if exist %Systemdrive%\Windows\System32\spp\store\2.0\tokens.dat set token=1
-if exist %Systemdrive%\Windows\System32\spp\store_test\2.0\tokens.dat set token=1
-if %token%==0 (
+set tokenstore=
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore 2^>nul') do call set "tokenstore=%%b"
+if not exist "%tokenstore%\" (
 set error=1
-call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found]"
+call :dk_color %Red% "Checking SPP Token Folder               [Not Found] [%tokenstore%\]"
 )
+
+
+if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
+set error=1
+call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
+)
+
+
+if not exist %ProgramData%\Microsoft\Windows\ClipSVC\tokens.dat (
+set error=1
+call :dk_color %Red% "Checking ClipSVC tokens.dat             [Not Found]"
+)
+
 
 if not exist %SystemRoot%\system32\sppsvc.exe (
 set error=1
 call :dk_color %Red% "Checking sppsvc.exe File                [Not Found]"
 )
 
-if /i %error_code% EQU 0xc0000022 (
-echo "%serv_e%" | find /i "sppsvc" %nul% && (
-call :dk_color %Magenta% "Looks like you may have used a Gaming spoofer. Check Activation Troubleshoot option in MAS."
+
+::  Below checks are performed if required services are not disabled + slmgr /dlv errorlevel is not Zero + Rearm restart is not required + WMI is working fine
+
+set showfix=
+set wpaerror=
+set permerror=
+if not defined serv_cste if /i not %error_code%==0 if /i not %error_code%==0xC004D302 if not defined wmifailed (
+
+REM  This code checks for invalid registry keys in HKLM\SYSTEM\WPA. This issue may appear even on healthy systems.
+
+if %winbuild% GEQ 14393 (
+set /a count=0
+for /f %%a in ('reg query "HKLM\SYSTEM\WPA" 2^>nul') do set /a count+=1
+for /L %%# in (1,1,!count!) do (
+reg query "HKLM\SYSTEM\WPA\8DEC0AF1-0341-4b93-85CD-72606C2DF94C-7P-%%#" /ve /t REG_BINARY %nul% || set wpaerror=1
 )
+if defined wpaerror call :dk_color %Red% "Checking WPA Registry Keys              [Error Found] [Registry Count - !count!]"
 )
+
+REM  This code checks if NT SERVICE\sppsvc has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers. 
+
+if not exist "%tokenstore%\" set permerror=1
+
+for %%# in (
+"%tokenstore%"
+"HKLM:\SYSTEM\WPA"
+"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
+) do if not defined permerror (
+%psc% "$acl = Get-Acl '%%#'; if ($acl.Access.Where{ $_.IdentityReference -eq 'NT SERVICE\sppsvc' -and $_.AccessControlType -eq 'Deny' -or $acl.Access.IdentityReference -notcontains 'NT SERVICE\sppsvc'}) {Exit 2}" %nul%
+if !errorlevel!==2 set permerror=1
+)
+if defined permerror call :dk_color %Red% "Checking SPP Permissions                [Error Found]"
+
+set showfix=1
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
+if not defined permerror call :dk_color %Magenta% "If activation still fails then run Fix WPA Registry option."
+)
+
 exit /b
 
 ::========================================================================================================================================
@@ -1090,38 +1269,39 @@ exit /b
 
 :hwiddata
 
+set f=
 for %%# in (
-8b351c9c-f398-4515-9900-09df49427262_XGVPP-NMH47-7TTHJ-W3FW7-8HV2C___4_X19-99683_X9J5T0gPQprYpz2euPvoJGlkurIO9h6N8ypE0KWYVpy0nbCKYnqSUCD7u8ReXAmc085jX2uM5PKurSee9Yq/PxesgiysQHDBsOhr98MXZZiIgy4ssnz2gZF70KB8tO3X7kk9LHwxXfz3rlquYPod9swe90nqvVaJMWCpQK0InUw_0_OEM:NONSLP_Enterprise
-c83cef07-6b72-4bbc-a28f-a00386872839_3V6Q6-NQXCX-V8YXR-9QCYV-QPFCT__27_X19-98746_WFZBjlVtHQumoaVE28/NHsRvv1lgkkfav6NPHqr6OC2u4vxkjjJkkl9OTF6DpHJu0IFrrQv+HYcdZ/WC5EzhOMqMxcujTBSAN7xLIVEbs72Db0Bi5iDAbOltJpk8QKKe18otQJ6vajW5WOPXjbgSJfDFaZQfiwvIJ1ICXt+stog_0_Volume:MAK_EnterpriseN
-4de7cb65-cdf1-4de9-8ae8-e3cce27b9f2c_VK7JG-NPHTM-C97JM-9MPGT-3V66T__48_X19-98841_K3qev/5gQpX1RK1F9M9beEWWv/di1GsRF7OUcEMGTGDTYnaRenRcJaO8zOHQQvKDc57fon/v77ZpHQHT/jWWhWnLm7Ssory+s8tOs72fPjivVBDwpSPIEC1v+8Vpb4a3XCZet2e/Z5wmpCq9XDkowys3IcxYM0mHWBaNPu8gIe4_0_____Retail_Professional
-9fbaf5d6-4d83-4422-870d-fdda6e5858aa_2B87N-8KFHP-DKV6R-Y2C8J-PKCKT__49_X19-98859_WcAcor6kQgxgkTRzcoxnb8UIoo5/ueYeaOKqy9/xAzlruHAKxhatXeGtSI58lXcCK5hxXkDmcyrRFwWSwdvg0txwTi7VusYcTNCLdmNWU/62iDrBhzMrCYtuhW9EV/g4+TlbjSm4PBJ0HMlI4YzAEnyJiBgKPDgBQ8Gj9LRbEgU_0_____Retail_ProfessionalN
-f742e4ff-909d-4fe9-aacb-3231d24a0c58_4CPRK-NM3K3-X6XXQ-RXX86-WXCHW__98_X19-98877_MBDSEqlayxtVVEgIeAl8milgjS/BVHow6+MmpCyh9nweuctlT1+LbEHmDlnqDeLr9FQrN2FpEJtNr26rE0niMdvcAP51MfJsREyhWOEbrWwWyMH0KwDAci2WxWZTJp/SEZnq5HYYT1pPPLMWAkKRHJksJJFtg4zBtoyHvLjc35c_0_____Retail_CoreN
-1d1bac85-7365-4fea-949a-96978ec91ae0_N2434-X9D7W-8PF6X-8DV9T-8TYMD__99_X19-99652_mpjCoh6soA/rwJutsjekZpA9vDUD8znR20V/c8FwSjuCcSbPhmP6bpJR9rfptAZqpagliMxA/OUZsx0Knt0n/hgOy2mv8pr24gI9uYXK8EfhG74bVdsyvZz1tyA6CaVR02ZahQvbKYzCmXUvsI+Wge3bHbKbVpn9Mvl+itn2a4g_0_____Retail_CoreCountrySpecific
-3ae2cc14-ab2d-41f4-972f-5e20142771dc_BT79Q-G7N6G-PGBYW-4YWX6-6F4BT_100_X19-99661_KaUs6KwvtthPOsxd3x0tU/baKSv1DWSFOqbq7PbU/uYEY95p0Skzv3y4aXq+xVmfwSt8STL/4vSfFIAlsaRh7Vnq6Y/Ael8joeqI8hBN461fykoHxSELRMJ+eed50T0cJUS79ol6OTBOCCVeHgmtGVbHuL88TMWW69fGNdIMM3U_0_____Retail_CoreSingleLanguage
-2b1f36bb-c1cd-4306-bf5c-a0367c2d97d8_YTMG3-N6DKC-DKB77-7M9GH-8HVX7_101_X19-98868_NpHxrAtA+GL6kawAP5Z2UdfUVcKFvf9UzEe6FIV/HztZqxpMBDFv2hdxCjD9+T8PKcW8j3n04McelOAgr3lD37Fu+wrvJIGX0dG3xEtU/MG9L9X5baBS8H6AmC6rq2+w5NUY8EchK9W2oatBflFb8IcfCSeAyOfsJei6bdu4mp8_0_____Retail_Core
-2a6137f3-75c0-4f26-8e3e-d83d802865a4_XKCNC-J26Q9-KFHD2-FKTHY-KD72Y_119_X19-99606_gtywgqIP3j+bliKdunuseeZWtsOzWhj+DmSBq7nqeNarHutgbWEwvcRiGo+nwxONt9Ak/VyuO76ZWH/db3iRVTk1y61vFv15gVlOy1ovLjVHBvmPVdQXIne2N+pIMb0eBhZWHRX63mYdkZRZ0wg/+bj4xsjJv+qLpWhVCzNMge4_0_OEM:NONSLP_PPIPro
-e558417a-5123-4f6f-91e7-385c1c7ca9d4_YNMGQ-8RYV3-4PGQ3-C8XTP-7CFBY_121_X19-98886_VuBmoSUdF63Cvwm9wNlc2yhD2tP9B72iVVWFNcbAwDGXF6o06oNMsIJ0VqGJDdBzZjVGw2wHokMabxZNDyIl90CO7trwgV8S0lLJVLymxyUaE3ThvN3YUsi9Q3H+5Kr0RpsojCWb+UQd/GY4bSXfyStXFylj6im7yv0db/ZWGbw_0_____Retail_Education
-c5198a66-e435-4432-89cf-ec777c9d0352_84NGF-MHBT6-FXBX8-QWJK7-DRR8H_122_X19-98892_jQ6S2bbNoVrp/zvi8BEUwCf7fge1nAdspcjXyTeTySUiR+hXPiKQEWgyLqAdZ5Or+X2JGT/LZN1/eZ9P+REmzG/WQotZ+fyyPguoSsES+d312RkfmQoI5gVanEkGjZSU4YohREM/Vyf9MOO7dbH9MMEpFm2mje6OnhyJo2gux0g_0_____Retail_EducationN
-cce9d2de-98ee-4ce2-8113-222620c64a27_KCNVH-YKWX8-GJJB9-H9FDT-6F7W2_125_X22-66075_wJ/BPDFz+13PVJtBqBo+E4LCm3LoMVALCQUun9kXGBULr7V8FQ5nKUudUGHDLNNVIIicdw9Uh26BKAt0/hnE7BpBkzwdi4qAdZgKXQ1t06Ek4+zXmoT225NvpaHsuhDkE687TtCB1ZWvAulA8G9ehE3HTJSoNm4wCFOQyIQQtqQ_1_Volume:MAK_EnterpriseS_VB
-d06934ee-5448-4fd1-964a-cd077618aa06_43TBQ-NH92J-XKTM7-KT3KK-P39PB_125_X21-83233_V+y0SFmAnGwRwgNz+0sO0mj+XxSjbdRDpom1Iqx2BJcsf96Q5ittJOcMhKiNswyKuq5suM5vy60tA/AUdb1mrnnrnXfmz7nFam/BIOOfa18GA7vd1aNFufhpmCiMWxoGSewH/T1pnCZrsvGYIj//qC7aiQVKYBngO7UYWGaytgc_0_OEM:NONSLP_EnterpriseS_RS5
-706e0cfd-23f4-43bb-a9af-1a492b9f1302_NK96Y-D9CD8-W44CQ-R8YTK-DYJWX_125_X21-05035_U2DIv+LAhSGz0rNbTiMQYaP3M41+0+ZioF7vh0COeeJSIruDFCZ3Li7ZM3dSleg6QTCxG04uZ3i3r1bCZv0+WAfU9rG+3BqLAwKlJS/31rETeRWvrxB1UK4mTMHwAJc9txDAc15ureqF+2b9pIIpwLljmFer6fI7z0iI6I/ZuTU_0_OEM:NONSLP_EnterpriseS_RS1
-faa57748-75c8-40a2-b851-71ce92aa8b45_FWN7H-PF93Q-4GGP8-M8RF3-MDWWW_125_X19-99617_0frpwr4N/wBVRA/nOvAMqkxmRj6Vv9mA+jVNtnurAL1TjkPN/y+6YVUd5MP/Y4As4kddHoHiZXI+2siKHJsaV95ppXoHKR8d7FRVitr1F+82TbB7OVvdCclGrRZymnq25HvtSC3BROHt7ZXTgSCWMyB7MlbLiqHiTymOj5OMX1g_0_OEM:NONSLP_EnterpriseS_TH
-2c060131-0e43-4e01-adc1-cf5ad1100da8_RQFNW-9TPM3-JQ73T-QV4VQ-DV9PT_126_X22-66108_UeA6O2iIW6zFMJzLMCQjVA7gUHOGRTiFB6LPrgjhgfJEXSZnDjxw8wsR+tp+JQWeaQDsVt06c2byH3z7Ft2wNk8n3gcXUknIjlcCckNjw05WDI64/wCqz+gtf1RajMEoV/mODpBx7rdLtCg03FyV7Z9LOib4/WLSmnxjDPKMG7s_1_Volume:MAK_EnterpriseSN_VB
-e8f74caa-03fb-4839-8bcc-2e442b317e53_M33WV-NHY3C-R7FPM-BQGPT-239PG_126_X21-83264_NtP6sMWmOTCdABAbgIZfxZzRs8zaqzfaabLeFXQJvfJvQPLQPk2UxMliASJG+7YwwbTD8pyhUoQqUYrlCzJZ6jDSDyUTJkXgo9akR4fBOg6Z5wn5fW8NGAMDcLND5d9XxHl0gWH/HZNIs/GZaPJsCVVqPr7X8bk/y0DeIofxICU_1_Volume:MAK_EnterpriseSN_RS5
-3d1022d8-969f-4222-b54b-327f5a5af4c9_2DBW3-N2PJG-MVHW3-G7TDK-9HKR4_126_X21-04921_WeNSkuiC3iyNT9tDqlj6KvM17UYMsYjEelyyMEyPEXSAbYA08lYtYJjCzxSE9T30p9dxqPIuj370OwHhAxG8a51/HoLNWR0grj08HmdOXUA8Ap4clEivxKM0zRvwPR6L2M2HQP0nN54c9It7ikzweJ0X2HHOb58oEw9LbMeUM/Y_0_Volume:MAK_EnterpriseSN_RS1
-60c243e1-f90b-4a1b-ba89-387294948fb6_NTX6B-BRYC2-K6786-F6MVQ-M7V2X_126_X19-98770_QLG40WW/TtUqtir9K6FJCQXU1mfn27uutdOunHJ3gXk6v0Mbxaqu9GKqpg5xFzdFiOPb/8Bmk/ylwceXgoaUx1nKcBGb/Bg+jICiNMEYIbGyMuYiHb0iJeVbjbBLLfWuAAuUPftfnKPH3dAu1YvhaS5nv7a5wICrXdJWeVNpBxk_0_Volume:MAK_EnterpriseSN_TH
-eb6d346f-1c60-4643-b960-40ec31596c45_DXG7C-N36C4-C4HTG-X4T3X-2YV77_161_X21-43626_vHO/5UEtrsDzGC30A2Ya5DYXlNMs7hVYiLvM7X31xkaFMxogbiy3ZDxBbjRku3VXyW+TYsFX/D/wdJgFmMrhsNrObkxqzYMMRjx+BpwOx2PspKpS2RyzovyRl8v93SvHB5IyoO2/3pm2YqJDK1hXLhms6+DDPuiofQt36q47reQ_0_____Retail_ProfessionalWorkstation
-89e87510-ba92-45f6-8329-3afa905e3e83_WYPNQ-8C467-V2W6J-TX4WX-WT2RQ_162_X21-43644_phlxNLr+sk8cCCmAVU3k3XrtD6sFDeoaODc+21soKqePbVQbzPHgokS73ccok6/gDfu/u5UKc7omL8pm2IhIhf70oC+8M/FFp0zRFeC/ZFXdF2tL23oKWI9kZbvcaoZBiqaDGc1bNYi5KAZYaJU8wwqw16ZnohQJZ7QR9cgUfFQ_0_____Retail_ProfessionalWorkstationN
-62f0c100-9c53-4e02-b886-a3528ddfe7f6_8PTT6-RNW4C-6V7J2-C2D3X-MHBPB_164_X21-04955_Px7QWdfy0esrMzQoydKlmIcGdfV0pQvbnumyrh4evDNF9gpENm8OIfZfljIynury0qZAkw4AG3uGyp+5IxZGIh6U3dz41uNVfEcA9NZ34OEBXMtjEOU1ZbJ8wp8JecQKwlORclvsri9OOi0GbGc0TYRanlci2jJL/3x/gSuWXCs_0_____Retail_ProfessionalEducation
-13a38698-4a49-4b9e-8e83-98fe51110953_GJTYN-HDMQY-FRR76-HVGC7-QPF8P_165_X21-04956_GRSYno4+yqU/JMxHLDKdvdFWRz1uT90n5JkTvSqztDvXMf/mBhSV/OpppJWGo6UL0FwqYcu9oXl+Vx336pLAE5/EDzQHh+QCwOCDJiTKnd3hW/zrGMe6Sb0OAIkNNML9gcOBbr1IHFWhN99r8ZWl5JjpzMs2nPjejB1Ec8NCcpE_0_____Retail_ProfessionalEducationN
-df96023b-dcd9-4be2-afa0-c6c871159ebe_NJCF7-PW8QT-3324D-688JX-2YV66_175_X21-41295_kkJyX1AwYgDYcGK1eIRdocybkbAfEtQkDxhRUhY89X2i2PSD9jcsGQgHWyD3KUKWb3bzR8QkDS3MTeieOw3EzD0RyAQhHc6lRR+rk18lh5UOVCgrZ6byxn29Ur+jAh0LJXImggC9JMGb2cTYaZckxzm3ICoAKwrmI9JnrzBTVmY_0_____Retail_ServerRdsh
-d4ef7282-3d2c-4cf0-9976-8854e64a8d1e_V3WVW-N2PV2-CGWC3-34QGF-VMJ2C_178_X21-32983_YIMgXu2dZ9x1r1NLs3egTc/8EYc1RndYDvoX7QquQQLnhnhbSNBw3hmlqrQ0zNsTLut3EKpGZK2CwPspJJWE60lecdxI4211K748P6vkuqHPL4uFqXyKxTG3qRrtDIra5nnMn4GqG2fWuguzTXaumu8cJU3H1uTOsR1E/DQnJJ0_0_____Retail_Cloud
-af5c9381-9240-417d-8d35-eb40cd03e484_NH9J3-68WK7-6FB93-4K3DF-DJ4F6_179_X21-32987_H0qrFdf+FQxcSRJDtEwd8OfwC4iH/25Q01jz3QuB9yhEqB0W1i83u0WDpVK04pvU1EDCCRRI/DhXynbkWpLC0chdTOW4k5jIy+aa0cD3fccz9ChSjVHMzyTg3abEVFAvy9rttUyxcFIOKcINXHTxTRp5cZPwOa393tlJyBiliAo_0_____Retail_CloudN
-8ab9bdd1-1f67-4997-82d9-8878520837d9_XQQYW-NFFMW-XJPBH-K8732-CKFFD_188_X21-99378_Bwx3E7qmE6M8UR6+KPqLnnavI6ThNHHUO717RJY9di2YI9rzC3O0LceXOHjshSKwfwxosqFsD/p/inrJmabed1yA/ZWwISyGtAIGTtRgpuSE4TAfW6KEW0v7rcr2wwwDq7DHSuz4QN4odEGe9bvtx4zIZKufQzzN4TN2rd/BJkE_0_____OEM:DM_IoTEnterprise
-ed655016-a9e8-4434-95d9-4345352c2552_QPM6N-7J2WJ-P88HH-P3YRH-YY74H_191_X21-99682_lE8qL1p4m68mv9wcxU2sdKZPIccybtOjr+aMAdV+sLHs9wzE26oz5GiSZ3UzpU7yoYrNMqwGkKX6mrCEGRLh+XR2Ricp7ELA1PkzaGm0FLUqaK2GNVQ00i+s6KcA2XRr/gWOhhGTqSCjpSi9cMiqMbftf9Bo/BJVK3ib9xU4OQw_0_OEM:NONSLP_IoTEnterpriseS_VB
-d4bdc678-0a4b-4a32-a5b3-aaa24c3b0f24_K9VKN-3BGWV-Y624W-MCRMQ-BHDCD_202_X22-53884_hPcIn0dF9Dq6zlXd3RxBqVDPDnf5sTasTjUqhD6lGc9IkTc8476NHd1PV1Ds++VO34/dw2H2PWk33LT5Es6PnUi32Ypva4POy4QJo5W3qyduiJiHUOM5GS9yAkKfdHFgUXaUVwopYKq+EwmgxFmEvHYdWgREHgIMyNoKAZQK0Ok_0_____Retail_CloudEditionN
-92fb8726-92a8-4ffc-94ce-f82e07444653_KY7PN-VR6RX-83W6Y-6DDYQ-T6R4W_203_X22-53847_DCP6QzPj+BD1EEmlBelBt7x9AmvQOfd7kdkUB0b0x6/TNHRnZtdyix3pNX2IDQtJbLnNLc2ZlMmupbZQrtyxe3xl8+xlCnHByXZpzFty9sGzq3MozHHA9u9WsJEf5R7tnFDplNM1UitlTVTAyuCGk83brY4zjmz/52pUQyQHzjI_0_____Retail_CloudEdition
-d4f9b41f-205c-405e-8e08-3d16e88e02be_J7NJW-V6KBM-CC8RW-Y29Y4-HQ2MJ_205_X23-15027_U9eyfIBXrs++lyP6OjHHaF/wjieAxQeSKwzSkGBeTTpyCDcenq8t4cKvqDHnauSZzaVPWNoVcASkMCdlJi3EkR29KSgvx9/K2OB8LVH2PPpqvwjm1ZZdrvLMGhW83A/KRrtN9AOx7bnPC8MNLErnzbRRS9/aOrmp4Uzo8EIVagI_0_OEM:NONSLP_IoTEnterpriseSK
+8b351c9c-f398-4515-9900-09df49427262_XGV%f%PP-NM%f%H47-7TT%f%HJ-W3%f%FW7-8H%f%V2C___4_X19-99683_X9J5T0gPQprYpz2euPvoJGlkurIO9h6N8ypE0KWYVpy0nbCKYnqSUCD7u8ReXAmc085jX2uM5PKurSee9Yq/PxesgiysQHDBsOhr98MXZZiIgy4ssnz2gZF70KB8tO3X7kk9LHwxXfz3rlquYPod9swe90nqvVaJMWCpQK0InUw_0_OEM:NONSLP_Enterprise
+c83cef07-6b72-4bbc-a28f-a00386872839_3V6%f%Q6-NQ%f%XCX-V8Y%f%XR-9Q%f%CYV-QP%f%FCT__27_X19-98746_WFZBjlVtHQumoaVE28/NHsRvv1lgkkfav6NPHqr6OC2u4vxkjjJkkl9OTF6DpHJu0IFrrQv+HYcdZ/WC5EzhOMqMxcujTBSAN7xLIVEbs72Db0Bi5iDAbOltJpk8QKKe18otQJ6vajW5WOPXjbgSJfDFaZQfiwvIJ1ICXt+stog_0_Volume:MAK_EnterpriseN
+4de7cb65-cdf1-4de9-8ae8-e3cce27b9f2c_VK7%f%JG-NP%f%HTM-C97%f%JM-9M%f%PGT-3V%f%66T__48_X19-98841_K3qev/5gQpX1RK1F9M9beEWWv/di1GsRF7OUcEMGTGDTYnaRenRcJaO8zOHQQvKDc57fon/v77ZpHQHT/jWWhWnLm7Ssory+s8tOs72fPjivVBDwpSPIEC1v+8Vpb4a3XCZet2e/Z5wmpCq9XDkowys3IcxYM0mHWBaNPu8gIe4_0_____Retail_Professional
+9fbaf5d6-4d83-4422-870d-fdda6e5858aa_2B8%f%7N-8K%f%FHP-DKV%f%6R-Y2%f%C8J-PK%f%CKT__49_X19-98859_WcAcor6kQgxgkTRzcoxnb8UIoo5/ueYeaOKqy9/xAzlruHAKxhatXeGtSI58lXcCK5hxXkDmcyrRFwWSwdvg0txwTi7VusYcTNCLdmNWU/62iDrBhzMrCYtuhW9EV/g4+TlbjSm4PBJ0HMlI4YzAEnyJiBgKPDgBQ8Gj9LRbEgU_0_____Retail_ProfessionalN
+f742e4ff-909d-4fe9-aacb-3231d24a0c58_4CP%f%RK-NM%f%3K3-X6X%f%XQ-RX%f%X86-WX%f%CHW__98_X19-98877_MBDSEqlayxtVVEgIeAl8milgjS/BVHow6+MmpCyh9nweuctlT1+LbEHmDlnqDeLr9FQrN2FpEJtNr26rE0niMdvcAP51MfJsREyhWOEbrWwWyMH0KwDAci2WxWZTJp/SEZnq5HYYT1pPPLMWAkKRHJksJJFtg4zBtoyHvLjc35c_0_____Retail_CoreN
+1d1bac85-7365-4fea-949a-96978ec91ae0_N24%f%34-X9%f%D7W-8PF%f%6X-8D%f%V9T-8T%f%YMD__99_X19-99652_mpjCoh6soA/rwJutsjekZpA9vDUD8znR20V/c8FwSjuCcSbPhmP6bpJR9rfptAZqpagliMxA/OUZsx0Knt0n/hgOy2mv8pr24gI9uYXK8EfhG74bVdsyvZz1tyA6CaVR02ZahQvbKYzCmXUvsI+Wge3bHbKbVpn9Mvl+itn2a4g_0_____Retail_CoreCountrySpecific
+3ae2cc14-ab2d-41f4-972f-5e20142771dc_BT7%f%9Q-G7%f%N6G-PGB%f%YW-4Y%f%WX6-6F%f%4BT_100_X19-99661_KaUs6KwvtthPOsxd3x0tU/baKSv1DWSFOqbq7PbU/uYEY95p0Skzv3y4aXq+xVmfwSt8STL/4vSfFIAlsaRh7Vnq6Y/Ael8joeqI8hBN461fykoHxSELRMJ+eed50T0cJUS79ol6OTBOCCVeHgmtGVbHuL88TMWW69fGNdIMM3U_0_____Retail_CoreSingleLanguage
+2b1f36bb-c1cd-4306-bf5c-a0367c2d97d8_YTM%f%G3-N6%f%DKC-DKB%f%77-7M%f%9GH-8H%f%VX7_101_X19-98868_NpHxrAtA+GL6kawAP5Z2UdfUVcKFvf9UzEe6FIV/HztZqxpMBDFv2hdxCjD9+T8PKcW8j3n04McelOAgr3lD37Fu+wrvJIGX0dG3xEtU/MG9L9X5baBS8H6AmC6rq2+w5NUY8EchK9W2oatBflFb8IcfCSeAyOfsJei6bdu4mp8_0_____Retail_Core
+2a6137f3-75c0-4f26-8e3e-d83d802865a4_XKC%f%NC-J2%f%6Q9-KFH%f%D2-FK%f%THY-KD%f%72Y_119_X19-99606_gtywgqIP3j+bliKdunuseeZWtsOzWhj+DmSBq7nqeNarHutgbWEwvcRiGo+nwxONt9Ak/VyuO76ZWH/db3iRVTk1y61vFv15gVlOy1ovLjVHBvmPVdQXIne2N+pIMb0eBhZWHRX63mYdkZRZ0wg/+bj4xsjJv+qLpWhVCzNMge4_0_OEM:NONSLP_PPIPro
+e558417a-5123-4f6f-91e7-385c1c7ca9d4_YNM%f%GQ-8R%f%YV3-4PG%f%Q3-C8%f%XTP-7C%f%FBY_121_X19-98886_VuBmoSUdF63Cvwm9wNlc2yhD2tP9B72iVVWFNcbAwDGXF6o06oNMsIJ0VqGJDdBzZjVGw2wHokMabxZNDyIl90CO7trwgV8S0lLJVLymxyUaE3ThvN3YUsi9Q3H+5Kr0RpsojCWb+UQd/GY4bSXfyStXFylj6im7yv0db/ZWGbw_0_____Retail_Education
+c5198a66-e435-4432-89cf-ec777c9d0352_84N%f%GF-MH%f%BT6-FXB%f%X8-QW%f%JK7-DR%f%R8H_122_X19-98892_jQ6S2bbNoVrp/zvi8BEUwCf7fge1nAdspcjXyTeTySUiR+hXPiKQEWgyLqAdZ5Or+X2JGT/LZN1/eZ9P+REmzG/WQotZ+fyyPguoSsES+d312RkfmQoI5gVanEkGjZSU4YohREM/Vyf9MOO7dbH9MMEpFm2mje6OnhyJo2gux0g_0_____Retail_EducationN
+cce9d2de-98ee-4ce2-8113-222620c64a27_KCN%f%VH-YK%f%WX8-GJJ%f%B9-H9%f%FDT-6F%f%7W2_125_X22-66075_wJ/BPDFz+13PVJtBqBo+E4LCm3LoMVALCQUun9kXGBULr7V8FQ5nKUudUGHDLNNVIIicdw9Uh26BKAt0/hnE7BpBkzwdi4qAdZgKXQ1t06Ek4+zXmoT225NvpaHsuhDkE687TtCB1ZWvAulA8G9ehE3HTJSoNm4wCFOQyIQQtqQ_1_Volume:MAK_EnterpriseS_VB
+d06934ee-5448-4fd1-964a-cd077618aa06_43T%f%BQ-NH%f%92J-XKT%f%M7-KT%f%3KK-P3%f%9PB_125_X21-83233_V+y0SFmAnGwRwgNz+0sO0mj+XxSjbdRDpom1Iqx2BJcsf96Q5ittJOcMhKiNswyKuq5suM5vy60tA/AUdb1mrnnrnXfmz7nFam/BIOOfa18GA7vd1aNFufhpmCiMWxoGSewH/T1pnCZrsvGYIj//qC7aiQVKYBngO7UYWGaytgc_0_OEM:NONSLP_EnterpriseS_RS5
+706e0cfd-23f4-43bb-a9af-1a492b9f1302_NK9%f%6Y-D9%f%CD8-W44%f%CQ-R8%f%YTK-DY%f%JWX_125_X21-05035_U2DIv+LAhSGz0rNbTiMQYaP3M41+0+ZioF7vh0COeeJSIruDFCZ3Li7ZM3dSleg6QTCxG04uZ3i3r1bCZv0+WAfU9rG+3BqLAwKlJS/31rETeRWvrxB1UK4mTMHwAJc9txDAc15ureqF+2b9pIIpwLljmFer6fI7z0iI6I/ZuTU_0_OEM:NONSLP_EnterpriseS_RS1
+faa57748-75c8-40a2-b851-71ce92aa8b45_FWN%f%7H-PF%f%93Q-4GG%f%P8-M8%f%RF3-MD%f%WWW_125_X19-99617_0frpwr4N/wBVRA/nOvAMqkxmRj6Vv9mA+jVNtnurAL1TjkPN/y+6YVUd5MP/Y4As4kddHoHiZXI+2siKHJsaV95ppXoHKR8d7FRVitr1F+82TbB7OVvdCclGrRZymnq25HvtSC3BROHt7ZXTgSCWMyB7MlbLiqHiTymOj5OMX1g_0_OEM:NONSLP_EnterpriseS_TH
+2c060131-0e43-4e01-adc1-cf5ad1100da8_RQF%f%NW-9T%f%PM3-JQ7%f%3T-QV%f%4VQ-DV%f%9PT_126_X22-66108_UeA6O2iIW6zFMJzLMCQjVA7gUHOGRTiFB6LPrgjhgfJEXSZnDjxw8wsR+tp+JQWeaQDsVt06c2byH3z7Ft2wNk8n3gcXUknIjlcCckNjw05WDI64/wCqz+gtf1RajMEoV/mODpBx7rdLtCg03FyV7Z9LOib4/WLSmnxjDPKMG7s_1_Volume:MAK_EnterpriseSN_VB
+e8f74caa-03fb-4839-8bcc-2e442b317e53_M33%f%WV-NH%f%Y3C-R7F%f%PM-BQ%f%GPT-23%f%9PG_126_X21-83264_NtP6sMWmOTCdABAbgIZfxZzRs8zaqzfaabLeFXQJvfJvQPLQPk2UxMliASJG+7YwwbTD8pyhUoQqUYrlCzJZ6jDSDyUTJkXgo9akR4fBOg6Z5wn5fW8NGAMDcLND5d9XxHl0gWH/HZNIs/GZaPJsCVVqPr7X8bk/y0DeIofxICU_1_Volume:MAK_EnterpriseSN_RS5
+3d1022d8-969f-4222-b54b-327f5a5af4c9_2DB%f%W3-N2%f%PJG-MVH%f%W3-G7%f%TDK-9H%f%KR4_126_X21-04921_WeNSkuiC3iyNT9tDqlj6KvM17UYMsYjEelyyMEyPEXSAbYA08lYtYJjCzxSE9T30p9dxqPIuj370OwHhAxG8a51/HoLNWR0grj08HmdOXUA8Ap4clEivxKM0zRvwPR6L2M2HQP0nN54c9It7ikzweJ0X2HHOb58oEw9LbMeUM/Y_0_Volume:MAK_EnterpriseSN_RS1
+60c243e1-f90b-4a1b-ba89-387294948fb6_NTX%f%6B-BR%f%YC2-K67%f%86-F6%f%MVQ-M7%f%V2X_126_X19-98770_QLG40WW/TtUqtir9K6FJCQXU1mfn27uutdOunHJ3gXk6v0Mbxaqu9GKqpg5xFzdFiOPb/8Bmk/ylwceXgoaUx1nKcBGb/Bg+jICiNMEYIbGyMuYiHb0iJeVbjbBLLfWuAAuUPftfnKPH3dAu1YvhaS5nv7a5wICrXdJWeVNpBxk_0_Volume:MAK_EnterpriseSN_TH
+eb6d346f-1c60-4643-b960-40ec31596c45_DXG%f%7C-N3%f%6C4-C4H%f%TG-X4%f%T3X-2Y%f%V77_161_X21-43626_vHO/5UEtrsDzGC30A2Ya5DYXlNMs7hVYiLvM7X31xkaFMxogbiy3ZDxBbjRku3VXyW+TYsFX/D/wdJgFmMrhsNrObkxqzYMMRjx+BpwOx2PspKpS2RyzovyRl8v93SvHB5IyoO2/3pm2YqJDK1hXLhms6+DDPuiofQt36q47reQ_0_____Retail_ProfessionalWorkstation
+89e87510-ba92-45f6-8329-3afa905e3e83_WYP%f%NQ-8C%f%467-V2W%f%6J-TX%f%4WX-WT%f%2RQ_162_X21-43644_phlxNLr+sk8cCCmAVU3k3XrtD6sFDeoaODc+21soKqePbVQbzPHgokS73ccok6/gDfu/u5UKc7omL8pm2IhIhf70oC+8M/FFp0zRFeC/ZFXdF2tL23oKWI9kZbvcaoZBiqaDGc1bNYi5KAZYaJU8wwqw16ZnohQJZ7QR9cgUfFQ_0_____Retail_ProfessionalWorkstationN
+62f0c100-9c53-4e02-b886-a3528ddfe7f6_8PT%f%T6-RN%f%W4C-6V7%f%J2-C2%f%D3X-MH%f%BPB_164_X21-04955_Px7QWdfy0esrMzQoydKlmIcGdfV0pQvbnumyrh4evDNF9gpENm8OIfZfljIynury0qZAkw4AG3uGyp+5IxZGIh6U3dz41uNVfEcA9NZ34OEBXMtjEOU1ZbJ8wp8JecQKwlORclvsri9OOi0GbGc0TYRanlci2jJL/3x/gSuWXCs_0_____Retail_ProfessionalEducation
+13a38698-4a49-4b9e-8e83-98fe51110953_GJT%f%YN-HD%f%MQY-FRR%f%76-HV%f%GC7-QP%f%F8P_165_X21-04956_GRSYno4+yqU/JMxHLDKdvdFWRz1uT90n5JkTvSqztDvXMf/mBhSV/OpppJWGo6UL0FwqYcu9oXl+Vx336pLAE5/EDzQHh+QCwOCDJiTKnd3hW/zrGMe6Sb0OAIkNNML9gcOBbr1IHFWhN99r8ZWl5JjpzMs2nPjejB1Ec8NCcpE_0_____Retail_ProfessionalEducationN
+df96023b-dcd9-4be2-afa0-c6c871159ebe_NJC%f%F7-PW%f%8QT-332%f%4D-68%f%8JX-2Y%f%V66_175_X21-41295_kkJyX1AwYgDYcGK1eIRdocybkbAfEtQkDxhRUhY89X2i2PSD9jcsGQgHWyD3KUKWb3bzR8QkDS3MTeieOw3EzD0RyAQhHc6lRR+rk18lh5UOVCgrZ6byxn29Ur+jAh0LJXImggC9JMGb2cTYaZckxzm3ICoAKwrmI9JnrzBTVmY_0_____Retail_ServerRdsh
+d4ef7282-3d2c-4cf0-9976-8854e64a8d1e_V3W%f%VW-N2%f%PV2-CGW%f%C3-34%f%QGF-VM%f%J2C_178_X21-32983_YIMgXu2dZ9x1r1NLs3egTc/8EYc1RndYDvoX7QquQQLnhnhbSNBw3hmlqrQ0zNsTLut3EKpGZK2CwPspJJWE60lecdxI4211K748P6vkuqHPL4uFqXyKxTG3qRrtDIra5nnMn4GqG2fWuguzTXaumu8cJU3H1uTOsR1E/DQnJJ0_0_____Retail_Cloud
+af5c9381-9240-417d-8d35-eb40cd03e484_NH9%f%J3-68%f%WK7-6FB%f%93-4K%f%3DF-DJ%f%4F6_179_X21-32987_H0qrFdf+FQxcSRJDtEwd8OfwC4iH/25Q01jz3QuB9yhEqB0W1i83u0WDpVK04pvU1EDCCRRI/DhXynbkWpLC0chdTOW4k5jIy+aa0cD3fccz9ChSjVHMzyTg3abEVFAvy9rttUyxcFIOKcINXHTxTRp5cZPwOa393tlJyBiliAo_0_____Retail_CloudN
+8ab9bdd1-1f67-4997-82d9-8878520837d9_XQQ%f%YW-NF%f%FMW-XJP%f%BH-K8%f%732-CK%f%FFD_188_X21-99378_Bwx3E7qmE6M8UR6+KPqLnnavI6ThNHHUO717RJY9di2YI9rzC3O0LceXOHjshSKwfwxosqFsD/p/inrJmabed1yA/ZWwISyGtAIGTtRgpuSE4TAfW6KEW0v7rcr2wwwDq7DHSuz4QN4odEGe9bvtx4zIZKufQzzN4TN2rd/BJkE_0_____OEM:DM_IoTEnterprise
+ed655016-a9e8-4434-95d9-4345352c2552_QPM%f%6N-7J%f%2WJ-P88%f%HH-P3%f%YRH-YY%f%74H_191_X21-99682_lE8qL1p4m68mv9wcxU2sdKZPIccybtOjr+aMAdV+sLHs9wzE26oz5GiSZ3UzpU7yoYrNMqwGkKX6mrCEGRLh+XR2Ricp7ELA1PkzaGm0FLUqaK2GNVQ00i+s6KcA2XRr/gWOhhGTqSCjpSi9cMiqMbftf9Bo/BJVK3ib9xU4OQw_0_OEM:NONSLP_IoTEnterpriseS_VB
+d4bdc678-0a4b-4a32-a5b3-aaa24c3b0f24_K9V%f%KN-3B%f%GWV-Y62%f%4W-MC%f%RMQ-BH%f%DCD_202_X22-53884_hPcIn0dF9Dq6zlXd3RxBqVDPDnf5sTasTjUqhD6lGc9IkTc8476NHd1PV1Ds++VO34/dw2H2PWk33LT5Es6PnUi32Ypva4POy4QJo5W3qyduiJiHUOM5GS9yAkKfdHFgUXaUVwopYKq+EwmgxFmEvHYdWgREHgIMyNoKAZQK0Ok_0_____Retail_CloudEditionN
+92fb8726-92a8-4ffc-94ce-f82e07444653_KY7%f%PN-VR%f%6RX-83W%f%6Y-6D%f%DYQ-T6%f%R4W_203_X22-53847_DCP6QzPj+BD1EEmlBelBt7x9AmvQOfd7kdkUB0b0x6/TNHRnZtdyix3pNX2IDQtJbLnNLc2ZlMmupbZQrtyxe3xl8+xlCnHByXZpzFty9sGzq3MozHHA9u9WsJEf5R7tnFDplNM1UitlTVTAyuCGk83brY4zjmz/52pUQyQHzjI_0_____Retail_CloudEdition
+d4f9b41f-205c-405e-8e08-3d16e88e02be_J7N%f%JW-V6%f%KBM-CC8%f%RW-Y2%f%9Y4-HQ%f%2MJ_205_X23-15027_U9eyfIBXrs++lyP6OjHHaF/wjieAxQeSKwzSkGBeTTpyCDcenq8t4cKvqDHnauSZzaVPWNoVcASkMCdlJi3EkR29KSgvx9/K2OB8LVH2PPpqvwjm1ZZdrvLMGhW83A/KRrtN9AOx7bnPC8MNLErnzbRRS9/aOrmp4Uzo8EIVagI_0_OEM:NONSLP_IoTEnterpriseSK
 ) do (
 for /f "tokens=1-10 delims=_" %%A in ("%%#") do (
 
@@ -1156,9 +1336,8 @@ set key=%%B
 REM Generate ticket
 
 if %1==ticket if "%key%"=="%%B" (
-set _nil=
 set "string=OSMajorVersion=5;OSMinorVersion=1;OSPlatformId=2;PP=0;Pfn=Microsoft.Windows.%%C.%%D_8wekyb3d8bbwe;DownlevelGenuineState=1;$([char]0)"
-for /f "tokens=* delims=" %%i in ('powershell [convert]::ToBas!_nil!e64String([Text.Encoding]::Unicode.GetBytes("""!string!"""^)^)') do set "encoded=%%i"
+for /f "tokens=* delims=" %%i in ('%psc% [conv%f%ert]::ToBas%f%e64String([Text.En%f%coding]::Uni%f%code.GetBytes("""!string!"""^)^)') do set "encoded=%%i"
 echo "!encoded!" | find "AAAA" 1>nul || exit /b
 
 <nul set /p "=<?xml version="1.0" encoding="utf-8"?><genuineAuthorization xmlns="http://www.microsoft.com/DRM/SL/GenuineAuthorization/1.0"><version>1.0</version><genuineProperties origin="sppclient"><properties>OA3xOriginalProductId=;OA3xOriginalProductKey=;SessionId=!encoded!;TimeStampClient=2022-10-11T12:00:00Z</properties><signatures><signature name="clientLockboxKey" method="rsa-sha256">%%E=</signature></signatures></genuineProperties></genuineAuthorization>" >"%tdir%\GenuineTicket"
@@ -1189,9 +1368,9 @@ set notfoundaltactID=
 if %_NoEditionChange%==1 exit /b
 
 for %%# in (
-125_EnterpriseS-2021___________cce9d2de-98ee-4ce2-8113-222620c64a27_ed655016-a9e8-4434-95d9-4345352c2552_QPM6N-7J2WJ-P88HH-P3YRH-YY74H_IoTEnterpriseS-2021
-191_IoTEnterpriseS-Win11_______59eb965c-9150-42b7-a0ec-22151b9897c5_d4f9b41f-205c-405e-8e08-3d16e88e02be_J7NJW-V6KBM-CC8RW-Y29Y4-HQ2MJ_IoTEnterpriseSK-Win11
-138_ProfessionalSingleLanguage_a48938aa-62fa-4966-9d44-9f04da3f72f2_4de7cb65-cdf1-4de9-8ae8-e3cce27b9f2c_VK7JG-NPHTM-C97JM-9MPGT-3V66T_Professional
+125_EnterpriseS-2021___________cce9d2de-98ee-4ce2-8113-222620c64a27_ed655016-a9e8-4434-95d9-4345352c2552_QPM%f%6N-7J2%f%WJ-P8%f%8HH-P3Y%f%RH-YY%f%74H_IoTEnterpriseS-2021
+191_IoTEnterpriseS-Win11_______59eb965c-9150-42b7-a0ec-22151b9897c5_d4f9b41f-205c-405e-8e08-3d16e88e02be_J7N%f%JW-V6K%f%BM-CC%f%8RW-Y29%f%Y4-HQ%f%2MJ_IoTEnterpriseSK-Win11
+138_ProfessionalSingleLanguage_a48938aa-62fa-4966-9d44-9f04da3f72f2_4de7cb65-cdf1-4de9-8ae8-e3cce27b9f2c_VK7%f%JG-NPH%f%TM-C9%f%7JM-9MP%f%GT-3V%f%66T_Professional
 ) do (
 for /f "tokens=1-6 delims=_" %%A in ("%%#") do if %osSKU%==%%A (
 echo "!applist!" | find /i "%%C" 1>nul && (
@@ -1214,8 +1393,7 @@ exit /b
 @setlocal DisableDelayedExpansion
 @echo off
 
-
-::  To activate, run the script with /KMS38 parameter or change 0 to 1 in below line
+::  To activate, run the script with "/KMS38" parameter or change 0 to 1 in below line
 set _act=0
 
 ::  To remove KMS38 protection, run the script with /KMS38-RemoveProtection parameter or change 0 to 1 in below line
@@ -1292,7 +1470,7 @@ set "specific_kms=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectio
 if %winbuild% LSS 14393 (
 %eline%
 echo Unsupported OS version detected.
-echo Project is supported for Windows 10/11/Server, build 14393 and later.
+echo KMS38 Activation is supported for Windows 10/11/Server, build 14393 and later.
 goto dk_done
 )
 
@@ -1406,11 +1584,13 @@ echo [%winos% ^| %winbuild%]
 if defined _evalserv (
 echo Server Evaluation cannot be activated. Convert it to full Server OS.
 echo:
-echo Check 'Change Edition' Option in MAS.
+echo In MAS, goto Extras and use 'Change Edition' option.
 ) else (
-echo Evaluation Editions cannot be activated. Download ^& Install full version of Windows OS.
+echo Evaluation Editions cannot be activated. 
+echo You need to install full version of %winos%
 echo:
-echo https://massgrave.dev/
+echo Download it from here,
+echo https://massgrave.dev/genuine-installation-media.html
 )
 goto dk_done
 )
@@ -1483,10 +1663,11 @@ echo Enabling Windows Script Host            [Successful]
 
 echo Initiating Diagnostic Tests...
 
-set "_serv=ClipSVC sppsvc Winmgmt"
+set "_serv=ClipSVC sppsvc KeyIso Winmgmt"
 
 ::  Client License Service (ClipSVC)
 ::  Software Protection
+::  CNG Key Isolation
 ::  Windows Management Instrumentation
 
 call :dk_errorcheck
@@ -1559,8 +1740,12 @@ if !error_code! EQU 0 (
 call :dk_refresh
 echo Installing KMS Client Setup Key         [%key%] [Successful]
 ) else (
-set error=1
 call :dk_color %Red% "Installing KMS Client Setup Key         [%key%] [Failed] !error_code!"
+if not defined error (
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
+set showfix=1
+)
+set error=1
 )
 )
 
@@ -1623,14 +1808,15 @@ goto :k_final
 ::========================================================================================================================================
 
 ::  Generate GenuineTicket.xml and apply
-::  Most correct way to apply a ticket is by restarting ClipSVC service but we can not check the log details in this way
-::  To get the log details and also to correctly apply ticket, script will install tickets two times (service restart + clipup -v -o)
+::  In some cases clipup -v -o method fails and in some cases service restart method fails as well
+::  To maximize success rate and get better error details, script will install tickets two times (service restart + clipup -v -o)
 
 set "tdir=%ProgramData%\Microsoft\Windows\ClipSVC\GenuineTicket"
 if not exist "%tdir%\" md "%tdir%\" %nul%
 
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
+if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*" del /f /q "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*" %nul%
 
 ::  Signature value is as it is, it's not encoded
 ::  Session ID is in Base64 encoded format. It's decoded value is "OSMajorVersion=5;OSMinorVersion=1;OSPlatformId=2;PP=0;GVLKExp=2038-01-19T03:14:07Z;DownlevelGenuineState=1;"
@@ -1671,6 +1857,7 @@ net start ClipSVC /y %nul%
 %_xmlexist% timeout /t 2 %nul%
 
 %_xmlexist% (
+set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
 call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipSVC Service Restart, Wait...]"
 )
@@ -1678,6 +1865,26 @@ call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipS
 
 copy /y /b "%tdir%\GenuineTicket" "%tdir%\GenuineTicket.xml" %nul%
 clipup -v -o
+
+set rebuildinfo=
+
+%_xmlexist% (
+set error=1
+set rebuildinfo=1
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With clipup -v -o]"
+)
+
+if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*.xml" (
+set error=1
+set rebuildinfo=1
+call :dk_color %Red% "Checking Ticket Migration               [Failed]"
+)
+
+if defined applist if not defined showfix if defined rebuildinfo (
+set showfix=1
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
+)
+
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 
 ::==========================================================================================================================================
@@ -1714,6 +1921,7 @@ goto :k_final
 )
 
 call :dk_color %Red% "Activation Failed"
+if not defined error call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
 call :dk_color2 %Magenta% "Check this page for help" %_Yellow% " https://massgrave.dev/troubleshoot"
 
 ::========================================================================================================================================
@@ -1757,7 +1965,9 @@ echo Deleting copied clipup.exe file         [Successful]
 )
 )
 
-if %osSKU%==175 call :dk_color %Red% "ServerRdsh Editon does not officially support activation on non-azure platforms."
+for %%# in (175 407) do if %osSKU%==%%# (
+call :dk_color %Red% "%winos% does not support activation on non-azure platforms."
+)
 
 goto :dk_done
 
@@ -1852,10 +2062,13 @@ exit /b
 
 :dk_pkey
 
+call :dk_reflection
+
+set d1=%ref% [void]$TypeBuilder.DefinePInvokeMethod('SkuGetProductKeyForEdition', 'pkeyhelper.dll', 'Public, Static', 1, [int], @([int], [String], [String].MakeByRefType(), [String].MakeByRefType()), 1, 3);
+set d1=%d1% $out = ''; [void]$TypeBuilder.CreateType()::SkuGetProductKeyForEdition(%1, %2, [ref]$out, [ref]$null); $out
+
 set pkey=
-set d1=[DllImport(\"pkeyhelper.dll\",CharSet=CharSet.Unicode)]public static extern int SkuGetProductKeyForEdition(int e, string c, out string k, out string p);
-set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $k=''; $null=$AP::SkuGetProductKeyForEdition(%1, %2, [ref]$k, [ref]$null); $k
-for /f %%a in ('%psc% "%d2%"') do if not errorlevel 1 (set pkey=%%a)
+for /f %%a in ('%psc% "%d1%"') do if not errorlevel 1 (set pkey=%%a)
 exit /b
 
 ::  Get channel name for the key which was extracted from pkeyhelper.dll
@@ -1863,13 +2076,15 @@ exit /b
 :dk_pkeychannel
 
 set k=%1
-set pkeychannel=
+set m=[Runtime.InteropServices.Marshal]
 set p=%SystemRoot%\System32\spp\tokens\pkeyconfig\pkeyconfig.xrm-ms
-set m=[System.Runtime.InteropServices.Marshal]
-set d1=[DllImport(\"PidGenX.dll\",CharSet=CharSet.Unicode)]public static extern int PidGenX(string k,string p,string m,int u,IntPtr i,IntPtr d,IntPtr f);
-set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $k='%k%'; $p='%p%'; $r=[byte[]]::new(0x04F8); $r[0]=0xF8; $r[1]=0x04; $f=%m%::AllocHGlobal(1272); %m%::Copy($r,0,$f,1272);
-set d3=%d2% [void]$AP::PidGenX($k,$p,\"00000\",0,0,0,$f); %m%::Copy($f,$r,0,1272); %m%::FreeHGlobal($f); [System.Text.Encoding]::Unicode.GetString($r, 1016, 128).Replace('0','')
-for /f %%a in ('%psc% "%d3%"') do if not errorlevel 1 (set pkeychannel=%%a)
+
+set d1=%ref% [void]$TypeBuilder.DefinePInvokeMethod('PidGenX', 'pidgenx.dll', 'Public, Static', 1, [int], @([String], [String], [String], [int], [IntPtr], [IntPtr], [IntPtr]), 1, 3);
+set d1=%d1% $r = [byte[]]::new(0x04F8); $r[0] = 0xF8; $r[1] = 0x04; $f = %m%::AllocHGlobal(0x04F8); %m%::Copy($r, 0, $f, 0x04F8);
+set d1=%d1% [void]$TypeBuilder.CreateType()::PidGenX('%k%', '%p%', '00000', 0, 0, 0, $f); %m%::Copy($f, $r, 0, 0x04F8); %m%::FreeHGlobal($f); [Text.Encoding]::Unicode.GetString($r, 1016, 128)
+
+set pkeychannel=
+for /f %%a in ('%psc% "%d1%"') do if not errorlevel 1 (set pkeychannel=%%a)
 exit /b
 
 :dk_gvlk
@@ -1896,56 +2111,57 @@ exit /b
 
 :kms38data
 
+set f=
 for %%# in (
-73111121-5638-40f6-bc11-f1d7b0d64300_NPPR9-FWDCX-D2C8J-H872K-2YT43___4_Enterprise
-9bd77860-9b31-4b7b-96ad-2564017315bf_VDYBN-27WPP-V4HQT-9VMD4-VMK7H___7_ServerStandard_FE
-de32eafd-aaee-4662-9444-c1befb41bde2_N69G4-B89J2-4G8F4-WWYCC-J464C___7_ServerStandard_RS5
-8c1c5410-9f39-4805-8c9d-63a07706358f_WC2BQ-8NRM3-FDDYY-2BFGV-KHKQY___7_ServerStandard_RS1
-ef6cfc9f-8c5d-44ac-9aad-de6a2ea0ae03_WX4NM-KYWYW-QJJR4-XV3QB-6VM33___8_ServerDatacenter_FE
-34e1ae55-27f8-4950-8877-7a03be5fb181_WMDGN-G9PQG-XVVXX-R3X43-63DFG___8_ServerDatacenter_RS5
-21c56779-b449-4d20-adfc-eece0e1ad74b_CB7KF-BWN84-R7R2Y-793K2-8XDDG___8_ServerDatacenter_RS1
-e272e3e2-732f-4c65-a8f0-484747d0d947_DPH2V-TTNVB-4X9Q3-TJR4H-KHJW4__27_EnterpriseN
-2de67392-b7a7-462a-b1ca-108dd189f588_W269N-WFGWX-YVC9B-4J6C9-T83GX__48_Professional
-a80b5abf-76ad-428b-b05d-a47d2dffeebf_MH37W-N47XK-V7XM9-C7227-GCQG9__49_ProfessionalN
-034d3cbb-5d4b-4245-b3f8-f84571314078_WVDHN-86M7X-466P6-VHXV7-YY726__50_ServerSolution_RS5
-2b5a1b0f-a5ab-4c54-ac2f-a6d94824a283_JCKRF-N37P4-C2D82-9YXRT-4M63B__50_ServerSolution_RS1
-7b9e1751-a8da-4f75-9560-5fadfe3d8e38_3KHY7-WNT83-DGQKR-F7HPR-844BM__98_CoreN
-a9107544-f4a0-4053-a96a-1479abdef912_PVMJN-6DFY6-9CCP6-7BKTT-D3WVR__99_CoreCountrySpecific
-cd918a57-a41b-4c82-8dce-1a538e221a83_7HNRX-D7KGG-3K4RQ-4WPJ4-YTDFH_100_CoreSingleLanguage
-58e97c99-f377-4ef1-81d5-4ad5522b5fd8_TX9XD-98N7V-6WMQ6-BX7FG-H8Q99_101_Core
-7b4433f4-b1e7-4788-895a-c45378d38253_QN4C6-GBJD2-FB422-GHWJK-GJG2R_110_ServerCloudStorage
-8de8eb62-bbe0-40ac-ac17-f75595071ea3_GRFBW-QNDC4-6QBHG-CCK3B-2PR88_120_ServerARM64_RS5
-43d9af6e-5e86-4be8-a797-d072a046896c_K9FYF-G6NCK-73M32-XMVPY-F9DRR_120_ServerARM64_RS4
-e0c42288-980c-4788-a014-c080d2e1926e_NW6C2-QMPVW-D7KKK-3GKT6-VCFB2_121_Education
-3c102355-d027-42c6-ad23-2e7ef8a02585_2WH4N-8QGBV-H22JP-CT43Q-MDWWJ_122_EducationN
-32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee_M7XTQ-FN8P6-TTKYV-9D4CC-J462D_125_EnterpriseS_RS5,VB
-2d5a5a60-3040-48bf-beb0-fcd770c20ce0_DCPHK-NFMTC-H88MJ-PFHPY-QJ4BJ_125_EnterpriseS_RS1
-7b51a46c-0c04-4e8f-9af4-8496cca90d5e_WNMTR-4C88C-JK8YV-HQ7T2-76DF9_125_EnterpriseS_TH1
-7103a333-b8c8-49cc-93ce-d37c09687f92_92NFX-8DJQP-P6BBQ-THF9C-7CG2H_126_EnterpriseSN_RS5,VB
-9f776d83-7156-45b2-8a5c-359b9c9f22a3_QFFDN-GRT3P-VKWWX-X7T3R-8B639_126_EnterpriseSN_RS1
-87b838b7-41b6-4590-8318-5797951d8529_2F77B-TNFGY-69QQF-B8YKP-D69TJ_126_EnterpriseSN_TH1
-39e69c41-42b4-4a0a-abad-8e3c10a797cc_QFND9-D3Y9C-J3KKY-6RPVP-2DPYV_145_ServerDatacenterACor_FE
-90c362e5-0da1-4bfd-b53b-b87d309ade43_6NMRW-2C8FM-D24W7-TQWMY-CWH2D_145_ServerDatacenterACor_RS5
-e49c08e7-da82-42f8-bde2-b570fbcae76c_2HXDN-KRXHB-GPYC7-YCKFJ-7FVDG_145_ServerDatacenterACor_RS3
-f5e9429c-f50b-4b98-b15c-ef92eb5cff39_67KN8-4FYJW-2487Q-MQ2J7-4C4RG_146_ServerStandardACor_FE
-73e3957c-fc0c-400d-9184-5f7b6f2eb409_N2KJX-J94YW-TQVFB-DG9YT-724CC_146_ServerStandardACor_RS5
-61c5ef22-f14f-4553-a824-c4b31e84b100_PTXN8-JFHJM-4WC78-MPCBR-9W4KR_146_ServerStandardACor_RS3
-82bbc092-bc50-4e16-8e18-b74fc486aec3_NRG8B-VKK3Q-CXVCJ-9G2XF-6Q84J_161_ProfessionalWorkstation
-4b1571d3-bafb-4b40-8087-a961be2caf65_9FNHH-K3HBT-3W4TD-6383H-6XYWF_162_ProfessionalWorkstationN
-3f1afc82-f8ac-4f6c-8005-1d233e606eee_6TP4R-GNPTD-KYYHQ-7B7DP-J447Y_164_ProfessionalEducation
-5300b18c-2e33-4dc2-8291-47ffcec746dd_YVWGF-BXNMC-HTQYQ-CPQ99-66QFC_165_ProfessionalEducationN
-8c8f0ad3-9a43-4e05-b840-93b8d1475cbc_6N379-GGTMK-23C6M-XVVTC-CKFRQ_168_ServerAzureCor_FE
-a99cc1f0-7719-4306-9645-294102fbff95_FDNH6-VW9RW-BXPJ7-4XTYG-239TB_168_ServerAzureCor_RS5
-3dbf341b-5f6c-4fa7-b936-699dce9e263f_VP34G-4NPPG-79JTQ-864T4-R3MQX_168_ServerAzureCor_RS1
-e0b2d383-d112-413f-8a80-97f373a5820c_YYVX9-NTFWV-6MDM3-9PT4T-4M68B_171_EnterpriseG
-e38454fb-41a4-4f59-a5dc-25080e354730_44RPN-FTY23-9VTTB-MP9BX-T84FV_172_EnterpriseGN
-ec868e65-fadf-4759-b23e-93fe37f2cc29_CPWHC-NT2C7-VYW78-DHDB2-PG3GK_175_ServerRdsh_RS5
-e4db50ea-bda1-4566-b047-0ca50abc6f07_7NBT4-WGBQX-MP4H7-QXFF8-YP3KX_175_ServerRdsh_RS3
-0df4f814-3f57-4b8b-9a9d-fddadcd69fac_NBTWJ-3DR69-3C4V8-C26MC-GQ9M6_183_CloudE
-59eb965c-9150-42b7-a0ec-22151b9897c5_KBN8V-HFGQ4-MGXVD-347P6-PDQGT_191_IoTEnterpriseS_NI
-d30136fc-cb4b-416e-a23d-87207abc44a9_6XN7V-PCBDC-BDBRH-8DQY7-G6R44_202_CloudEditionN
-ca7df2e3-5ea0-47b8-9ac1-b1be4d8edd69_37D7F-N49CB-WQR8W-TBJ73-FM8RX_203_CloudEdition
-19b5e0fb-4431-46bc-bac1-2f1873e4ae73_NTBV8-9K7Q8-V27C6-M2BTV-KHMXV_407_ServerTurbine
+73111121-5638-40f6-bc11-f1d7b0d64300_NPP%f%R9-FW%f%DCX-D2C%f%8J-H8%f%72K-2Y%f%T43___4_Enterprise
+9bd77860-9b31-4b7b-96ad-2564017315bf_VDY%f%BN-27%f%WPP-V4H%f%QT-9V%f%MD4-VM%f%K7H___7_ServerStandard_FE
+de32eafd-aaee-4662-9444-c1befb41bde2_N69%f%G4-B8%f%9J2-4G8%f%F4-WW%f%YCC-J4%f%64C___7_ServerStandard_RS5
+8c1c5410-9f39-4805-8c9d-63a07706358f_WC2%f%BQ-8N%f%RM3-FDD%f%YY-2B%f%FGV-KH%f%KQY___7_ServerStandard_RS1
+ef6cfc9f-8c5d-44ac-9aad-de6a2ea0ae03_WX4%f%NM-KY%f%WYW-QJJ%f%R4-XV%f%3QB-6V%f%M33___8_ServerDatacenter_FE
+34e1ae55-27f8-4950-8877-7a03be5fb181_WMD%f%GN-G9%f%PQG-XVV%f%XX-R3%f%X43-63%f%DFG___8_ServerDatacenter_RS5
+21c56779-b449-4d20-adfc-eece0e1ad74b_CB7%f%KF-BW%f%N84-R7R%f%2Y-79%f%3K2-8X%f%DDG___8_ServerDatacenter_RS1
+e272e3e2-732f-4c65-a8f0-484747d0d947_DPH%f%2V-TT%f%NVB-4X9%f%Q3-TJ%f%R4H-KH%f%JW4__27_EnterpriseN
+2de67392-b7a7-462a-b1ca-108dd189f588_W26%f%9N-WF%f%GWX-YVC%f%9B-4J%f%6C9-T8%f%3GX__48_Professional
+a80b5abf-76ad-428b-b05d-a47d2dffeebf_MH3%f%7W-N4%f%7XK-V7X%f%M9-C7%f%227-GC%f%QG9__49_ProfessionalN
+034d3cbb-5d4b-4245-b3f8-f84571314078_WVD%f%HN-86%f%M7X-466%f%P6-VH%f%XV7-YY%f%726__50_ServerSolution_RS5
+2b5a1b0f-a5ab-4c54-ac2f-a6d94824a283_JCK%f%RF-N3%f%7P4-C2D%f%82-9Y%f%XRT-4M%f%63B__50_ServerSolution_RS1
+7b9e1751-a8da-4f75-9560-5fadfe3d8e38_3KH%f%Y7-WN%f%T83-DGQ%f%KR-F7%f%HPR-84%f%4BM__98_CoreN
+a9107544-f4a0-4053-a96a-1479abdef912_PVM%f%JN-6D%f%FY6-9CC%f%P6-7B%f%KTT-D3%f%WVR__99_CoreCountrySpecific
+cd918a57-a41b-4c82-8dce-1a538e221a83_7HN%f%RX-D7%f%KGG-3K4%f%RQ-4W%f%PJ4-YT%f%DFH_100_CoreSingleLanguage
+58e97c99-f377-4ef1-81d5-4ad5522b5fd8_TX9%f%XD-98%f%N7V-6WM%f%Q6-BX%f%7FG-H8%f%Q99_101_Core
+7b4433f4-b1e7-4788-895a-c45378d38253_QN4%f%C6-GB%f%JD2-FB4%f%22-GH%f%WJK-GJ%f%G2R_110_ServerCloudStorage
+8de8eb62-bbe0-40ac-ac17-f75595071ea3_GRF%f%BW-QN%f%DC4-6QB%f%HG-CC%f%K3B-2P%f%R88_120_ServerARM64_RS5
+43d9af6e-5e86-4be8-a797-d072a046896c_K9F%f%YF-G6%f%NCK-73M%f%32-XM%f%VPY-F9%f%DRR_120_ServerARM64_RS4
+e0c42288-980c-4788-a014-c080d2e1926e_NW6%f%C2-QM%f%PVW-D7K%f%KK-3G%f%KT6-VC%f%FB2_121_Education
+3c102355-d027-42c6-ad23-2e7ef8a02585_2WH%f%4N-8Q%f%GBV-H22%f%JP-CT%f%43Q-MD%f%WWJ_122_EducationN
+32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee_M7X%f%TQ-FN%f%8P6-TTK%f%YV-9D%f%4CC-J4%f%62D_125_EnterpriseS_RS5,VB
+2d5a5a60-3040-48bf-beb0-fcd770c20ce0_DCP%f%HK-NF%f%MTC-H88%f%MJ-PF%f%HPY-QJ%f%4BJ_125_EnterpriseS_RS1
+7b51a46c-0c04-4e8f-9af4-8496cca90d5e_WNM%f%TR-4C%f%88C-JK8%f%YV-HQ%f%7T2-76%f%DF9_125_EnterpriseS_TH1
+7103a333-b8c8-49cc-93ce-d37c09687f92_92N%f%FX-8D%f%JQP-P6B%f%BQ-TH%f%F9C-7C%f%G2H_126_EnterpriseSN_RS5,VB
+9f776d83-7156-45b2-8a5c-359b9c9f22a3_QFF%f%DN-GR%f%T3P-VKW%f%WX-X7%f%T3R-8B%f%639_126_EnterpriseSN_RS1
+87b838b7-41b6-4590-8318-5797951d8529_2F7%f%7B-TN%f%FGY-69Q%f%QF-B8%f%YKP-D6%f%9TJ_126_EnterpriseSN_TH1
+39e69c41-42b4-4a0a-abad-8e3c10a797cc_QFN%f%D9-D3%f%Y9C-J3K%f%KY-6R%f%PVP-2D%f%PYV_145_ServerDatacenterACor_FE
+90c362e5-0da1-4bfd-b53b-b87d309ade43_6NM%f%RW-2C%f%8FM-D24%f%W7-TQ%f%WMY-CW%f%H2D_145_ServerDatacenterACor_RS5
+e49c08e7-da82-42f8-bde2-b570fbcae76c_2HX%f%DN-KR%f%XHB-GPY%f%C7-YC%f%KFJ-7F%f%VDG_145_ServerDatacenterACor_RS3
+f5e9429c-f50b-4b98-b15c-ef92eb5cff39_67K%f%N8-4F%f%YJW-248%f%7Q-MQ%f%2J7-4C%f%4RG_146_ServerStandardACor_FE
+73e3957c-fc0c-400d-9184-5f7b6f2eb409_N2K%f%JX-J9%f%4YW-TQV%f%FB-DG%f%9YT-72%f%4CC_146_ServerStandardACor_RS5
+61c5ef22-f14f-4553-a824-c4b31e84b100_PTX%f%N8-JF%f%HJM-4WC%f%78-MP%f%CBR-9W%f%4KR_146_ServerStandardACor_RS3
+82bbc092-bc50-4e16-8e18-b74fc486aec3_NRG%f%8B-VK%f%K3Q-CXV%f%CJ-9G%f%2XF-6Q%f%84J_161_ProfessionalWorkstation
+4b1571d3-bafb-4b40-8087-a961be2caf65_9FN%f%HH-K3%f%HBT-3W4%f%TD-63%f%83H-6X%f%YWF_162_ProfessionalWorkstationN
+3f1afc82-f8ac-4f6c-8005-1d233e606eee_6TP%f%4R-GN%f%PTD-KYY%f%HQ-7B%f%7DP-J4%f%47Y_164_ProfessionalEducation
+5300b18c-2e33-4dc2-8291-47ffcec746dd_YVW%f%GF-BX%f%NMC-HTQ%f%YQ-CP%f%Q99-66%f%QFC_165_ProfessionalEducationN
+8c8f0ad3-9a43-4e05-b840-93b8d1475cbc_6N3%f%79-GG%f%TMK-23C%f%6M-XV%f%VTC-CK%f%FRQ_168_ServerAzureCor_FE
+a99cc1f0-7719-4306-9645-294102fbff95_FDN%f%H6-VW%f%9RW-BXP%f%J7-4X%f%TYG-23%f%9TB_168_ServerAzureCor_RS5
+3dbf341b-5f6c-4fa7-b936-699dce9e263f_VP3%f%4G-4N%f%PPG-79J%f%TQ-86%f%4T4-R3%f%MQX_168_ServerAzureCor_RS1
+e0b2d383-d112-413f-8a80-97f373a5820c_YYV%f%X9-NT%f%FWV-6MD%f%M3-9P%f%T4T-4M%f%68B_171_EnterpriseG
+e38454fb-41a4-4f59-a5dc-25080e354730_44R%f%PN-FT%f%Y23-9VT%f%TB-MP%f%9BX-T8%f%4FV_172_EnterpriseGN
+ec868e65-fadf-4759-b23e-93fe37f2cc29_CPW%f%HC-NT%f%2C7-VYW%f%78-DH%f%DB2-PG%f%3GK_175_ServerRdsh_RS5
+e4db50ea-bda1-4566-b047-0ca50abc6f07_7NB%f%T4-WG%f%BQX-MP4%f%H7-QX%f%FF8-YP%f%3KX_175_ServerRdsh_RS3
+0df4f814-3f57-4b8b-9a9d-fddadcd69fac_NBT%f%WJ-3D%f%R69-3C4%f%V8-C2%f%6MC-GQ%f%9M6_183_CloudE
+59eb965c-9150-42b7-a0ec-22151b9897c5_KBN%f%8V-HF%f%GQ4-MGX%f%VD-34%f%7P6-PD%f%QGT_191_IoTEnterpriseS_NI
+d30136fc-cb4b-416e-a23d-87207abc44a9_6XN%f%7V-PC%f%BDC-BDB%f%RH-8D%f%QY7-G6%f%R44_202_CloudEditionN
+ca7df2e3-5ea0-47b8-9ac1-b1be4d8edd69_37D%f%7F-N4%f%9CB-WQR%f%8W-TB%f%J73-FM%f%8RX_203_CloudEdition
+19b5e0fb-4431-46bc-bac1-2f1873e4ae73_NTB%f%V8-9K%f%7Q8-V27%f%C6-M2%f%BTV-KH%f%MXV_407_ServerTurbine
 ) do (
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do if %osSKU%==%%C (
 if %1==getkey if not defined key echo "!applist!" | find /i "%%A" >nul && set key=%%B
@@ -1973,10 +2189,10 @@ set notfoundaltactID=
 if %_NoEditionChange%==1 exit /b
 
 for %%# in (
-188_IoTEnterprise_______________8ab9bdd1-1f67-4997-82d9-8878520837d9_73111121-5638-40f6-bc11-f1d7b0d64300_NPPR9-FWDCX-D2C8J-H872K-2YT43_Enterprise
-191_IoTEnterpriseS-2021_________ed655016-a9e8-4434-95d9-4345352c2552_32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee_M7XTQ-FN8P6-TTKYV-9D4CC-J462D_EnterpriseS-2021
-205_IoTEnterpriseSK_____________d4f9b41f-205c-405e-8e08-3d16e88e02be_59eb965c-9150-42b7-a0ec-22151b9897c5_KBN8V-HFGQ4-MGXVD-347P6-PDQGT_IoTEnterpriseS-Win11
-138_ProfessionalSingleLanguage__a48938aa-62fa-4966-9d44-9f04da3f72f2_2de67392-b7a7-462a-b1ca-108dd189f588_W269N-WFGWX-YVC9B-4J6C9-T83GX_Professional
+188_IoTEnterprise_______________8ab9bdd1-1f67-4997-82d9-8878520837d9_73111121-5638-40f6-bc11-f1d7b0d64300_NPP%f%R9-FWD%f%CX-D2%f%C8J-H872%f%K-2Y%f%T43_Enterprise
+191_IoTEnterpriseS-2021_________ed655016-a9e8-4434-95d9-4345352c2552_32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee_M7X%f%TQ-FN8%f%P6-TT%f%KYV-9D4C%f%C-J4%f%62D_EnterpriseS-2021
+205_IoTEnterpriseSK_____________d4f9b41f-205c-405e-8e08-3d16e88e02be_59eb965c-9150-42b7-a0ec-22151b9897c5_KBN%f%8V-HFG%f%Q4-MG%f%XVD-347P%f%6-PD%f%QGT_IoTEnterpriseS-Win11
+138_ProfessionalSingleLanguage__a48938aa-62fa-4966-9d44-9f04da3f72f2_2de67392-b7a7-462a-b1ca-108dd189f588_W26%f%9N-WFG%f%WX-YV%f%C9B-4J6C%f%9-T8%f%3GX_Professional
 ) do (
 for /f "tokens=1-6 delims=_" %%A in ("%%#") do if %osSKU%==%%A (
 echo "!applist!" | find /i "%%C" 1>nul && (
@@ -2100,9 +2316,9 @@ goto Done
 
 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "ComputerSystem" 1>nul || (
 %nceline%
-echo wmic.exe is not responding in the system.
-echo Check this page for help https://massgrave.dev/troubleshoot
-echo Aborting...
+echo WMI is not responding in the system.
+echo:
+echo In MAS, Goto Troubleshoot and run Fix WMI option.
 goto Done
 )
 
@@ -2137,20 +2353,17 @@ set sub_next=0
 set sub_o365=0
 set sub_proj=0
 set sub_vsio=0
-set _Identity=0
 set kNext=HKCU\SOFTWARE\Microsoft\Office\16.0\Common\Licensing\LicensingNext
-dir /b /s /a:-d "!_Local!\Microsoft\Office\Licenses\*1*" %nul% && set _Identity=1
-dir /b /s /a:-d "!ProgramData!\Microsoft\Office\Licenses\*1*" %nul% && set _Identity=1
-if %_Identity% EQU 1 reg query %kNext% /v MigrationToV5Done 2>nul | find /i "0x1" %nul% && call :officeSub %nul%
+reg query %kNext% /v MigrationToV5Done 2>nul | find /i "0x1" %nul% && call :officeSub %nul%
 
 set _tskinstalled=
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "\Activation-Renewal" >nul && (
-set _tskinstalled=1
+find /i "Ver:1.8" %ProgramData%\Activation-Renewal\Activation_task.cmd %nul% && set _tskinstalled=1
 )
 
 set _oldtsk=
 if not defined _tskinstalled (
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "\Online_KMS_Activation_Script-Renewal" >nul && (
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | findstr /i "\Activation-Renewal \Online_KMS_Activation_Script-Renewal" >nul && (
 set _oldtsk=1
 )
 )
@@ -2226,7 +2439,7 @@ goto _KMS_Menu
 if defined _unattended exit /b
 
 echo.
-echo Press any key to go back...
+echo Press any key to exit...
 pause >nul
 exit /b
 
@@ -2262,6 +2475,7 @@ if /i "%PROCESSOR_ARCHITECTURE%"=="arm64" set "xBit=x86"&set "xOS=A64"
 if /i "%PROCESSOR_ARCHITECTURE%"=="x86" if "%PROCESSOR_ARCHITEW6432%"=="" set "xBit=x86"&set "xOS=x86"&set "_wow=0"&set "_bit=32"
 if /i "%PROCESSOR_ARCHITEW6432%"=="amd64" set "xBit=x64"&set "xOS=x64"
 if /i "%PROCESSOR_ARCHITEW6432%"=="arm64" set "xBit=x86"&set "xOS=A64"
+if not defined xBit set "xBit=x64"&set "xOS=x64"
 
 set _cwmi=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
@@ -2290,6 +2504,7 @@ set "_mO14m=Detected Office 2010 MSI Retail is not supported by this script"
 set "_mO15m=Detected Office 2013 MSI Retail is not supported by this script"
 set "_mO16m=Detected Office 2016 MSI Retail is not supported by this script"
 set "_mOuwp=Detected Office 365/2016 UWP is not supported by this script"
+set DO15Ids=ProPlus,Standard,Access,Lync,Excel,Groove,InfoPath,OneNote,Outlook,PowerPoint,Publisher,Word
 set DO16Ids=ProPlus,Standard,Access,SkypeforBusiness,Excel,Outlook,PowerPoint,Publisher,Word
 set LV16Ids=Mondo,ProPlus,ProjectPro,VisioPro,Standard,ProjectStd,VisioStd,Access,SkypeforBusiness,OneNote,Excel,Outlook,PowerPoint,Publisher,Word
 set LR16Ids=%LV16Ids%,Professional,HomeBusiness,HomeStudent,O365Business,O365SmallBusPrem,O365HomePrem,O365EduCloud
@@ -2568,7 +2783,7 @@ if %ActWindows% EQU 0 (
     echo.&echo %_winos% %nKMS%
     if defined _eval echo %nEval%
     ) else (
-    echo.&echo Failed checking KMS Activation ID^(s^) for Windows.&echo Check this page for help https://massgrave.dev/troubleshoot &call :CheckWS
+    echo.&echo Failed checking KMS Activation ID^(s^) for Windows. &call :CheckWS
     exit /b
     )
   )
@@ -2637,6 +2852,7 @@ if %sub_next% EQU 1 reg delete HKCU\SOFTWARE\Microsoft\Office\16.0\Common\Licens
 set Off1ce=1
 set _sC2R=sppoff
 set _fC2R=ReturnSPP
+
 set vol_off14=0&set vol_off15=0&set vol_off16=0&set vol_off19=0&set vol_off21=0
 set "_qr=%_zz1% %spp% %_zz2% %_zz5%Description like '%%KMSCLIENT%%' AND NOT Name like '%%MondoR_KMS_Automation%%' %_zz6% %_zz3% Name %_zz4%"
 %_qr% > "!_temp!\sppchk.txt" 2>&1
@@ -2654,6 +2870,7 @@ set "_qr=%_zz1% %spp% %_zz2% "ApplicationID='%_oApp%' AND LicenseFamily like 'Of
 if %vol_off15% EQU 1 find /i "OfficeMondoVL_KMS_Client" "!_temp!\sppchk.txt" %_Nul1% && (
 %_qr% %_Nul2% | find /i "O365" %_Nul1% || (set vol_off15=0)
 )
+
 set ret_off14=0&set ret_off15=0&set ret_off16=0&set ret_off19=0&set ret_off21=0
 set "_qr=%_zz1% %spp% %_zz2% %_zz5%ApplicationID='%_oApp%' AND NOT Name like '%%O365%%' %_zz6% %_zz3% Name %_zz4%"
 %_qr% > "!_temp!\sppchk.txt" 2>&1
@@ -2663,6 +2880,7 @@ find /i "R_Retail" "!_temp!\sppchk.txt" %_Nul2% | find /i "Office 16" %_Nul1% &&
 find /i "R_Retail" "!_temp!\sppchk.txt" %_Nul2% | find /i "Office 15" %_Nul1% && (set ret_off15=1)
 set "_qr=%_zz1% %spp% %_zz2% %_zz5%ApplicationID='%_oA14%'%_zz6% %_zz3% Description %_zz4%"
 if %winbuild% LSS 9200 if %vol_off14% EQU 0 %_qr% %_Nul2% | findstr /i channel %_Nul1% && (set ret_off14=1)
+
 set run_off21=0&set prr_off21=0&set prv_off21=0
 if %loc_off21% EQU 1 if %ret_off21% EQU 1 if %_O16MSI% EQU 0 if %vol_off21% EQU 0 set run_off21=1
 if %loc_off21% EQU 1 if %ret_off21% EQU 1 if %_O16MSI% EQU 0 if %vol_off21% EQU 1 (
@@ -2688,6 +2906,7 @@ if %sub_vsio% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office21%%a2021R"
   )
 )
 if %loc_off21% EQU 1 if %ret_off21% EQU 1 if %_O16MSI% EQU 0 if %vol_off21% EQU 1 if %prv_off21% LSS %prr_off21% (set vol_off21=0&set run_off21=1)
+
 set run_off19=0&set prr_off19=0&set prv_off19=0
 if %loc_off19% EQU 1 if %ret_off19% EQU 1 if %_O16MSI% EQU 0 if %vol_off19% EQU 0 set run_off19=1
 if %loc_off19% EQU 1 if %ret_off19% EQU 1 if %_O16MSI% EQU 0 if %vol_off19% EQU 1 (
@@ -2713,6 +2932,7 @@ if %sub_vsio% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office19%%a2019R"
   )
 )
 if %loc_off19% EQU 1 if %ret_off19% EQU 1 if %_O16MSI% EQU 0 if %vol_off19% EQU 1 if %prv_off19% LSS %prr_off19% (set vol_off19=0&set run_off19=1)
+
 set run_off16=0&set prr_off16=0&set prv_off16=0
 if %loc_off16% EQU 1 if %ret_off16% EQU 1 if %_O16MSI% EQU 0 if defined _C16R (
 for %%a in (%DO16Ids%) do find /i "Office16%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
@@ -2751,11 +2971,37 @@ set "_qr=%_zz1% %spp% %_zz2% %_zz5%ApplicationID='%_oApp%' AND LicenseFamily lik
 if %loc_off16% EQU 1 if %run_off16% EQU 0 if %sub_o365% EQU 0 if defined _C16R %_qr% %_Nul2% | find /i "O365" %_Nul1% && (
 find /i "Office16MondoVL" "!_temp!\sppchk.txt" %_Nul1% || set run_off16=1
 )
-set run_off15=0
-if %loc_off15% EQU 1 if %ret_off15% EQU 1 if %_O15MSI% EQU 0 (
-set vol_off15=0
-if defined _C15R set run_off15=1
+
+set run_off15=0&set prr_off15=0&set prv_off15=0
+if %loc_off15% EQU 1 if %ret_off15% EQU 1 if %_O15MSI% EQU 0 if %vol_off15% EQU 0 if defined _C15R set run_off15=1
+if %loc_off15% EQU 1 if %ret_off15% EQU 1 if %_O15MSI% EQU 0 if %vol_off15% EQU 1 if defined _C15R (
+for %%a in (%DO15Ids%) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "Office%%aVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
+for %%a in (Professional) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "OfficeProPlusVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
+for %%a in (HomeBusiness,HomeStudent) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "OfficeStandardVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
+if %sub_proj% EQU 0 for %%a in (ProjectPro,ProjectStd) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "Office%%aVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
+if %sub_vsio% EQU 0 for %%a in (VisioPro,VisioStd) do find /i "Office%%aR" "!_temp!\sppchk.txt" %_Nul1% && (
+  call set /a prr_off15+=1
+  find /i "Office%%aVL" "!_temp!\sppchk.txt" %_Nul1% && call set /a prv_off15+=1
+  )
 )
+if %loc_off15% EQU 1 if %ret_off15% EQU 1 if %_O15MSI% EQU 0 if %vol_off15% EQU 1 if defined _C15R if %prv_off15% LSS %prr_off15% (set vol_off15=0&set run_off15=1)
+set "_qr=%_zz1% %spp% %_zz2% %_zz5%ApplicationID='%_oApp%' AND LicenseFamily like 'OfficeO365%%' %_zz6% %_zz3% LicenseFamily %_zz4%"
+if %loc_off15% EQU 1 if %run_off15% EQU 0 if defined _C15R %_qr% %_Nul2% | find /i "O365" %_Nul1% && (
+find /i "OfficeMondoVL" "!_temp!\sppchk.txt" %_Nul1% || set run_off15=1
+)
+
 set vol_offgl=1
 if %vol_off21% EQU 0 if %vol_off19% EQU 0 if %vol_off16% EQU 0 if %vol_off15% EQU 0 (
 if %winbuild% GEQ 9200 set vol_offgl=0
@@ -3370,10 +3616,6 @@ if %WMIe% EQU 1 (
 echo.
 echo %_err%
 echo Failed running WMI query check.
-echo.
-echo Verify that these services are working correctly:
-echo Windows Management Instrumentation [WinMgmt]
-echo Software Protection [sppsvc]
 )
 goto :eof
 
@@ -3439,12 +3681,14 @@ set "_LicensesPath="
 set "_Integrator="
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath" %_Nul6%') do (set "_InstallRoot=%%b\root")
 if not "%_InstallRoot%"=="" (
+  for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath" %_Nul6%') do (set "_OSPPVBS=%%b\Office16\OSPP.VBS")
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v PackageGUID" %_Nul6%') do (set "_GUID=%%b")
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun\Configuration /v ProductReleaseIds" %_Nul6%') do (set "_ProductIds=%%b")
   set "_Config=HKLM\SOFTWARE\Microsoft\Office\ClickToRun\Configuration"
   set "_PRIDs=HKLM\SOFTWARE\Microsoft\Office\ClickToRun\ProductReleaseIDs"
 ) else (
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun /v InstallPath" %_Nul6%') do (set "_InstallRoot=%%b\root")
+  for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun /v InstallPath" %_Nul6%') do (set "_OSPPVBS=%%b\Office16\OSPP.VBS")
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun /v PackageGUID" %_Nul6%') do (set "_GUID=%%b")
   for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration /v ProductReleaseIds" %_Nul6%') do (set "_ProductIds=%%b")
   set "_Config=HKLM\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration"
@@ -3534,10 +3778,12 @@ if %winbuild% GEQ 9200 (
 set _spp=SoftwareLicensingProduct
 set _sps=SoftwareLicensingService
 set "_vbsi=%_SLMGR% /ilc "
+set "_vbsf=%_SLMGR% /ilc "
 ) else (
 set _spp=OfficeSoftwareProtectionProduct
 set _sps=OfficeSoftwareProtectionService
 set _vbsi="!_OSPP15VBS!" /inslic:
+set _vbsf="!_OSPPVBS!" /inslic:
 )
 set "_wmi="
 set "_qr=%_zz7% %_sps% %_zz3% Version %_zz8%"
@@ -3555,60 +3801,11 @@ if %WMI_VBS% NEQ 0 %_qr% %_Nul2% >"!_temp!\crvRetail.txt"
 find /i "RETAIL channel" "!_temp!\crvRetail.txt" %_Nul1% && set _Retail=1
 find /i "RETAIL(MAK) channel" "!_temp!\crvRetail.txt" %_Nul1% && set _Retail=1
 find /i "TIMEBASED_SUB channel" "!_temp!\crvRetail.txt" %_Nul1% && set _Retail=1
-set "_copp="
-if exist "%SysPath%\msvcr100.dll" (
-set _copp=1
-) else if exist "!_InstallRoot!\vfs\System\msvcr100.dll" (
-set _copp="!_InstallRoot!\vfs\System"
-) else if exist "!_Install15Root!\vfs\System\msvcr100.dll" (
-set _copp="!_Install15Root!\vfs\System"
-) else if exist "%SystemRoot%\SysWOW64\msvcr100.dll" (
-set _copp=1
-set xBit=x86
-) else if exist "!_InstallRoot!\vfs\SystemX86\msvcr100.dll" (
-set _copp="!_InstallRoot!\vfs\SystemX86"
-set xBit=x86
-) else if exist "!_Install15Root!\vfs\SystemX86\msvcr100.dll" (
-set _copp="!_Install15Root!\vfs\SystemX86"
-set xBit=x86
-)
 set rancopp=0
-if %_Identity% EQU 0 if %_Retail% EQU 0 if %_OMSI% EQU 0 if defined _copp call :oppcln
-goto :oppchk
-
-:oppcln
+if %_Retail% EQU 0 if %_OMSI% EQU 0 (
 set rancopp=1
-set "_cleanloc=%SystemRoot%\Temp\_cleanospp"
-if exist "%_cleanloc%\.*" rmdir /s /q "%_cleanloc%\" %nul%
-md "%_cleanloc%\" %nul%
-pushd "%_cleanloc%\"
-setlocal
-set "TMP=%SystemRoot%\Temp"
-set "TEMP=%SystemRoot%\Temp"
-%nul% %psc% "$b=[IO.File]::ReadAllText('!_batp!')-split'[:]cleanospp[:].*';iex $b[1]; B 1"
-endlocal
-popd
-set extf=
-if not exist "%_cleanloc%\BIN\cleanosppx64.exe" set extf=1
-if not exist "%_cleanloc%\BIN\cleanosppx86.exe" set extf=1
-if defined extf (
-set "_copp="
-echo Failed to extract cleanospp files
+%_Nul3% powershell "$f=[io.file]::ReadAllText('!_batp!') -split ':cleanlicense\:.*';iex ($f[1]);"
 )
-if "!_copp!"=="1" (
-%_Nul3% "!_cleanloc!\bin\cleanospp%xBit%.exe" -Licenses
-) else if not defined extf (
-pushd %_copp%
-%_Nul3% copy /y "!_cleanloc!\bin\cleanospp%xBit%.exe" cleanospp.exe
-%_Nul3% cleanospp.exe -Licenses
-%_Nul3% del /f /q cleanospp.exe
-popd
-)
-cd \
-if exist "%_cleanloc%\.*" rmdir /s /q "%_cleanloc%\" %nul%
-exit /b
-
-:oppchk
 set _O16O365=0
 set _C16Msg=0
 set _C15Msg=0
@@ -3726,6 +3923,11 @@ echo.
 echo Converting Office C2R Retail-to-Volume:
 )
 if %_C16Msg% EQU 0 (if %_Office15% EQU 1 (goto :R15V) else (goto :GVLKC2R))
+
+for %%# in ("!_LicensesPath!\client-issuance-*.xrm-ms") do (
+%_cscript% %_vbsf%"!_LicensesPath!\%%~nx#"
+)
+%_cscript% %_vbsf%"!_LicensesPath!\pkeyconfig-office.xrm-ms"
 
 if !_Mondo! EQU 1 (
 call :InsLic Mondo
@@ -3895,11 +4097,6 @@ if !_O365ProPlus! EQU 0 if !_ProPlus2021! EQU 0 if !_ProPlus2019! EQU 0 if !_Pro
 if %_Office15% EQU 1 (goto :R15V) else (goto :GVLKC2R)
 
 :R15V
-for %%# in ("!_Licenses15Path!\client-issuance-*.xrm-ms") do (
-%_cscript% %_vbsi%"!_Licenses15Path!\%%~nx#"
-)
-%_cscript% %_vbsi%"!_Licenses15Path!\pkeyconfig-office.xrm-ms"
-
 set _O15Ids=Standard,ProjectPro,VisioPro,ProjectStd,VisioStd,Access,Lync
 set _A15Ids=Excel,Groove,InfoPath,OneNote,Outlook,PowerPoint,Publisher,Word
 set _R15Ids=SPD,Mondo,%_O15Ids%,%_A15Ids%,Professional,HomeBusiness,HomeStudent,O365ProPlus,O365Business,O365SmallBusPrem,O365HomePrem
@@ -3956,6 +4153,11 @@ echo.
 echo Converting Office C2R Retail-to-Volume:
 )
 if %_C15Msg% EQU 0 goto :GVLKC2R
+
+for %%# in ("!_Licenses15Path!\client-issuance-*.xrm-ms") do (
+%_cscript% %_vbsi%"!_Licenses15Path!\%%~nx#"
+)
+%_cscript% %_vbsi%"!_Licenses15Path!\pkeyconfig-office.xrm-ms"
 
 if !_Mondo! EQU 1 (
 call :Ins15Lic Mondo
@@ -4038,13 +4240,56 @@ goto :GVLKC2R
 
 :InsLic
 set "_ID=%1Volume"
+set "_patt=%1VL_"
 set "_pkey="
+set "_kpey="
 if not "%2"=="" (
 set "_ID=%1Retail"
+set "_patt=%1R_"
 set "_pkey=PidKey=%2"
+set "_kpey=%2"
 )
 reg delete %_Config% /f /v %_ID%.OSPPReady %_Nul3%
 "!_Integrator!" /I /License PRIDName=%_ID%.16 %_pkey% PackageGUID="%_GUID%" PackageRoot="!_InstallRoot!" %_Nul1%
+
+set fallback=0
+set "_qr=wmic path %_spp% where ApplicationID='%_oApp%' get LicenseFamily"
+if %WMI_VBS% NEQ 0 set "_qr=%_csq% %_spp% "ApplicationID='%_oApp%'" LicenseFamily"
+%_qr% %_Nul2% | find /i "%_patt%" %_Nul1% || (set fallback=1)
+if %fallback% equ 0 goto :IntOK
+
+set "_lsfs="
+for %%# in ("!_LicensesPath!\%_patt%*.xrm-ms") do (
+set "_lsfs=!_lsfs! %%~nx#"
+)
+if defined _kpey (
+  for %%# in ("!_LicensesPath!\%1DemoR*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1E5R*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1EDUR*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1MSDNR*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1O365R*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+  for %%# in ("!_LicensesPath!\%1CO365R*.xrm-ms") do (
+  set "_lsfs=!_lsfs! %%~nx#"
+  )
+)
+for %%# in (!_lsfs!) do (
+%_cscript% %_vbsf%"!_LicensesPath!\%%#"
+)
+set "_qr=wmic path %_sps% where Version='%_wmi%' call InstallProductKey ProductKey="%_kpey%""
+if %WMI_VBS% NEQ 0 set "_qr=%_csp% %_sps% "%_kpey%""
+if defined _kpey %_qr% %_Nul3%
+
+:IntOK
 reg add %_Config% /f /v %_ID%.OSPPReady /t REG_SZ /d 1 %_Nul1%
 reg query %_Config% /v ProductReleaseIds | findstr /I "%_ID%" %_Nul1%
 if %errorlevel% NEQ 0 (
@@ -4096,810 +4341,810 @@ goto :%_sC2R%
 
 :keys
 if "%~1"=="" exit /b
-set hy=-
+set yh=-
 goto :%1 %_Nul2%
 
 :: Windows 11 [Ni]
 :59eb965c-9150-42b7-a0ec-22151b9897c5
-set "_key=KBN8V%hy%HFGQ4%hy%MGXVD%hy%347P6%hy%PDQGT" &:: IoT Enterprise LTSC
+set "_key=KBN8V%yh%HFGQ4%yh%MGXVD%yh%347P6%yh%PDQGT" &:: IoT Enterprise LTSC
 exit /b
 
 :: Windows 11 [Co]
 :ca7df2e3-5ea0-47b8-9ac1-b1be4d8edd69
-set "_key=37D7F%hy%N49CB%hy%WQR8W%hy%TBJ73%hy%FM8RX" &:: SE {Cloud}
+set "_key=37D7F%yh%N49CB%yh%WQR8W%yh%TBJ73%yh%FM8RX" &:: SE {Cloud}
 exit /b
 
 :d30136fc-cb4b-416e-a23d-87207abc44a9
-set "_key=6XN7V%hy%PCBDC%hy%BDBRH%hy%8DQY7%hy%G6R44" &:: SE N {Cloud N}
+set "_key=6XN7V%yh%PCBDC%yh%BDBRH%yh%8DQY7%yh%G6R44" &:: SE N {Cloud N}
 exit /b
 
 :: Windows 10 [RS5]
 :32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee
-set "_key=M7XTQ%hy%FN8P6%hy%TTKYV%hy%9D4CC%hy%J462D" &:: Enterprise LTSC 2019
+set "_key=M7XTQ%yh%FN8P6%yh%TTKYV%yh%9D4CC%yh%J462D" &:: Enterprise LTSC 2019
 exit /b
 
 :7103a333-b8c8-49cc-93ce-d37c09687f92
-set "_key=92NFX%hy%8DJQP%hy%P6BBQ%hy%THF9C%hy%7CG2H" &:: Enterprise LTSC 2019 N
+set "_key=92NFX%yh%8DJQP%yh%P6BBQ%yh%THF9C%yh%7CG2H" &:: Enterprise LTSC 2019 N
 exit /b
 
 :ec868e65-fadf-4759-b23e-93fe37f2cc29
-set "_key=CPWHC%hy%NT2C7%hy%VYW78%hy%DHDB2%hy%PG3GK" &:: Enterprise for Virtual Desktops
+set "_key=CPWHC%yh%NT2C7%yh%VYW78%yh%DHDB2%yh%PG3GK" &:: Enterprise for Virtual Desktops
 exit /b
 
 :0df4f814-3f57-4b8b-9a9d-fddadcd69fac
-set "_key=NBTWJ%hy%3DR69%hy%3C4V8%hy%C26MC%hy%GQ9M6" &:: Lean
+set "_key=NBTWJ%yh%3DR69%yh%3C4V8%yh%C26MC%yh%GQ9M6" &:: Lean
 exit /b
 
 :: Windows 10 [RS3]
 :82bbc092-bc50-4e16-8e18-b74fc486aec3
-set "_key=NRG8B%hy%VKK3Q%hy%CXVCJ%hy%9G2XF%hy%6Q84J" &:: Pro Workstation
+set "_key=NRG8B%yh%VKK3Q%yh%CXVCJ%yh%9G2XF%yh%6Q84J" &:: Pro Workstation
 exit /b
 
 :4b1571d3-bafb-4b40-8087-a961be2caf65
-set "_key=9FNHH%hy%K3HBT%hy%3W4TD%hy%6383H%hy%6XYWF" &:: Pro Workstation N
+set "_key=9FNHH%yh%K3HBT%yh%3W4TD%yh%6383H%yh%6XYWF" &:: Pro Workstation N
 exit /b
 
 :e4db50ea-bda1-4566-b047-0ca50abc6f07
-set "_key=7NBT4%hy%WGBQX%hy%MP4H7%hy%QXFF8%hy%YP3KX" &:: Enterprise Remote Server
+set "_key=7NBT4%yh%WGBQX%yh%MP4H7%yh%QXFF8%yh%YP3KX" &:: Enterprise Remote Server
 exit /b
 
 :: Windows 10 [RS2]
 :e0b2d383-d112-413f-8a80-97f373a5820c
-set "_key=YYVX9%hy%NTFWV%hy%6MDM3%hy%9PT4T%hy%4M68B" &:: Enterprise G
+set "_key=YYVX9%yh%NTFWV%yh%6MDM3%yh%9PT4T%yh%4M68B" &:: Enterprise G
 exit /b
 
 :e38454fb-41a4-4f59-a5dc-25080e354730
-set "_key=44RPN%hy%FTY23%hy%9VTTB%hy%MP9BX%hy%T84FV" &:: Enterprise G N
+set "_key=44RPN%yh%FTY23%yh%9VTTB%yh%MP9BX%yh%T84FV" &:: Enterprise G N
 exit /b
 
 :: Windows 10 [RS1]
 :2d5a5a60-3040-48bf-beb0-fcd770c20ce0
-set "_key=DCPHK%hy%NFMTC%hy%H88MJ%hy%PFHPY%hy%QJ4BJ" &:: Enterprise 2016 LTSB
+set "_key=DCPHK%yh%NFMTC%yh%H88MJ%yh%PFHPY%yh%QJ4BJ" &:: Enterprise 2016 LTSB
 exit /b
 
 :9f776d83-7156-45b2-8a5c-359b9c9f22a3
-set "_key=QFFDN%hy%GRT3P%hy%VKWWX%hy%X7T3R%hy%8B639" &:: Enterprise 2016 LTSB N
+set "_key=QFFDN%yh%GRT3P%yh%VKWWX%yh%X7T3R%yh%8B639" &:: Enterprise 2016 LTSB N
 exit /b
 
 :3f1afc82-f8ac-4f6c-8005-1d233e606eee
-set "_key=6TP4R%hy%GNPTD%hy%KYYHQ%hy%7B7DP%hy%J447Y" &:: Pro Education
+set "_key=6TP4R%yh%GNPTD%yh%KYYHQ%yh%7B7DP%yh%J447Y" &:: Pro Education
 exit /b
 
 :5300b18c-2e33-4dc2-8291-47ffcec746dd
-set "_key=YVWGF%hy%BXNMC%hy%HTQYQ%hy%CPQ99%hy%66QFC" &:: Pro Education N
+set "_key=YVWGF%yh%BXNMC%yh%HTQYQ%yh%CPQ99%yh%66QFC" &:: Pro Education N
 exit /b
 
 :: Windows 10 [TH]
 :58e97c99-f377-4ef1-81d5-4ad5522b5fd8
-set "_key=TX9XD%hy%98N7V%hy%6WMQ6%hy%BX7FG%hy%H8Q99" &:: Home
+set "_key=TX9XD%yh%98N7V%yh%6WMQ6%yh%BX7FG%yh%H8Q99" &:: Home
 exit /b
 
 :7b9e1751-a8da-4f75-9560-5fadfe3d8e38
-set "_key=3KHY7%hy%WNT83%hy%DGQKR%hy%F7HPR%hy%844BM" &:: Home N
+set "_key=3KHY7%yh%WNT83%yh%DGQKR%yh%F7HPR%yh%844BM" &:: Home N
 exit /b
 
 :cd918a57-a41b-4c82-8dce-1a538e221a83
-set "_key=7HNRX%hy%D7KGG%hy%3K4RQ%hy%4WPJ4%hy%YTDFH" &:: Home Single Language
+set "_key=7HNRX%yh%D7KGG%yh%3K4RQ%yh%4WPJ4%yh%YTDFH" &:: Home Single Language
 exit /b
 
 :a9107544-f4a0-4053-a96a-1479abdef912
-set "_key=PVMJN%hy%6DFY6%hy%9CCP6%hy%7BKTT%hy%D3WVR" &:: Home China
+set "_key=PVMJN%yh%6DFY6%yh%9CCP6%yh%7BKTT%yh%D3WVR" &:: Home China
 exit /b
 
 :2de67392-b7a7-462a-b1ca-108dd189f588
-set "_key=W269N%hy%WFGWX%hy%YVC9B%hy%4J6C9%hy%T83GX" &:: Pro
+set "_key=W269N%yh%WFGWX%yh%YVC9B%yh%4J6C9%yh%T83GX" &:: Pro
 exit /b
 
 :a80b5abf-76ad-428b-b05d-a47d2dffeebf
-set "_key=MH37W%hy%N47XK%hy%V7XM9%hy%C7227%hy%GCQG9" &:: Pro N
+set "_key=MH37W%yh%N47XK%yh%V7XM9%yh%C7227%yh%GCQG9" &:: Pro N
 exit /b
 
 :e0c42288-980c-4788-a014-c080d2e1926e
-set "_key=NW6C2%hy%QMPVW%hy%D7KKK%hy%3GKT6%hy%VCFB2" &:: Education
+set "_key=NW6C2%yh%QMPVW%yh%D7KKK%yh%3GKT6%yh%VCFB2" &:: Education
 exit /b
 
 :3c102355-d027-42c6-ad23-2e7ef8a02585
-set "_key=2WH4N%hy%8QGBV%hy%H22JP%hy%CT43Q%hy%MDWWJ" &:: Education N
+set "_key=2WH4N%yh%8QGBV%yh%H22JP%yh%CT43Q%yh%MDWWJ" &:: Education N
 exit /b
 
 :73111121-5638-40f6-bc11-f1d7b0d64300
-set "_key=NPPR9%hy%FWDCX%hy%D2C8J%hy%H872K%hy%2YT43" &:: Enterprise
+set "_key=NPPR9%yh%FWDCX%yh%D2C8J%yh%H872K%yh%2YT43" &:: Enterprise
 exit /b
 
 :e272e3e2-732f-4c65-a8f0-484747d0d947
-set "_key=DPH2V%hy%TTNVB%hy%4X9Q3%hy%TJR4H%hy%KHJW4" &:: Enterprise N
+set "_key=DPH2V%yh%TTNVB%yh%4X9Q3%yh%TJR4H%yh%KHJW4" &:: Enterprise N
 exit /b
 
 :7b51a46c-0c04-4e8f-9af4-8496cca90d5e
-set "_key=WNMTR%hy%4C88C%hy%JK8YV%hy%HQ7T2%hy%76DF9" &:: Enterprise 2015 LTSB
+set "_key=WNMTR%yh%4C88C%yh%JK8YV%yh%HQ7T2%yh%76DF9" &:: Enterprise 2015 LTSB
 exit /b
 
 :87b838b7-41b6-4590-8318-5797951d8529
-set "_key=2F77B%hy%TNFGY%hy%69QQF%hy%B8YKP%hy%D69TJ" &:: Enterprise 2015 LTSB N
+set "_key=2F77B%yh%TNFGY%yh%69QQF%yh%B8YKP%yh%D69TJ" &:: Enterprise 2015 LTSB N
 exit /b
 
 :: Windows Server 2022 [Fe]
 :9bd77860-9b31-4b7b-96ad-2564017315bf
-set "_key=VDYBN%hy%27WPP%hy%V4HQT%hy%9VMD4%hy%VMK7H" &:: Standard
+set "_key=VDYBN%yh%27WPP%yh%V4HQT%yh%9VMD4%yh%VMK7H" &:: Standard
 exit /b
 
 :ef6cfc9f-8c5d-44ac-9aad-de6a2ea0ae03
-set "_key=WX4NM%hy%KYWYW%hy%QJJR4%hy%XV3QB%hy%6VM33" &:: Datacenter
+set "_key=WX4NM%yh%KYWYW%yh%QJJR4%yh%XV3QB%yh%6VM33" &:: Datacenter
 exit /b
 
 :8c8f0ad3-9a43-4e05-b840-93b8d1475cbc
-set "_key=6N379%hy%GGTMK%hy%23C6M%hy%XVVTC%hy%CKFRQ" &:: Azure Core
+set "_key=6N379%yh%GGTMK%yh%23C6M%yh%XVVTC%yh%CKFRQ" &:: Azure Core
 exit /b
 
 :f5e9429c-f50b-4b98-b15c-ef92eb5cff39
-set "_key=67KN8%hy%4FYJW%hy%2487Q%hy%MQ2J7%hy%4C4RG" &:: Standard ACor
+set "_key=67KN8%yh%4FYJW%yh%2487Q%yh%MQ2J7%yh%4C4RG" &:: Standard ACor
 exit /b
 
 :39e69c41-42b4-4a0a-abad-8e3c10a797cc
-set "_key=QFND9%hy%D3Y9C%hy%J3KKY%hy%6RPVP%hy%2DPYV" &:: Datacenter ACor
+set "_key=QFND9%yh%D3Y9C%yh%J3KKY%yh%6RPVP%yh%2DPYV" &:: Datacenter ACor
 exit /b
 
 :: Windows Server 2019 [RS5]
 :de32eafd-aaee-4662-9444-c1befb41bde2
-set "_key=N69G4%hy%B89J2%hy%4G8F4%hy%WWYCC%hy%J464C" &:: Standard
+set "_key=N69G4%yh%B89J2%yh%4G8F4%yh%WWYCC%yh%J464C" &:: Standard
 exit /b
 
 :34e1ae55-27f8-4950-8877-7a03be5fb181
-set "_key=WMDGN%hy%G9PQG%hy%XVVXX%hy%R3X43%hy%63DFG" &:: Datacenter
+set "_key=WMDGN%yh%G9PQG%yh%XVVXX%yh%R3X43%yh%63DFG" &:: Datacenter
 exit /b
 
 :a99cc1f0-7719-4306-9645-294102fbff95
-set "_key=FDNH6%hy%VW9RW%hy%BXPJ7%hy%4XTYG%hy%239TB" &:: Azure Core
+set "_key=FDNH6%yh%VW9RW%yh%BXPJ7%yh%4XTYG%yh%239TB" &:: Azure Core
 exit /b
 
 :73e3957c-fc0c-400d-9184-5f7b6f2eb409
-set "_key=N2KJX%hy%J94YW%hy%TQVFB%hy%DG9YT%hy%724CC" &:: Standard ACor
+set "_key=N2KJX%yh%J94YW%yh%TQVFB%yh%DG9YT%yh%724CC" &:: Standard ACor
 exit /b
 
 :90c362e5-0da1-4bfd-b53b-b87d309ade43
-set "_key=6NMRW%hy%2C8FM%hy%D24W7%hy%TQWMY%hy%CWH2D" &:: Datacenter ACor
+set "_key=6NMRW%yh%2C8FM%yh%D24W7%yh%TQWMY%yh%CWH2D" &:: Datacenter ACor
 exit /b
 
 :034d3cbb-5d4b-4245-b3f8-f84571314078
-set "_key=WVDHN%hy%86M7X%hy%466P6%hy%VHXV7%hy%YY726" &:: Essentials
+set "_key=WVDHN%yh%86M7X%yh%466P6%yh%VHXV7%yh%YY726" &:: Essentials
 exit /b
 
 :8de8eb62-bbe0-40ac-ac17-f75595071ea3
-set "_key=GRFBW%hy%QNDC4%hy%6QBHG%hy%CCK3B%hy%2PR88" &:: ServerARM64
+set "_key=GRFBW%yh%QNDC4%yh%6QBHG%yh%CCK3B%yh%2PR88" &:: ServerARM64
 exit /b
 
 :19b5e0fb-4431-46bc-bac1-2f1873e4ae73
-set "_key=NTBV8%hy%9K7Q8%hy%V27C6%hy%M2BTV%hy%KHMXV" &:: Azure Datacenter %hy% ServerTurbine
+set "_key=NTBV8%yh%9K7Q8%yh%V27C6%yh%M2BTV%yh%KHMXV" &:: Azure Datacenter - ServerTurbine
 exit /b
 
 :: Windows Server 2016 [RS4]
 :43d9af6e-5e86-4be8-a797-d072a046896c
-set "_key=K9FYF%hy%G6NCK%hy%73M32%hy%XMVPY%hy%F9DRR" &:: ServerARM64
+set "_key=K9FYF%yh%G6NCK%yh%73M32%yh%XMVPY%yh%F9DRR" &:: ServerARM64
 exit /b
 
 :: Windows Server 2016 [RS3]
 :61c5ef22-f14f-4553-a824-c4b31e84b100
-set "_key=PTXN8%hy%JFHJM%hy%4WC78%hy%MPCBR%hy%9W4KR" &:: Standard ACor
+set "_key=PTXN8%yh%JFHJM%yh%4WC78%yh%MPCBR%yh%9W4KR" &:: Standard ACor
 exit /b
 
 :e49c08e7-da82-42f8-bde2-b570fbcae76c
-set "_key=2HXDN%hy%KRXHB%hy%GPYC7%hy%YCKFJ%hy%7FVDG" &:: Datacenter ACor
+set "_key=2HXDN%yh%KRXHB%yh%GPYC7%yh%YCKFJ%yh%7FVDG" &:: Datacenter ACor
 exit /b
 
 :: Windows Server 2016 [RS1]
 :8c1c5410-9f39-4805-8c9d-63a07706358f
-set "_key=WC2BQ%hy%8NRM3%hy%FDDYY%hy%2BFGV%hy%KHKQY" &:: Standard
+set "_key=WC2BQ%yh%8NRM3%yh%FDDYY%yh%2BFGV%yh%KHKQY" &:: Standard
 exit /b
 
 :21c56779-b449-4d20-adfc-eece0e1ad74b
-set "_key=CB7KF%hy%BWN84%hy%R7R2Y%hy%793K2%hy%8XDDG" &:: Datacenter
+set "_key=CB7KF%yh%BWN84%yh%R7R2Y%yh%793K2%yh%8XDDG" &:: Datacenter
 exit /b
 
 :3dbf341b-5f6c-4fa7-b936-699dce9e263f
-set "_key=VP34G%hy%4NPPG%hy%79JTQ%hy%864T4%hy%R3MQX" &:: Azure Core
+set "_key=VP34G%yh%4NPPG%yh%79JTQ%yh%864T4%yh%R3MQX" &:: Azure Core
 exit /b
 
 :2b5a1b0f-a5ab-4c54-ac2f-a6d94824a283
-set "_key=JCKRF%hy%N37P4%hy%C2D82%hy%9YXRT%hy%4M63B" &:: Essentials
+set "_key=JCKRF%yh%N37P4%yh%C2D82%yh%9YXRT%yh%4M63B" &:: Essentials
 exit /b
 
 :7b4433f4-b1e7-4788-895a-c45378d38253
-set "_key=QN4C6%hy%GBJD2%hy%FB422%hy%GHWJK%hy%GJG2R" &:: Cloud Storage
+set "_key=QN4C6%yh%GBJD2%yh%FB422%yh%GHWJK%yh%GJG2R" &:: Cloud Storage
 exit /b
 
 :: Windows 8.1
 :fe1c3238-432a-43a1-8e25-97e7d1ef10f3
-set "_key=M9Q9P%hy%WNJJT%hy%6PXPY%hy%DWX8H%hy%6XWKK" &:: Core
+set "_key=M9Q9P%yh%WNJJT%yh%6PXPY%yh%DWX8H%yh%6XWKK" &:: Core
 exit /b
 
 :78558a64-dc19-43fe-a0d0-8075b2a370a3
-set "_key=7B9N3%hy%D94CG%hy%YTVHR%hy%QBPX3%hy%RJP64" &:: Core N
+set "_key=7B9N3%yh%D94CG%yh%YTVHR%yh%QBPX3%yh%RJP64" &:: Core N
 exit /b
 
 :c72c6a1d-f252-4e7e-bdd1-3fca342acb35
-set "_key=BB6NG%hy%PQ82V%hy%VRDPW%hy%8XVD2%hy%V8P66" &:: Core Single Language
+set "_key=BB6NG%yh%PQ82V%yh%VRDPW%yh%8XVD2%yh%V8P66" &:: Core Single Language
 exit /b
 
 :db78b74f-ef1c-4892-abfe-1e66b8231df6
-set "_key=NCTT7%hy%2RGK8%hy%WMHRF%hy%RY7YQ%hy%JTXG3" &:: Core China
+set "_key=NCTT7%yh%2RGK8%yh%WMHRF%yh%RY7YQ%yh%JTXG3" &:: Core China
 exit /b
 
 :ffee456a-cd87-4390-8e07-16146c672fd0
-set "_key=XYTND%hy%K6QKT%hy%K2MRH%hy%66RTM%hy%43JKP" &:: Core ARM
+set "_key=XYTND%yh%K6QKT%yh%K2MRH%yh%66RTM%yh%43JKP" &:: Core ARM
 exit /b
 
 :c06b6981-d7fd-4a35-b7b4-054742b7af67
-set "_key=GCRJD%hy%8NW9H%hy%F2CDX%hy%CCM8D%hy%9D6T9" &:: Pro
+set "_key=GCRJD%yh%8NW9H%yh%F2CDX%yh%CCM8D%yh%9D6T9" &:: Pro
 exit /b
 
 :7476d79f-8e48-49b4-ab63-4d0b813a16e4
-set "_key=HMCNV%hy%VVBFX%hy%7HMBH%hy%CTY9B%hy%B4FXY" &:: Pro N
+set "_key=HMCNV%yh%VVBFX%yh%7HMBH%yh%CTY9B%yh%B4FXY" &:: Pro N
 exit /b
 
 :096ce63d-4fac-48a9-82a9-61ae9e800e5f
-set "_key=789NJ%hy%TQK6T%hy%6XTH8%hy%J39CJ%hy%J8D3P" &:: Pro with Media Center
+set "_key=789NJ%yh%TQK6T%yh%6XTH8%yh%J39CJ%yh%J8D3P" &:: Pro with Media Center
 exit /b
 
 :81671aaf-79d1-4eb1-b004-8cbbe173afea
-set "_key=MHF9N%hy%XY6XB%hy%WVXMC%hy%BTDCT%hy%MKKG7" &:: Enterprise
+set "_key=MHF9N%yh%XY6XB%yh%WVXMC%yh%BTDCT%yh%MKKG7" &:: Enterprise
 exit /b
 
 :113e705c-fa49-48a4-beea-7dd879b46b14
-set "_key=TT4HM%hy%HN7YT%hy%62K67%hy%RGRQJ%hy%JFFXW" &:: Enterprise N
+set "_key=TT4HM%yh%HN7YT%yh%62K67%yh%RGRQJ%yh%JFFXW" &:: Enterprise N
 exit /b
 
 :0ab82d54-47f4-4acb-818c-cc5bf0ecb649
-set "_key=NMMPB%hy%38DD4%hy%R2823%hy%62W8D%hy%VXKJB" &:: Embedded Industry Pro
+set "_key=NMMPB%yh%38DD4%yh%R2823%yh%62W8D%yh%VXKJB" &:: Embedded Industry Pro
 exit /b
 
 :cd4e2d9f-5059-4a50-a92d-05d5bb1267c7
-set "_key=FNFKF%hy%PWTVT%hy%9RC8H%hy%32HB2%hy%JB34X" &:: Embedded Industry Enterprise
+set "_key=FNFKF%yh%PWTVT%yh%9RC8H%yh%32HB2%yh%JB34X" &:: Embedded Industry Enterprise
 exit /b
 
 :f7e88590-dfc7-4c78-bccb-6f3865b99d1a
-set "_key=VHXM3%hy%NR6FT%hy%RY6RT%hy%CK882%hy%KW2CJ" &:: Embedded Industry Automotive
+set "_key=VHXM3%yh%NR6FT%yh%RY6RT%yh%CK882%yh%KW2CJ" &:: Embedded Industry Automotive
 exit /b
 
 :e9942b32-2e55-4197-b0bd-5ff58cba8860
-set "_key=3PY8R%hy%QHNP9%hy%W7XQD%hy%G6DPH%hy%3J2C9" &:: with Bing
+set "_key=3PY8R%yh%QHNP9%yh%W7XQD%yh%G6DPH%yh%3J2C9" &:: with Bing
 exit /b
 
 :c6ddecd6-2354-4c19-909b-306a3058484e
-set "_key=Q6HTR%hy%N24GM%hy%PMJFP%hy%69CD8%hy%2GXKR" &:: with Bing N
+set "_key=Q6HTR%yh%N24GM%yh%PMJFP%yh%69CD8%yh%2GXKR" &:: with Bing N
 exit /b
 
 :b8f5e3a3-ed33-4608-81e1-37d6c9dcfd9c
-set "_key=KF37N%hy%VDV38%hy%GRRTV%hy%XH8X6%hy%6F3BB" &:: with Bing Single Language
+set "_key=KF37N%yh%VDV38%yh%GRRTV%yh%XH8X6%yh%6F3BB" &:: with Bing Single Language
 exit /b
 
 :ba998212-460a-44db-bfb5-71bf09d1c68b
-set "_key=R962J%hy%37N87%hy%9VVK2%hy%WJ74P%hy%XTMHR" &:: with Bing China
+set "_key=R962J%yh%37N87%yh%9VVK2%yh%WJ74P%yh%XTMHR" &:: with Bing China
 exit /b
 
 :e58d87b5-8126-4580-80fb-861b22f79296
-set "_key=MX3RK%hy%9HNGX%hy%K3QKC%hy%6PJ3F%hy%W8D7B" &:: Pro for Students
+set "_key=MX3RK%yh%9HNGX%yh%K3QKC%yh%6PJ3F%yh%W8D7B" &:: Pro for Students
 exit /b
 
 :cab491c7-a918-4f60-b502-dab75e334f40
-set "_key=TNFGH%hy%2R6PB%hy%8XM3K%hy%QYHX2%hy%J4296" &:: Pro for Students N
+set "_key=TNFGH%yh%2R6PB%yh%8XM3K%yh%QYHX2%yh%J4296" &:: Pro for Students N
 exit /b
 
 :: Windows Server 2012 R2
 :b3ca044e-a358-4d68-9883-aaa2941aca99
-set "_key=D2N9P%hy%3P6X9%hy%2R39C%hy%7RTCD%hy%MDVJX" &:: Standard
+set "_key=D2N9P%yh%3P6X9%yh%2R39C%yh%7RTCD%yh%MDVJX" &:: Standard
 exit /b
 
 :00091344-1ea4-4f37-b789-01750ba6988c
-set "_key=W3GGN%hy%FT8W3%hy%Y4M27%hy%J84CP%hy%Q3VJ9" &:: Datacenter
+set "_key=W3GGN%yh%FT8W3%yh%Y4M27%yh%J84CP%yh%Q3VJ9" &:: Datacenter
 exit /b
 
 :21db6ba4-9a7b-4a14-9e29-64a60c59301d
-set "_key=KNC87%hy%3J2TX%hy%XB4WP%hy%VCPJV%hy%M4FWM" &:: Essentials
+set "_key=KNC87%yh%3J2TX%yh%XB4WP%yh%VCPJV%yh%M4FWM" &:: Essentials
 exit /b
 
 :b743a2be-68d4-4dd3-af32-92425b7bb623
-set "_key=3NPTF%hy%33KPT%hy%GGBPR%hy%YX76B%hy%39KDD" &:: Cloud Storage
+set "_key=3NPTF%yh%33KPT%yh%GGBPR%yh%YX76B%yh%39KDD" &:: Cloud Storage
 exit /b
 
 :: Windows 8
 :c04ed6bf-55c8-4b47-9f8e-5a1f31ceee60
-set "_key=BN3D2%hy%R7TKB%hy%3YPBD%hy%8DRP2%hy%27GG4" &:: Core
+set "_key=BN3D2%yh%R7TKB%yh%3YPBD%yh%8DRP2%yh%27GG4" &:: Core
 exit /b
 
 :197390a0-65f6-4a95-bdc4-55d58a3b0253
-set "_key=8N2M2%hy%HWPGY%hy%7PGT9%hy%HGDD8%hy%GVGGY" &:: Core N
+set "_key=8N2M2%yh%HWPGY%yh%7PGT9%yh%HGDD8%yh%GVGGY" &:: Core N
 exit /b
 
 :8860fcd4-a77b-4a20-9045-a150ff11d609
-set "_key=2WN2H%hy%YGCQR%hy%KFX6K%hy%CD6TF%hy%84YXQ" &:: Core Single Language
+set "_key=2WN2H%yh%YGCQR%yh%KFX6K%yh%CD6TF%yh%84YXQ" &:: Core Single Language
 exit /b
 
 :9d5584a2-2d85-419a-982c-a00888bb9ddf
-set "_key=4K36P%hy%JN4VD%hy%GDC6V%hy%KDT89%hy%DYFKP" &:: Core China
+set "_key=4K36P%yh%JN4VD%yh%GDC6V%yh%KDT89%yh%DYFKP" &:: Core China
 exit /b
 
 :af35d7b7-5035-4b63-8972-f0b747b9f4dc
-set "_key=DXHJF%hy%N9KQX%hy%MFPVR%hy%GHGQK%hy%Y7RKV" &:: Core ARM
+set "_key=DXHJF%yh%N9KQX%yh%MFPVR%yh%GHGQK%yh%Y7RKV" &:: Core ARM
 exit /b
 
 :a98bcd6d-5343-4603-8afe-5908e4611112
-set "_key=NG4HW%hy%VH26C%hy%733KW%hy%K6F98%hy%J8CK4" &:: Pro
+set "_key=NG4HW%yh%VH26C%yh%733KW%yh%K6F98%yh%J8CK4" &:: Pro
 exit /b
 
 :ebf245c1-29a8-4daf-9cb1-38dfc608a8c8
-set "_key=XCVCF%hy%2NXM9%hy%723PB%hy%MHCB7%hy%2RYQQ" &:: Pro N
+set "_key=XCVCF%yh%2NXM9%yh%723PB%yh%MHCB7%yh%2RYQQ" &:: Pro N
 exit /b
 
 :a00018a3-f20f-4632-bf7c-8daa5351c914
-set "_key=GNBB8%hy%YVD74%hy%QJHX6%hy%27H4K%hy%8QHDG" &:: Pro with Media Center
+set "_key=GNBB8%yh%YVD74%yh%QJHX6%yh%27H4K%yh%8QHDG" &:: Pro with Media Center
 exit /b
 
 :458e1bec-837a-45f6-b9d5-925ed5d299de
-set "_key=32JNW%hy%9KQ84%hy%P47T8%hy%D8GGY%hy%CWCK7" &:: Enterprise
+set "_key=32JNW%yh%9KQ84%yh%P47T8%yh%D8GGY%yh%CWCK7" &:: Enterprise
 exit /b
 
 :e14997e7-800a-4cf7-ad10-de4b45b578db
-set "_key=JMNMF%hy%RHW7P%hy%DMY6X%hy%RF3DR%hy%X2BQT" &:: Enterprise N
+set "_key=JMNMF%yh%RHW7P%yh%DMY6X%yh%RF3DR%yh%X2BQT" &:: Enterprise N
 exit /b
 
 :10018baf-ce21-4060-80bd-47fe74ed4dab
-set "_key=RYXVT%hy%BNQG7%hy%VD29F%hy%DBMRY%hy%HT73M" &:: Embedded Industry Pro
+set "_key=RYXVT%yh%BNQG7%yh%VD29F%yh%DBMRY%yh%HT73M" &:: Embedded Industry Pro
 exit /b
 
 :18db1848-12e0-4167-b9d7-da7fcda507db
-set "_key=NKB3R%hy%R2F8T%hy%3XCDP%hy%7Q2KW%hy%XWYQ2" &:: Embedded Industry Enterprise
+set "_key=NKB3R%yh%R2F8T%yh%3XCDP%yh%7Q2KW%yh%XWYQ2" &:: Embedded Industry Enterprise
 exit /b
 
 :: Windows Server 2012
 :f0f5ec41-0d55-4732-af02-440a44a3cf0f
-set "_key=XC9B7%hy%NBPP2%hy%83J2H%hy%RHMBY%hy%92BT4" &:: Standard
+set "_key=XC9B7%yh%NBPP2%yh%83J2H%yh%RHMBY%yh%92BT4" &:: Standard
 exit /b
 
 :d3643d60-0c42-412d-a7d6-52e6635327f6
-set "_key=48HP8%hy%DN98B%hy%MYWDG%hy%T2DCC%hy%8W83P" &:: Datacenter
+set "_key=48HP8%yh%DN98B%yh%MYWDG%yh%T2DCC%yh%8W83P" &:: Datacenter
 exit /b
 
 :7d5486c7-e120-4771-b7f1-7b56c6d3170c
-set "_key=HM7DN%hy%YVMH3%hy%46JC3%hy%XYTG7%hy%CYQJJ" &:: MultiPoint Standard
+set "_key=HM7DN%yh%YVMH3%yh%46JC3%yh%XYTG7%yh%CYQJJ" &:: MultiPoint Standard
 exit /b
 
 :95fd1c83-7df5-494a-be8b-1300e1c9d1cd
-set "_key=XNH6W%hy%2V9GX%hy%RGJ4K%hy%Y8X6F%hy%QGJ2G" &:: MultiPoint Premium
+set "_key=XNH6W%yh%2V9GX%yh%RGJ4K%yh%Y8X6F%yh%QGJ2G" &:: MultiPoint Premium
 exit /b
 
 :: Windows 7
 :b92e9980-b9d5-4821-9c94-140f632f6312
-set "_key=FJ82H%hy%XT6CR%hy%J8D7P%hy%XQJJ2%hy%GPDD4" &:: Professional
+set "_key=FJ82H%yh%XT6CR%yh%J8D7P%yh%XQJJ2%yh%GPDD4" &:: Professional
 exit /b
 
 :54a09a0d-d57b-4c10-8b69-a842d6590ad5
-set "_key=MRPKT%hy%YTG23%hy%K7D7T%hy%X2JMM%hy%QY7MG" &:: Professional N
+set "_key=MRPKT%yh%YTG23%yh%K7D7T%yh%X2JMM%yh%QY7MG" &:: Professional N
 exit /b
 
 :5a041529-fef8-4d07-b06f-b59b573b32d2
-set "_key=W82YF%hy%2Q76Y%hy%63HXB%hy%FGJG9%hy%GF7QX" &:: Professional E
+set "_key=W82YF%yh%2Q76Y%yh%63HXB%yh%FGJG9%yh%GF7QX" &:: Professional E
 exit /b
 
 :ae2ee509-1b34-41c0-acb7-6d4650168915
-set "_key=33PXH%hy%7Y6KF%hy%2VJC9%hy%XBBR8%hy%HVTHH" &:: Enterprise
+set "_key=33PXH%yh%7Y6KF%yh%2VJC9%yh%XBBR8%yh%HVTHH" &:: Enterprise
 exit /b
 
 :1cb6d605-11b3-4e14-bb30-da91c8e3983a
-set "_key=YDRBP%hy%3D83W%hy%TY26F%hy%D46B2%hy%XCKRJ" &:: Enterprise N
+set "_key=YDRBP%yh%3D83W%yh%TY26F%yh%D46B2%yh%XCKRJ" &:: Enterprise N
 exit /b
 
 :46bbed08-9c7b-48fc-a614-95250573f4ea
-set "_key=C29WB%hy%22CC8%hy%VJ326%hy%GHFJW%hy%H9DH4" &:: Enterprise E
+set "_key=C29WB%yh%22CC8%yh%VJ326%yh%GHFJW%yh%H9DH4" &:: Enterprise E
 exit /b
 
 :db537896-376f-48ae-a492-53d0547773d0
-set "_key=YBYF6%hy%BHCR3%hy%JPKRB%hy%CDW7B%hy%F9BK4" &:: Embedded POSReady 7
+set "_key=YBYF6%yh%BHCR3%yh%JPKRB%yh%CDW7B%yh%F9BK4" &:: Embedded POSReady 7
 exit /b
 
 :e1a8296a-db37-44d1-8cce-7bc961d59c54
-set "_key=XGY72%hy%BRBBT%hy%FF8MH%hy%2GG8H%hy%W7KCW" &:: Embedded Standard
+set "_key=XGY72%yh%BRBBT%yh%FF8MH%yh%2GG8H%yh%W7KCW" &:: Embedded Standard
 exit /b
 
 :aa6dd3aa-c2b4-40e2-a544-a6bbb3f5c395
-set "_key=73KQT%hy%CD9G6%hy%K7TQG%hy%66MRP%hy%CQ22C" &:: Embedded ThinPC
+set "_key=73KQT%yh%CD9G6%yh%K7TQG%yh%66MRP%yh%CQ22C" &:: Embedded ThinPC
 exit /b
 
 :: Windows Server 2008 R2
 :a78b8bd9-8017-4df5-b86a-09f756affa7c
-set "_key=6TPJF%hy%RBVHG%hy%WBW2R%hy%86QPH%hy%6RTM4" &:: Web
+set "_key=6TPJF%yh%RBVHG%yh%WBW2R%yh%86QPH%yh%6RTM4" &:: Web
 exit /b
 
 :cda18cf3-c196-46ad-b289-60c072869994
-set "_key=TT8MH%hy%CG224%hy%D3D7Q%hy%498W2%hy%9QCTX" &:: HPC
+set "_key=TT8MH%yh%CG224%yh%D3D7Q%yh%498W2%yh%9QCTX" &:: HPC
 exit /b
 
 :68531fb9-5511-4989-97be-d11a0f55633f
-set "_key=YC6KT%hy%GKW9T%hy%YTKYR%hy%T4X34%hy%R7VHC" &:: Standard
+set "_key=YC6KT%yh%GKW9T%yh%YTKYR%yh%T4X34%yh%R7VHC" &:: Standard
 exit /b
 
 :7482e61b-c589-4b7f-8ecc-46d455ac3b87
-set "_key=74YFP%hy%3QFB3%hy%KQT8W%hy%PMXWJ%hy%7M648" &:: Datacenter
+set "_key=74YFP%yh%3QFB3%yh%KQT8W%yh%PMXWJ%yh%7M648" &:: Datacenter
 exit /b
 
 :620e2b3d-09e7-42fd-802a-17a13652fe7a
-set "_key=489J6%hy%VHDMP%hy%X63PK%hy%3K798%hy%CPX3Y" &:: Enterprise
+set "_key=489J6%yh%VHDMP%yh%X63PK%yh%3K798%yh%CPX3Y" &:: Enterprise
 exit /b
 
 :8a26851c-1c7e-48d3-a687-fbca9b9ac16b
-set "_key=GT63C%hy%RJFQ3%hy%4GMB6%hy%BRFB9%hy%CB83V" &:: Itanium
+set "_key=GT63C%yh%RJFQ3%yh%4GMB6%yh%BRFB9%yh%CB83V" &:: Itanium
 exit /b
 
 :f772515c-0e87-48d5-a676-e6962c3e1195
-set "_key=736RG%hy%XDKJK%hy%V34PF%hy%BHK87%hy%J6X3K" &:: MultiPoint Server %hy% ServerEmbeddedSolution
+set "_key=736RG%yh%XDKJK%yh%V34PF%yh%BHK87%yh%J6X3K" &:: MultiPoint Server - ServerEmbeddedSolution
 exit /b
 
 :: Office 2021
 :fbdb3e18-a8ef-4fb3-9183-dffd60bd0984
-set "_key=FXYTK%hy%NJJ8C%hy%GB6DW%hy%3DYQT%hy%6F7TH" &:: Professional Plus
+set "_key=FXYTK%yh%NJJ8C%yh%GB6DW%yh%3DYQT%yh%6F7TH" &:: Professional Plus
 exit /b
 
 :080a45c5-9f9f-49eb-b4b0-c3c610a5ebd3
-set "_key=KDX7X%hy%BNVR8%hy%TXXGX%hy%4Q7Y8%hy%78VT3" &:: Standard
+set "_key=KDX7X%yh%BNVR8%yh%TXXGX%yh%4Q7Y8%yh%78VT3" &:: Standard
 exit /b
 
 :76881159-155c-43e0-9db7-2d70a9a3a4ca
-set "_key=FTNWT%hy%C6WBT%hy%8HMGF%hy%K9PRX%hy%QV9H8" &:: Project Professional
+set "_key=FTNWT%yh%C6WBT%yh%8HMGF%yh%K9PRX%yh%QV9H8" &:: Project Professional
 exit /b
 
 :6dd72704-f752-4b71-94c7-11cec6bfc355
-set "_key=J2JDC%hy%NJCYY%hy%9RGQ4%hy%YXWMH%hy%T3D4T" &:: Project Standard
+set "_key=J2JDC%yh%NJCYY%yh%9RGQ4%yh%YXWMH%yh%T3D4T" &:: Project Standard
 exit /b
 
 :fb61ac9a-1688-45d2-8f6b-0674dbffa33c
-set "_key=KNH8D%hy%FGHT4%hy%T8RK3%hy%CTDYJ%hy%K2HT4" &:: Visio Professional
+set "_key=KNH8D%yh%FGHT4%yh%T8RK3%yh%CTDYJ%yh%K2HT4" &:: Visio Professional
 exit /b
 
 :72fce797-1884-48dd-a860-b2f6a5efd3ca
-set "_key=MJVNY%hy%BYWPY%hy%CWV6J%hy%2RKRT%hy%4M8QG" &:: Visio Standard
+set "_key=MJVNY%yh%BYWPY%yh%CWV6J%yh%2RKRT%yh%4M8QG" &:: Visio Standard
 exit /b
 
 :1fe429d8-3fa7-4a39-b6f0-03dded42fe14
-set "_key=WM8YG%hy%YNGDD%hy%4JHDC%hy%PG3F4%hy%FC4T4" &:: Access
+set "_key=WM8YG%yh%YNGDD%yh%4JHDC%yh%PG3F4%yh%FC4T4" &:: Access
 exit /b
 
 :ea71effc-69f1-4925-9991-2f5e319bbc24
-set "_key=NWG3X%hy%87C9K%hy%TC7YY%hy%BC2G7%hy%G6RVC" &:: Excel
+set "_key=NWG3X%yh%87C9K%yh%TC7YY%yh%BC2G7%yh%G6RVC" &:: Excel
 exit /b
 
 :a5799e4c-f83c-4c6e-9516-dfe9b696150b
-set "_key=C9FM6%hy%3N72F%hy%HFJXB%hy%TM3V9%hy%T86R9" &:: Outlook
+set "_key=C9FM6%yh%3N72F%yh%HFJXB%yh%TM3V9%yh%T86R9" &:: Outlook
 exit /b
 
 :6e166cc3-495d-438a-89e7-d7c9e6fd4dea
-set "_key=TY7XF%hy%NFRBR%hy%KJ44C%hy%G83KF%hy%GX27K" &:: PowerPoint
+set "_key=TY7XF%yh%NFRBR%yh%KJ44C%yh%G83KF%yh%GX27K" &:: PowerPoint
 exit /b
 
 :aa66521f-2370-4ad8-a2bb-c095e3e4338f
-set "_key=2MW9D%hy%N4BXM%hy%9VBPG%hy%Q7W6M%hy%KFBGQ" &:: Publisher
+set "_key=2MW9D%yh%N4BXM%yh%9VBPG%yh%Q7W6M%yh%KFBGQ" &:: Publisher
 exit /b
 
 :1f32a9af-1274-48bd-ba1e-1ab7508a23e8
-set "_key=HWCXN%hy%K3WBT%hy%WJBKY%hy%R8BD9%hy%XK29P" &:: Skype for Business
+set "_key=HWCXN%yh%K3WBT%yh%WJBKY%yh%R8BD9%yh%XK29P" &:: Skype for Business
 exit /b
 
 :abe28aea-625a-43b1-8e30-225eb8fbd9e5
-set "_key=TN8H9%hy%M34D3%hy%Y64V9%hy%TR72V%hy%X79KV" &:: Word
+set "_key=TN8H9%yh%M34D3%yh%Y64V9%yh%TR72V%yh%X79KV" &:: Word
 exit /b
 
 :: Office 2019
 :85dd8b5f-eaa4-4af3-a628-cce9e77c9a03
-set "_key=NMMKJ%hy%6RK4F%hy%KMJVX%hy%8D9MJ%hy%6MWKP" &:: Professional Plus
+set "_key=NMMKJ%yh%6RK4F%yh%KMJVX%yh%8D9MJ%yh%6MWKP" &:: Professional Plus
 exit /b
 
 :6912a74b-a5fb-401a-bfdb-2e3ab46f4b02
-set "_key=6NWWJ%hy%YQWMR%hy%QKGCB%hy%6TMB3%hy%9D9HK" &:: Standard
+set "_key=6NWWJ%yh%YQWMR%yh%QKGCB%yh%6TMB3%yh%9D9HK" &:: Standard
 exit /b
 
 :2ca2bf3f-949e-446a-82c7-e25a15ec78c4
-set "_key=B4NPR%hy%3FKK7%hy%T2MBV%hy%FRQ4W%hy%PKD2B" &:: Project Professional
+set "_key=B4NPR%yh%3FKK7%yh%T2MBV%yh%FRQ4W%yh%PKD2B" &:: Project Professional
 exit /b
 
 :1777f0e3-7392-4198-97ea-8ae4de6f6381
-set "_key=C4F7P%hy%NCP8C%hy%6CQPT%hy%MQHV9%hy%JXD2M" &:: Project Standard
+set "_key=C4F7P%yh%NCP8C%yh%6CQPT%yh%MQHV9%yh%JXD2M" &:: Project Standard
 exit /b
 
 :5b5cf08f-b81a-431d-b080-3450d8620565
-set "_key=9BGNQ%hy%K37YR%hy%RQHF2%hy%38RQ3%hy%7VCBB" &:: Visio Professional
+set "_key=9BGNQ%yh%K37YR%yh%RQHF2%yh%38RQ3%yh%7VCBB" &:: Visio Professional
 exit /b
 
 :e06d7df3-aad0-419d-8dfb-0ac37e2bdf39
-set "_key=7TQNQ%hy%K3YQQ%hy%3PFH7%hy%CCPPM%hy%X4VQ2" &:: Visio Standard
+set "_key=7TQNQ%yh%K3YQQ%yh%3PFH7%yh%CCPPM%yh%X4VQ2" &:: Visio Standard
 exit /b
 
 :9e9bceeb-e736-4f26-88de-763f87dcc485
-set "_key=9N9PT%hy%27V4Y%hy%VJ2PD%hy%YXFMF%hy%YTFQT" &:: Access
+set "_key=9N9PT%yh%27V4Y%yh%VJ2PD%yh%YXFMF%yh%YTFQT" &:: Access
 exit /b
 
 :237854e9-79fc-4497-a0c1-a70969691c6b
-set "_key=TMJWT%hy%YYNMB%hy%3BKTF%hy%644FC%hy%RVXBD" &:: Excel
+set "_key=TMJWT%yh%YYNMB%yh%3BKTF%yh%644FC%yh%RVXBD" &:: Excel
 exit /b
 
 :c8f8a301-19f5-4132-96ce-2de9d4adbd33
-set "_key=7HD7K%hy%N4PVK%hy%BHBCQ%hy%YWQRW%hy%XW4VK" &:: Outlook
+set "_key=7HD7K%yh%N4PVK%yh%BHBCQ%yh%YWQRW%yh%XW4VK" &:: Outlook
 exit /b
 
 :3131fd61-5e4f-4308-8d6d-62be1987c92c
-set "_key=RRNCX%hy%C64HY%hy%W2MM7%hy%MCH9G%hy%TJHMQ" &:: PowerPoint
+set "_key=RRNCX%yh%C64HY%yh%W2MM7%yh%MCH9G%yh%TJHMQ" &:: PowerPoint
 exit /b
 
 :9d3e4cca-e172-46f1-a2f4-1d2107051444
-set "_key=G2KWX%hy%3NW6P%hy%PY93R%hy%JXK2T%hy%C9Y9V" &:: Publisher
+set "_key=G2KWX%yh%3NW6P%yh%PY93R%yh%JXK2T%yh%C9Y9V" &:: Publisher
 exit /b
 
 :734c6c6e-b0ba-4298-a891-671772b2bd1b
-set "_key=NCJ33%hy%JHBBY%hy%HTK98%hy%MYCV8%hy%HMKHJ" &:: Skype for Business
+set "_key=NCJ33%yh%JHBBY%yh%HTK98%yh%MYCV8%yh%HMKHJ" &:: Skype for Business
 exit /b
 
 :059834fe-a8ea-4bff-b67b-4d006b5447d3
-set "_key=PBX3G%hy%NWMT6%hy%Q7XBW%hy%PYJGG%hy%WXD33" &:: Word
+set "_key=PBX3G%yh%NWMT6%yh%Q7XBW%yh%PYJGG%yh%WXD33" &:: Word
 exit /b
 
 :0bc88885-718c-491d-921f-6f214349e79c
-set "_key=VQ9DP%hy%NVHPH%hy%T9HJC%hy%J9PDT%hy%KTQRG" &:: Pro Plus 2019 Preview
+set "_key=VQ9DP%yh%NVHPH%yh%T9HJC%yh%J9PDT%yh%KTQRG" &:: Pro Plus 2019 Preview
 exit /b
 
 :fc7c4d0c-2e85-4bb9-afd4-01ed1476b5e9
-set "_key=XM2V9%hy%DN9HH%hy%QB449%hy%XDGKC%hy%W2RMW" &:: Project Pro 2019 Preview
+set "_key=XM2V9%yh%DN9HH%yh%QB449%yh%XDGKC%yh%W2RMW" &:: Project Pro 2019 Preview
 exit /b
 
 :500f6619-ef93-4b75-bcb4-82819998a3ca
-set "_key=N2CG9%hy%YD3YK%hy%936X4%hy%3WR82%hy%Q3X4H" &:: Visio Pro 2019 Preview
+set "_key=N2CG9%yh%YD3YK%yh%936X4%yh%3WR82%yh%Q3X4H" &:: Visio Pro 2019 Preview
 exit /b
 
 :f3fb2d68-83dd-4c8b-8f09-08e0d950ac3b
-set "_key=HFPBN%hy%RYGG8%hy%HQWCW%hy%26CH6%hy%PDPVF" &:: Pro Plus 2021 Preview
+set "_key=HFPBN%yh%RYGG8%yh%HQWCW%yh%26CH6%yh%PDPVF" &:: Pro Plus 2021 Preview
 exit /b
 
 :76093b1b-7057-49d7-b970-638ebcbfd873
-set "_key=WDNBY%hy%PCYFY%hy%9WP6G%hy%BXVXM%hy%92HDV" &:: Project Pro 2021 Preview
+set "_key=WDNBY%yh%PCYFY%yh%9WP6G%yh%BXVXM%yh%92HDV" &:: Project Pro 2021 Preview
 exit /b
 
 :a3b44174-2451-4cd6-b25f-66638bfb9046
-set "_key=2XYX7%hy%NXXBK%hy%9CK7W%hy%K2TKW%hy%JFJ7G" &:: Visio Pro 2021 Preview
+set "_key=2XYX7%yh%NXXBK%yh%9CK7W%yh%K2TKW%yh%JFJ7G" &:: Visio Pro 2021 Preview
 exit /b
 
 :: Office 2016
 :829b8110-0e6f-4349-bca4-42803577788d
-set "_key=WGT24%hy%HCNMF%hy%FQ7XH%hy%6M8K7%hy%DRTW9" &:: Project Professional C2R%hy%P
+set "_key=WGT24%yh%HCNMF%yh%FQ7XH%yh%6M8K7%yh%DRTW9" &:: Project Professional C2R-P
 exit /b
 
 :cbbaca45-556a-4416-ad03-bda598eaa7c8
-set "_key=D8NRQ%hy%JTYM3%hy%7J2DX%hy%646CT%hy%6836M" &:: Project Standard C2R%hy%P
+set "_key=D8NRQ%yh%JTYM3%yh%7J2DX%yh%646CT%yh%6836M" &:: Project Standard C2R-P
 exit /b
 
 :b234abe3-0857-4f9c-b05a-4dc314f85557
-set "_key=69WXN%hy%MBYV6%hy%22PQG%hy%3WGHK%hy%RM6XC" &:: Visio Professional C2R%hy%P
+set "_key=69WXN%yh%MBYV6%yh%22PQG%yh%3WGHK%yh%RM6XC" &:: Visio Professional C2R-P
 exit /b
 
 :361fe620-64f4-41b5-ba77-84f8e079b1f7
-set "_key=NY48V%hy%PPYYH%hy%3F4PX%hy%XJRKJ%hy%W4423" &:: Visio Standard C2R%hy%P
+set "_key=NY48V%yh%PPYYH%yh%3F4PX%yh%XJRKJ%yh%W4423" &:: Visio Standard C2R-P
 exit /b
 
 :e914ea6e-a5fa-4439-a394-a9bb3293ca09
-set "_key=DMTCJ%hy%KNRKX%hy%26982%hy%JYCKT%hy%P7KB6" &:: MondoR
+set "_key=DMTCJ%yh%KNRKX%yh%26982%yh%JYCKT%yh%P7KB6" &:: MondoR
 exit /b
 
 :9caabccb-61b1-4b4b-8bec-d10a3c3ac2ce
-set "_key=HFTND%hy%W9MK4%hy%8B7MJ%hy%B6C4G%hy%XQBR2" &:: Mondo
+set "_key=HFTND%yh%W9MK4%yh%8B7MJ%yh%B6C4G%yh%XQBR2" &:: Mondo
 exit /b
 
 :d450596f-894d-49e0-966a-fd39ed4c4c64
-set "_key=XQNVK%hy%8JYDB%hy%WJ9W3%hy%YJ8YR%hy%WFG99" &:: Professional Plus
+set "_key=XQNVK%yh%8JYDB%yh%WJ9W3%yh%YJ8YR%yh%WFG99" &:: Professional Plus
 exit /b
 
 :dedfa23d-6ed1-45a6-85dc-63cae0546de6
-set "_key=JNRGM%hy%WHDWX%hy%FJJG3%hy%K47QV%hy%DRTFM" &:: Standard
+set "_key=JNRGM%yh%WHDWX%yh%FJJG3%yh%K47QV%yh%DRTFM" &:: Standard
 exit /b
 
 :4f414197-0fc2-4c01-b68a-86cbb9ac254c
-set "_key=YG9NW%hy%3K39V%hy%2T3HJ%hy%93F3Q%hy%G83KT" &:: Project Professional
+set "_key=YG9NW%yh%3K39V%yh%2T3HJ%yh%93F3Q%yh%G83KT" &:: Project Professional
 exit /b
 
 :da7ddabc-3fbe-4447-9e01-6ab7440b4cd4
-set "_key=GNFHQ%hy%F6YQM%hy%KQDGJ%hy%327XX%hy%KQBVC" &:: Project Standard
+set "_key=GNFHQ%yh%F6YQM%yh%KQDGJ%yh%327XX%yh%KQBVC" &:: Project Standard
 exit /b
 
 :6bf301c1-b94a-43e9-ba31-d494598c47fb
-set "_key=PD3PC%hy%RHNGV%hy%FXJ29%hy%8JK7D%hy%RJRJK" &:: Visio Professional
+set "_key=PD3PC%yh%RHNGV%yh%FXJ29%yh%8JK7D%yh%RJRJK" &:: Visio Professional
 exit /b
 
 :aa2a7821-1827-4c2c-8f1d-4513a34dda97
-set "_key=7WHWN%hy%4T7MP%hy%G96JF%hy%G33KR%hy%W8GF4" &:: Visio Standard
+set "_key=7WHWN%yh%4T7MP%yh%G96JF%yh%G33KR%yh%W8GF4" &:: Visio Standard
 exit /b
 
 :67c0fc0c-deba-401b-bf8b-9c8ad8395804
-set "_key=GNH9Y%hy%D2J4T%hy%FJHGG%hy%QRVH7%hy%QPFDW" &:: Access
+set "_key=GNH9Y%yh%D2J4T%yh%FJHGG%yh%QRVH7%yh%QPFDW" &:: Access
 exit /b
 
 :c3e65d36-141f-4d2f-a303-a842ee756a29
-set "_key=9C2PK%hy%NWTVB%hy%JMPW8%hy%BFT28%hy%7FTBF" &:: Excel
+set "_key=9C2PK%yh%NWTVB%yh%JMPW8%yh%BFT28%yh%7FTBF" &:: Excel
 exit /b
 
 :d8cace59-33d2-4ac7-9b1b-9b72339c51c8
-set "_key=DR92N%hy%9HTF2%hy%97XKM%hy%XW2WJ%hy%XW3J6" &:: OneNote
+set "_key=DR92N%yh%9HTF2%yh%97XKM%yh%XW2WJ%yh%XW3J6" &:: OneNote
 exit /b
 
 :ec9d9265-9d1e-4ed0-838a-cdc20f2551a1
-set "_key=R69KK%hy%NTPKF%hy%7M3Q4%hy%QYBHW%hy%6MT9B" &:: Outlook
+set "_key=R69KK%yh%NTPKF%yh%7M3Q4%yh%QYBHW%yh%6MT9B" &:: Outlook
 exit /b
 
 :d70b1bba-b893-4544-96e2-b7a318091c33
-set "_key=J7MQP%hy%HNJ4Y%hy%WJ7YM%hy%PFYGF%hy%BY6C6" &:: Powerpoint
+set "_key=J7MQP%yh%HNJ4Y%yh%WJ7YM%yh%PFYGF%yh%BY6C6" &:: Powerpoint
 exit /b
 
 :041a06cb-c5b8-4772-809f-416d03d16654
-set "_key=F47MM%hy%N3XJP%hy%TQXJ9%hy%BP99D%hy%8K837" &:: Publisher
+set "_key=F47MM%yh%N3XJP%yh%TQXJ9%yh%BP99D%yh%8K837" &:: Publisher
 exit /b
 
 :83e04ee1-fa8d-436d-8994-d31a862cab77
-set "_key=869NQ%hy%FJ69K%hy%466HW%hy%QYCP2%hy%DDBV6" &:: Skype for Business
+set "_key=869NQ%yh%FJ69K%yh%466HW%yh%QYCP2%yh%DDBV6" &:: Skype for Business
 exit /b
 
 :bb11badf-d8aa-470e-9311-20eaf80fe5cc
-set "_key=WXY84%hy%JN2Q9%hy%RBCCQ%hy%3Q3J3%hy%3PFJ6" &:: Word
+set "_key=WXY84%yh%JN2Q9%yh%RBCCQ%yh%3Q3J3%yh%3PFJ6" &:: Word
 exit /b
 
 :: Office 2013
 :dc981c6b-fc8e-420f-aa43-f8f33e5c0923
-set "_key=42QTK%hy%RN8M7%hy%J3C4G%hy%BBGYM%hy%88CYV" &:: Mondo
+set "_key=42QTK%yh%RN8M7%yh%J3C4G%yh%BBGYM%yh%88CYV" &:: Mondo
 exit /b
 
 :b322da9c-a2e2-4058-9e4e-f59a6970bd69
-set "_key=YC7DK%hy%G2NP3%hy%2QQC3%hy%J6H88%hy%GVGXT" &:: Professional Plus
+set "_key=YC7DK%yh%G2NP3%yh%2QQC3%yh%J6H88%yh%GVGXT" &:: Professional Plus
 exit /b
 
 :b13afb38-cd79-4ae5-9f7f-eed058d750ca
-set "_key=KBKQT%hy%2NMXY%hy%JJWGP%hy%M62JB%hy%92CD4" &:: Standard
+set "_key=KBKQT%yh%2NMXY%yh%JJWGP%yh%M62JB%yh%92CD4" &:: Standard
 exit /b
 
 :4a5d124a-e620-44ba-b6ff-658961b33b9a
-set "_key=FN8TT%hy%7WMH6%hy%2D4X9%hy%M337T%hy%2342K" &:: Project Professional
+set "_key=FN8TT%yh%7WMH6%yh%2D4X9%yh%M337T%yh%2342K" &:: Project Professional
 exit /b
 
 :427a28d1-d17c-4abf-b717-32c780ba6f07
-set "_key=6NTH3%hy%CW976%hy%3G3Y2%hy%JK3TX%hy%8QHTT" &:: Project Standard
+set "_key=6NTH3%yh%CW976%yh%3G3Y2%yh%JK3TX%yh%8QHTT" &:: Project Standard
 exit /b
 
 :e13ac10e-75d0-4aff-a0cd-764982cf541c
-set "_key=C2FG9%hy%N6J68%hy%H8BTJ%hy%BW3QX%hy%RM3B3" &:: Visio Professional
+set "_key=C2FG9%yh%N6J68%yh%H8BTJ%yh%BW3QX%yh%RM3B3" &:: Visio Professional
 exit /b
 
 :ac4efaf0-f81f-4f61-bdf7-ea32b02ab117
-set "_key=J484Y%hy%4NKBF%hy%W2HMG%hy%DBMJC%hy%PGWR7" &:: Visio Standard
+set "_key=J484Y%yh%4NKBF%yh%W2HMG%yh%DBMJC%yh%PGWR7" &:: Visio Standard
 exit /b
 
 :6ee7622c-18d8-4005-9fb7-92db644a279b
-set "_key=NG2JY%hy%H4JBT%hy%HQXYP%hy%78QH9%hy%4JM2D" &:: Access
+set "_key=NG2JY%yh%H4JBT%yh%HQXYP%yh%78QH9%yh%4JM2D" &:: Access
 exit /b
 
 :f7461d52-7c2b-43b2-8744-ea958e0bd09a
-set "_key=VGPNG%hy%Y7HQW%hy%9RHP7%hy%TKPV3%hy%BG7GB" &:: Excel
+set "_key=VGPNG%yh%Y7HQW%yh%9RHP7%yh%TKPV3%yh%BG7GB" &:: Excel
 exit /b
 
 :fb4875ec-0c6b-450f-b82b-ab57d8d1677f
-set "_key=H7R7V%hy%WPNXQ%hy%WCYYC%hy%76BGV%hy%VT7GH" &:: Groove
+set "_key=H7R7V%yh%WPNXQ%yh%WCYYC%yh%76BGV%yh%VT7GH" &:: Groove
 exit /b
 
 :a30b8040-d68a-423f-b0b5-9ce292ea5a8f
-set "_key=DKT8B%hy%N7VXH%hy%D963P%hy%Q4PHY%hy%F8894" &:: InfoPath
+set "_key=DKT8B%yh%N7VXH%yh%D963P%yh%Q4PHY%yh%F8894" &:: InfoPath
 exit /b
 
 :1b9f11e3-c85c-4e1b-bb29-879ad2c909e3
-set "_key=2MG3G%hy%3BNTT%hy%3MFW9%hy%KDQW3%hy%TCK7R" &:: Lync
+set "_key=2MG3G%yh%3BNTT%yh%3MFW9%yh%KDQW3%yh%TCK7R" &:: Lync
 exit /b
 
 :efe1f3e6-aea2-4144-a208-32aa872b6545
-set "_key=TGN6P%hy%8MMBC%hy%37P2F%hy%XHXXK%hy%P34VW" &:: OneNote
+set "_key=TGN6P%yh%8MMBC%yh%37P2F%yh%XHXXK%yh%P34VW" &:: OneNote
 exit /b
 
 :771c3afa-50c5-443f-b151-ff2546d863a0
-set "_key=QPN8Q%hy%BJBTJ%hy%334K3%hy%93TGY%hy%2PMBT" &:: Outlook
+set "_key=QPN8Q%yh%BJBTJ%yh%334K3%yh%93TGY%yh%2PMBT" &:: Outlook
 exit /b
 
 :8c762649-97d1-4953-ad27-b7e2c25b972e
-set "_key=4NT99%hy%8RJFH%hy%Q2VDH%hy%KYG2C%hy%4RD4F" &:: Powerpoint
+set "_key=4NT99%yh%8RJFH%yh%Q2VDH%yh%KYG2C%yh%4RD4F" &:: Powerpoint
 exit /b
 
 :00c79ff1-6850-443d-bf61-71cde0de305f
-set "_key=PN2WF%hy%29XG2%hy%T9HJ7%hy%JQPJR%hy%FCXK4" &:: Publisher
+set "_key=PN2WF%yh%29XG2%yh%T9HJ7%yh%JQPJR%yh%FCXK4" &:: Publisher
 exit /b
 
 :d9f5b1c6-5386-495a-88f9-9ad6b41ac9b3
-set "_key=6Q7VD%hy%NX8JD%hy%WJ2VH%hy%88V73%hy%4GBJ7" &:: Word
+set "_key=6Q7VD%yh%NX8JD%yh%WJ2VH%yh%88V73%yh%4GBJ7" &:: Word
 exit /b
 
 :: Office 2010
 :09ed9640-f020-400a-acd8-d7d867dfd9c2
-set "_key=YBJTT%hy%JG6MD%hy%V9Q7P%hy%DBKXJ%hy%38W9R" &:: Mondo
+set "_key=YBJTT%yh%JG6MD%yh%V9Q7P%yh%DBKXJ%yh%38W9R" &:: Mondo
 exit /b
 
 :ef3d4e49-a53d-4d81-a2b1-2ca6c2556b2c
-set "_key=7TC2V%hy%WXF6P%hy%TD7RT%hy%BQRXR%hy%B8K32" &:: Mondo2
+set "_key=7TC2V%yh%WXF6P%yh%TD7RT%yh%BQRXR%yh%B8K32" &:: Mondo2
 exit /b
 
 :6f327760-8c5c-417c-9b61-836a98287e0c
-set "_key=VYBBJ%hy%TRJPB%hy%QFQRF%hy%QFT4D%hy%H3GVB" &:: Professional Plus
+set "_key=VYBBJ%yh%TRJPB%yh%QFQRF%yh%QFT4D%yh%H3GVB" &:: Professional Plus
 exit /b
 
 :9da2a678-fb6b-4e67-ab84-60dd6a9c819a
-set "_key=V7QKV%hy%4XVVR%hy%XYV4D%hy%F7DFM%hy%8R6BM" &:: Standard
+set "_key=V7QKV%yh%4XVVR%yh%XYV4D%yh%F7DFM%yh%8R6BM" &:: Standard
 exit /b
 
 :df133ff7-bf14-4f95-afe3-7b48e7e331ef
-set "_key=YGX6F%hy%PGV49%hy%PGW3J%hy%9BTGG%hy%VHKC6" &:: Project Professional
+set "_key=YGX6F%yh%PGV49%yh%PGW3J%yh%9BTGG%yh%VHKC6" &:: Project Professional
 exit /b
 
 :5dc7bf61-5ec9-4996-9ccb-df806a2d0efe
-set "_key=4HP3K%hy%88W3F%hy%W2K3D%hy%6677X%hy%F9PGB" &:: Project Standard
+set "_key=4HP3K%yh%88W3F%yh%W2K3D%yh%6677X%yh%F9PGB" &:: Project Standard
 exit /b
 
 :92236105-bb67-494f-94c7-7f7a607929bd
-set "_key=D9DWC%hy%HPYVV%hy%JGF4P%hy%BTWQB%hy%WX8BJ" &:: Visio Premium
+set "_key=D9DWC%yh%HPYVV%yh%JGF4P%yh%BTWQB%yh%WX8BJ" &:: Visio Premium
 exit /b
 
 :e558389c-83c3-4b29-adfe-5e4d7f46c358
-set "_key=7MCW8%hy%VRQVK%hy%G677T%hy%PDJCM%hy%Q8TCP" &:: Visio Professional
+set "_key=7MCW8%yh%VRQVK%yh%G677T%yh%PDJCM%yh%Q8TCP" &:: Visio Professional
 exit /b
 
 :9ed833ff-4f92-4f36-b370-8683a4f13275
-set "_key=767HD%hy%QGMWX%hy%8QTDB%hy%9G3R2%hy%KHFGJ" &:: Visio Standard
+set "_key=767HD%yh%QGMWX%yh%8QTDB%yh%9G3R2%yh%KHFGJ" &:: Visio Standard
 exit /b
 
 :8ce7e872-188c-4b98-9d90-f8f90b7aad02
-set "_key=V7Y44%hy%9T38C%hy%R2VJK%hy%666HK%hy%T7DDX" &:: Access
+set "_key=V7Y44%yh%9T38C%yh%R2VJK%yh%666HK%yh%T7DDX" &:: Access
 exit /b
 
 :cee5d470-6e3b-4fcc-8c2b-d17428568a9f
-set "_key=H62QG%hy%HXVKF%hy%PP4HP%hy%66KMR%hy%CW9BM" &:: Excel
+set "_key=H62QG%yh%HXVKF%yh%PP4HP%yh%66KMR%yh%CW9BM" &:: Excel
 exit /b
 
 :8947d0b8-c33b-43e1-8c56-9b674c052832
-set "_key=QYYW6%hy%QP4CB%hy%MBV6G%hy%HYMCJ%hy%4T3J4" &:: Groove %hy% SharePoint Workspace
+set "_key=QYYW6%yh%QP4CB%yh%MBV6G%yh%HYMCJ%yh%4T3J4" &:: Groove - SharePoint Workspace
 exit /b
 
 :ca6b6639-4ad6-40ae-a575-14dee07f6430
-set "_key=K96W8%hy%67RPQ%hy%62T9Y%hy%J8FQJ%hy%BT37T" &:: InfoPath
+set "_key=K96W8%yh%67RPQ%yh%62T9Y%yh%J8FQJ%yh%BT37T" &:: InfoPath
 exit /b
 
 :ab586f5c-5256-4632-962f-fefd8b49e6f4
-set "_key=Q4Y4M%hy%RHWJM%hy%PY37F%hy%MTKWH%hy%D3XHX" &:: OneNote
+set "_key=Q4Y4M%yh%RHWJM%yh%PY37F%yh%MTKWH%yh%D3XHX" &:: OneNote
 exit /b
 
 :ecb7c192-73ab-4ded-acf4-2399b095d0cc
-set "_key=7YDC2%hy%CWM8M%hy%RRTJC%hy%8MDVC%hy%X3DWQ" &:: Outlook
+set "_key=7YDC2%yh%CWM8M%yh%RRTJC%yh%8MDVC%yh%X3DWQ" &:: Outlook
 exit /b
 
 :45593b1d-dfb1-4e91-bbfb-2d5d0ce2227a
-set "_key=RC8FX%hy%88JRY%hy%3PF7C%hy%X8P67%hy%P4VTT" &:: Powerpoint
+set "_key=RC8FX%yh%88JRY%yh%3PF7C%yh%X8P67%yh%P4VTT" &:: Powerpoint
 exit /b
 
 :b50c4f75-599b-43e8-8dcd-1081a7967241
-set "_key=BFK7F%hy%9MYHM%hy%V68C7%hy%DRQ66%hy%83YTP" &:: Publisher
+set "_key=BFK7F%yh%9MYHM%yh%V68C7%yh%DRQ66%yh%83YTP" &:: Publisher
 exit /b
 
 :2d0882e7-a4e7-423b-8ccc-70d91e0158b1
-set "_key=HVHB3%hy%C6FV7%hy%KQX9W%hy%YQG79%hy%CRY7T" &:: Word
+set "_key=HVHB3%yh%C6FV7%yh%KQX9W%yh%YQG79%yh%CRY7T" &:: Word
 exit /b
 
 :ea509e87-07a1-4a45-9edc-eba5a39f36af
-set "_key=D6QFG%hy%VBYP2%hy%XQHM7%hy%J97RH%hy%VVRCK" &:: Small Business Basics
+set "_key=D6QFG%yh%VBYP2%yh%XQHM7%yh%J97RH%yh%VVRCK" &:: Small Business Basics
 exit /b
 
 :TheEnd
 
 if %act_failed% EQU 1 (
-echo __________________________________________________________________
+echo ____________________________________________________________________
 echo.
 call :_errorinfo
 )
 
-echo.
 if not defined _tskinstalled if not defined _oldtsk (
+echo.
 if %winbuild% GEQ 9200 (
 call :leavenonexistentkms %nul%
 echo Keeping the non-existent IP address 10.0.0.10 as KMS Server.
@@ -4908,12 +5153,14 @@ call :Clear-KMS-Cache
 )
 )
 
-if defined _tskinstalled echo Renewal Task found, keeping the online KMS IP in the system.
-if defined _oldtsk echo Renewal Task found, keeping the online KMS IP in the system.
+if not [%Act_OK%]==[1] (
+echo.
+echo In case of any issues, check https://massgrave.dev/troubleshoot
+)
 
 if defined _unattended exit /b
 
-echo ___________________________________________________________________
+echo ____________________________________________________________________
 echo.
 call :_color %_Yellow% "Press any key to go back..."
 pause >nul
@@ -4926,7 +5173,7 @@ exit /b
 call :CheckFR
 
 set _intcon=
-for %%a in (dns.msftncsi.com licensing.mp.microsoft.com) do (
+for %%a in (l.root-servers.net resolver1.opendns.com download.windowsupdate.com google.com) do if not defined _intcon (
 for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not [%%#]==[] set _intcon=1)
 )
 
@@ -4935,33 +5182,36 @@ call :_color %_Red% "Internet is not connected."
 exit /b
 )
 
+if [%ERRORCODE%]==[-1073418124] (
+echo Checking Port 1688 connection, it may take a while...
+echo.
+
+set /a count=0
 set _portcon=
-for %%a in (%srvlist%) do if not defined _portcon (
+for %%a in (%srvlist%) do if not defined _portcon if !count! LEQ 7 (
+set /a count+=1
 %psc% "$t = New-Object Net.Sockets.TcpClient;try{$t.Connect("""%%a""", 1688)}catch{};$t.Connected" | findstr /i true 1>nul && set _portcon=1
 )
 
 if not defined _portcon (
-echo Internet is found but failed to connect KMS servers on Port 1688.
+call :_color %Red% "Port 1688 is blocked in your Internet connection."
 echo.
-echo Make sure restricted Internet [Office/College] is not connected, 
-echo or Port 1688 is not blocked in the firewall.
+echo Reason:   Probably restricted Internet [Office/College] is connected,
+echo           or Firewall is blocking the connection.
 echo.
-echo Either use another Internet connection or use offline KMS activator
+echo Solution: Either use another Internet connection or use offline KMS
+echo           https://github.com/abbodi1406/KMS_VL_ALL_AIO
+) else (
+echo Port 1688 connection test is passed.
+echo.
+echo Make sure system files are not blocked by your firewall.
+echo If the issue persists, try offline KMS
 echo https://github.com/abbodi1406/KMS_VL_ALL_AIO
-exit /b
 )
-
-if [%ERRORCODE%]==[-1073418124] (
-echo KMS server port 1688 test is passed.
-echo Make sure system files are not blocked in firewall.
-echo.
-echo If the issue persist, try offline KMS activator,
-echo https://github.com/abbodi1406/KMS_VL_ALL_AIO
 echo.
 )
 
 echo KMS server is not an issue in this case.
-call :_color2 %Magenta% "Check this page for help" %_Yellow% " https://massgrave.dev/troubleshoot"
 exit /b
 
 ::========================================================================================================================================
@@ -4973,9 +5223,9 @@ exit /b
 set srvlist=
 set -=
 
-set "srvlist=win.km%-%s.pub xincheng213%-%618.cn kms.six%-%yin.com kms.moec%-%lub.org kms.cgts%-%oft.com"
-set "srvlist=%srvlist% kms.03%-%k.org kms.moey%-%uuko.com kms.lol%-%i.best kms.zhuxi%-%aole.org kms.ca%-%tqu.com"
-set "srvlist=%srvlist% kms.lol%-%i.beer kms.ca%-%ry.tech kms.wx%-%lost.com kms.moeyu%-%uko.top kms.ghp%-%ym.com"
+set "srvlist=kms.zhu%-%xiaole.org kms-default.cangs%-%hui.net kms.six%-%yin.com kms.moe%-%club.org kms.cgt%-%soft.com"
+set "srvlist=%srvlist% kms.id%-%ina.cn kms.moe%-%yuuko.com xinch%-%eng213618.cn kms.wl%-%rxy.cn kms.ca%-%tqu.com"
+set "srvlist=%srvlist% kms.0%-%t.net.cn kms.its%-%jzx.com kms.wx%-%lost.com kms.moe%-%yuuko.top kms.gh%-%pym.com"
 
 set n=1
 for %%a in (%srvlist%) do (set %%a=&set server!n!=%%a&set /a n+=1)
@@ -5220,7 +5470,7 @@ if defined ActTask (s%nil%cht%nil%asks /cre%nil%ate /tn "Activation-Run_Once" /r
 if exist "%_temp%\.*" rmdir /s /q "%_temp%\" %nul%
 
 call :createInfo.txt
-call :RenExport _extracttask "%_dest%\Activation_task.cmd" ASCII
+%nul% %psc% "$f=[io.file]::ReadAllText('!_batp!') -split \":_extracttask\:.*`r`n\"; [io.file]::WriteAllText('%_dest%\Activation_task.cmd', '@REM Dummy ' + '%random%' + [Environment]::NewLine + $f[1].Trim(), [System.Text.Encoding]::ASCII);"
 title  Install Activation Auto-Renewal
 
 ::========================================================================================================================================
@@ -5262,6 +5512,7 @@ echo ___________________________________________________________________________
 echo.
 echo Info:
 echo Activation will be renewed every week if the Internet connection is found.
+echo It'll only renew installed KMS licenses. It won't convert any license to KMS.
 echo __________________________________________________________________________________________
 echo.
 if defined ActTask (
@@ -5270,7 +5521,7 @@ call :_color %Green% "Renewal and Activation Tasks were successfully created."
 call :_color %Green% "Renewal Task was successfully created."
 )
 echo.
-call :_color %Gray% "Make sure to run the Activation from the previous menu atleast once."
+call :_color %Gray% "Make sure you have run the Activation option at least once."
 echo __________________________________________________________________________________________
 )
 
@@ -5290,7 +5541,7 @@ exit /b
 :createInfo.txt
 
 (
-echo   The use of this script is to activate/renew your Windows/Office license using online KMS.
+echo   The use of this script is to renew your Windows/Office KMS license using online KMS.
 echo:
 echo   If renewal/activation Scheduled tasks were created then following would exist,
 echo:
@@ -5322,7 +5573,7 @@ exit /b
     <Date>1999-01-01T12:00:00.34375</Date>
     <Author>WindowsAddict</Author>
     <Version>1.0</Version>
-    <Description>Online_K-M-S_Activation-Renewal - Weekly Task</Description>
+    <Description>Online K-M-S Activation-Renewal - Weekly Task</Description>
     <URI>\Activation-Renewal</URI>
     <SecurityDescriptor>D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FRFX;;;LS)(A;;FRFW;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)(A;;FR;;;S-1-5-4)</SecurityDescriptor>
   </RegistrationInfo>
@@ -5386,7 +5637,7 @@ exit /b
     <Date>1999-01-01T12:00:00.34375</Date>
     <Author>WindowsAddict</Author>
     <Version>1.0</Version>
-    <Description>Online_K-M-S_Activation-Run_Once - Run and Delete itself on first Internet Contact</Description>
+    <Description>Online K-M-S Activation Run Once - Run and Delete itself on first Internet Contact</Description>
     <URI>\Activation-Run_Once</URI>
     <SecurityDescriptor>D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FRFX;;;LS)(A;;FRFW;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)(A;;FR;;;S-1-5-4)</SecurityDescriptor>
   </RegistrationInfo>
@@ -5479,11 +5730,12 @@ if exist "%SystemRoot%\Sysnative\reg.exe" (
 set "PATH=%SystemRoot%\Sysnative;%SystemRoot%\Sysnative\wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%PATH%"
 )
 
-reg query HKU\S-1-5-19 1>nul 2>nul || exit /b
+>nul fltmc || exit /b
 
 ::========================================================================================================================================
 
 set _tserror=
+set winbuild=1
 set "nul=>nul 2>&1"
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 set psc=powershell.exe
@@ -5788,7 +6040,6 @@ exit /b
 if %errorcode% EQU -1073417728 (
 echo Product Activation Failed: 0xC004F200
 echo Windows needs to rebuild the activation-related files.
-echo See KB2736303 for details.
 set _tserror=1
 exit /b
 )
@@ -5856,9 +6107,6 @@ exit /b
 %nul% reg add "HKLM\%SPPk%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%"
 %nul% reg add "HKLM\%OPPk%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%"
 
-::  Thanks to @dialmak for Office non-genuine banner solution
-::  forum.ru-board.com/topic.cgi?forum=35&topic=81283&start=6080#19
-
 if %winbuild% GEQ 9200 (
 %nul% reg add "HKLM\%SPPk%\%_oApp%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%"
 if defined notx86 (
@@ -5877,9 +6125,9 @@ exit /b
 set srvlist=
 set -=
 
-set "srvlist=win.km%-%s.pub xincheng213%-%618.cn kms.six%-%yin.com kms.moec%-%lub.org kms.cgts%-%oft.com"
-set "srvlist=%srvlist% kms.03%-%k.org kms.moey%-%uuko.com kms.lol%-%i.best kms.zhuxi%-%aole.org kms.ca%-%tqu.com"
-set "srvlist=%srvlist% kms.lol%-%i.beer kms.ca%-%ry.tech kms.wx%-%lost.com kms.moeyu%-%uko.top kms.ghp%-%ym.com"
+set "srvlist=kms.zhu%-%xiaole.org kms-default.cangs%-%hui.net kms.six%-%yin.com kms.moe%-%club.org kms.cgt%-%soft.com"
+set "srvlist=%srvlist% kms.id%-%ina.cn kms.moe%-%yuuko.com xinch%-%eng213618.cn kms.wl%-%rxy.cn kms.ca%-%tqu.com"
+set "srvlist=%srvlist% kms.0%-%t.net.cn kms.its%-%jzx.com kms.wx%-%lost.com kms.moe%-%yuuko.top kms.gh%-%pym.com"
 
 set n=1
 for %%a in (%srvlist%) do (set %%a=&set server!n!=%%a&set /a n+=1)
@@ -5905,7 +6153,7 @@ if not [%KMS_IP%]==[!KMS_IP!] exit /b
 goto :_taskgetserv
 )
 
-:: Ver:1.7
+:: Ver:1.8
 ::========================================================================================================================================
 :_extracttask:
 
@@ -6015,168 +6263,40 @@ exit /b
 
 ::========================================================================================================================================
 
-:cleanospp:
-$a='.,;{-}[+](/)_|^=?'+'O123456789ABCDeFGHyIdJKLMoN0PQRSTYUWXVZabcfghijklmnpqrstuvwxz'+'!@#$&~E<*`%\>'; $91=@"
-using System.IO; public class Bat{public static void File(int x,string fo,string d,ref string[] f){unchecked{int n=0,c=0xff,q=0
-,v=0x5b,z=f[x].Length; byte[]b=new byte[0x100]; while(c>0) b[c--]=0x5b; while(c<0x5b) b[d[c]]=(byte)c++; using (FileStream o=new
-FileStream(fo,FileMode.Create)){for(int i=0;i!=z;i++){c=b[f[x][i]];if(c==0x5b)continue;if(v==0x5b){v=c;}else{v+=c*0x5b;q|=v<<n;if(
-(v&0x1fff)>88){n-=1;}n+=14;v=0x5b;do{o.Writ`eByte((byte)q);n-=8;q>>=8;}while(n>0x7);}}if(v!=0x5b)o.Writ`eByte((byte)(q|v<<n));}}}}
-"@; $c=new-object CodeDom.Compiler.CompilerParameters; $c.GenerateInMemory=1; $s=new-object Microsoft.CSharp.CSharpCodeProvider
-function B([int]$i=1){[Bat]::File($i+1,$i,$a,[ref]$b);expand -R $i -F:* .;del $i -force}; $9=$s.CompileAssemblyFromSource($c,$91)
+::  https://gist.github.com/ave9858/9fff6af726ba3ddc646285d1bbf37e71
+::  This code is used to clean Office licenses
 
-<#
-: Text to File conversion and vice-versa
-: Compressed2TXT
-: github.com/AveYo/Compressed2TXT
-:
-: Encoded files details:
-:
-: BIN\
-: cleanosppx64.exe        SHA-1: d30a0e4e5911d3ca705617d17225372731c770e2
-: cleanosppx86.exe        SHA-1: 39ed8659e7ca16aaccb86def94ce6cec4c847dd6
-:
-: https://massgrave.dev/unreadable-codes-in-mas-aio.html
-#>
+:cleanlicense:
+function UninstallLicenses($DllPath) {
+    $AssemblyBuilder = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1)
+    $ModuleBuilder = $AssemblyBuilder.DefineDynamicModule(2, $False)
+    $TypeBuilder = $ModuleBuilder.DefineType(0)
+    
+    [void]$TypeBuilder.DefinePInvokeMethod('SLOpen', $DllPath, 'Public, Static', 1, [int], @([IntPtr].MakeByRefType()), 1, 3)
+    [void]$TypeBuilder.DefinePInvokeMethod('SLGetSLIDList', $DllPath, 'Public, Static', 1, [int],
+        @([IntPtr], [int], [Guid].MakeByRefType(), [int], [int].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+    [void]$TypeBuilder.DefinePInvokeMethod('SLUninstallLicense', $DllPath, 'Public, Static', 1, [int], @([IntPtr], [IntPtr]), 1, 3)
 
-:cleanospp:[
-::AVEYO...Q5u2......*D........j}?.d,..;>_}..O}..v;qGy+yK;.......Q5Cf&gn}v;nrMFzHJebzC2r2y@IR5?bp~]..p...l|....w+Zcp{->RU4qoOcWts?K8Q
-::#(lK`@sOkWs!BpVCKi_.Gz8)P().\Fx@L.quL--_;.B.X$~p`lrg!Yj=2SZs|@$C}[qxw*<M5G_v*1,Tc-sf?ocl2]~eXsGX=5~*ihr(`@af{4O5X!T!x!L(C6tEc[Q@@!
-::,r0gT5vJeKTmr}f{ykK.<OV>z_..}V0RT;YkLxte6hCe!z7cXup8Z88{\2f8=Pna,L-F<2BBhs.9\w@}1INx1/m;2wXi!fe/,b>3]1t^J7]w~]YQYLxl}FEs|{autWtHu8
-::Zp!x`_*\p!vRh4;>..F7->s/B#]m)EPNG/w0A$OOS=s{|2,V}6%9tQEIh37=/keUZ9qH$0{9}RnE~,P_h8LS^J<M7wxnA1L#AjO5|$r1FLX$2L,F*pi|eR4{Sq4skdLOre
-::zzVr$q)XAl)?qYX]2k0_NG<lRqzjt=_A^9}gO<@E^`;,bLJVD5yw>=,mrkq+QtrIiV^_v2O+YKI#OsW`6Jp3uR%T?<&6}U.$i_-S|tsI)A{A8A7)Ro\.zs.<_iOC.qs$VB
-::y7vGpR*%[w@ffzZ!CppP=.z_$C!C&5p<6?)B5!!%^mxHy0q%l&fb*wn##JY|iW.1Ra;sQj!9JORB$CR<6u.X?SeSAipH\d?mtgnBrtZvdZ4+Z@cK1NwsQ_^=Ji.h,cK`&i
-::!ZY@LZ9|U$YngSRw1[\C6nBYZWFM6F,7~PBkx2,YfdDCS>03)(yn{sVii*_H)xlcM+RK3I4ZzcwLrX/{6YBK*rf+_GCFXFjR/#g7toZ[$4*.lrSH0\[y#^%ub7.Z<E$4$d
-::}D.0Efk%U2^gZ,UO!2T91Y0ft/[73c?m4xyu-(GZBnA!+hi9KnRK,yy5s(Upf1egDuMc1t[0i;#8/sV}o{4Zo2yeJyIJne}a4j6Kp]Eb>&WyRL~bTL`685r_w/l5t_we)]
-::RL{WV~0Gcerz.*44h=Ak*\I^0FDE&sXSdmx/RC#0{P[qRQB|Bl*SV|^#-B4LLxh2uE[mH-B,`FcKvAZZWs%a`cjMJWTd.K;[aF5CSi]{[jr?1ucN-OBnc%sZ=5<p7mLo@/
-::+l-v4aBBwkVOq\uIJLlXfk!59{ef[W<\#/_?z<B%#dq3%pbKi)WPlTr4k,{xh}+^R7\vmnl)qLP=%?I%UP2zO&>aY{5H%\m=<$UiU?IRQ-|Pj^;o+EZHDmK7E?Za$zkJhd
-::Z\vuqPA5]TlqP}c_3kpe+|*ux`~S0oz;ezH54\b62Oee9;zGGV)-\{yPasOL`=?i>!8(`5[Rty[gPZQn869Kgi*bYJx#0S?&07<3WSN!lBba2_~l2P>G4ANo+KITny\Nm/
-::bgQsbIz=!tVil.21cLp^<\5UD>;aEK}\8W<AGC&`*m!*.9&SXo/!qS%OcPBQ0==D\P-kko}x~R.l(@LbLL,z%HiqiO>]^/fQ@Z|hlpZVvGfGrK[M{POy{YmhKeMGg\;e!*
-::`7wp*qKGuq&(Lo0b.+%@l~NRW(S^|!#o5dC,bn&@?T1wn>X)ZEU*`oXi[7w]W[yyaa)1Y{|<DP$\A?!rs{B_ovnO0)2n{l+Je5=$gmM<hN<GtKq-_(|^ZaXhl!_e#d42Mw
-::IFC;<KP{ym]!`3$%ZkG#y%@m/p4~vO&L(B)0[/S@}}@GFL=%j{Pr1|TPZa\)g<0,;SL`wER_X%3l10EQ=8BHm6DXl09izM#hA`$[w&aw<hBvl,sTGFzs3WDLwSD(/Gf3&$
-::2\GAx%9`J*>dDuA~9(^K,\P)(].<A^;u^IXvgyzUHroq+vThu0WTRM]H,oR4q0.lUB`})BCqNM|M5qMN>TfNa30!mSKAIlQUKY=)al7n`T<o4LZ]_ZZ\bm4O;NY6@NoR\s
-::kc+9FwWBZx;]X!Z6#!+6!SzJi;x(*qUnK;+CH$KX{fBQ0+e=Uk{!8;A[H%5~AFe&fWOtn7T0MA96$wUWx0>>`;nAB_wYgG6nK`Hn=mOWfLbD{&1tAMmN0y$LTNWov\?sO!
-::-BOh02QhE3?iopO+G2ZTwZqPJN08}H6\>=jg3T#nAxXd*])O]WB_caew@?9!L1Vp_1)U-W|4CyNfdI3GV+<)iBF<pNX0dVZcLd@LKol_@lm&206x!5+9{o1dG5zd@OoF4g
-::I``#k5d&?zv+Oaa97j6X,7<{ioU*)5<=;{dTZQkN>bB@,*.t*vU%{^UrP7Fa_)FE\I@l4T|IB]s@>XT^BiqYP,`JmW`/AD5JeGc/z%HnvL^%6^7g<O\[<iG{^e+0/|s4]g
-::_W/b#]7OR9Ga0i>xGnmd6rqWZvY#Vq4C_;i$NIZ~,DrV*uPR|-%%\e);rLR!v+K|}iL=o`j]ScZRIAlDYmk0,ADmCZBCEZ?jhw&$(LP15FG*T2TUX%D+ZwJ^WWA_BT)Bn,
-::>C.NkY7a6mnDHIX{=5rb*&bW3fTng95)8XlwV|sle^U|]JI~(qf!HZktQ/RG[$YxLP8{D0lX?)Fl>-avn1(O]K?XVEuu&}A2=H>JpS3zQ,QfOpvkvAeUd$+zMvwt+rR*=?
-::6H}NM`l\u3H3E,OYDI=[{S-z*w$I+Gz2na4~?zj6MF>xXGx{VW&mw`9XWU\~KH5e2k,G_G7@Q8}Swp@y$*qN](]KTjV@Ew;m=<0!2?}MvWe>*pJBrm2;&Y,o90mZtSKBYu
-::]<&-Y3J?(Ot;z_#pM*$[j!*Iggf!Z}1F-z8nfZ_&9ad%0TZkr3\+{dC8keiH~Nee+h%-xc}A+,t()%,/*<\|mu3,}Wj{hF_T*a}Ml+XMwlI|a7=ky]%2[ckY}#~y(`\8T2
-::JUaFFX@7$9LcyiyWznl|?+J\~^a~7~)|2&I~GpST(#)Ss]qk_~=h%k.c~!T_<q[zs%BLU9gO-AMV&z<<;M%w#XdNV/A6&T!&t?801-TJ)F[8+=J;N+H1c9([Bq`j*dakX{
-::{xWIT@_]??>7^At!y2^Y*1RZ=f}zq^Tzw$V\Y[[Fj6(_sJBt~\>Zj2;Fj9Dupk1EuI.MWtDYeSX@q36JIhTbNRw{AeM]+?7%/A;![&D,CRa)oQt.`@7vESa/v/iJOIh%[f
-::bHkE8lBQ\d<D6?S)%8[-mzU<05[BUcRq]sOF|!`M<{v(lp3*ooJqkLtmkXv3o@BwAb2R@1Sq^r7|Ymz9Dgr~i_.Hs\g91JEjUg<xvW-wj.v-~-q}k6d#r|Zhp%XoVLhE\A
-::pb.=gEl~6h{)>0~s<<?N2V<]Lp>J^RikG<~*$y!Rr{at#WthL4</E8<X&@Z8-.{8f~_A*\oO~w=J<W;ZjeaDQM$N!pt[&jFX|mr_Ol*pF/75^ol`KFNg%{soykfKh}<Zh0
-::p2y!PmcJvY1qNIyHs^8sCAAu^x#DbC60fXPsz5qaZ;U&b&&)r/Y|PKP(&c.38ohs/ji,Jq)QNVfE!TB]N^L[dec)j_}T.MAHM~Q?TRoqCa4BW)Fhw_K@VOB,nxtKdU^Hy@
-::U2?w2R9mP=|Fv.l2h}W25Nozt_g3>x<=6U!8b{FlG}4VkEa/?Vd}>{\.uyeInH}n8n1{A)18adnE1,ac`BdhEf}kdx13Lz(yMJd+c!$g~9XZVg4n`#!D\;A8~XzIy~J44F
-::Z@CJX`7rx\7o#q2cFW5IiL(dc,<\{)%k<3,8]@`HQ,k,DzSij4j_f2XW%cVcpsD&vZK}l?Sz$Nk}q_JGB~*qovn`iP[sN5Bh;K8bBht=UmS|44Z|fxHQ/EQ`&$@lSI;FiG
-::X/bWUh;_lD5\(anZEwl%duHxqL5!Y?wcw~LR%?d~ImQgH`,-?|~C2ae!FBn4pz>Yajjdzv\]#v>a=&/rS%cjO,KN20K[Nd!,_$hDVA}}=&yAtO_5L;V{)|plFw9YAa`-EJ
-::bn\sw6?oO+Nd7bTEW(eB-,)ZMni2ily\mp\Y!CIloe#k*)o.,ed|-49PR9@4S?.+=Tkw1R.81#=QJ3b?^$@S*L_+tA(L$@[X+5?`M5(T@)ugqp]l_{EZ#1d]e#AV?o7K=[
-::5v//o)>@P%VMO},AUkp[UJB3MLl\<U`%}bLn2Ms\[2TcNs0P4i\H6.=rT0tfwtPXcu7?^xOK}{y2[WW\9B&yVj$BrxGP>(Qm.X~l8=$6Gq)0{EKYc|!\~o$xX7O@QbX7HZ
-::2Nnoz7saM%[nGcl,dB?7LJGm2d=a`dpD6%}\)r(EJ8$GNGJ2r8+4[}ZxV\r}#cf04\D``x0Z@K&Uwl6u6+Lu/W%G4ddVYMnzO-*3dZ#7!)=N7|B2{!@efFUre<|h2(l2^t
-::kKAp[*Q}Zl&!Z#~lw^qkprFPv~vBGz~H);A{!]|3LNpD?T7~$[Nd*g*rpkeQ0+hdwt9Z=h{?Y!;ol*O&9N1Oa8dLjzmEZNQc?sZd9k@iLC=`4MG?UbGDA[MKY_B?zO0GvT
-::mn)d-hd@buZ~wMOgF1/)s+c.&xieLo//t|x9Sjba?BLzlTzVc\#Lp9^x;=%X9=*UNkn)FsKxb=Hni<.a;Qvg.Z>y!0x_g94}[7iSDhXiN%z.bM3]a7EsY{+j#9uj|o>lfU
-::wM$|#QO{}<{kHsqk6W6.#\yiV@%2bivkx29<adzZ#*.)u9Ri)IBx6}/C~OKWFWTI]]E|UGd`[L$NShRc2IQhBf$m0Dzc5>1W0KN$Qz%2]Iy~G]SRr?a\.fzGHMB;DEXFO*
-::w{6rFN{dD|q~QsPG`t[lx8!yQme^OGq9yp}.Rjku)S@b7V4I=p/%J}leN-~c4^z]Oge3Ewi-KB3Nqu*R+Q5$|8&5p8cXlu^WY6lB$+hYI/o*Nx6jl+m#K#@jn9FpZz{EVA
-::Gc1~b2Mrf_u&PH!le*K2[cQ+WD?F8#B58=_6xcS}/%,Wl|O>Z7k!U0fF_~Ub+M?)lc$94,jV]gw1PijzSjCVq=3)H&-fd/iJtqAHX(X\j<3XYtMDRt}\3Ey>r58Yi?uT_z
-::`AGKSZdeuFIYF^QY+3n^wcgF<&6Cz,#cj-DXftH@Sx+unM-(0/XM\XB=~*=x*6}SVYjM!|.3%%Bj_M|#sjC|*dTu{3Pr_toq28Lf2ev~8RE69w!`78B|]Kqs~in,Mk`1GK
-::qc\Ky}fpyd*[trJR+]i;pV=zK$}%@~L>\i\\p[33=6V?Bp1GDW~bnI*uf{#4xq[]8;E|P@_c1GJAz4YuiFz}D/A4v}4~ANel,c`#CP!-mX>ZxJ|CKL\s]XO}^HdmSXkCZH
-::&<DU5oo6~EO-f7BjLP+L=BUG>8;=+TWK!J^hOSwYft|7F9&faK&3XFOoAUPnhj6NNxeh6zt}nrTN9z<AH*yw3dBrBVV[XHeMn4;4lc$J#*.%)%DW[|[`3EC87{A0Re%~;!
-::oA}B+y/]v]|90!#(9axE}0>1a.(&sn@j~!|[|8Z;2g^CV6@z.E$C_s`cP!4n5(?JThA[DPB6FC]ck>Rra.Sase|<i*\I<FD|w4$JGqq%<KEK5.-x=,)3TP0kwH*lV`gUib
-::FDNXGaTK]uQhConfSzeG)k3B24(?*%0c;j|@5-.!tFYvQ,]gtKBHDG4A)`Eyr$p2V2D5sw9rq7M_O|b]{[$Ui0TP^X\XjVtme)YRN;Ten&tlpZu,WMm/|}>&-,*}f(9Q(e
-::i7J`#Id,QPpB.=x?o`_\`7j(k#^PxmBa`!g4(^F[;vI0@qoTA5t<E|!THG|%?b~jjuEh<e?%F,%|Rj5TDG}F&]z|4y3*wR>]o(kjZubJHc)R;I6L(Q/-|mUSgyh?`Zd{3O
-::YVRxgeV%DUi<c@P77,dNu;~*J5lZ(,*?6}2JA@Hjh.m;ZqYGS%D=Ie)LA,V1R*j.wEUZaX#p%/YQ,QT.-n=n(k}@WU8*.SQ]bR20V!j_stIHtDIR3uCQ626KVnV66wZXqR
-::zzeOhnN}zNZNF8y42Y7)ghNA^G7|HOS-}q2TgUlW.)aE(</eTaD4zdN/YbxOxp<VM0,G9%`r9&F62K.hu]6Pz5IY;vp4#+\\hSVL@hbH,un,,OgxDam,Ly<K5./,8dS?sV
-::dC>;d6PG|(6P\q(#nuBXt{GkH1+<zMg-eMQ<F}i0_}y;]XHXTS./i0IVO4$r##PkC4_UnP8T37[(!2eD>B^XCufNRsp_c#B\%N\S+BH#;tSQOGp]X}rw5E8h`;QKtH#-|p
-::1s6-5vftZGS/EBwn0Rxx?=/ykq`{=;gg#$,_M-Dly3jV3iPC&fA6P)j+;SH9r6]P!i!p>XuUkrwLv$<gzu->,@lXt%vN.g,pJp&KH_vLKsMuPRP)lrV9=<D-4^rJqImCX}
-::N).=UL_4q}>?%W~5BWB,.qA<r<6n5hqsW;K^ie=6B^LIN6/;ugu9}Z#8WuM6{8xAKn|W\y|cM#|Ia8Sc?9k/a6PvkIvOcX%Ff-MZu]SROR}Od9`Pw|{39qQvPt/A5_;cAZ
-::V3+{1X)057ofxH.~8T<_3g_LC&<zps=JbX(7NW<;yb3seR*2A/h_sd.*,O!n@+%CpYN;AehUqX~=9V,M#W?UwyT+qjnvG.N2PTRjflUFk3Q1le11o|,gs&WZ,%%z<7m\?N
-::[Q>4+Zd^yD_]5So[zPNZjQf7c(7V|DsrEr7#n1HuRO-CFbWLTrc7T]$_mSQaCRFu3y47MjE/,p]_GjxISK.Y>CpK[8M$s{ofgb/<#gV)L2S=-;eP/F\,X1c^u}A4J+[|vK
-::~iEDq,wai<&P9E_e-D8=>RlS<c*ah$c/dbcp+Kqi$Ga|0]CSv>3FaxJ;,^NYa#\9HehKI*o[&)p3lsqO8AF^x!4&}|,s?*<OwIjTqK%Cu1zSWf],*O1+xG&g[GP<*/wYUU
-::FbHiq/I|P{R>T&O]?mtPT?D8hvP}WW.eo%@vg]PLg]HO%uFd#J#y8((e;;=deySsr^+jBR0RlOdjRkZ9YuFci)BJrnoU7&CYdWGV/KvPcG!;A3jof#gu0tW8~geu@d*Oyp
-::}SF*-uPf/G$5T]Ae/(C;~g_,lNRrF1#;)piPG7M_yjIWKvqrU=W<^mReji2z9[.068~tJjn;D|,C;InF)hLhRYH__xzC`3;1NBv=.5O=5`Egt?iWk9NpnMa1z,a={M[V=q
-::gc[,&j&qPFF;1Gx3F$b5@UR6nJ,;y0w[^/NwgiYJMI,VSeuyi/w7Z2E2qqwh8N96m}rrcmXTU^n3aqQ2S3yUJ!ExYF~b8k)S[=CDM}$|3a(WS;>m,<y{qN)JAY;BXJ#YIe
-::$YI`dVSa|Sh.r;Hd0<]N5k-@$y,UGLkIk`GupEyU~//GkoM6ax15FbA<7ZUuE@C`MbJS5SD5_V}|c<p}Lu=))+-j~}lp)yG#?g!nz^_73k(&;(k7GbroG_9BgwoUeS6xl5
-::]RYf%h;V(c_[.Y-E.J|7iGDQ~]{tP4kp%MCHv*W&TLJ)oS?dzNJU(#{9_tF4H%n]TB@cImZcVSI1^Ck7oQ&L;zXZ$k@2P}*=5s)b7<cmg{^<R1X/u6Z^lz;.j^Dswut/B1
-::q9YtV[^k5DC0A_@As-&BwqYr>@1[fTGc^W8fMsUH+bG#/Xw,[=j59U>[;oF8doOGU(@FR!&gi_\,/7~q1M8o.=a@w7cMf#BXGaO-<dTz-wyV\R!ejuy{Ml?IV{1J>ixWFy
-::<qfH^[]|C4rX[F.cb3\*OPr=b1SIyrP}[,Zn7xF(Ak@sy35F+T8W#<CGcpxe&xWKk,%rIj.cXeFfoZ]S9&?r4<`&gNrT\7r])5Nx9i\b&9}XjU@IImFR_f4=?&;sH+5PFg
-::-R&EEzGi&PVh>O(-vSn>IS0gU<-QA.e3+8i=@70|obrU|+\GYC|f!XfMHI%9ByToU1[c\OCp9G_;?f]js5k(>B6D3UJfJYWUvsu1Hr!O=I8SFd<nuJn%>!prYTE^~2{3CK
-::SM=coAB/www<v<Qiy1\[^tj)9q}3iN~ew}afa)r5IqjrVb5[]*@iWFADh%$[[zP&l}]oxODNcQXjy~iB|z8p06cD/v8y&$c(TY#4/3[%^4dq8F0tg5>9K2<_,KkZ^;%3p]
-::?![?hF]]e^%fHUsR24uvg9zoVRE~=dqMkGb~L{tG6uO8q&Z<e_Y`D;fEvH)t)OE(Om9%@=?~O7QXnKVnnP$V#*4}7)yyos^\\+CaH1&~R+-fKPZAF/{~8v@?2~aFS`|haj
-::,$Qe=i>V6@];J)4WQHcyKxvh4kcE8l@%[<wDShU\Q%NFKD.cEmI4QJ-dbbQ%5`S.(N5E6K{=mU_1SMhxSqYWJk$bxeZU_u/)Qe.zRwoc4gD^Xs[?0)Up{WdDYK@%0TOW;9
-::tiiK85a_\1NYPWkTYdufKq9nkBjb60bnPsd=o;U3r`Z!#`6qYw%VUT+>y9&;xB#eP{hRd|qOtzFn/PRU#$<=jY[Dngn{Xv4uNaW|Qg<l%a?B_wN^GfzivYEvt[ziM^w&+P
-::+bhK;Qk<r@{[=+{2%DuwCe1hVP96OraPS}Q-goL%FbFnj@wt!jUE(IvPV_;4]26$}SuH7pP,^%/q]|N*CY(8C4W{Q,-?Sw^gLmheE{HhOTFF1T4ugxY|_7wzt,u8pkp5``
-::LsY=vg2b9i<=pL7al\{KQ6H[hN5pv_Ro/c9i%GdMUr-9O|k#@?n?.{0)\dgxz_/E);kT/K^vN?{eq,#ei6`^p+/(Md3.Y3#4h0PsNw|%/q|D|?swv^5EN10|4PBh[fE-m6
-::Jb<krnZ1Wd.,lZ|Q#V{6j#9Y%UM38@coXI0m`F]Chr_3TjWf<gA*.jTNvy)M%wdG},$GA=\+KQGd;c/LoQ`Ud,gJWR+Wj{l)`KNY(Q9EPrX-dR}<i|NsbVbrxWWWkjxYuv
-::Uf;kE?)#0I/-`xEtE7XWh4;p%$L~QwBcQij*7zcw0vVEcMKrUb/u^FV6~]KB6sFJJlu]hl@ef|Ab/qK;^T}*F_CRzh?%BfK-kP-|do=i^`AJI8&GByi\tk<!o8-8jL-5zl
-::=+9f*Y[h;#7_[78A_jHL|5382|I4NI/8,>pv-DqI6PYnc@ut[F)c/~$,pDWKP*Mw|fH5BdTT^2#YvToXp4](gPLV2!wO#$tmMXz?gTto`7}}P;2?%aCdFH*!?[uUib\4&|
-::1jS$p17&zUBLY_z%tz0i}l&HmzUVvoYUPqBT+YDu^k#O9C=62lFAnbP2qWh,^D^@NU?1$jkVJx!5on~NpHRQ(Jj8iMpOls@Zft=M;Q<W3DyXG2tuH9-B^XKn;v%|jBZqxJ
-::zTQ2>z`=83GqF!R^Sn!8.Q.jy;Zrk~ehz=0s4_f/~$r_4/|UT+^]()Jgf?1,^<VNwla%~PTP8RP,&x%pQ{CA11qa/i+=|&~p!HTc\?feu2|2=w}1PLT22=$0?Y&mtc*-UQ
-::*O?c~pP34*%lh=37WhvD-<-$u0EI#20CCe\+QX%i;(pPL-v(rTk`%eI,nX!<Zlc\6pT}H1gAEWee#k|hr`FnXQR~y0mAykq(7A@jSGJEo;%_?!J!FjQP;Hj(7z,B,GjBa8
-::tmOI]cRT]@4@EFQ?[%`}!}@8\&v=ppWJ<\AVW$RC,ua-G>hSZx5Y_uNE9H3VVijpG$6^DGgl-d.>1xw~c<n!w(kFr[MiN[H2#JB-z!>_iZ>lCp`l)/OrOottQw9Q<|M+5T
-::&q;._tX}fCJ_IjwT>lW><N@o@f\Qzl^a@-;or.als5P*XzM`C[OL#Nb#4zE-XXkG&2?5p\qJIly$dWQE;sPe28(,`wc5d;N*y`I)#-$mycw)}Gf.D}(lq3{O3DNT4E/AiB
-::8u(dNB^({`M/T.&z|M7QBzVXD}8~2gHr2wSZ!aF2+~>pL;(v8deUqqF1E(%Ua0=B^,fhFybOMl3f7}PEc;9|~,Q-*[y.gq3I}6Zy\Rd;]!FFzn-3zG9U{}k6[o?#cpb0D!
-::[m0u8]e1zH#u`%OY3rt>Wxy0rmpD_}hE%zh?E\R{VxD31-\P]Fh$p^?,z!d675Pgb;^4>J*ny!?wGWAQh,0Zc1RZ[ihuDZ&1feA8yMuy~o3P\aJa7F3+e=8xSZKUMF9ol2
-::#PTGb}EivmF<xAEm3d_i<&l{V%$3~ma)jY0;8cpX};DPgA^/95.y+DQE2V0G)0u>DdKSY/@j=2Ol+2p_c8R/8Me#_x.S[(&Tyoya<&d<1Wl^yp&F|$PdGyb^6Tyi~|7X`q
-::z}Q~2wZ8L1J%s#Yp0Et]is./6@X-stdozPW*dN91y^FhZg`U4DnZRyDnc55?;9zd1/z$NA*2m,v|8/GkS8m}Ia5EK|iExm,1sc73qrTS-]Q_=3Ir$SM(7?o#s|`?MS,}h#
-::QWcAN\+TYA3-5a$$7I_lJsm|T12&sJ=LA2{c,L-m+$i1`ScPizNL!1BT6[bF*s%w4qTRto%sBz{Ne%J4VLWZuJHpdv+YVLtV-<QoVs^Z2$.1y0ICOZR5/9gL3/u$.6hi{y
-::m/B^>6O]uL)789pmwcbcxMZj4/~$x9b/J<C$0lxuvXBV/bbl\vtf$+T_j3F&_gA(F=/%Pf%hoS9G2*WD8!J0.T1AudDgVKvM>lC/a&LFBGw*]rglxvVG`Y2]9/f-U45Ja~
-::L<p\yK7)MGb\5\&j;3~S|)J]rMfo^u,N;hcIMDuyOB>*441#Qo7ZIU`ueLj?3UXcu26pa}%{<sJw>\p8jA-[h=x_n9u!,[uPf+3=Wg\fN]dXZApOCDI?,@+a%wE0XngP>s
-::-Qvzmiv)V4q#@O&d\gGYCEZ=}0x5R.Awt*%M4~4~BgpsJ\tR%;vkEch>!?Jda,_)pmKm4JL`p!s%_2L67l$;VXVw^Q4f4+bK`D#i>q&h{[c#XZ~{UhX5)_sA1u`59]yXn6
-::O.G]s$@NvK[W;,u+v_*TXRrMdPT-jPm7aFT_W+BJi8i$EED*h{arRMOH?=1DS5568X6bzYEnh(jF&oe8$ay5HO;YOo3EvG[ON|5p~nwF}).R{O8,;+W17Jv%=`s6OV@QM-
-::y59(3H-fT<wvKw/DG3R1^t>A~QR^QC/F[&(MTfr8;d\*OtTfqLs8necZh+5/3AJd=3suJuVceb!g%A=cQ!Mvx7q$DKVB2^P22,lI]1(tr)2t~~t$MYR&R5EBKIdP{.b;\)
-::r/m>-Pk3h_uac1~9l}wlFh&tlB+o^+V~9OhsEiRmmwi\]zDP`4Q_+^-5p7<Pe5X8br<lRt{N<nUHHy1f#?{U<GO+~@@I\/M~*TpE5I%]ER#G.j.D,t!Ho>&l$cDbwJ*}<~
-::F!g_t0WEZNoDV5jwY%),PfN8Un@n,.b5D6_>qOf$Q>u,fU?;([7_-WG<AC(wm8eILQG&5QDD-s+o~4z--*5#`E!(@]0MVL?/b<o5g\,>,>NP..yR3;D)CZ0(|ZEVl/Jn}F
-::UkOT)uIk@I7tr{]_wyfodWbC(b66i)2wG|ilLTKd#9C0R&,gDE*j.g)gV_GcpY^EODTBL~l~L+Z0#b4{]`/,WS)5j5FJ,<MqJS&$5R\,&IMSnZ@RhV{Zcub{k%lO~7!j!v
-::Mk%nNE?x51]qtcU+Uf%Lrs!]goNd4KEY>7LQU-WH_0Z,za7vtqRO!_^[i03V5^YLU{<C.vFS[LE+67M)*AM<bxEVP7~Zf(mr#Dw)S+c5~+lyXVf6GfSsj|R*\m>|!X)bf*
-::`r*9R7i1R1w^8j<?/snOA3Ue-qf^8to-J6N)6;wbuA>m2m;F1W6Bn#vfXO}#4^((`v6P<SmvlY[B<;F^e5|`e[Jra\<uu78fFqP8[_sIn|KR4nzUp_P<h},B`+2.7CF/X/
-::N+Rj{cp)NxJYPuD/HUcY1/4PO@E(cl}NU@p*mu()=;9]s1t9M1@czWl~ve[J)V>Z3@6&[m9CbA^Ed+cw)b7W8+hqjS8CTk/P\~o)aT_oz_&5P4J%FH5BUl[`5A&GN9Md71
-::>L$uoB>OI1=oGjYU3&&)u{,sxac!Z)K2Ub{1!7g2?o^3>Y2c]|.]?28SyW#c}+h7\WTv;8Z5v\o)=;N9me(.!7ktqAX(e8s]8ez}8qt(>TeGvGP<98K;.7k\*+tcF~Q!y5
-::x@X!yo~?mU/sJ)wNn@bfq9YM+\D^n{xh#Q!!!hv0|%a$thLJ)R2wbC(=/_6f#I.k*uog;-.%}DX.I`Wm8Ta^NIe;$s!fZ{}nq1].u#4W&dK1/XIt08>kgVDAIVV8uPGA{_
-::$#[xQ5pQ096V7KR0ZLW\X@.5\E!ELd6mw%x\Is-`EX|$[Gw},^?Y%|/MNLx|XJ~2Pstn]2^)l!yohpX\bCr**t-h&/vIK5wBP%fBHBt&pNDF&^-]MQhjOw=729`$fq=J-0
-::B].Yo*&Km?_6i<V=4aSUb&aH?${X|+<J;$?3;i<8LaT7(8r4Djy[/k!oN0OzH!m5\T797v6>IN^lYl.^WXKU>ehTlVjy,ozWN8DO(&2w$EdvM)v5i&gIP!e0jjE/}&hTWK
-::`JhK6(VfK=M@<faBTJB!]=(xL0yf9X7\NVOSqf2buiIOBPjofoH??gWa]8x~E;I9N4xt8exrj=^1XXxQkaS&`&FEYRmLeuyi;CObG1uOjDvEj{0ZC<V%HTS7jm51[Y!zp,
-::,r)/T%X{RL@W}=ZrWK@Hb@t)Ea)4!i&)8+8`v_A}=F$iw#=1u;cd(7{grEq%O9j1hQtCe7%1-H*nD,Wd`.a}?X#pKyPY],cAsjv7jov?rU9Q[Ps2+Uk{U;%Tb3cg0tL7yd
-::9#)Vuaw?;=~zq1nDg!N^qBW8s|;s.O7I&Tj*@|PVI7h`K5*<CZQvCZt9PF#XPx3^e;&kUe2U71o7AJZ`.V!#S!gynT(M,t#@UUpAUAi),8%f`yA35eKav$oW^{b=2<g{Gy
-::(73/Ge5`H%SWiOSFZSf`GkckU3/6Z2T*{D+os~B5|Y]?wB}lPZ8+iZIdu8`F@(FUJWQg>%AFkedXi(8@2BMwp`qEXrHXH)4FVSc~<ACLoT#<zs&ue=SmfB+KUM5IO~0\?a
-::Y,Ikev)Rf&0)Y=(C`l9|>Q)h}G$b,w_o}qBSTrCDfFBiHzUI00{}Agr1Hu[X|wvz=zEi^\Pp+n{&ka[~L+`+K}18+ALX8K)sgmul~f%N#[@mmY].HWIyO9b?~K@IQ\e[G>
-::D]I2!lh9ZF=*R1=1GK3y9u.yM&oB8l}/&Df$8s!&yI\EvMv(+/T$=DJUMmts$b>I\)>9>K|4BXL1tQ/ng~1>l=$3yC2cScpTXucwu{QHIAE1M0QwN0;}#@8H+f-)HV.Wdf
-::!*Ejy@?iLG=u-h$bT\3}thUwPDdWOey8&B=S%}K\*LHxb;!~$CbF4LK)`^)Sz?aOzf(b34H4r*z~Ua_Mc,60}cdr.TtE]h,c}8$qtW?VCs$tp@)qz5hC-p|`kVoY{H(--X
-::@d]ct\{lVBvuA2b3ci6&+@riqNyD<9SEL8VBB^=Cw<<RTj,jBZ>K4A%xVuHT.6E%[F(lecOMTGQY;||hE@m`SD+4G]?G(g2<e&3XTDv=$H4LBn`W7ZOikk&zpof(!PSe,T
-::luv<rkNhguiPa$7|&eW/WLs#y<ajO|uvF`D&<%gq`^1Y{)4gX/vf_$=trO_^|t]xZP-;aBcM{q<^K^Pa,{]bZVQf}/{iAfWahKDuxuajbM;$<89]^_yArX6G[!LK]GCDdA
-::K8cll8wy/va9T/_sKNX*,%E`6>/ztG3XU\G-iM<+u|KeMMh]hg<[c*^K[{0UUr1z$S&<pM[`xn#tlcL}k6*^$N\raxn&~Y>2=g4wcp!^k@L^kI_<r7,D4I29^Ljv3jzxn$
-::Ag4@q1QCs[M6`^c?}?hdq25[%wvTG^&z/e0(iF\*DkG8`e]T#3L_Q^/km{F_7HGAU&+]*frOcsCRocNamM>bRV*Euc2AFwxnc_LjOBO(gp<\IfMUzQ?#8VOLo*rqUYh`F1
-::*/2&H\LeSylLi0ck+<9gM##W?Oe,(n-ctzHH-A~c}M$CxCr~#WePpWppC<&f-~=NURw\ZK@n,XZo%LCYes}(\ZhQrsuru2)bro[(lm);M5}.&8(K9tLz_cIPo2icgn|Y5&
-::)AXS@<8%B_oA]2Ue=9mH3h0Pd0HbRnGcmAr(I]R~qf|eRTj%%&&7(N?~=z1mbtHp|gk;d|oeaLAdd2axuQ>;LR`VV8PvYqU`z10D/F6E>*Fbg[n86Ns\mh&uQ)y,NMYK<D
-::|OHViOi;9|zRHu9q+Usik=q5ZG##2e%E4=n6bniORCJr`~if6Cm%l5~8y}GJp{U{*fL<v+D>@Gh]+_s3opEJ0efpid.rZ#[>-0S|jVPke*LOU,Afk!{1[<$8@E%PM7yg*P
-::lRhJAmbNe~cDGv>7>%^NY?B!u]!jeXjG2<WP=}jxR6Fpd7hTfk1d(=N!7-ngYldo>sbT?7}ngz}(`]wk9bvgLT^t`3c1+0dd;e69awr3f2@%&F$Ve|@L<7]w~4xS.hJ|EH
-::bx!>e&F\thGGWY11{ZqI|g]ibbYUHMHn^T[qM~@c\ui7L$AJnyS0*4+{U({z,LwH[`f8eub[yTgShzExq|iA\ZVP~F]%#]+>xZb[I=XyeAD!=510|E[pm1i\]*X~W4&r=u
-::u(#METhm(/9Kqr=fygK+UQ/k\x-En_^*]%!QQZd2%iDi]s#23OWwIDJ<{X[GTH<2Khu7WG|6#X\cP6=%bM8rHF;c1GWhI-rt6w#X\R*,i#iIom51vOHz?=zzdKY<.rJc[*
-::smZ|_bO0UUhOC5zM\?Ff6vy+byN~P$S8Y(`$+Tk{|,*1]1{l=hm;,ah_hp8jez7$1q!sRB]CSx5b\g]68cy=b!WAI}sb$#Pt_U)Zb-)pD&sg/unJoJ6,%kFd>KE.od;_2O
-::0pB{c+h|h(5y8zK@`pkSmU(~IlgR,QMp=d_bi&`kSMK+s4OcE5^&*1WUR|G[x]AO$mVf!H\$MR9@]%cTyG2u6KYLfm*G-Bnd2&k829xzD!OA%4*`LE+xS9Q0XR%s,0v?]n
-::Iqw1Y#Avf/SHl!>zqQH]vh{=0kLmvJ-QNpNW5~r`o1Y*l?Vj![pd4}<ifgA]!tJGE[J%-td.eTFM_T!9C(*tLu~0?wM3-ccbRfkCBQ,Bc\GSw0Mb?D/~=q0Rhx|ujJ4Sut
-::3K$NCYXw;)GI%IK@m$F&`ersLcvM?gYcEw+-fY5#fhwXPk<kgTar2/w$-utdoZ\PKVb&xj87Q-[&{~X941!jNvpf*H&m8kvH8GAb}cB{+a&u%@lu6PABoT^^zZ`j>wxjco
-::\7c(,idILL^#^SmM,PydE1aKu/+8O!-Sp1}D\Yv@.NRZm)qvyiHvE&/4o$!nMi(oL*h0I9Sj>76ZkHX|Uc{Fth{5|Ev?-M!dUc[e.n)T#kxX_buv}8wir+gAMwiP{;Yd8G
-::<z8vH(s&Cn1]ed!uv6=1Yif`izG[*k4ecs.=]Ua9\g|dXAaWFxOw|at&e7O0&Vo3+LkCydW%7=Dzg5-}Y\Z_!=Dq#e]v,D{7>ol3E3{h3t|3DO=xYU{WE]3/>^sc9${}1Y
-::m*QxbMVbm;_j\^t{N-tvJzzNO)JIpEZux8+{UUhq<RRzgR;GT&9pwvNgl@KU=pbV]is1ab#.R*G?#Fm&1+<d`mF@1|HMM$0@4UO_ES;R%[Z1]_@H*]#68LNv@_JC1Q${&L
-::dd$jXuyhp2,6^l/Y%T*c&W&}GhrRbworL~~{xz4{P%~rwdl@!6n,2e!_chuP3jBhZh_-F/(`$JCO{E_++HP#t%^G/&puY-G=8=clJOzepw{^JqneYa)6%$O*+KgYBDR#XN
-::7D~#a~MI]%^=@^]hpbATX!f?@nSk?0{p@v\));UVy(i\q^e1SRnq[*.DOG3v079r=YM~@UK-S*Lm>b)PrP`*vytFyp^psQ9$s7po?CxQ]v>knk-+{GJ*vNW}nGr0ixgeVs
-::8XU\Dq3)UIC#?l)1cdu?oto)rwR\%vhfCl?9JaSn`hJFqEG4zY*krP=mwPOE*G|;`WIO{i<.]6~+4d-*TnFRvqkOH&evEKC@~wyhlWzm`,R0_4NT08C8E/p{Y\l\cq7puQ
-::4S=\uN^n!`3lb%B^P}<PBv9l@\!jh^O;hDf]l=Oe;Pw%nX2XTi<p%07lQU1fGm];uQhz{Ym,B=_ETxz.SdI%.1U(\1A,gxA%pX(KDJt02fq$GNWdMJ{3(syC*,)cN+^UKm
-::;y7%g!^%{EiMZ*sl1M(d|0a2l8|E_wafB+nWBZ}+*~%q-pmY]4i2!rL$Rf+k^I[LOr~&`M@st~XMJ,<Jm1w2qS<K/a(_napr2\+x2LIGJ-O\(8lys`>aK^{VelCKd1#WC{
-::>f7SGiGX~Y/&bE=d?BM*I]r6iL!0TycDbl+/W?&-xHUK&Zc07~&/{o`CfggJ#uD+y1q&bdDA;I*J|HB9k9`1BXHoGCl%;0`&J{-jM$V=$+{^Ubo#zq`a3#k\Iu.|=fX&Iz
-::Wr*+um+|]0_m{.UR4E4hS{6)!MvH>`I%7i1!S!F\Y`[5T&rUB)*P(r!(w`WM/r#l}cetE8M*^KsN?V8P[@99vR^jPREqTd[i\(bb]8diif_BX8-2Zq$/l(jijL=/uP^^yz
-::MQ\#S$bx(;LY8sQSg>KoBjS(m#r^]JQF`R)Kg=c]Vp^!++@L>K3OjCiGND;=%LqK/w4]G>V[?eK$NF.S,>LDo%v>KuKt^Kt24DD4_AuAK#Xu>M$M1aNV6MuWE^fFV_MlQx
-::\i,%d1mC!b|LOibK-qI>yoBw_qfvtbH|!=E&07*\wzDkR1Y\0m%<gk-pC|O!7}4s5o^]3R/kX>1_/[K7fRRX92J70xI<]FA8R=-KY#6O/LwYYQS.-o|KYo\<^Ser+{7^ED
-::37V_g=eTOddl+(D\*m^?!Mp&l;!#ppgEU=RR0hns4QUK}O3^Vrz/;zO#=/WSm.k~uBgR###.7BQ];Hk_PPFt*iq5WJ\hv2u(K,ui*KU_#?\e5leay@~bp9bET5xkRDhL,N
-::l\gNvV&/3pj)\]<;g4IK-Rjn0Ra.,/|;bQI|0`]FL.%F].8R%T,.AHQo|l~x]tUCQjXsn;[)U+Cr|@[j>l#CEUf8iFs52Y3xo,R{`QuFe&Lc`,VP7$X/vq91EWJkCt.hPJ
-::%eR(}aA5Em-JNrZfn](yPqU2sz$}N<QO>q$}X/uavcZ@Q_E88}54/<3t+ptqL-XVf1Gp?2HvlFl0^+m-b1LF1NTp?i@75tg1f9.u~8U(SN{%&ldm~7,K&04oD@E}GvrVf!
-::Cl}E^Zk613~sayWQr6UAfL\sz_?X#I+<V}>O8ZU?&I@c@3>ez`b=6Y%v]f5q_rFZ+mSuN\jL4YzM7E^*y&>w~_*t5N(lC\#R|SrAeZZ~>X.q!p1G4$vK71F}z*ZrPQ4&jp
-::hs+o-~NHwxJ=%cc4?~`5+7%|#ZRNy4,I;)5\6~Jw/BF}~\@~hmO>UI#0}`\o&`2as4+\tEBq,/3T%0!0M\p`&RWT)B&d?>@d7gmwVi2Qy=33-PF}Eohb);qu4o~G]?~`+P
-::=pD8Ka@2]SEh)6x/8\jUT5b.}}P$,P9d@R}7qVwjb$Gpz[GX5^*[;WQQ>;auO8*62]h##&+In+<diaK=n)}X}?_0yH>TaM%X-XEzf~fm)_!-g0!$oQ9@S$D5ZN3%u*\>$Y
-::k9f?2A;2^z\,xqa1VdFdPJk4xXWJ?1.Wd]#w,hlakOZN(N(#+{k[ROb6=X5;^1lVK!T,$H0->OMm%w2MOQU(BwdO5s;O<roV9dNl]inX[X92qrwV1K+svdVt+4+#GGkv|1
-::-8O/836lb(,D;#!Bj#)D;mi~]0Y@>BJ*7;!|{o#_gOiCm9sjMP@Gw@s5Ogv,\ig_!n??Ee8PmOb}A.n.Jm!uC>,;4lY5M/?.I<a7{,MGpE|>Z7Rnq}B-oQycS.V]b}-Pi(
-::xE0=?;?Pr!T.v]h__,@5TP<GQ[9gz(R,P,e[s>F[(q$({9>}i7+sQQ(S}(HPBK=[EIdKknk|$n7+{-5lLaZ_TMss,qY/{&oGm%=Hi[`?J,%Ge{TXtQxK$}CTw@=^+qwXT}
-::>hF{uXZU,7X,@X^;Q,a){v0B*Ye);S$uDqxPzXX_8.D[
-:cleanospp:]
+    $SPPC = $TypeBuilder.CreateType()
+    $Handle = 0
+    [void]$SPPC::SLOpen([ref]$Handle)
+    $pnReturnIds = 0
+    $ppReturnIds = 0
+
+    if (!$SPPC::SLGetSLIDList($Handle, 0, [ref][Guid]"0ff1ce15-a989-479d-af46-f275c6370663", 6, [ref]$pnReturnIds, [ref]$ppReturnIds)) {
+        foreach ($i in 0..($pnReturnIds - 1)) {
+            [void]$SPPC::SLUninstallLicense($Handle, [Int64]$ppReturnIds + [Int64]16 * $i)
+        }    
+    }
+}
+
+$OSPP = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform" -ErrorAction SilentlyContinue).Path
+if ($OSPP) {
+    Write-Output "Found Office Software Protection installed, cleaning"
+    UninstallLicenses($OSPP + "osppc.dll")
+}
+UninstallLicenses("sppc.dll")
+:cleanlicense:
 
 :+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -6430,7 +6550,9 @@ wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "Com
 
 if %_cwmi% EQU 0 (
 echo:
-echo Error: wmic.exe is not responding in the system.
+echo Error: WMI is not responding in the system.
+echo:
+echo In MAS, Goto Troubleshoot and run Fix WMI option.
 echo:
 echo Press any key to go back...
 pause >nul
@@ -6886,11 +7008,9 @@ PrintLicensesInformation -Mode "Device"
 @setlocal DisableDelayedExpansion
 @echo off
 
-::========================================================================================================================================
-
 cls
 color 07
-title  Activation Troubleshoot
+title  Troubleshoot
 
 set _elev=
 if /i "%~1"=="-el" set _elev=1
@@ -6946,9 +7066,11 @@ setlocal EnableDelayedExpansion
 
 cls
 color 07
-title  Activation Troubleshoot
+title  Troubleshoot
 mode con cols=77 lines=30
 
+echo:
+echo:
 echo:
 echo:
 echo:       _______________________________________________________________
@@ -6958,35 +7080,23 @@ echo:             ___________________________________________________
 echo:                                                                      
 echo:             [2] Dism RestoreHealth
 echo:             [3] SFC Scannow
-echo:
-echo:             [4] Rebuild Licensing Tokens
-echo:             [5] Rebuild ClipSVC Licences
-echo:             [6] Clear Office vNext Licences
-echo:             ___________________________________________________
 echo:                                                                      
-echo:             [7] Rebuild WMI Repository
-echo:             [8] Fix: Issues Caused By Gaming Spoofers
-echo:             [9] Fix: Issues Caused By KB971033 In Windows 7
-echo:             [G] Fix: Office Is Not Genuine Banner
-echo:             [E] Export Event Viewer Logs
+echo:             [4] Fix WMI
+echo:             [5] Fix Licensing
+echo:             [6] Fix WPA Registry
 echo:             ___________________________________________________
 echo:
 echo:             [0] %_exitmsg%
 echo:       _______________________________________________________________
 echo:          
 call :_color2 %_White% "            " %_Green% "Enter a menu option in the Keyboard :"
-choice /C:123456789GE0 /N
+choice /C:1234560 /N
 set _erl=%errorlevel%
 
-if %_erl%==12 exit /b
-if %_erl%==11 goto:exportevtlogs
-if %_erl%==10 start https://massgrave.dev/office-license-is-not-genuine &goto at_menu
-if %_erl%==9 goto:fixwindows7
-if %_erl%==8 goto:fixspoofer
-if %_erl%==7 goto:rewmi
-if %_erl%==6 goto:clearvnext
-if %_erl%==5 goto:reclipsvc
-if %_erl%==4 goto:retokens
+if %_erl%==7 exit /b
+if %_erl%==6 start https://massgrave.dev/fix-wpa-registry.html &goto at_menu
+if %_erl%==5 goto:retokens
+if %_erl%==4 goto:fixwmi
 if %_erl%==3 goto:sfcscan
 if %_erl%==2 goto:dism_rest
 if %_erl%==1 start https://massgrave.dev/troubleshoot.html &goto at_menu
@@ -6998,7 +7108,7 @@ goto :at_menu
 
 cls
 mode 98, 30
-title  Dism /Online /Cleanup-Image /RestoreHealth
+title  Dism /English /Online /Cleanup-Image /RestoreHealth
 
 if %winbuild% LSS 9200 (
 %eline%
@@ -7008,8 +7118,9 @@ goto :at_back
 )
 
 set _int=
-for %%a in (dns.msftncsi.com) do (
-if not defined _int (for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do if not [%%#]==[] set _int=1))
+for %%a in (l.root-servers.net resolver1.opendns.com download.windowsupdate.com google.com) do if not defined _int (
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not [%%#]==[] set _int=1)
+)
 
 echo:
 if defined _int (
@@ -7045,9 +7156,9 @@ set _time=
 for /f %%a in ('%psc% "Get-Date -format HH_mm_ss"') do set _time=%%a
 echo:
 echo Applying the command,
-echo dism /online /cleanup-image /restorehealth /Logpath:"%SystemRoot%\Temp\RHealth_DISM_%_time%.txt" /loglevel:4
+echo dism /english /online /cleanup-image /restorehealth
 echo:
-dism /online /cleanup-image /restorehealth /Logpath:"%SystemRoot%\Temp\RHealth_DISM_%_time%.txt" /loglevel:4
+dism /english /online /cleanup-image /restorehealth /Logpath:"%SystemRoot%\Temp\RHealth_DISM_%_time%.txt" /loglevel:4
 
 if not exist "!desktop!\AT_Logs\" md "!desktop!\AT_Logs\" %nul%
 copy /y /b "%SystemRoot%\Temp\RHealth_DISM_%_time%.txt" "!desktop!\AT_Logs\RHealth_DISM_%_time%.txt" %nul%
@@ -7098,35 +7209,153 @@ sfc /scannow
 if not exist "!desktop!\AT_Logs\" md "!desktop!\AT_Logs\" %nul%
 
 copy /y /b "%cbs_log%" "!desktop!\AT_Logs\SFC_CBS_%_time%.txt" %nul%
-findstr /i /c:"[SR]" %cbs_log% | findstr /i /v /c:verify >"!desktop!\AT_Logs\SFC_Main_%_time%.txt"
 
 echo:
-call :_color %Gray% "CBS and main extracted logs are copied to the AT_Logs folder on the dekstop."
+call :_color %Gray% "CBS log is copied to the AT_Logs folder on the dekstop."
 goto :at_back
 
 ::========================================================================================================================================
 
-:clearvnext
+:retokens
 
 cls
-mode 98, 30
-title  Clear Office vNext License
+mode con cols=115 lines=32
+%nul% %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
+title  Fix Licensing ^(ClipSVC ^+ Office vNext ^+ SPP ^+ OSPP^)
 
 echo:
 echo %line%
-echo:    
-echo      This options will clear Office vNext ^(subscription^) license
-echo:
-echo      You need to use this option when,
-echo          - KMS option is not activating office due to existing subscription license
-echo          - KMS option activated Office but Office activation page is not showing activated
 echo:   
+echo      Notes:
+echo:
+echo       - It helps in troubleshooting activation issues.
+echo:
+echo       - This option will,
+echo            - Deactivate Windows and Office, you may need to reactivate
+echo            - Clear ClipSVC, Office vNext, SPP and OSPP licenses
+echo            - Fix SPP permissions of tokens folder and registries
+echo            - Trigger the repair option for Office.
+echo:
+call :_color2 %_White% "      - " %Red% "Apply it only when it is necessary."
+echo:
 echo %line%
 echo:
 choice /C:09 /N /M ">    [9] Continue [0] Go back : "
 if %errorlevel%==1 goto at_menu
 
+::========================================================================================================================================
+
+::  Rebuild ClipSVC Licences
+
 cls
+:cleanlicensing
+
+echo:
+echo %line%
+echo:
+call :_color %Magenta% "Rebuilding ClipSVC Licences"
+echo:
+
+if %winbuild% LSS 10240 (
+echo ClipSVC Licence rebuilding is supported only on Win 10/11 and Server equivalent.
+echo Skipping...
+goto :cleanvnext
+)
+
+%psc% "(([WMISEARCHER]'SELECT Name FROM SoftwareLicensingProduct WHERE LicenseStatus=1 AND GracePeriodRemaining=0 AND PartialProductKey IS NOT NULL').Get()).Name" 2>nul | findstr /i "Windows" 1>nul && (
+echo Windows is permanently activated.
+echo Skipping rebuilding ClipSVC licences...
+goto :cleanvnext
+)
+
+echo Stopping ClipSVC service...
+call :_stopservice ClipSVC
+timeout /t 2 %nul%
+
+echo:
+echo Applying the command to Clean ClipSVC Licences...
+echo rundll32 clipc.dll,ClipCleanUpState
+
+rundll32 clipc.dll,ClipCleanUpState
+
+if %winbuild% LEQ 10240 (
+echo [Successful]
+) else (
+if exist "%ProgramData%\Microsoft\Windows\ClipSVC\tokens.dat" (
+call :_color %Red% "[Failed]"
+) else (
+echo [Successful]
+)
+)
+
+::  Below registry key (Volatile & Protected) gets created after the ClipSVC License cleanup command, and gets automatically deleted after 
+::  system restart. It needs to be deleted to activate the system without restart.
+
+set "RegKey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState"
+set "_ident=HKU\S-1-5-19\SOFTWARE\Microsoft\IdentityCRL"
+
+reg query "%RegKey%" %nul% && %nul% call :regownstart
+reg delete "%RegKey%" /f %nul% 
+
+echo:
+echo Deleting a Volatile ^& Protected Registry Key...
+echo [%RegKey%]
+reg query "%RegKey%" %nul% && (
+call :_color %Red% "[Failed]"
+echo Restart the system, that will delete this registry key automatically.
+) || (
+echo [Successful]
+)
+
+::   Clear HWID token related registry to fix activation incase if there is any corruption
+
+echo:
+echo Deleting a IdentityCRL Registry Key...
+echo [%_ident%]
+reg delete "%_ident%" /f %nul%
+reg query "%_ident%" %nul% && (
+call :_color %Red% "[Failed]"
+) || (
+echo [Successful]
+)
+
+call :_stopservice ClipSVC
+
+::  Rebuild ClipSVC folder to fix permission issues
+
+echo:
+if %winbuild% GTR 10240 (
+echo Deleting Folder %ProgramData%\Microsoft\Windows\ClipSVC\
+rmdir /s /q "C:\ProgramData\Microsoft\Windows\ClipSvc" %nul%
+
+if exist "%ProgramData%\Microsoft\Windows\ClipSVC\" (
+call :_color %Red% "[Failed]"
+) else (
+echo [Successful]
+)
+
+echo:
+echo Rebuilding Folder %ProgramData%\Microsoft\Windows\ClipSVC\
+net start ClipSVC /y %nul%
+timeout /t 3 %nul%
+if not exist "%ProgramData%\Microsoft\Windows\ClipSVC\" timeout /t 5 %nul%
+if not exist "%ProgramData%\Microsoft\Windows\ClipSVC\" (
+call :_color %Red% "[Failed]"
+) else (
+echo [Successful]
+)
+)
+
+echo:
+echo Restarting [wlidsvc LicenseManager] services...
+for %%# in (wlidsvc LicenseManager) do (net stop %%# /y %nul% & net start %%# /y %nul%)
+
+::========================================================================================================================================
+
+::  Clear Office vNext License
+
+:cleanvnext
+
 echo:
 echo %line%
 echo:
@@ -7139,19 +7368,27 @@ setlocal EnableDelayedExpansion
 
 attrib -R "!ProgramData!\Microsoft\Office\Licenses" %nul%
 attrib -R "!_Local!\Microsoft\Office\Licenses" %nul%
-rd /s /q "!ProgramData!\Microsoft\Office\Licenses\" %nul%
-rd /s /q "!_Local!\Microsoft\Office\Licenses\" %nul%
 
+if exist "!ProgramData!\Microsoft\Office\Licenses\" (
+rd /s /q "!ProgramData!\Microsoft\Office\Licenses\" %nul%
 if exist "!ProgramData!\Microsoft\Office\Licenses\" (
 echo Failed To Delete - !ProgramData!\Microsoft\Office\Licenses\
 ) else (
 echo Deleted Folder - !ProgramData!\Microsoft\Office\Licenses\
 )
+) else (
+echo Not Found - !ProgramData!\Microsoft\Office\Licenses\
+)
 
+if exist "!_Local!\Microsoft\Office\Licenses\" (
+rd /s /q "!_Local!\Microsoft\Office\Licenses\" %nul%
 if exist "!_Local!\Microsoft\Office\Licenses\" (
 echo Failed To Delete - !_Local!\Microsoft\Office\Licenses\
 ) else (
 echo Deleted Folder - !_Local!\Microsoft\Office\Licenses\
+)
+) else (
+echo Not Found - !_Local!\Microsoft\Office\Licenses\
 )
 
 echo:
@@ -7166,44 +7403,14 @@ echo Deleted Registry - %%#
 echo Failed to Delete - %%#
 )
 ) || (
-echo Deleted Registry - %%#
+echo Not Found Registry - %%#
 )
 )
-
-goto :at_back
 
 ::========================================================================================================================================
 
-:retokens
+::  Rebuild SPP Tokens
 
-cls
-mode con cols=115 lines=32
-%nul% %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
-title  Rebuild Licensing Tokens ^(SPP ^+ OSPP)
-
-echo:
-echo %line%
-echo:   
-echo      Notes:
-echo:
-echo       - It helps in troubleshooting activation issues.
-echo:
-call :_color2 %_White% "      - " %Magenta% "This option will,"
-call :_color2 %_White% "        " %Magenta% "- Deactivate Windows and Office, you will need to reactivate"
-call :_color2 %_White% "        " %Magenta% "- Uninstall Office licenses and keys"
-call :_color2 %_White% "        " %Magenta% "- Clear SPP-OSPP data.dat, tokens.dat, cache.dat"
-call :_color2 %_White% "        " %Magenta% "- Trigger the repair option for Office"
-echo:
-call :_color2 %_White% "      - " %Red% "Apply it only when it is necessary."
-echo:
-echo %line%
-echo:
-choice /C:09 /N /M ">    [9] Continue [0] Go back : "
-if %errorlevel%==1 goto at_menu
-
-
-cls
-:cleanspptoken
 echo:
 echo %line%
 echo:
@@ -7216,6 +7423,64 @@ if not defined token (
 call :_color %Red% "tokens.dat file not found."
 ) else (
 echo tokens.dat file: [%token%]
+)
+
+if %winbuild% GEQ 14393 (
+set wpaerror=
+set /a count=0
+for /f %%a in ('reg query "HKLM\SYSTEM\WPA" 2^>nul') do set /a count+=1
+for /L %%# in (1,1,!count!) do (
+reg query "HKLM\SYSTEM\WPA\8DEC0AF1-0341-4b93-85CD-72606C2DF94C-7P-%%#" /ve /t REG_BINARY %nul% || set wpaerror=1
+)
+
+if defined wpaerror (
+echo:
+echo Checking WPA Registry Keys...
+call :_color %Red% "[Error Found] [Registry Count - !count!]"
+)
+)
+
+set tokenstore=
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore 2^>nul') do call set "tokenstore=%%b"
+
+::  Check sppsvc permissions and apply fixes
+
+if %winbuild% GEQ 10240 (
+
+echo:
+echo Checking SPP permission related issues...
+call :checkperms
+
+if defined permerror (
+
+mkdir "%tokenstore%" %nul%
+set "d=$sddl = 'O:BAG:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICIIO;GR;;;BU)(A;;FR;;;BU)(A;OICI;FA;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)';"
+set "d=!d! $AclObject = New-Object System.Security.AccessControl.DirectorySecurity;"
+set "d=!d! $AclObject.SetSecurityDescriptorSddlForm($sddl);"
+set "d=!d! Set-Acl -Path %tokenstore% -AclObject $AclObject;"
+%psc% "!d!" %nul%
+
+for %%# in (
+"HKLM:\SYSTEM\WPA_QueryValues, EnumerateSubKeys, WriteKey"
+"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform_SetValue"
+) do for /f "tokens=1,2 delims=_" %%A in (%%#) do (
+set "d=$acl = Get-Acl '%%A';"
+set "d=!d! $rule = New-Object System.Security.AccessControl.RegistryAccessRule ('NT Service\sppsvc', '%%B', 'ContainerInherit, ObjectInherit','None','Allow');"
+set "d=!d! $acl.ResetAccessRule($rule);"
+set "d=!d! $acl.SetAccessRule($rule);"
+set "d=!d! Set-Acl -Path '%%A' -AclObject $acl"
+%psc% "!d!" %nul%
+)
+
+call :checkperms
+if defined permerror (
+call :_color %Red% "[Failed To Fix]"
+) else (
+echo [Successfully Fixed]
+)
+) else (
+echo [Error Not Found]
+)
 )
 
 echo:
@@ -7248,7 +7513,7 @@ echo:
 if not defined token (
 call :_color %Red% "Failed to rebuilt tokens.dat file."
 ) else (
-call :_color %Green% "tokens.dat file was rebuilt successfully."
+echo tokens.dat file was rebuilt successfully.
 )
 
 ::========================================================================================================================================
@@ -7258,16 +7523,14 @@ call :_color %Green% "tokens.dat file was rebuilt successfully."
 echo:
 echo %line%
 echo:
-
-sc qc osppsvc %nul% || (
-echo:
-call :_color %Magenta% "OSPP based Office is not installed"
-call :_color %Magenta% "Skipping rebuilding OSPP tokens"
-goto :repairoffice
-)
-
 call :_color %Magenta% "Rebuilding OSPP Licensing Tokens"
 echo:
+
+sc qc osppsvc %nul% || (
+echo OSPP based Office is not installed
+echo Skipping rebuilding OSPP tokens...
+goto :repairoffice
+)
 
 call :scandatospp check
 
@@ -7307,7 +7570,7 @@ echo:
 if not defined token (
 call :_color %Red% "Failed to rebuilt tokens.dat file."
 ) else (
-call :_color %Green% "tokens.dat file was rebuilt successfully."
+echo tokens.dat file was rebuilt successfully.
 )
 
 ::========================================================================================================================================
@@ -7457,215 +7720,11 @@ goto :at_back
 
 ::========================================================================================================================================
 
-:reclipsvc
+:fixwmi
 
 cls
-mode 98, 30
-title  Rebuild ClipSVC Licences
-
-if %winbuild% LSS 10240 (
-%eline%
-echo Unsupported OS version Detected.
-echo This command is supported only for Windows 10/11 and their Server equivalent..
-goto :at_back
-)
-
-echo:
-echo %line%
-echo:
-echo      Notes:
-echo:
-echo       - Rebuilding ClipSVC Licences helps in troubleshooting HWID-KMS38 activation issues.
-echo:
-echo       - Do not run this option unless you are having issues in HWID-KMS38 activation.
-echo:
-echo       - System restart is recommended after applying it.
-echo:
-echo %line%
-echo:
-choice /C:09 /N /M ">    [9] Continue [0] Go back : "
-if %errorlevel%==1 goto at_menu
-
-cls
-echo:
-
-echo Stopping ClipSVC service...
-call :_stopservice ClipSVC
-timeout /t 2 %nul%
-
-echo:
-echo Applying the command to Clean ClipSVC Licences...
-echo rundll32 clipc.dll,ClipCleanUpState
-
-rundll32 clipc.dll,ClipCleanUpState
-
-if %winbuild% LEQ 10240 (
-call :_color %Green% "[Successful]"
-) else (
-if exist "%ProgramData%\Microsoft\Windows\ClipSVC\tokens.dat" (
-call :_color %Red% "[Failed]"
-) else (
-call :_color %Green% "[Successful]"
-)
-)
-
-::  Below registry key (Volatile & Protected) gets created after the ClipSVC License cleanup command, and gets automatically deleted after 
-::  system restart. It needs to be deleted to activate the system without restart.
-
-set "RegKey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState"
-set "_ident=HKU\S-1-5-19\SOFTWARE\Microsoft\IdentityCRL"
-
-reg query "%RegKey%" %nul% && %nul% call :regownstart
-reg delete "%RegKey%" /f %nul% 
-
-echo:
-echo Deleting a Volatile ^& Protected Registry Key...
-echo [%RegKey%]
-reg query "%RegKey%" %nul% && (
-call :_color %Red% "[Failed]"
-echo Restart the system, that will delete this registry key automatically.
-) || (
-call :_color %Green% "[Successful]"
-)
-
-::   Clear HWID token related registry to fix activation incase if there is any corruption
-
-echo:
-echo Deleting a IdentityCRL Registry Key...
-echo [%_ident%]
-reg delete "%_ident%" /f %nul%
-reg query "%_ident%" %nul% && (
-call :_color %Red% "[Failed]"
-) || (
-call :_color %Green% "[Successful]"
-)
-
-echo:
-echo Restarting [ClipSVC wlidsvc LicenseManager sppsvc] services...
-for %%# in (ClipSVC wlidsvc LicenseManager sppsvc) do (net stop %%# /y %nul% & net start %%# /y %nul%)
-goto :at_back
-
-::========================================================================================================================================
-
-:fixspoofer
-
-cls
-mode con cols=115 lines=32
-%nul% %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
-title  Fix: Issues Caused By Gaming Spoofers
-
-%psc% $ExecutionContext.SessionState.LanguageMode 2>nul | find /i "Full" 1>nul || (
-%eline%
-echo Powershell is not responding properly. Aborting."
-goto :at_back
-)
-
-echo:
-echo %line%
-echo:
-echo      Notes:
-echo:
-echo       - Gaming unban/spoofers/cleaners often cause Windows activation issues.
-echo:
-call :_color2 %_White% "      - " %Red% "Apply this fix ONLY if you have used these things."
-echo:
-echo       - This option will fix files and registry permissions and rebuild licensing tokens.
-echo:
-echo       - System restart is recommended after applying it.
-echo:
-echo %line%
-echo:
-choice /C:09 /N /M ">    [9] Continue [0] Go back : "
-if %errorlevel%==1 goto at_menu
-
-cls
-echo:
-echo Fixing registry and files permissions...
-call :fixpermissions %nul%
-goto :cleanspptoken
-
-:fixpermissions
-
-::  Thanks to skidaim for the fix
-
-takeown /F %windir%\System32\sppsvc.exe
-icacls %windir%\System32 /grant administrators:F /T
-icacls %windir%\System32\spp /grant administrators:F /T
-
-::  I know it's bad but people have messed up system32 permissions, that's why I don't recommend to run this unless users have messed up systems
-
-%psc% $acl = Get-Acl 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform'; $rule = New-Object System.Security.AccessControl.RegistryAccessRule ('NT Service\sppsvc','FullControl','ContainerInherit, ObjectInherit','None','Allow'); $acl.SetAccessRule($rule); Set-Acl -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform' -AclObject $acl
-%psc% $acl = Get-Acl 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SPP'; $rule = New-Object System.Security.AccessControl.RegistryAccessRule ('NT Service\sppsvc','FullControl','ContainerInherit, ObjectInherit','None','Allow'); $acl.SetAccessRule($rule); Set-Acl -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SPP' -AclObject $acl
-%psc% $acl = Get-Acl 'HKLM:\SYSTEM\CurrentControlSet\Services\SPPSVC'; $rule = New-Object System.Security.AccessControl.RegistryAccessRule ('NT Service\sppsvc','FullControl','ContainerInherit, ObjectInherit','None','Allow'); $acl.SetAccessRule($rule); Set-Acl -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\SPPSVC' -AclObject $acl
-%psc% $acl = Get-Acl 'HKLM:\SYSTEM\WPA'; $rule = New-Object System.Security.AccessControl.RegistryAccessRule ('NT Service\sppsvc','FullControl','ContainerInherit, ObjectInherit','None','Allow'); $acl.SetAccessRule($rule); Set-Acl -Path 'HKLM:\SYSTEM\WPA' -AclObject $acl
-%psc% $acl = Get-Acl '%windir%\System32'; $rule = New-Object System.Security.AccessControl.FileSystemAccessRule ('NT Service\sppsvc','FullControl','ContainerInherit, ObjectInherit','None','Allow'); $acl.SetAccessRule($rule); Set-Acl -Path '%windir%\System32' -AclObject $acl
-%psc% $acl = Get-Acl '%windir%\System32\spp'; $rule = New-Object System.Security.AccessControl.FileSystemAccessRule ('NT Service\sppsvc','FullControl','ContainerInherit, ObjectInherit','None','Allow'); $acl.SetAccessRule($rule); Set-Acl -Path '%windir%\System32\spp' -AclObject $acl
-exit /b
-
-::========================================================================================================================================
-
-:fixwindows7
-
-cls
-mode 98, 30
-title  Fix: Issues Caused By KB971033 In Windows 7
-
-if %winbuild% GEQ 9200 (
-%eline%
-echo Unsupported OS version Detected.
-echo This option is supported only for Windows 7 and it's Server equivalent.
-goto :at_back
-)
-
-echo:
-echo %line%
-echo:
-echo      Notes:
-echo:
-echo       - This option fixes issues caused by Update KB971033 in Windows 7.
-echo         https://support.microsoft.com/en-us/help/4487266
-echo:
-echo %line%
-echo:
-choice /C:01 /N /M ">    [1] Continue [0] Go back : "
-if %errorlevel%==1 goto at_menu
-
-cls
-echo:
-
-echo Checking Update KB971033...
-dism /online /get-packages | find /i "Microsoft-Windows-Security-WindowsActivationTechnologies-package~31bf3856ad364e35~amd64~~7.1.7600.16395" 1>nul && (
-echo [Found]
-echo Uninstalling it...
-) || (
-echo [Not Found]
-)
-
-wusa /uninstall /quiet /norestart /kb:971033
-
-echo:
-echo Applying Fixes...
-echo:
-
-net stop sppuinotify /y
-sc config sppuinotify start= disabled
-net stop sppsvc /y
-del %windir%\system32\7B296FB0-376B-497e-B012-9C450E1B7327-5P-0.C7483456-A289-439d-8115-601632D005A0 /ah
-del %windir%\system32\7B296FB0-376B-497e-B012-9C450E1B7327-5P-1.C7483456-A289-439d-8115-601632D005A0 /ah
-del %windir%\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\tokens.dat
-del %windir%\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\cache\cache.dat
-cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
-sc config sppuinotify start= demand
-
-goto :at_back
-
-::========================================================================================================================================
-
-:rewmi
-
-cls
-mode 98, 30
-title  Rebuild WMI Repository
+mode 98, 34
+title  Fix WMI
 
 ::  https://techcommunity.microsoft.com/t5/ask-the-performance-team/wmi-repository-corruption-or-not/ba-p/375484
 
@@ -7675,183 +7734,129 @@ echo WMI rebuild is not recommended on Windows Server. Aborting...
 goto :at_back
 )
 
-echo:
-echo Initializing...
+for %%# in (wmic.exe) do @if "%%~$PATH:#"=="" (
+%eline%
+echo wmic.exe file is not found in the system. Aborting...
+goto :at_back
+)
 
-set _wmic=0
-for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" set _wmic=1
+echo:
+echo Checking WMI
 
 set error=
-if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
-if %_wmic% EQU 0 %psc% "Get-CIMInstance -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" 2>nul | find /i "computersystem" 1>nul
+wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
 if %errorlevel% NEQ 0 set error=1
 winmgmt /verifyrepository %nul%
 if %errorlevel% NEQ 0 set error=1
 
-cls
-echo:
-echo %line%
-echo:
-if defined error (
-echo      WMI Status - [Not Responding] %_wmic%
-) else (
-call :_color %_Green% "     WMI Status - [Working]"
+if not defined error (
+echo [Working]
+echo No need to apply this option. Aborting...
+goto :at_back
 )
-echo:
-echo      Notes:
-echo:
-call :_color2 %_White% "      - " %Magenta% "WMI rebuild can cause some 3rd party apps to not work until reinstall."
-echo:       
-call :_color2 %_White% "      - " %Red% "Apply this fix ONLY if WMI is not working."
-echo:
-echo %line%
-echo:
-choice /C:09 /N /M ">    [9] Continue [0] Go back : "
-if %errorlevel%==1 goto at_menu
 
-::  Below fixes are taken from https://kb.acronis.com/content/62731
+call :_color %Red% "[Not Responding]"
 
-cls
 echo:
-
 sc query Winmgmt %nul% || (
 %eline%
 echo Winmgmt service is not installed. Aborting...
 goto :at_back
 )
 
-echo Disabling Winmgmt service...
+echo Disabling Winmgmt service
 sc config Winmgmt start= disabled %nul%
 if %errorlevel% EQU 0 (
-call :_color %Green% "[Successful]"
+echo [Successful]
 ) else (
 call :_color %Red% "[Failed] Aborting..."
-goto :wmifixend
+sc config Winmgmt start= auto %nul%
+goto :at_back
 )
 
 echo:
-echo Stopping Winmgmt service...
+echo Stopping Winmgmt service
+call :_stopservice Winmgmt
 call :_stopservice Winmgmt
 call :_stopservice Winmgmt
 sc query Winmgmt | find /i "1  STOPPED" %nul% && (
-call :_color %Green% "[Successful]"
+echo [Successful]
 ) || (
-call :_color %Red% "[Failed] Aborting..."
-goto :wmifixend
+call :_color %Red% "[Failed]"
+echo:
+call :_color %Magenta% "Its recommended to select [Restart] option and then apply Fix WMI option again."
+echo %line%
+echo:
+choice /C:21 /N /M "> [1] Restart  [2] Revert Back Changes :"
+if !errorlevel!==1 (sc config Winmgmt start= auto %nul%&goto :at_back)
+echo:
+echo Restarting...
+shutdown -t 5 -r
+exit
 )
 
 echo:
-echo Deleting WMI repository...
-if exist "%windir%\System32\wbem\repository\" rmdir /s /q "%windir%\System32\wbem\repository\" %nul%
+echo Deleting WMI repository
+rmdir /s /q "%windir%\System32\wbem\repository\" %nul%
 if exist "%windir%\System32\wbem\repository\" (
 call :_color %Red% "[Failed]"
 ) else (
-call :_color %Green% "[Successful]"
+echo [Successful]
 )
 
 echo:
-echo Enabling Winmgmt service...
+echo Enabling Winmgmt service
 sc config Winmgmt start= auto %nul%
 if %errorlevel% EQU 0 (
-call :_color %Green% "[Successful]"
+echo [Successful]
 ) else (
 call :_color %Red% "[Failed]"
 )
 
+wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
+if %errorlevel% EQU 0 (
 echo:
-echo Checking WMI...
-if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
-if %_wmic% EQU 0 %psc% "Get-CIMInstance -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" 2>nul | find /i "computersystem" 1>nul
+echo Checking WMI
+call :_color %Green% "[Working]"
+goto :at_back
+)
+
+echo:
+echo Registering .dll's and Compiling .mof's, .mfl's
+call :registerobj %nul%
+
+echo:
+echo Checking WMI
+wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
 if %errorlevel% NEQ 0 (
 call :_color %Red% "[Not Responding]"
+echo:
+echo Run [Dism RestoreHealth] and [SFC Scannow] options and make sure there are no errors.
 ) else (
 call :_color %Green% "[Working]"
 )
 
 goto :at_back
 
-:wmifixend
+:registerobj
 
-echo:
-echo Enabling Winmgmt service...
-sc config Winmgmt start= auto %nul%
-if %errorlevel% EQU 0 (
-call :_color %Green% "[Successful]"
-) else (
-call :_color %Red% "[Failed]"
-)
+::  https://eskonr.com/2012/01/how-to-fix-wmi-issues-automatically/
 
-goto :at_back
+call :_stopservice Winmgmt
+cd /d %systemroot%\system32\wbem\
+regsvr32 /s %systemroot%\system32\scecli.dll
+regsvr32 /s %systemroot%\system32\userenv.dll
+mofcomp cimwin32.mof
+mofcomp cimwin32.mfl
+mofcomp rsop.mof
+mofcomp rsop.mfl
+for /f %%s in ('dir /b /s *.dll') do regsvr32 /s %%s
+for /f %%s in ('dir /b *.mof') do mofcomp %%s
+for /f %%s in ('dir /b *.mfl') do mofcomp %%s
 
-::========================================================================================================================================
-
-:exportevtlogs
-
-cls
-mode con cols=125 lines=32
-%nul% %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=500;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
-title  Export Event Viewer Logs
-
-set tdir=%SystemRoot%\Temp\_EventLogs
-if exist %tdir%\. rd /s /q %tdir%\ %nul%
-if exist %tdir%\ (
-%eline%
-echo Failed to delete below folder. Aborting...
-echo %tdir%\
-goto :at_back
-)
-
-md %tdir%\
-
-echo:
-echo Creating archive file of Event logs...
-
-set _time=
-for /f %%a in ('%psc% "Get-Date -format HH_mm_ss"') do set _time=%%a
-%nul% robocopy %SystemRoot%\System32\winevt\Logs\ %tdir%\
-
-::  https://stackoverflow.com/a/46268232
-
-set "ddf="%SystemRoot%\Temp\ddf""
-%nul% del /q /f %ddf%
-echo/.New Cabinet>%ddf%
-echo/.set Cabinet=ON>>%ddf%
-echo/.set CabinetFileCountThreshold=0;>>%ddf%
-echo/.set Compress=ON>>%ddf%
-echo/.set CompressionType=LZX>>%ddf%
-echo/.set CompressionLevel=7;>>%ddf%
-echo/.set CompressionMemory=21;>>%ddf%
-echo/.set FolderFileCountThreshold=0;>>%ddf%
-echo/.set FolderSizeThreshold=0;>>%ddf%
-echo/.set GenerateInf=OFF>>%ddf%
-echo/.set InfFileName=nul>>%ddf%
-echo/.set MaxCabinetSize=0;>>%ddf%
-echo/.set MaxDiskFileCount=0;>>%ddf%
-echo/.set MaxDiskSize=0;>>%ddf%
-echo/.set MaxErrors=1;>>%ddf%
-echo/.set RptFileName=nul>>%ddf%
-echo/.set UniqueFiles=ON>>%ddf%
-pushd "%tdir%\"
-for /f "tokens=* delims=" %%D in ('dir /a:-D/b/s "%tdir%\"') do (
- echo/"%%~fD"  /inf=no;>>%ddf%
-)
-makecab /F %ddf% /D DiskDirectory1="" /D CabinetNameTemplate=%tdir%\Logs.cab
-del /q /f %ddf%
-popd
-
-if not exist "!desktop!\AT_Logs\" md "!desktop!\AT_Logs\" %nul%
-copy /y /b "%tdir%\Logs.cab" "!desktop!\AT_Logs\EventLogs_%_time%.cab" %nul%
-if exist %tdir%\. rd /s /q %tdir%\ %nul%
-
-echo:
-if exist "!desktop!\AT_Logs\EventLogs_%_time%.cab" (
-call :_color %Green% "[Successful]"
-echo EventLogs_%_time%.cab created inside AT_Logs folder on the dekstop.
-) else (
-call :_color %Red% "[Failed]"
-)
-
-goto :at_back
+winmgmt /salvagerepository
+winmgmt /resetrepository
+exit /b
 
 ::========================================================================================================================================
 
@@ -7888,6 +7893,23 @@ exit /b
 for %%# in (%1) do (
 sc query %%# | find /i "RUNNING" %nul% || net start %%# /y %nul%
 sc query %%# | find /i "RUNNING" %nul% || sc start %%# %nul%
+)
+exit /b
+
+::========================================================================================================================================
+
+:checkperms
+
+set permerror=
+if not exist "%tokenstore%\" set permerror=1
+
+for %%# in (
+"%tokenstore%"
+"HKLM:\SYSTEM\WPA"
+"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
+) do if not defined permerror (
+%psc% "$acl = Get-Acl '%%#'; if ($acl.Access.Where{ $_.IdentityReference -eq 'NT SERVICE\sppsvc' -and $_.AccessControlType -eq 'Deny' -or $acl.Access.IdentityReference -notcontains 'NT SERVICE\sppsvc'}) {Exit 2}" %nul%
+if !errorlevel!==2 set permerror=1
 )
 exit /b
 
@@ -7944,35 +7966,19 @@ exit /b
 
 :regownstart
 
-setlocal
-set "TMP=%SystemRoot%\Temp"
-set "TEMP=%SystemRoot%\Temp"
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regown\:.*';iex ($f[1]);"
-endlocal
 exit /b
 
 ::  Below code takes ownership of a volatile registry key and deletes it
 ::  HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState
 
-::  Thanks to Remko Weijnen for the code and thanks to abbodi1406 for the help
-::  remkoweijnen.nl/blog/2012/01/16/take-ownership-of-a-registry-key-in-powershell/
-
 :regown:
-$definition = @"
-using System;
-using System.Runtime.InteropServices;
-namespace Win32Api
-{
-    public class NtDll
-    {
-        [DllImport("ntdll.dll", EntryPoint="RtlAdjustPrivilege")]
-        public static extern int RtlAdjustPrivilege(int Privilege, bool Enable, bool CurrentThread, ref bool Enabled);
-    }
-}
-"@
+$AssemblyBuilder = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1)
+$ModuleBuilder = $AssemblyBuilder.DefineDynamicModule(2, $False)
+$TypeBuilder = $ModuleBuilder.DefineType(0)
 
-Add-Type -TypeDefinition $definition -PassThru | Out-Null
-[Win32Api.NtDll]::RtlAdjustPrivilege(9, $true, $false, [ref]$false) | Out-Null
+$TypeBuilder.DefinePInvokeMethod('RtlAdjustPrivilege', 'ntdll.dll', 'Public, Static', 1, [int], @([int], [bool], [bool], [bool].MakeByRefType()), 1, 3) | Out-Null
+$TypeBuilder.CreateType()::RtlAdjustPrivilege(9, $true, $false, [ref]$false) | Out-Null
 
 $SID = New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')
 $IDN = ($SID.Translate([System.Security.Principal.NTAccount])).Value
@@ -8047,7 +8053,7 @@ if %~z0 GEQ 200000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
 if %winbuild% LSS 10240 (
 %eline%
 echo Unsupported OS version detected.
-echo Project is supported for Windows 10/11.
+echo This option is supported only for Windows 10/11.
 goto ins_done
 )
 
@@ -8133,13 +8139,12 @@ if %_unattended%==1 goto insertkey
 cls
 %line%
 echo:
-echo Install [%winos% ^| SKU:%osSKU% ^| %winbuild%] Key
+echo Install [%winos% ^| SKU:%osSKU% ^| %winbuild%] %channel% Key
 echo [%key%]
 %line%
 echo:
 if not "%regSKU%"=="%wmiSKU%" (
 echo Note: Difference Found In SKU Value- WMI:%wmiSKU% Reg:%regSKU%
-echo       Restart the system to resolve it
 echo:
 )
 call :dk_color %_Green% "Press [1] to Continue or [0] to %_exitmsg%"
@@ -8176,6 +8181,7 @@ echo Installing [%key%]
 echo:
 call :dk_color %Red% "[Unsuccessful] %error_code%"
 if defined actidnotfound call :dk_color %Red% "Activation ID not found for this key."
+echo Check this page for help https://massgrave.dev/troubleshoot
 )
 %line%
 
@@ -8195,12 +8201,8 @@ exit /b
 @setlocal DisableDelayedExpansion
 @echo off
 
-
 ::  To stage current edition while changing edition with CBS Upgrade Method, change 0 to 1 in below line
 set _stg=0
-
-
-::========================================================================================================================================
 
 cls
 color 07
@@ -8241,17 +8243,6 @@ set "nceline=echo: &echo ==== ERROR ==== &echo:"
 set "eline=echo: &call :dk_color %Red% "==== ERROR ====" &echo:"
 set "line=echo ___________________________________________________________________________________________"
 if %~z0 GEQ 200000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
-
-::========================================================================================================================================
-
-if %winbuild% LSS 9200 if not exist "%SystemRoot%\servicing\Packages\Microsoft-Windows-PowerShell-WTR-Package~*.mum" (
-%nceline%
-echo Updated Powershell not found.
-echo:
-echo Download Windows Management Framework 5.1 from below link and install
-echo https://aka.ms/wmf5download
-goto ced_done
-)
 
 ::========================================================================================================================================
 
@@ -8299,6 +8290,8 @@ call :dk_actids
 if not defined applist (
 %eline%
 echo Activation IDs not found. Aborting...
+echo:
+echo Check this page for help. https://massgrave.dev/troubleshoot
 goto ced_done
 )
 
@@ -8313,6 +8306,8 @@ DISM /English /Online /Get-CurrentEdition %nul%
 cmd /c exit /b !errorlevel!
 echo DISM command failed [Error Code - 0x!=ExitCode!]
 echo OS Edition was not detected properly. Aborting...
+echo:
+echo Check this page for help. https://massgrave.dev/troubleshoot
 goto ced_done
 )
 
@@ -8448,9 +8443,9 @@ echo:
 %line%
 echo:
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
-echo  [1] DISM Method
+echo  [1] DISM Method             [Recommended]
 ) else (
-echo  [1] Changepk Method
+echo  [1] Changepk Method         [Recommended]
 )
 echo:
 echo  [2] CBS Upgrade Method      [Alternative]
@@ -8484,7 +8479,6 @@ cls
 set key=
 set _chan=
 set _changepk=0
-set "keyflow=Retail Volume:MAK Volume:GVLK OEM:NONSLP OEM:DM"
 
 ::  Check if changepk.exe or slmgr.vbs is required for edition upgrade
 
@@ -8498,11 +8492,16 @@ set _changepk=1
 )
 )
 
-if %winbuild% LEQ 19045 call :changeeditiondata
+if %_changepk%==1 (
+set "keyflow=Retail Volume:MAK Volume:GVLK OEM:NONSLP OEM:DM"
+) else (
+set "keyflow=Retail OEM:NONSLP OEM:DM Volume:MAK Volume:GVLK"
+)
 
 if not defined key call :ced_targetSKU %targetedition%
 if not defined key if defined targetSKU call :ced_windowskey
 if defined key if defined pkeychannel set _chan=%pkeychannel%
+if not defined key call :changeeditiondata
 
 if not defined key (
 %eline%
@@ -8534,7 +8533,7 @@ goto ced_done
 
 cls
 if %_changepk%==1 (
-for %%a in (dns.msftncsi.com,www.microsoft.com,one.one.one.one,resolver1.opendns.com) do (
+for %%a in (l.root-servers.net resolver1.opendns.com download.windowsupdate.com google.com) do (
 for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (
 if not [%%#]==[] (
 %eline%
@@ -8552,18 +8551,15 @@ echo Changing the Current Edition [%osedition%] to [%targetedition%]
 echo:
 
 if %_changepk%==1 (
-call :dk_color %_Green% "You can safely ignore if error appears in the upgrade Window."
-call :dk_color %_Yellow% "But in that case you must manually reboot the system."
+call :dk_color %Magenta% "Notes-"
 echo:
-%psc% "$BLinfo = Get-BitLockerVolume -MountPoint "C:";$blinfo.ProtectionStatus" | find /i "On" 1>nul && (
-call :dk_color %Red% "Bitlocker / Device Encryption is On in the system."
+echo  - You can safely ignore if error appears in the upgrade Window,
+echo    but in that case you must manually reboot the system.
 echo:
-echo Either Use alternative CBS upgrade method for edition change
-echo Or     Ensure that you have it's recovery key, you may need it
-echo Or     Turn off Bitlocker / Device Encryption
+echo  - Save your work before continue, system will auto restart.
+echo  - You can connect to Internet after the system restart.
 echo:
-)
-call :dk_color %Magenta% "Important - Save your work before continue, system will auto reboot."
+echo  - You will need to activate with HWID option once the edition is changed.
 echo:
 choice /C:21 /N /M "[1] Continue [2] %_exitmsg% : "
 if !errorlevel!==1 exit /b
@@ -8699,9 +8695,13 @@ exit /b
 set k=%1
 set targetSKU=
 for %%# in (pkeyhelper.dll) do @if "%%~$PATH:#"=="" exit /b
-set d1=[DllImport(\"pkeyhelper.dll\",CharSet=CharSet.Unicode)]public static extern int GetEditionIdFromName(string e, out int s);
-set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $s=0; $null=$AP::GetEditionIdFromName('%k%', [ref]$s); $s
-for /f %%a in ('%psc% "%d2%"') do if not errorlevel 1 (set targetSKU=%%a)
+
+call :dk_reflection
+
+set d1=%ref% [void]$TypeBuilder.DefinePInvokeMethod('GetEditionIdFromName', 'pkeyhelper.dll', 'Public, Static', 1, [int], @([String], [int].MakeByRefType()), 1, 3);
+set d1=%d1% $out = 0; [void]$TypeBuilder.CreateType()::GetEditionIdFromName('%k%', [ref]$out); $out
+
+for /f %%a in ('%psc% "%d1%"') do if not errorlevel 1 (set targetSKU=%%a)
 if "%targetSKU%"=="0" set targetSKU=
 exit /b
 
@@ -8845,7 +8845,7 @@ function Write-UpgradeXml {
 }
 
 function Write-Usage {
-    Get-Help $PSCommandPath -detailed
+    Get-Help $script:MyInvocation.MyCommand.Path -detailed
 }
 
 $version = '1.0'
@@ -8860,7 +8860,7 @@ if($SetEdition -eq '' -and ($false -eq $getTargetsParam)) {
 $removalCandidates = @();
 $installCandidates = @{};
 
-$packages = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages' | select Name | where name -Match '^.*\\Microsoft-Windows-.*Edition~'
+$packages = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages' | select Name | where { $_.name -match '^.*\\Microsoft-Windows-.*Edition~' }
 foreach($package in $packages) {
     $state = (Get-ItemProperty -Path "Registry::$($package.Name)").CurrentState
     $packageName = ($package.Name -split '\\')[-1]
@@ -8871,12 +8871,12 @@ foreach($package in $packages) {
             $installCandidates[$packageEdition] = @()
         }
 
-        if($false -eq ($packageName -in $installCandidates[$packageEdition])) {
+        if($false -eq ($installCandidates[$packageEdition] -contains $packageName)) {
             $installCandidates[$packageEdition] = $installCandidates[$packageEdition] + @($packageName)
         }
     }
 
-    if((($state -eq 0x50) -or ($state -eq 0x70)) -and ($false -eq ($packageName -in $removalCandidates))) {
+    if((($state -eq 0x50) -or ($state -eq 0x70)) -and ($false -eq ($removalCandidates -contains $packageName))) {
         $removalCandidates = $removalCandidates + @($packageName)
     }
 }
@@ -8886,12 +8886,12 @@ if($getTargetsParam) {
     Exit
 }
 
-if($false -eq ($SetEdition -in $installCandidates.Keys)) {
+if($false -eq ($installCandidates.Keys -contains $SetEdition)) {
     Write-Error "The system cannot be upgraded to `"$SetEdition`""
     Exit 1
 }
 
-$xmlPath = $Env:Temp + '\CbsUpgrade.xml'
+$xmlPath = $Env:SystemRoot + '\Temp' + '\CbsUpgrade.xml'
 
 Write-UpgradeXml -RemovalCandidates $removalCandidates `
     -InstallCandidates $installCandidates[$SetEdition] `
@@ -8944,46 +8944,47 @@ Restart-Computer
 
 :changeeditiondata
 
+set h=
 for %%# in (
-44NYX-TKR9D-CCM2D-V6B8F-HQWWR__Volume:MAK_Enterprise
-D6RD9-D4N8T-RT9QX-YW6YT-FCWWJ______Retail_Starter
-3V6Q6-NQXCX-V8YXR-9QCYV-QPFCT__Volume:MAK_EnterpriseN
-3NFXW-2T27M-2BDW6-4GHRV-68XRX______Retail_StarterN
-VK7JG-NPHTM-C97JM-9MPGT-3V66T______Retail_Professional
-2B87N-8KFHP-DKV6R-Y2C8J-PKCKT______Retail_ProfessionalN
-4CPRK-NM3K3-X6XXQ-RXX86-WXCHW______Retail_CoreN
-N2434-X9D7W-8PF6X-8DV9T-8TYMD______Retail_CoreCountrySpecific
-BT79Q-G7N6G-PGBYW-4YWX6-6F4BT______Retail_CoreSingleLanguage
-YTMG3-N6DKC-DKB77-7M9GH-8HVX7______Retail_Core
-XKCNC-J26Q9-KFHD2-FKTHY-KD72Y__OEM:NONSLP_PPIPro
-YNMGQ-8RYV3-4PGQ3-C8XTP-7CFBY______Retail_Education
-84NGF-MHBT6-FXBX8-QWJK7-DRR8H______Retail_EducationN
-KCNVH-YKWX8-GJJB9-H9FDT-6F7W2__Volume:MAK_EnterpriseS_VB
-VBX36-N7DDY-M9H62-83BMJ-CPR42__Volume:MAK_EnterpriseS_RS5
-PN3KR-JXM7T-46HM4-MCQGK-7XPJQ__Volume:MAK_EnterpriseS_RS1
-DVWKN-3GCMV-Q2XF4-DDPGM-VQWWY__Volume:MAK_EnterpriseS_TH
-RQFNW-9TPM3-JQ73T-QV4VQ-DV9PT__Volume:MAK_EnterpriseSN_VB
-M33WV-NHY3C-R7FPM-BQGPT-239PG__Volume:MAK_EnterpriseSN_RS5
-2DBW3-N2PJG-MVHW3-G7TDK-9HKR4__Volume:MAK_EnterpriseSN_RS1
-NTX6B-BRYC2-K6786-F6MVQ-M7V2X__Volume:MAK_EnterpriseSN_TH
-G3KNM-CHG6T-R36X3-9QDG6-8M8K9______Retail_ProfessionalSingleLanguage
-HNGCC-Y38KG-QVK8D-WMWRK-X86VK______Retail_ProfessionalCountrySpecific
-DXG7C-N36C4-C4HTG-X4T3X-2YV77______Retail_ProfessionalWorkstation
-WYPNQ-8C467-V2W6J-TX4WX-WT2RQ______Retail_ProfessionalWorkstationN
-8PTT6-RNW4C-6V7J2-C2D3X-MHBPB______Retail_ProfessionalEducation
-GJTYN-HDMQY-FRR76-HVGC7-QPF8P______Retail_ProfessionalEducationN
-C4NTJ-CX6Q2-VXDMR-XVKGM-F9DJC__Volume:MAK_EnterpriseG
-46PN6-R9BK9-CVHKB-HWQ9V-MBJY8__Volume:MAK_EnterpriseGN
-NJCF7-PW8QT-3324D-688JX-2YV66______Retail_ServerRdsh
-V3WVW-N2PV2-CGWC3-34QGF-VMJ2C______Retail_Cloud
-NH9J3-68WK7-6FB93-4K3DF-DJ4F6______Retail_CloudN
-2HN6V-HGTM8-6C97C-RK67V-JQPFD______Retail_CloudE
-XQQYW-NFFMW-XJPBH-K8732-CKFFD______OEM:DM_IoTEnterprise
-QPM6N-7J2WJ-P88HH-P3YRH-YY74H__OEM:NONSLP_IoTEnterpriseS_VB
-KBN8V-HFGQ4-MGXVD-347P6-PDQGT_Volume:GVLK_IoTEnterpriseS_NI
-K9VKN-3BGWV-Y624W-MCRMQ-BHDCD______Retail_CloudEditionN
-KY7PN-VR6RX-83W6Y-6DDYQ-T6R4W______Retail_CloudEdition
-MPB3G-XNBR7-CC43M-FG64B-F9GBK______Retail_IoTEnterpriseSK
+44N%h%YX-TK%h%R9D-CCM2%h%D-V6%h%B8F-HQ%h%WWR__Volume:MAK_Enterprise
+D6R%h%D9-D4%h%N8T-RT9Q%h%X-YW%h%6YT-FC%h%WWJ______Retail_Starter
+3V6%h%Q6-NQ%h%XCX-V8YX%h%R-9Q%h%CYV-QP%h%FCT__Volume:MAK_EnterpriseN
+3NF%h%XW-2T%h%27M-2BDW%h%6-4G%h%HRV-68%h%XRX______Retail_StarterN
+VK7%h%JG-NP%h%HTM-C97J%h%M-9M%h%PGT-3V%h%66T______Retail_Professional
+2B8%h%7N-8K%h%FHP-DKV6%h%R-Y2%h%C8J-PK%h%CKT______Retail_ProfessionalN
+4CP%h%RK-NM%h%3K3-X6XX%h%Q-RX%h%X86-WX%h%CHW______Retail_CoreN
+N24%h%34-X9%h%D7W-8PF6%h%X-8D%h%V9T-8T%h%YMD______Retail_CoreCountrySpecific
+BT7%h%9Q-G7%h%N6G-PGBY%h%W-4Y%h%WX6-6F%h%4BT______Retail_CoreSingleLanguage
+YTM%h%G3-N6%h%DKC-DKB7%h%7-7M%h%9GH-8H%h%VX7______Retail_Core
+XKC%h%NC-J2%h%6Q9-KFHD%h%2-FK%h%THY-KD%h%72Y__OEM:NONSLP_PPIPro
+YNM%h%GQ-8R%h%YV3-4PGQ%h%3-C8%h%XTP-7C%h%FBY______Retail_Education
+84N%h%GF-MH%h%BT6-FXBX%h%8-QW%h%JK7-DR%h%R8H______Retail_EducationN
+KCN%h%VH-YK%h%WX8-GJJB%h%9-H9%h%FDT-6F%h%7W2__Volume:MAK_EnterpriseS_VB
+VBX%h%36-N7%h%DDY-M9H6%h%2-83%h%BMJ-CP%h%R42__Volume:MAK_EnterpriseS_RS5
+PN3%h%KR-JX%h%M7T-46HM%h%4-MC%h%QGK-7X%h%PJQ__Volume:MAK_EnterpriseS_RS1
+DVW%h%KN-3G%h%CMV-Q2XF%h%4-DD%h%PGM-VQ%h%WWY__Volume:MAK_EnterpriseS_TH
+RQF%h%NW-9T%h%PM3-JQ73%h%T-QV%h%4VQ-DV%h%9PT__Volume:MAK_EnterpriseSN_VB
+M33%h%WV-NH%h%Y3C-R7FP%h%M-BQ%h%GPT-23%h%9PG__Volume:MAK_EnterpriseSN_RS5
+2DB%h%W3-N2%h%PJG-MVHW%h%3-G7%h%TDK-9H%h%KR4__Volume:MAK_EnterpriseSN_RS1
+NTX%h%6B-BR%h%YC2-K678%h%6-F6%h%MVQ-M7%h%V2X__Volume:MAK_EnterpriseSN_TH
+G3K%h%NM-CH%h%G6T-R36X%h%3-9Q%h%DG6-8M%h%8K9______Retail_ProfessionalSingleLanguage
+HNG%h%CC-Y3%h%8KG-QVK8%h%D-WM%h%WRK-X8%h%6VK______Retail_ProfessionalCountrySpecific
+DXG%h%7C-N3%h%6C4-C4HT%h%G-X4%h%T3X-2Y%h%V77______Retail_ProfessionalWorkstation
+WYP%h%NQ-8C%h%467-V2W6%h%J-TX%h%4WX-WT%h%2RQ______Retail_ProfessionalWorkstationN
+8PT%h%T6-RN%h%W4C-6V7J%h%2-C2%h%D3X-MH%h%BPB______Retail_ProfessionalEducation
+GJT%h%YN-HD%h%MQY-FRR7%h%6-HV%h%GC7-QP%h%F8P______Retail_ProfessionalEducationN
+C4N%h%TJ-CX%h%6Q2-VXDM%h%R-XV%h%KGM-F9%h%DJC__Volume:MAK_EnterpriseG
+46P%h%N6-R9%h%BK9-CVHK%h%B-HW%h%Q9V-MB%h%JY8__Volume:MAK_EnterpriseGN
+NJC%h%F7-PW%h%8QT-3324%h%D-68%h%8JX-2Y%h%V66______Retail_ServerRdsh
+V3W%h%VW-N2%h%PV2-CGWC%h%3-34%h%QGF-VM%h%J2C______Retail_Cloud
+NH9%h%J3-68%h%WK7-6FB9%h%3-4K%h%3DF-DJ%h%4F6______Retail_CloudN
+2HN%h%6V-HG%h%TM8-6C97%h%C-RK%h%67V-JQ%h%PFD______Retail_CloudE
+XQQ%h%YW-NF%h%FMW-XJPB%h%H-K8%h%732-CK%h%FFD______OEM:DM_IoTEnterprise
+QPM%h%6N-7J%h%2WJ-P88H%h%H-P3%h%YRH-YY%h%74H__OEM:NONSLP_IoTEnterpriseS_VB
+KBN%h%8V-HF%h%GQ4-MGXV%h%D-34%h%7P6-PD%h%QGT_Volume:GVLK_IoTEnterpriseS_NI
+K9V%h%KN-3B%h%GWV-Y624%h%W-MC%h%RMQ-BH%h%DCD______Retail_CloudEditionN
+KY7%h%PN-VR%h%6RX-83W6%h%Y-6D%h%DYQ-T6%h%R4W______Retail_CloudEdition
+MPB%h%3G-XN%h%BR7-CC43%h%M-FG%h%64B-F9%h%GBK______Retail_IoTEnterpriseSK
 ) do (
 for /f "tokens=1-4 delims=_" %%A in ("%%#") do if /i %targetedition%==%%C (
 
@@ -9007,17 +9008,18 @@ if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*CorEdition~*.
 
 ::  Only RS3 and older version keys (GVLK/Generic Retail) are stored here, later ones are extracted from the system itself
 
+set h=
 for %%# in (
-WC2BQ-8NRM3-FDDYY-2BFGV-KHKQY_RS1_ServerStandard%Cor%
-CB7KF-BWN84-R7R2Y-793K2-8XDDG_RS1_ServerDatacenter%Cor%
-JCKRF-N37P4-C2D82-9YXRT-4M63B_RS1_ServerSolution
-QN4C6-GBJD2-FB422-GHWJK-GJG2R_RS1_ServerCloudStorage
-VP34G-4NPPG-79JTQ-864T4-R3MQX_RS1_ServerAzureCor
-9JQNQ-V8HQ6-PKB8H-GGHRY-R62H6_RS1_ServerAzureNano
-VN8D3-PR82H-DB6BJ-J9P4M-92F6J_RS1_ServerStorageStandard
-48TQX-NVK3R-D8QR3-GTHHM-8FHXC_RS1_ServerStorageWorkgroup
-2HXDN-KRXHB-GPYC7-YCKFJ-7FVDG_RS3_ServerDatacenterACor
-PTXN8-JFHJM-4WC78-MPCBR-9W4KR_RS3_ServerStandardACor
+WC2%h%BQ-8N%h%RM3-FDD%h%YY-2B%h%FGV-KHK%h%QY_RS1_ServerStandard%Cor%
+CB7%h%KF-BW%h%N84-R7R%h%2Y-79%h%3K2-8XD%h%DG_RS1_ServerDatacenter%Cor%
+JCK%h%RF-N3%h%7P4-C2D%h%82-9Y%h%XRT-4M6%h%3B_RS1_ServerSolution
+QN4%h%C6-GB%h%JD2-FB4%h%22-GH%h%WJK-GJG%h%2R_RS1_ServerCloudStorage
+VP3%h%4G-4N%h%PPG-79J%h%TQ-86%h%4T4-R3M%h%QX_RS1_ServerAzureCor
+9JQ%h%NQ-V8%h%HQ6-PKB%h%8H-GG%h%HRY-R62%h%H6_RS1_ServerAzureNano
+VN8%h%D3-PR%h%82H-DB6%h%BJ-J9%h%P4M-92F%h%6J_RS1_ServerStorageStandard
+48T%h%QX-NV%h%K3R-D8Q%h%R3-GT%h%HHM-8FH%h%XC_RS1_ServerStorageWorkgroup
+2HX%h%DN-KR%h%XHB-GPY%h%C7-YC%h%KFJ-7FV%h%DG_RS3_ServerDatacenterACor
+PTX%h%N8-JF%h%HJM-4WC%h%78-MP%h%CBR-9W4%h%KR_RS3_ServerStandardACor
 ) do (
 for /f "tokens=1-3 delims=_" %%A in ("%%#") do if /i %targetedition%==%%C (
 echo "%branch%" | find /i "%%B" 1>nul && (set "key=%%A")

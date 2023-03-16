@@ -53,7 +53,7 @@ pushd "%~dp0"
 >nul findstr /rxc:".*" "%~nx0"
 if not %errorlevel%==0 (
 echo:
-echo Error: This is not a correct file. It has LF line ending issue.
+echo Error: Script either has LF line ending issue, or it failed to read itself.
 echo:
 ping 127.0.0.1 -n 6 > nul
 popd
@@ -168,7 +168,7 @@ goto done2
 
 ::========================================================================================================================================
 
-mode 66, 26
+mode con cols=78 lines=30
 
 if exist "!desktop!\$OEM$\" (
 echo _____________________________________________________
@@ -178,12 +178,9 @@ echo _____________________________________________________
 goto done2
 )
 
-set HWID_Activation.cmd=HWID-KMS38_Activation\HWID_Activation.cmd
-set KMS38_Activation.cmd=HWID-KMS38_Activation\KMS38_Activation.cmd
-
-set Activate.cmd=Online_KMS_Activation\Activate.cmd
-set cleanosppx64.exe=Online_KMS_Activation\BIN\cleanosppx64.exe
-set cleanosppx86.exe=Online_KMS_Activation\BIN\cleanosppx86.exe
+set HWID_Activation.cmd=Activators\HWID_Activation.cmd
+set KMS38_Activation.cmd=Activators\KMS38_Activation.cmd
+set Online_KMS_Activation.cmd=Activators\Online_KMS_Activation.cmd
 
 pushd "!_work!"
 
@@ -191,9 +188,7 @@ set _nofile=
 for %%# in (
 %HWID_Activation.cmd%
 %KMS38_Activation.cmd%
-%Activate.cmd%
-%cleanosppx64.exe%
-%cleanosppx86.exe%
+%Online_KMS_Activation.cmd%
 ) do (
 if not exist "%%#" set _nofile=1
 )
@@ -213,24 +208,26 @@ goto done2
 :Menu
 
 cls
+mode con cols=78 lines=30
 echo:
 echo:
 echo:
 echo:
-echo:               Extract $OEM$ folder on the desktop           
-echo:     ________________________________________________________
-echo:                                                            
-echo:        [1] HWID
-echo:        [2] KMS38
-echo:        [3] Online KMS
-echo:    
-echo:        [4] HWID  ^(Windows^) ^+ Online KMS ^(Office^)
-echo:        [5] KMS38 ^(Windows^) ^+ Online KMS ^(Office^)
 echo:
-echo:        [0] Exit                                            
-echo:     ________________________________________________________
+echo:                     Extract $OEM$ folder on the desktop           
+echo:           ________________________________________________________
+echo:                                                                  
+echo:              [1] HWID
+echo:              [2] KMS38
+echo:              [3] Online KMS
+echo:          
+echo:              [4] HWID  ^(Windows^) ^+ Online KMS ^(Office^)
+echo:              [5] KMS38 ^(Windows^) ^+ Online KMS ^(Office^)
+echo:          
+echo:              [0] Exit                                            
+echo:           ________________________________________________________
 echo:  
-call :ex_color2 %_White% "      " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,0]"
+call :ex_color2 %_White% "             " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,0]"
 choice /C:123450 /N
 set _erl=%errorlevel%
 
@@ -307,19 +304,15 @@ cd \
 :kms
 
 cls
-md "!desktop!\$OEM$\$$\Setup\Scripts\BIN"
+md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
-copy /y /b "%Activate.cmd%" "!_dir!\Activate.cmd" %nul%
-copy /y /b "%cleanosppx64.exe%" "!_dir!\BIN\cleanosppx64.exe" %nul%
-copy /y /b "%cleanosppx86.exe%" "!_dir!\BIN\cleanosppx86.exe" %nul%
+copy /y /b "%Online_KMS_Activation.cmd%" "!_dir!\Online_KMS_Activation.cmd" %nul%
 popd
 call :export kms_setup
 
 set _error=
-if not exist "!_dir!\Activate.cmd" set _error=1
+if not exist "!_dir!\Online_KMS_Activation.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
-if not exist "!_dir!\BIN\cleanosppx64.exe" set _error=1
-if not exist "!_dir!\BIN\cleanosppx86.exe" set _error=1
 if defined _error goto errorfound
 
 set oem=Online KMS
@@ -330,7 +323,7 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0Activate.cmd" /KMS-ActAndRenewalTask /KMS-WindowsOffice
+start /b /wait cmd /c "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-WindowsOffice
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -341,21 +334,17 @@ cd \
 :hwid_kms
 
 cls
-md "!desktop!\$OEM$\$$\Setup\Scripts\BIN"
+md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
 copy /y /b "%HWID_Activation.cmd%" "!_dir!\HWID_Activation.cmd" %nul%
-copy /y /b "%Activate.cmd%" "!_dir!\Activate.cmd" %nul%
-copy /y /b "%cleanosppx64.exe%" "!_dir!\BIN\cleanosppx64.exe" %nul%
-copy /y /b "%cleanosppx86.exe%" "!_dir!\BIN\cleanosppx86.exe" %nul%
+copy /y /b "%Online_KMS_Activation.cmd%" "!_dir!\Online_KMS_Activation.cmd" %nul%
 popd
 call :export hwid_kms_setup
 
 set _error=
 if not exist "!_dir!\HWID_Activation.cmd" set _error=1
-if not exist "!_dir!\Activate.cmd" set _error=1
+if not exist "!_dir!\Online_KMS_Activation.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
-if not exist "!_dir!\BIN\cleanosppx64.exe" set _error=1
-if not exist "!_dir!\BIN\cleanosppx86.exe" set _error=1
 if defined _error goto errorfound
 
 set oem=HWID [Windows] + Online KMS [Office]
@@ -368,7 +357,7 @@ fltmc >nul || exit /b
 
 start /b /wait cmd /c "%~dp0HWID_Activation.cmd" /HWID
 
-start /b /wait cmd /c "%~dp0Activate.cmd" /KMS-ActAndRenewalTask /KMS-Office
+start /b /wait cmd /c "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -379,21 +368,17 @@ cd \
 :kms38_kms
 
 cls
-md "!desktop!\$OEM$\$$\Setup\Scripts\BIN"
+md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
 copy /y /b "%KMS38_Activation.cmd%" "!_dir!\KMS38_Activation.cmd" %nul%
-copy /y /b "%Activate.cmd%" "!_dir!\Activate.cmd" %nul%
-copy /y /b "%cleanosppx64.exe%" "!_dir!\BIN\cleanosppx64.exe" %nul%
-copy /y /b "%cleanosppx86.exe%" "!_dir!\BIN\cleanosppx86.exe" %nul%
+copy /y /b "%Online_KMS_Activation.cmd%" "!_dir!\Online_KMS_Activation.cmd" %nul%
 popd
 call :export kms38_kms_setup
 
 set _error=
 if not exist "!_dir!\KMS38_Activation.cmd" set _error=1
-if not exist "!_dir!\Activate.cmd" set _error=1
+if not exist "!_dir!\Online_KMS_Activation.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
-if not exist "!_dir!\BIN\cleanosppx64.exe" set _error=1
-if not exist "!_dir!\BIN\cleanosppx86.exe" set _error=1
 if defined _error goto errorfound
 
 set oem=KMS38 [Windows] + Online KMS [Office]
@@ -406,7 +391,7 @@ fltmc >nul || exit /b
 
 start /b /wait cmd /c "%~dp0KMS38_Activation.cmd" /KMS38
 
-start /b /wait cmd /c "%~dp0Activate.cmd" /KMS-ActAndRenewalTask /KMS-Office
+start /b /wait cmd /c "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")

@@ -14,7 +14,7 @@
 
 
 
-::  To activate, run the script with /KMS38 parameter or change 0 to 1 in below line
+::  To activate, run the script with "/KMS38" parameter or change 0 to 1 in below line
 set _act=0
 
 ::  To remove KMS38 protection, run the script with /KMS38-RemoveProtection parameter or change 0 to 1 in below line
@@ -65,7 +65,7 @@ pushd "%~dp0"
 >nul findstr /rxc:".*" "%~nx0"
 if not %errorlevel%==0 (
 echo:
-echo Error: This is not a correct file. It has LF line ending issue.
+echo Error: Script either has LF line ending issue, or it failed to read itself.
 echo:
 ping 127.0.0.1 -n 6 > nul
 popd
@@ -137,7 +137,7 @@ set "specific_kms=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectio
 if %winbuild% LSS 14393 (
 %eline%
 echo Unsupported OS version detected.
-echo Project is supported for Windows 10/11/Server, build 14393 and later.
+echo KMS38 Activation is supported for Windows 10/11/Server, build 14393 and later.
 goto dk_done
 )
 
@@ -282,11 +282,13 @@ echo [%winos% ^| %winbuild%]
 if defined _evalserv (
 echo Server Evaluation cannot be activated. Convert it to full Server OS.
 echo:
-echo Check 'Change Edition' Option in MAS.
+echo In MAS, goto Extras and use 'Change Edition' option.
 ) else (
-echo Evaluation Editions cannot be activated. Download ^& Install full version of Windows OS.
+echo Evaluation Editions cannot be activated. 
+echo You need to install full version of %winos%
 echo:
-echo https://massgrave.dev/
+echo Download it from here,
+echo https://massgrave.dev/genuine-installation-media.html
 )
 goto dk_done
 )
@@ -359,10 +361,11 @@ echo Enabling Windows Script Host            [Successful]
 
 echo Initiating Diagnostic Tests...
 
-set "_serv=ClipSVC sppsvc Winmgmt"
+set "_serv=ClipSVC sppsvc KeyIso Winmgmt"
 
 ::  Client License Service (ClipSVC)
 ::  Software Protection
+::  CNG Key Isolation
 ::  Windows Management Instrumentation
 
 call :dk_errorcheck
@@ -435,8 +438,12 @@ if !error_code! EQU 0 (
 call :dk_refresh
 echo Installing KMS Client Setup Key         [%key%] [Successful]
 ) else (
-set error=1
 call :dk_color %Red% "Installing KMS Client Setup Key         [%key%] [Failed] !error_code!"
+if not defined error (
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
+set showfix=1
+)
+set error=1
 )
 )
 
@@ -499,14 +506,15 @@ goto :k_final
 ::========================================================================================================================================
 
 ::  Generate GenuineTicket.xml and apply
-::  Most correct way to apply a ticket is by restarting ClipSVC service but we can not check the log details in this way
-::  To get the log details and also to correctly apply ticket, script will install tickets two times (service restart + clipup -v -o)
+::  In some cases clipup -v -o method fails and in some cases service restart method fails as well
+::  To maximize success rate and get better error details, script will install tickets two times (service restart + clipup -v -o)
 
 set "tdir=%ProgramData%\Microsoft\Windows\ClipSVC\GenuineTicket"
 if not exist "%tdir%\" md "%tdir%\" %nul%
 
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
+if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*" del /f /q "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*" %nul%
 
 ::  Signature value is as it is, it's not encoded
 ::  Session ID is in Base64 encoded format. It's decoded value is "OSMajorVersion=5;OSMinorVersion=1;OSPlatformId=2;PP=0;GVLKExp=2038-01-19T03:14:07Z;DownlevelGenuineState=1;"
@@ -547,6 +555,7 @@ net start ClipSVC /y %nul%
 %_xmlexist% timeout /t 2 %nul%
 
 %_xmlexist% (
+set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
 call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipSVC Service Restart, Wait...]"
 )
@@ -554,6 +563,26 @@ call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipS
 
 copy /y /b "%tdir%\GenuineTicket" "%tdir%\GenuineTicket.xml" %nul%
 clipup -v -o
+
+set rebuildinfo=
+
+%_xmlexist% (
+set error=1
+set rebuildinfo=1
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With clipup -v -o]"
+)
+
+if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*.xml" (
+set error=1
+set rebuildinfo=1
+call :dk_color %Red% "Checking Ticket Migration               [Failed]"
+)
+
+if defined applist if not defined showfix if defined rebuildinfo (
+set showfix=1
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
+)
+
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 
 ::==========================================================================================================================================
@@ -590,6 +619,7 @@ goto :k_final
 )
 
 call :dk_color %Red% "Activation Failed"
+if not defined error call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
 call :dk_color2 %Magenta% "Check this page for help" %_Yellow% " https://massgrave.dev/troubleshoot"
 
 ::========================================================================================================================================
@@ -633,7 +663,9 @@ echo Deleting copied clipup.exe file         [Successful]
 )
 )
 
-if %osSKU%==175 call :dk_color %Red% "ServerRdsh Editon does not officially support activation on non-azure platforms."
+for %%# in (175 407) do if %osSKU%==%%# (
+call :dk_color %Red% "%winos% does not support activation on non-azure platforms."
+)
 
 goto :dk_done
 
@@ -747,22 +779,6 @@ if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISE
 %chkapp% do (if defined applist (call set "applist=!applist! %%a") else (call set "applist=%%a"))
 exit /b
 
-::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
-
-:dk_product
-
-set winos=
-set d1=[DllImport(\"winbrand\",CharSet=CharSet.Unicode)]public static extern string BrandingFormatString(string s);
-set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $AP::BrandingFormatString('%%WINDOWS_LONG%%')
-for /f "delims=" %%s in ('"%psc% %d2%"') do if not errorlevel 1 (set winos=%%s)
-echo "%winos%" | find /i "Windows" 1>nul || (
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName 2^>nul') do set "winos=%%b"
-if %winbuild% GEQ 22000 (
-set winos=!winos:Windows 10=Windows 11!
-)
-)
-exit /b
-
 ::  Check wmic.exe
 
 :dk_ckeckwmic
@@ -773,6 +789,34 @@ wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "com
 )
 exit /b
 
+::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
+
+:dk_product
+
+call :dk_reflection
+
+set d1=%ref% $meth = $TypeBuilder.DefinePInvokeMethod('BrandingFormatString', 'winbrand.dll', 'Public, Static', 1, [String], @([String]), 1, 3);
+set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%')
+
+set winos=
+for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set winos=%%s)
+echo "%winos%" | find /i "Windows" 1>nul || (
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName 2^>nul') do set "winos=%%b"
+if %winbuild% GEQ 22000 (
+set winos=!winos:Windows 10=Windows 11!
+)
+)
+exit /b
+
+::  Common lines used in PowerShell reflection code
+
+:dk_reflection
+
+set ref=$AssemblyBuilder = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1);
+set ref=%ref% $ModuleBuilder = $AssemblyBuilder.DefineDynamicModule(2, $False);
+set ref=%ref% $TypeBuilder = $ModuleBuilder.DefineType(0);
+exit /b
+
 ::========================================================================================================================================
 
 ::  Get Product Key from pkeyhelper.dll for future new editions
@@ -780,10 +824,13 @@ exit /b
 
 :dk_pkey
 
+call :dk_reflection
+
+set d1=%ref% [void]$TypeBuilder.DefinePInvokeMethod('SkuGetProductKeyForEdition', 'pkeyhelper.dll', 'Public, Static', 1, [int], @([int], [String], [String].MakeByRefType(), [String].MakeByRefType()), 1, 3);
+set d1=%d1% $out = ''; [void]$TypeBuilder.CreateType()::SkuGetProductKeyForEdition(%1, %2, [ref]$out, [ref]$null); $out
+
 set pkey=
-set d1=[DllImport(\"pkeyhelper.dll\",CharSet=CharSet.Unicode)]public static extern int SkuGetProductKeyForEdition(int e, string c, out string k, out string p);
-set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $k=''; $null=$AP::SkuGetProductKeyForEdition(%1, %2, [ref]$k, [ref]$null); $k
-for /f %%a in ('%psc% "%d2%"') do if not errorlevel 1 (set pkey=%%a)
+for /f %%a in ('%psc% "%d1%"') do if not errorlevel 1 (set pkey=%%a)
 exit /b
 
 ::  Get channel name for the key which was extracted from pkeyhelper.dll
@@ -791,13 +838,15 @@ exit /b
 :dk_pkeychannel
 
 set k=%1
-set pkeychannel=
+set m=[Runtime.InteropServices.Marshal]
 set p=%SystemRoot%\System32\spp\tokens\pkeyconfig\pkeyconfig.xrm-ms
-set m=[System.Runtime.InteropServices.Marshal]
-set d1=[DllImport(\"PidGenX.dll\",CharSet=CharSet.Unicode)]public static extern int PidGenX(string k,string p,string m,int u,IntPtr i,IntPtr d,IntPtr f);
-set d2=$AP=Add-Type -Member '%d1%' -Name D1 -PassThru; $k='%k%'; $p='%p%'; $r=[byte[]]::new(0x04F8); $r[0]=0xF8; $r[1]=0x04; $f=%m%::AllocHGlobal(1272); %m%::Copy($r,0,$f,1272);
-set d3=%d2% [void]$AP::PidGenX($k,$p,\"00000\",0,0,0,$f); %m%::Copy($f,$r,0,1272); %m%::FreeHGlobal($f); [System.Text.Encoding]::Unicode.GetString($r, 1016, 128).Replace('0','')
-for /f %%a in ('%psc% "%d3%"') do if not errorlevel 1 (set pkeychannel=%%a)
+
+set d1=%ref% [void]$TypeBuilder.DefinePInvokeMethod('PidGenX', 'pidgenx.dll', 'Public, Static', 1, [int], @([String], [String], [String], [int], [IntPtr], [IntPtr], [IntPtr]), 1, 3);
+set d1=%d1% $r = [byte[]]::new(0x04F8); $r[0] = 0xF8; $r[1] = 0x04; $f = %m%::AllocHGlobal(0x04F8); %m%::Copy($r, 0, $f, 0x04F8);
+set d1=%d1% [void]$TypeBuilder.CreateType()::PidGenX('%k%', '%p%', '00000', 0, 0, 0, $f); %m%::Copy($f, $r, 0, 0x04F8); %m%::FreeHGlobal($f); [Text.Encoding]::Unicode.GetString($r, 1016, 128)
+
+set pkeychannel=
+for /f %%a in ('%psc% "%d1%"') do if not errorlevel 1 (set pkeychannel=%%a)
 exit /b
 
 :dk_gvlk
@@ -822,8 +871,11 @@ exit /b
 set serv_ste=
 for %%# in (%_serv%) do (
 set serv_dis=
-reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start %nul% || set serv_dis=1
+reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v ImagePath %nul% || set serv_dis=1
 for /f "skip=2 tokens=2*" %%a in ('reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v Start 2^>nul') do if /i %%b equ 0x4 set serv_dis=1
+sc start %%# %nul%
+if !errorlevel! EQU 1058 set serv_dis=1
+sc query %%# %nul% || set serv_dis=1
 if defined serv_dis (if defined serv_ste (set "serv_ste=!serv_ste! %%#") else (set "serv_ste=%%#"))
 )
 
@@ -837,26 +889,23 @@ for %%# in (%serv_ste%) do (
 if /i %%#==ClipSVC        (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
 if /i %%#==wlidsvc        sc config %%# start= demand %nul%
 if /i %%#==sppsvc         (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
+if /i %%#==KeyIso         sc config %%# start= demand %nul%
 if /i %%#==LicenseManager sc config %%# start= demand %nul%
 if /i %%#==Winmgmt        sc config %%# start= auto %nul%
 if /i %%#==wuauserv       sc config %%# start= demand %nul%
 if !errorlevel!==0 (
 if defined serv_csts (set "serv_csts=!serv_csts! %%#") else (set "serv_csts=%%#")
 ) else (
-set error=1
 if defined serv_cste (set "serv_cste=!serv_cste! %%#") else (set "serv_cste=%%#")
 )
 )
 )
 
-if defined serv_csts echo Enabling Disabled Services              [Successful] [%serv_csts%]
+if defined serv_csts call :dk_color %Gray% "Enabling Disabled Services              [Successful] [%serv_csts%]"
 
 if defined serv_cste (
-echo %serv_cste% | findstr /i "ClipSVC sppsvc" %nul% && (
-call :dk_color %Red% "Enabling Disabled Services              [Failed] [%serv_cste%] [Restart System]"
-) || (
+set error=1
 call :dk_color %Red% "Enabling Disabled Services              [Failed] [%serv_cste%]"
-)
 )
 
 ::========================================================================================================================================
@@ -869,22 +918,43 @@ for %%# in (%_serv%) do (
 set errorcode=
 set checkerror=
 net start %%# /y %nul%
+set errorcode=!errorlevel!
 sc query %%# | find /i "4  RUNNING" %nul% || set checkerror=1
 
 sc start %%# %nul%
-set errorcode=!errorlevel!
-if !errorcode! NEQ 1056 if !errorcode! NEQ 0 set checkerror=1
+if !errorlevel! NEQ 1056 if !errorlevel! NEQ 0 (set errorcode=!errorlevel!&set checkerror=1)
 if defined checkerror if defined serv_e (set "serv_e=!serv_e!, %%#-!errorcode!") else (set "serv_e=%%#-!errorcode!")
 )
 
 if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
+echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
+call :dk_color %Magenta% "Restart the system to fix disabled service error 1058."
+)
 )
 
 ::========================================================================================================================================
 
 ::  Various error checks
+
+if defined safeboot_option (
+set error=1
+call :dk_color2 %Red% "Checking Boot Mode                      " %Magenta% "[System is running in safe mode. Run in normal mode.]"
+)
+
+
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" 2>nul | find /i "IMAGE_STATE_COMPLETE" 1>nul || (
+set error=1
+call :dk_color2 %Red% "Checking Audit Mode                     " %Magenta% "[System is running in Audit mode. Run in normal mode.]"
+)
+
+
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WinPE" /v InstRoot %nul% && (
+set error=1
+call :dk_color2 %Red% "Checking WinPE                          " %Magenta% "[System is running in WinPE mode. Run in normal mode.]"
+)
+
 
 for %%# in (wmic.exe) do @if "%%~$PATH:#"=="" (
 call :dk_color %Gray% "Checking WMIC.exe                       [Not Found]"
@@ -897,16 +967,18 @@ call :dk_color %Red% "Checking Powershell                     [Not Responding]"
 )
 
 
+set wmifailed=
 if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
 if %_wmic% EQU 0 %psc% "Get-CIMInstance -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" 2>nul | find /i "computersystem" 1>nul
 if %errorlevel% NEQ 0 (
 set error=1
+set wmifailed=1
 call :dk_color %Red% "Checking WMI                            [Not Responding] %_wmic%"
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix WMI option."
 )
 
 
 if not "%regSKU%"=="%wmiSKU%" (
-set error=1
 call :dk_color %Red% "Checking WMI/REG SKU                    [Difference Found - WMI:%wmiSKU% Reg:%regSKU%]"
 )
 
@@ -921,6 +993,7 @@ call :dk_color %Red% "Checking DISM                           [Not Responding] %
 
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
+set error=1
 call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
 )
 
@@ -937,13 +1010,13 @@ call :dk_color %Red% "Checking slmgr /dlv                     [Not Responding] %
 
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
 set error=1
-call :dk_color %Red% "Checking Rearm                          [System Restart Is Required]"
+call :dk_color2 %Red% "Checking Rearm                          " %Magenta% "[System Restart Is Required]"
 )
 
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState" %nul% && (
 set error=1
-call :dk_color %Red% "Checking ClipSVC                        [System Restart Is Required]"
+call :dk_color2 %Red% "Checking ClipSVC                        " %Magenta% "[System Restart Is Required]"
 )
 
 
@@ -952,6 +1025,12 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPla
 call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found, Changing To 0]"
 net stop sppsvc /y %nul%
 net start sppsvc /y %nul%
+set error=1
+)
+
+
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
+call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set error=1
 )
 
@@ -970,24 +1049,69 @@ call :dk_color %Red% "Checking Activation IDs                 [Not Found]"
 )
 
 
-set token=0
-if exist %Systemdrive%\Windows\System32\spp\store\2.0\tokens.dat set token=1
-if exist %Systemdrive%\Windows\System32\spp\store_test\2.0\tokens.dat set token=1
-if %token%==0 (
+set tokenstore=
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore 2^>nul') do call set "tokenstore=%%b"
+if not exist "%tokenstore%\" (
 set error=1
-call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found]"
+call :dk_color %Red% "Checking SPP Token Folder               [Not Found] [%tokenstore%\]"
 )
+
+
+if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
+set error=1
+call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
+)
+
+
+if not exist %ProgramData%\Microsoft\Windows\ClipSVC\tokens.dat (
+set error=1
+call :dk_color %Red% "Checking ClipSVC tokens.dat             [Not Found]"
+)
+
 
 if not exist %SystemRoot%\system32\sppsvc.exe (
 set error=1
 call :dk_color %Red% "Checking sppsvc.exe File                [Not Found]"
 )
 
-if /i %error_code% EQU 0xc0000022 (
-echo "%serv_e%" | find /i "sppsvc" %nul% && (
-call :dk_color %Magenta% "Looks like you may have used a Gaming spoofer. Check Activation Troubleshoot option in MAS."
+
+::  Below checks are performed if required services are not disabled + slmgr /dlv errorlevel is not Zero + Rearm restart is not required + WMI is working fine
+
+set showfix=
+set wpaerror=
+set permerror=
+if not defined serv_cste if /i not %error_code%==0 if /i not %error_code%==0xC004D302 if not defined wmifailed (
+
+REM  This code checks for invalid registry keys in HKLM\SYSTEM\WPA. This issue may appear even on healthy systems.
+
+if %winbuild% GEQ 14393 (
+set /a count=0
+for /f %%a in ('reg query "HKLM\SYSTEM\WPA" 2^>nul') do set /a count+=1
+for /L %%# in (1,1,!count!) do (
+reg query "HKLM\SYSTEM\WPA\8DEC0AF1-0341-4b93-85CD-72606C2DF94C-7P-%%#" /ve /t REG_BINARY %nul% || set wpaerror=1
 )
+if defined wpaerror call :dk_color %Red% "Checking WPA Registry Keys              [Error Found] [Registry Count - !count!]"
 )
+
+REM  This code checks if NT SERVICE\sppsvc has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers. 
+
+if not exist "%tokenstore%\" set permerror=1
+
+for %%# in (
+"%tokenstore%"
+"HKLM:\SYSTEM\WPA"
+"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
+) do if not defined permerror (
+%psc% "$acl = Get-Acl '%%#'; if ($acl.Access.Where{ $_.IdentityReference -eq 'NT SERVICE\sppsvc' -and $_.AccessControlType -eq 'Deny' -or $acl.Access.IdentityReference -notcontains 'NT SERVICE\sppsvc'}) {Exit 2}" %nul%
+if !errorlevel!==2 set permerror=1
+)
+if defined permerror call :dk_color %Red% "Checking SPP Permissions                [Error Found]"
+
+set showfix=1
+call :dk_color %Magenta% "In MAS, Goto Troubleshoot and run Fix Licensing option."
+if not defined permerror call :dk_color %Magenta% "If activation still fails then run Fix WPA Registry option."
+)
+
 exit /b
 
 ::========================================================================================================================================
@@ -1031,56 +1155,57 @@ exit /b
 
 :kms38data
 
+set f=
 for %%# in (
-73111121-5638-40f6-bc11-f1d7b0d64300_NPPR9-FWDCX-D2C8J-H872K-2YT43___4_Enterprise
-9bd77860-9b31-4b7b-96ad-2564017315bf_VDYBN-27WPP-V4HQT-9VMD4-VMK7H___7_ServerStandard_FE
-de32eafd-aaee-4662-9444-c1befb41bde2_N69G4-B89J2-4G8F4-WWYCC-J464C___7_ServerStandard_RS5
-8c1c5410-9f39-4805-8c9d-63a07706358f_WC2BQ-8NRM3-FDDYY-2BFGV-KHKQY___7_ServerStandard_RS1
-ef6cfc9f-8c5d-44ac-9aad-de6a2ea0ae03_WX4NM-KYWYW-QJJR4-XV3QB-6VM33___8_ServerDatacenter_FE
-34e1ae55-27f8-4950-8877-7a03be5fb181_WMDGN-G9PQG-XVVXX-R3X43-63DFG___8_ServerDatacenter_RS5
-21c56779-b449-4d20-adfc-eece0e1ad74b_CB7KF-BWN84-R7R2Y-793K2-8XDDG___8_ServerDatacenter_RS1
-e272e3e2-732f-4c65-a8f0-484747d0d947_DPH2V-TTNVB-4X9Q3-TJR4H-KHJW4__27_EnterpriseN
-2de67392-b7a7-462a-b1ca-108dd189f588_W269N-WFGWX-YVC9B-4J6C9-T83GX__48_Professional
-a80b5abf-76ad-428b-b05d-a47d2dffeebf_MH37W-N47XK-V7XM9-C7227-GCQG9__49_ProfessionalN
-034d3cbb-5d4b-4245-b3f8-f84571314078_WVDHN-86M7X-466P6-VHXV7-YY726__50_ServerSolution_RS5
-2b5a1b0f-a5ab-4c54-ac2f-a6d94824a283_JCKRF-N37P4-C2D82-9YXRT-4M63B__50_ServerSolution_RS1
-7b9e1751-a8da-4f75-9560-5fadfe3d8e38_3KHY7-WNT83-DGQKR-F7HPR-844BM__98_CoreN
-a9107544-f4a0-4053-a96a-1479abdef912_PVMJN-6DFY6-9CCP6-7BKTT-D3WVR__99_CoreCountrySpecific
-cd918a57-a41b-4c82-8dce-1a538e221a83_7HNRX-D7KGG-3K4RQ-4WPJ4-YTDFH_100_CoreSingleLanguage
-58e97c99-f377-4ef1-81d5-4ad5522b5fd8_TX9XD-98N7V-6WMQ6-BX7FG-H8Q99_101_Core
-7b4433f4-b1e7-4788-895a-c45378d38253_QN4C6-GBJD2-FB422-GHWJK-GJG2R_110_ServerCloudStorage
-8de8eb62-bbe0-40ac-ac17-f75595071ea3_GRFBW-QNDC4-6QBHG-CCK3B-2PR88_120_ServerARM64_RS5
-43d9af6e-5e86-4be8-a797-d072a046896c_K9FYF-G6NCK-73M32-XMVPY-F9DRR_120_ServerARM64_RS4
-e0c42288-980c-4788-a014-c080d2e1926e_NW6C2-QMPVW-D7KKK-3GKT6-VCFB2_121_Education
-3c102355-d027-42c6-ad23-2e7ef8a02585_2WH4N-8QGBV-H22JP-CT43Q-MDWWJ_122_EducationN
-32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee_M7XTQ-FN8P6-TTKYV-9D4CC-J462D_125_EnterpriseS_RS5,VB
-2d5a5a60-3040-48bf-beb0-fcd770c20ce0_DCPHK-NFMTC-H88MJ-PFHPY-QJ4BJ_125_EnterpriseS_RS1
-7b51a46c-0c04-4e8f-9af4-8496cca90d5e_WNMTR-4C88C-JK8YV-HQ7T2-76DF9_125_EnterpriseS_TH1
-7103a333-b8c8-49cc-93ce-d37c09687f92_92NFX-8DJQP-P6BBQ-THF9C-7CG2H_126_EnterpriseSN_RS5,VB
-9f776d83-7156-45b2-8a5c-359b9c9f22a3_QFFDN-GRT3P-VKWWX-X7T3R-8B639_126_EnterpriseSN_RS1
-87b838b7-41b6-4590-8318-5797951d8529_2F77B-TNFGY-69QQF-B8YKP-D69TJ_126_EnterpriseSN_TH1
-39e69c41-42b4-4a0a-abad-8e3c10a797cc_QFND9-D3Y9C-J3KKY-6RPVP-2DPYV_145_ServerDatacenterACor_FE
-90c362e5-0da1-4bfd-b53b-b87d309ade43_6NMRW-2C8FM-D24W7-TQWMY-CWH2D_145_ServerDatacenterACor_RS5
-e49c08e7-da82-42f8-bde2-b570fbcae76c_2HXDN-KRXHB-GPYC7-YCKFJ-7FVDG_145_ServerDatacenterACor_RS3
-f5e9429c-f50b-4b98-b15c-ef92eb5cff39_67KN8-4FYJW-2487Q-MQ2J7-4C4RG_146_ServerStandardACor_FE
-73e3957c-fc0c-400d-9184-5f7b6f2eb409_N2KJX-J94YW-TQVFB-DG9YT-724CC_146_ServerStandardACor_RS5
-61c5ef22-f14f-4553-a824-c4b31e84b100_PTXN8-JFHJM-4WC78-MPCBR-9W4KR_146_ServerStandardACor_RS3
-82bbc092-bc50-4e16-8e18-b74fc486aec3_NRG8B-VKK3Q-CXVCJ-9G2XF-6Q84J_161_ProfessionalWorkstation
-4b1571d3-bafb-4b40-8087-a961be2caf65_9FNHH-K3HBT-3W4TD-6383H-6XYWF_162_ProfessionalWorkstationN
-3f1afc82-f8ac-4f6c-8005-1d233e606eee_6TP4R-GNPTD-KYYHQ-7B7DP-J447Y_164_ProfessionalEducation
-5300b18c-2e33-4dc2-8291-47ffcec746dd_YVWGF-BXNMC-HTQYQ-CPQ99-66QFC_165_ProfessionalEducationN
-8c8f0ad3-9a43-4e05-b840-93b8d1475cbc_6N379-GGTMK-23C6M-XVVTC-CKFRQ_168_ServerAzureCor_FE
-a99cc1f0-7719-4306-9645-294102fbff95_FDNH6-VW9RW-BXPJ7-4XTYG-239TB_168_ServerAzureCor_RS5
-3dbf341b-5f6c-4fa7-b936-699dce9e263f_VP34G-4NPPG-79JTQ-864T4-R3MQX_168_ServerAzureCor_RS1
-e0b2d383-d112-413f-8a80-97f373a5820c_YYVX9-NTFWV-6MDM3-9PT4T-4M68B_171_EnterpriseG
-e38454fb-41a4-4f59-a5dc-25080e354730_44RPN-FTY23-9VTTB-MP9BX-T84FV_172_EnterpriseGN
-ec868e65-fadf-4759-b23e-93fe37f2cc29_CPWHC-NT2C7-VYW78-DHDB2-PG3GK_175_ServerRdsh_RS5
-e4db50ea-bda1-4566-b047-0ca50abc6f07_7NBT4-WGBQX-MP4H7-QXFF8-YP3KX_175_ServerRdsh_RS3
-0df4f814-3f57-4b8b-9a9d-fddadcd69fac_NBTWJ-3DR69-3C4V8-C26MC-GQ9M6_183_CloudE
-59eb965c-9150-42b7-a0ec-22151b9897c5_KBN8V-HFGQ4-MGXVD-347P6-PDQGT_191_IoTEnterpriseS_NI
-d30136fc-cb4b-416e-a23d-87207abc44a9_6XN7V-PCBDC-BDBRH-8DQY7-G6R44_202_CloudEditionN
-ca7df2e3-5ea0-47b8-9ac1-b1be4d8edd69_37D7F-N49CB-WQR8W-TBJ73-FM8RX_203_CloudEdition
-19b5e0fb-4431-46bc-bac1-2f1873e4ae73_NTBV8-9K7Q8-V27C6-M2BTV-KHMXV_407_ServerTurbine
+73111121-5638-40f6-bc11-f1d7b0d64300_NPP%f%R9-FW%f%DCX-D2C%f%8J-H8%f%72K-2Y%f%T43___4_Enterprise
+9bd77860-9b31-4b7b-96ad-2564017315bf_VDY%f%BN-27%f%WPP-V4H%f%QT-9V%f%MD4-VM%f%K7H___7_ServerStandard_FE
+de32eafd-aaee-4662-9444-c1befb41bde2_N69%f%G4-B8%f%9J2-4G8%f%F4-WW%f%YCC-J4%f%64C___7_ServerStandard_RS5
+8c1c5410-9f39-4805-8c9d-63a07706358f_WC2%f%BQ-8N%f%RM3-FDD%f%YY-2B%f%FGV-KH%f%KQY___7_ServerStandard_RS1
+ef6cfc9f-8c5d-44ac-9aad-de6a2ea0ae03_WX4%f%NM-KY%f%WYW-QJJ%f%R4-XV%f%3QB-6V%f%M33___8_ServerDatacenter_FE
+34e1ae55-27f8-4950-8877-7a03be5fb181_WMD%f%GN-G9%f%PQG-XVV%f%XX-R3%f%X43-63%f%DFG___8_ServerDatacenter_RS5
+21c56779-b449-4d20-adfc-eece0e1ad74b_CB7%f%KF-BW%f%N84-R7R%f%2Y-79%f%3K2-8X%f%DDG___8_ServerDatacenter_RS1
+e272e3e2-732f-4c65-a8f0-484747d0d947_DPH%f%2V-TT%f%NVB-4X9%f%Q3-TJ%f%R4H-KH%f%JW4__27_EnterpriseN
+2de67392-b7a7-462a-b1ca-108dd189f588_W26%f%9N-WF%f%GWX-YVC%f%9B-4J%f%6C9-T8%f%3GX__48_Professional
+a80b5abf-76ad-428b-b05d-a47d2dffeebf_MH3%f%7W-N4%f%7XK-V7X%f%M9-C7%f%227-GC%f%QG9__49_ProfessionalN
+034d3cbb-5d4b-4245-b3f8-f84571314078_WVD%f%HN-86%f%M7X-466%f%P6-VH%f%XV7-YY%f%726__50_ServerSolution_RS5
+2b5a1b0f-a5ab-4c54-ac2f-a6d94824a283_JCK%f%RF-N3%f%7P4-C2D%f%82-9Y%f%XRT-4M%f%63B__50_ServerSolution_RS1
+7b9e1751-a8da-4f75-9560-5fadfe3d8e38_3KH%f%Y7-WN%f%T83-DGQ%f%KR-F7%f%HPR-84%f%4BM__98_CoreN
+a9107544-f4a0-4053-a96a-1479abdef912_PVM%f%JN-6D%f%FY6-9CC%f%P6-7B%f%KTT-D3%f%WVR__99_CoreCountrySpecific
+cd918a57-a41b-4c82-8dce-1a538e221a83_7HN%f%RX-D7%f%KGG-3K4%f%RQ-4W%f%PJ4-YT%f%DFH_100_CoreSingleLanguage
+58e97c99-f377-4ef1-81d5-4ad5522b5fd8_TX9%f%XD-98%f%N7V-6WM%f%Q6-BX%f%7FG-H8%f%Q99_101_Core
+7b4433f4-b1e7-4788-895a-c45378d38253_QN4%f%C6-GB%f%JD2-FB4%f%22-GH%f%WJK-GJ%f%G2R_110_ServerCloudStorage
+8de8eb62-bbe0-40ac-ac17-f75595071ea3_GRF%f%BW-QN%f%DC4-6QB%f%HG-CC%f%K3B-2P%f%R88_120_ServerARM64_RS5
+43d9af6e-5e86-4be8-a797-d072a046896c_K9F%f%YF-G6%f%NCK-73M%f%32-XM%f%VPY-F9%f%DRR_120_ServerARM64_RS4
+e0c42288-980c-4788-a014-c080d2e1926e_NW6%f%C2-QM%f%PVW-D7K%f%KK-3G%f%KT6-VC%f%FB2_121_Education
+3c102355-d027-42c6-ad23-2e7ef8a02585_2WH%f%4N-8Q%f%GBV-H22%f%JP-CT%f%43Q-MD%f%WWJ_122_EducationN
+32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee_M7X%f%TQ-FN%f%8P6-TTK%f%YV-9D%f%4CC-J4%f%62D_125_EnterpriseS_RS5,VB
+2d5a5a60-3040-48bf-beb0-fcd770c20ce0_DCP%f%HK-NF%f%MTC-H88%f%MJ-PF%f%HPY-QJ%f%4BJ_125_EnterpriseS_RS1
+7b51a46c-0c04-4e8f-9af4-8496cca90d5e_WNM%f%TR-4C%f%88C-JK8%f%YV-HQ%f%7T2-76%f%DF9_125_EnterpriseS_TH1
+7103a333-b8c8-49cc-93ce-d37c09687f92_92N%f%FX-8D%f%JQP-P6B%f%BQ-TH%f%F9C-7C%f%G2H_126_EnterpriseSN_RS5,VB
+9f776d83-7156-45b2-8a5c-359b9c9f22a3_QFF%f%DN-GR%f%T3P-VKW%f%WX-X7%f%T3R-8B%f%639_126_EnterpriseSN_RS1
+87b838b7-41b6-4590-8318-5797951d8529_2F7%f%7B-TN%f%FGY-69Q%f%QF-B8%f%YKP-D6%f%9TJ_126_EnterpriseSN_TH1
+39e69c41-42b4-4a0a-abad-8e3c10a797cc_QFN%f%D9-D3%f%Y9C-J3K%f%KY-6R%f%PVP-2D%f%PYV_145_ServerDatacenterACor_FE
+90c362e5-0da1-4bfd-b53b-b87d309ade43_6NM%f%RW-2C%f%8FM-D24%f%W7-TQ%f%WMY-CW%f%H2D_145_ServerDatacenterACor_RS5
+e49c08e7-da82-42f8-bde2-b570fbcae76c_2HX%f%DN-KR%f%XHB-GPY%f%C7-YC%f%KFJ-7F%f%VDG_145_ServerDatacenterACor_RS3
+f5e9429c-f50b-4b98-b15c-ef92eb5cff39_67K%f%N8-4F%f%YJW-248%f%7Q-MQ%f%2J7-4C%f%4RG_146_ServerStandardACor_FE
+73e3957c-fc0c-400d-9184-5f7b6f2eb409_N2K%f%JX-J9%f%4YW-TQV%f%FB-DG%f%9YT-72%f%4CC_146_ServerStandardACor_RS5
+61c5ef22-f14f-4553-a824-c4b31e84b100_PTX%f%N8-JF%f%HJM-4WC%f%78-MP%f%CBR-9W%f%4KR_146_ServerStandardACor_RS3
+82bbc092-bc50-4e16-8e18-b74fc486aec3_NRG%f%8B-VK%f%K3Q-CXV%f%CJ-9G%f%2XF-6Q%f%84J_161_ProfessionalWorkstation
+4b1571d3-bafb-4b40-8087-a961be2caf65_9FN%f%HH-K3%f%HBT-3W4%f%TD-63%f%83H-6X%f%YWF_162_ProfessionalWorkstationN
+3f1afc82-f8ac-4f6c-8005-1d233e606eee_6TP%f%4R-GN%f%PTD-KYY%f%HQ-7B%f%7DP-J4%f%47Y_164_ProfessionalEducation
+5300b18c-2e33-4dc2-8291-47ffcec746dd_YVW%f%GF-BX%f%NMC-HTQ%f%YQ-CP%f%Q99-66%f%QFC_165_ProfessionalEducationN
+8c8f0ad3-9a43-4e05-b840-93b8d1475cbc_6N3%f%79-GG%f%TMK-23C%f%6M-XV%f%VTC-CK%f%FRQ_168_ServerAzureCor_FE
+a99cc1f0-7719-4306-9645-294102fbff95_FDN%f%H6-VW%f%9RW-BXP%f%J7-4X%f%TYG-23%f%9TB_168_ServerAzureCor_RS5
+3dbf341b-5f6c-4fa7-b936-699dce9e263f_VP3%f%4G-4N%f%PPG-79J%f%TQ-86%f%4T4-R3%f%MQX_168_ServerAzureCor_RS1
+e0b2d383-d112-413f-8a80-97f373a5820c_YYV%f%X9-NT%f%FWV-6MD%f%M3-9P%f%T4T-4M%f%68B_171_EnterpriseG
+e38454fb-41a4-4f59-a5dc-25080e354730_44R%f%PN-FT%f%Y23-9VT%f%TB-MP%f%9BX-T8%f%4FV_172_EnterpriseGN
+ec868e65-fadf-4759-b23e-93fe37f2cc29_CPW%f%HC-NT%f%2C7-VYW%f%78-DH%f%DB2-PG%f%3GK_175_ServerRdsh_RS5
+e4db50ea-bda1-4566-b047-0ca50abc6f07_7NB%f%T4-WG%f%BQX-MP4%f%H7-QX%f%FF8-YP%f%3KX_175_ServerRdsh_RS3
+0df4f814-3f57-4b8b-9a9d-fddadcd69fac_NBT%f%WJ-3D%f%R69-3C4%f%V8-C2%f%6MC-GQ%f%9M6_183_CloudE
+59eb965c-9150-42b7-a0ec-22151b9897c5_KBN%f%8V-HF%f%GQ4-MGX%f%VD-34%f%7P6-PD%f%QGT_191_IoTEnterpriseS_NI
+d30136fc-cb4b-416e-a23d-87207abc44a9_6XN%f%7V-PC%f%BDC-BDB%f%RH-8D%f%QY7-G6%f%R44_202_CloudEditionN
+ca7df2e3-5ea0-47b8-9ac1-b1be4d8edd69_37D%f%7F-N4%f%9CB-WQR%f%8W-TB%f%J73-FM%f%8RX_203_CloudEdition
+19b5e0fb-4431-46bc-bac1-2f1873e4ae73_NTB%f%V8-9K%f%7Q8-V27%f%C6-M2%f%BTV-KH%f%MXV_407_ServerTurbine
 ) do (
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do if %osSKU%==%%C (
 if %1==getkey if not defined key echo "!applist!" | find /i "%%A" >nul && set key=%%B
@@ -1108,10 +1233,10 @@ set notfoundaltactID=
 if %_NoEditionChange%==1 exit /b
 
 for %%# in (
-188_IoTEnterprise_______________8ab9bdd1-1f67-4997-82d9-8878520837d9_73111121-5638-40f6-bc11-f1d7b0d64300_NPPR9-FWDCX-D2C8J-H872K-2YT43_Enterprise
-191_IoTEnterpriseS-2021_________ed655016-a9e8-4434-95d9-4345352c2552_32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee_M7XTQ-FN8P6-TTKYV-9D4CC-J462D_EnterpriseS-2021
-205_IoTEnterpriseSK_____________d4f9b41f-205c-405e-8e08-3d16e88e02be_59eb965c-9150-42b7-a0ec-22151b9897c5_KBN8V-HFGQ4-MGXVD-347P6-PDQGT_IoTEnterpriseS-Win11
-138_ProfessionalSingleLanguage__a48938aa-62fa-4966-9d44-9f04da3f72f2_2de67392-b7a7-462a-b1ca-108dd189f588_W269N-WFGWX-YVC9B-4J6C9-T83GX_Professional
+188_IoTEnterprise_______________8ab9bdd1-1f67-4997-82d9-8878520837d9_73111121-5638-40f6-bc11-f1d7b0d64300_NPP%f%R9-FWD%f%CX-D2%f%C8J-H872%f%K-2Y%f%T43_Enterprise
+191_IoTEnterpriseS-2021_________ed655016-a9e8-4434-95d9-4345352c2552_32d2fab3-e4a8-42c2-923b-4bf4fd13e6ee_M7X%f%TQ-FN8%f%P6-TT%f%KYV-9D4C%f%C-J4%f%62D_EnterpriseS-2021
+205_IoTEnterpriseSK_____________d4f9b41f-205c-405e-8e08-3d16e88e02be_59eb965c-9150-42b7-a0ec-22151b9897c5_KBN%f%8V-HFG%f%Q4-MG%f%XVD-347P%f%6-PD%f%QGT_IoTEnterpriseS-Win11
+138_ProfessionalSingleLanguage__a48938aa-62fa-4966-9d44-9f04da3f72f2_2de67392-b7a7-462a-b1ca-108dd189f588_W26%f%9N-WFG%f%WX-YV%f%C9B-4J6C%f%9-T8%f%3GX_Professional
 ) do (
 for /f "tokens=1-6 delims=_" %%A in ("%%#") do if %osSKU%==%%A (
 echo "!applist!" | find /i "%%C" 1>nul && (

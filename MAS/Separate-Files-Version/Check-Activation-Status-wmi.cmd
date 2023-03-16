@@ -70,7 +70,7 @@ pushd "%~dp0"
 >nul findstr /rxc:".*" "%~nx0"
 if not %errorlevel%==0 (
 echo:
-echo Error: This is not a correct file. It has LF line ending issue.
+echo Error: Script either has LF line ending issue, or it failed to read itself.
 echo:
 ping 127.0.0.1 -n 6 > nul
 popd
@@ -85,7 +85,9 @@ wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "Com
 
 if %_cwmi% EQU 0 (
 echo:
-echo Error: wmic.exe is not responding in the system.
+echo Error: WMI is not responding in the system.
+echo:
+echo In MAS, Goto Troubleshoot and run Fix WMI option.
 echo:
 echo Press any key to exit...
 pause >nul
