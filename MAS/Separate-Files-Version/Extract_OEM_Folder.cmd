@@ -7,7 +7,7 @@
 ::
 ::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
 ::
-::   Homepage: massgrave.dev
+::   Homepage: mass grave.dev
 ::      Email: windowsaddict@protonmail.com
 ::
 ::============================================================================
@@ -407,6 +407,7 @@ goto :done2
 
 :done
 
+set -=
 echo ______________________________________________________________
 echo:
 call :ex_color %Magenta% "%oem%"
@@ -414,7 +415,7 @@ call :ex_color %Green% "$OEM$ folder is successfully created on the Desktop."
 echo "%oem%" | find /i "38" %nul% && (
 echo:
 echo To KMS38 activate Server Cor/Acor editions ^(No GUI Versions^),
-echo Check this page https://massgrave.dev/oem-folder
+echo Check this page https://mass%-%grave.dev/oem-folder
 )
 echo ______________________________________________________________
 
