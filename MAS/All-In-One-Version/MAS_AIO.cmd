@@ -6,7 +6,7 @@
 
 ::============================================================================
 ::
-::   This script is a part of 'Microsoft Activation Scripts' (MAS) project.
+::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
 ::
 ::   Homepage: massgrave.dev
 ::      Email: windowsaddict@protonmail.com
@@ -66,7 +66,7 @@ popd
 
 cls
 color 07
-title  Microsoft Activation Scripts
+title  Microsoft_Activation_Scripts
 
 set _args=
 set _elev=
@@ -190,7 +190,7 @@ setlocal EnableDelayedExpansion
 
 cls
 color 07
-title  Microsoft Activation Scripts 1.8
+title  Microsoft_Activation_Scripts 1.8
 mode 76, 30
 set "mastemp=%SystemRoot%\Temp\__MAS"
 if exist "%mastemp%\.*" rmdir /s /q "%mastemp%\" %nul%
@@ -5556,7 +5556,7 @@ echo     C:\ProgramData\Activation-Renewal\Info.txt
 echo     C:\ProgramData\Activation-Renewal\Logs.txt
 echo ______________________________________________________________________________________________
 echo:
-echo   Online KMS Activation Script is a part of 'Microsoft Activation Scripts' [MAS] project.
+echo   Online KMS Activation Script is a part of 'Microsoft_Activation_Scripts' [MAS] project.
 echo:   
 echo   Homepage: massgrave.dev
 echo      Email: windowsaddict@protonmail.com
@@ -5704,7 +5704,7 @@ exit /b
 
 ::============================================================================
 ::
-::   This script is a part of 'Microsoft Activation Scripts' (MAS) project.
+::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
 ::
 ::   Homepage: massgrave.dev
 ::      Email: windowsaddict@protonmail.com
