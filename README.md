@@ -1,32 +1,31 @@
 <p align="center"><img src="https://github.com/KomashiFX/KomashiFX/blob/main/ReadMeSaves/1689385067225.png?raw=true" width="500">
 <br>
-<img alt="GitHub all releases" src="https://img.shields.io/github/downloads/massgravel/Microsoft-Activation-Scripts/total"> <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/massgravel/Microsoft-Activation-Scripts">
 
 </p>
 <h1 align="center">Microsoft  Activation  Scripts (MAS)</h1>
 
 <p align="center">A Windows and Office activator using HWID / KMS38 / Online KMS activation methods, with a focus on open-source code and fewer antivirus detections.</p><br>
 
-## <img src="https://api.iconify.design/ph:download-simple-bold.svg?color=%23cdcdcd"> Download / How to use it?
+## Download / How to use it?
 
-### Method 1 - <img src="https://api.iconify.design/vscode-icons:file-type-powershell2.svg?color=%23cdcdcd" alt="PowerShell Logo"> PowerShell (Recommended)
+### Method 1 - PowerShell (Recommended)
 
--   On Windows 8.1/10/11, right-click on the windows start menu and select PowerShell or Terminal (Not CMD).
+-   On Windows 8.1/10/11, right-click on the Windows start menu and select PowerShell or Terminal (Not CMD).
 -   Copy-paste the below code and press enter\
     `irm https://massgrave.dev/get | iex`
 -   You will see the activation options, and follow onscreen instructions.
 -   That's all.
 
-### Method 2 - <img src="https://api.iconify.design/ic:baseline-room-preferences.svg?color=%23cdcdcd" alt="Traditional"> Traditional
+### Method 2 - Traditional
 
 -   Download the file from [here](https://github.com/massgravel/Microsoft-Activation-Scripts/archive/refs/heads/master.zip)
--   Right click on the downloaded zip file and extract
+-   Right-click on the downloaded zip file and extract
 -   In the extracted folder, find the folder named `All-In-One-Version`
 -   Run the file named `MAS_AIO.cmd`
 -   You will see the activation options, and follow onscreen instructions.
 -   That's all.
 
-<img src="https://api.iconify.design/codicon:debug-coverage.svg?color=%23cdcdcd"> To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches.html)
+To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches.html)
 
 ```
 Latest Version: 1.8
