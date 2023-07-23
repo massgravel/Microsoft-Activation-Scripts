@@ -8,7 +8,7 @@
 ::
 ::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
 ::
-::   Homepage: massgrave.dev
+::   Homepage: mass grave[.]dev
 ::      Email: windowsaddict@protonmail.com
 ::
 ::============================================================================
@@ -5558,7 +5558,7 @@ echo ___________________________________________________________________________
 echo:
 echo   Online KMS Activation Script is a part of 'Microsoft_Activation_Scripts' [MAS] project.
 echo:   
-echo   Homepage: massgrave.dev
+echo   Homepage: mass grave[.]dev
 echo      Email: windowsaddict@protonmail.com
 )>"%_dest%\Info.txt"
 exit /b
@@ -5706,7 +5706,7 @@ exit /b
 ::
 ::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
 ::
-::   Homepage: massgrave.dev
+::   Homepage: mass grave[.]dev
 ::      Email: windowsaddict@protonmail.com
 ::
 ::============================================================================

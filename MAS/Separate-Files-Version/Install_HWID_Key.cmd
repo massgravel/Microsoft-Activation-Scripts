@@ -169,7 +169,7 @@ goto ins_done
 >nul fltmc || (
 if not defined _elev %nul% %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %eline%
-echo This script require administrator privileges.
+echo This script require admin privileges.
 echo To do so, right click on this script and select 'Run as administrator'.
 goto ins_done
 )
