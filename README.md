@@ -50,6 +50,6 @@ Release date: 16-Mar-2023
 
 ---
 
-Made with Love ❤️
+<p align="center">Made with Love ❤️</p>
 
 
