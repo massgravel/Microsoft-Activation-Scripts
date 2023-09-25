@@ -7,15 +7,21 @@
 ::
 ::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
 ::
-::   Homepage: massgrave.dev
+::   Homepage: mass grave[.]dev
 ::      Email: windowsaddict@protonmail.com
 ::
 ::============================================================================
 
 
 
-
 ::========================================================================================================================================
+
+::  Set Path variable, it helps if it is misconfigured in the system
+
+set "PATH=%SystemRoot%\System32;%SystemRoot%\System32\wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
+if exist "%SystemRoot%\Sysnative\reg.exe" (
+set "PATH=%SystemRoot%\Sysnative;%SystemRoot%\Sysnative\wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%PATH%"
+)
 
 :: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
 :: or with ARM64 process if it was initiated by x86/ARM32 process on ARM64 Windows
@@ -24,6 +30,10 @@ set "_cmdf=%~f0"
 for %%# in (%*) do (
 if /i "%%#"=="r1" set r1=1
 if /i "%%#"=="r2" set r2=1
+if /i "%%#"=="-qedit" (
+reg add HKCU\Console /v QuickEdit /t REG_DWORD /d "1" /f %nul1%
+rem check the code below admin elevation to understand why it's here
+)
 )
 
 if exist %SystemRoot%\Sysnative\cmd.exe if not defined r1 (
@@ -40,22 +50,34 @@ start %SystemRoot%\SysArm32\cmd.exe /c ""!_cmdf!" %* r2"
 exit /b
 )
 
-::  Set Path variable, it helps if it is misconfigured in the system
+::========================================================================================================================================
 
-set "PATH=%SystemRoot%\System32;%SystemRoot%\System32\wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
-if exist "%SystemRoot%\Sysnative\reg.exe" (
-set "PATH=%SystemRoot%\Sysnative;%SystemRoot%\Sysnative\wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%PATH%"
+set "blank="
+set "mas=mass%blank%grave.dev"
+
+::  Check if Null service is working, it's important for the batch script
+
+sc query Null | find /i "RUNNING"
+if %errorlevel% NEQ 0 (
+echo:
+echo Null service is not running, script may crash...
+echo:
+echo:
+echo Help - https://%mas%/troubleshoot.html
+echo:
+echo:
+ping 127.0.0.1 -n 10
 )
+cls
 
 ::  Check LF line ending
 
 pushd "%~dp0"
->nul findstr /rxc:".*" "%~nx0"
-if not %errorlevel%==0 (
+>nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error: Script either has LF line ending issue, or it failed to read itself.
+echo Error: Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
-ping 127.0.0.1 -n 6 > nul
+ping 127.0.0.1 -n 6 >nul
 popd
 exit /b
 )
@@ -67,21 +89,32 @@ cls
 color 07
 title  Troubleshoot
 
+set _args=
 set _elev=
-if /i "%~1"=="-el" set _elev=1
 
-set winbuild=1
+set _args=%*
+if defined _args set _args=%_args:"=%
+if defined _args (
+for %%A in (%_args%) do (
+if /i "%%A"=="-el"                    set _elev=1
+)
+)
+
+set "nul1=1>nul"
+set "nul2=2>nul"
+set "nul6=2^>nul"
 set "nul=>nul 2>&1"
+
 set psc=powershell.exe
+set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
-if %winbuild% GEQ 10586 reg query "HKCU\Console" /v ForceV2 2>nul | find /i "0x0" 1>nul && (set _NCS=0)
+if %winbuild% GEQ 10586 reg query "HKCU\Console" /v ForceV2 %nul2% | find /i "0x0" %nul1% && (set _NCS=0)
 
 call :_colorprep
 
-set cbs_log=%SystemRoot%\logs\cbs\cbs.log
 set "nceline=echo: &echo ==== ERROR ==== &echo:"
 set "eline=echo: &call :_color %Red% "==== ERROR ====" &echo:"
 set "line=_________________________________________________________________________________________________"
@@ -91,7 +124,7 @@ if %~z0 GEQ 200000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
 
 if %winbuild% LSS 7600 (
 %nceline%
-echo Unsupported OS version detected.
+echo Unsupported OS version detected [%winbuild%].
 echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalent.
 goto at_done
 )
@@ -120,7 +153,7 @@ setlocal EnableDelayedExpansion
 
 ::========================================================================================================================================
 
-echo "!_batf!" | find /i "!_ttemp!" 1>nul && (
+echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %nceline%
 echo Script is launched from the temp folder,
@@ -135,12 +168,26 @@ goto at_done
 
 ::  Elevate script as admin and pass arguments and preventing loop
 
->nul fltmc || (
-if not defined _elev %nul% %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
+%nul1% fltmc || (
+if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %nceline%
 echo This script require admin privileges.
 echo To do so, right click on this script and select 'Run as administrator'.
 goto at_done
+)
+
+::========================================================================================================================================
+
+::  This code disables QuickEdit for this cmd.exe session only without making permanent changes to the registry
+::  It is added because clicking on the script window pauses the operation and leads to the confusion that script stopped due to an error
+
+for %%# in (%_args%) do (if /i "%%#"=="-qedit" set quedit=1)
+
+reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% || if not defined quedit (
+reg add HKCU\Console /v QuickEdit /t REG_DWORD /d "0" /f %nul1%
+start cmd.exe /c ""!_batf!" %_args% -qedit"
+rem quickedit reset code is added at the starting of the script instead of here because it takes time to reflect in some cases
+exit /b
 )
 
 ::========================================================================================================================================
@@ -195,12 +242,12 @@ choice /C:1234560 /N
 set _erl=%errorlevel%
 
 if %_erl%==7 exit /b
-if %_erl%==6 start https://massgrave.dev/fix-wpa-registry.html &goto at_menu
+if %_erl%==6 start https://%mas%/fix-wpa-registry.html &goto at_menu
 if %_erl%==5 goto:retokens
 if %_erl%==4 goto:fixwmi
 if %_erl%==3 goto:sfcscan
 if %_erl%==2 goto:dism_rest
-if %_erl%==1 start https://massgrave.dev/troubleshoot.html &goto at_menu
+if %_erl%==1 start https://%mas%/troubleshoot.html &goto at_menu
 goto :at_menu
 
 ::========================================================================================================================================
@@ -248,23 +295,29 @@ if %errorlevel%==1 goto at_menu
 
 cls
 mode 110, 30
-echo:
-
 call :_stopservice TrustedInstaller
-del /s /f /q "%SystemRoot%\logs\cbs\*.*"
 
 set _time=
 for /f %%a in ('%psc% "Get-Date -format HH_mm_ss"') do set _time=%%a
 echo:
 echo Applying the command,
 echo dism /english /online /cleanup-image /restorehealth
-echo:
-dism /english /online /cleanup-image /restorehealth /Logpath:"%SystemRoot%\Temp\RHealth_DISM_%_time%.txt" /loglevel:4
+dism /english /online /cleanup-image /restorehealth
+
+call :_stopservice TrustedInstaller
 
 if not exist "!desktop!\AT_Logs\" md "!desktop!\AT_Logs\" %nul%
-copy /y /b "%SystemRoot%\Temp\RHealth_DISM_%_time%.txt" "!desktop!\AT_Logs\RHealth_DISM_%_time%.txt" %nul%
-copy /y /b "%cbs_log%" "!desktop!\AT_Logs\RHealth_CBS_%_time%.txt" %nul%
-del /f /q "%SystemRoot%\Temp\RHealth_DISM_%_time%.txt" %nul%
+
+call :compresslog cbs\CBS.log RHealth_CBS %nul%
+call :compresslog DISM\dism.log RHealth_DISM %nul%
+
+if not exist "!desktop!\AT_Logs\RHealth_CBS_%_time%.cab" (
+copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "!desktop!\AT_Logs\RHealth_CBS_%_time%.log" %nul%
+)
+
+if not exist "!desktop!\AT_Logs\RHealth_DISM_%_time%.cab" (
+copy /y /b "%SystemRoot%\logs\DISM\dism.log" "!desktop!\AT_Logs\RHealth_DISM_%_time%.log" %nul%
+)
 
 echo:
 call :_color %Gray% "CBS and DISM logs are copied to the AT_Logs folder on the dekstop."
@@ -294,22 +347,24 @@ choice /C:09 /N /M ">    [9] Continue [0] Go back : "
 if %errorlevel%==1 goto at_menu
 
 cls
-echo:
-
 call :_stopservice TrustedInstaller
-del /s /f /q "%SystemRoot%\logs\cbs\*.*"
 
 set _time=
 for /f %%a in ('%psc% "Get-Date -format HH_mm_ss"') do set _time=%%a
 echo:
 echo Applying the command,
 echo sfc /scannow
-echo:
 sfc /scannow
+
+call :_stopservice TrustedInstaller
 
 if not exist "!desktop!\AT_Logs\" md "!desktop!\AT_Logs\" %nul%
 
-copy /y /b "%cbs_log%" "!desktop!\AT_Logs\SFC_CBS_%_time%.txt" %nul%
+call :compresslog cbs\CBS.log SFC_CBS %nul%
+
+if not exist "!desktop!\AT_Logs\SFC_CBS_%_time%.cab" (
+copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "!desktop!\AT_Logs\SFC_CBS_%_time%.log" %nul%
+)
 
 echo:
 call :_color %Gray% "CBS log is copied to the AT_Logs folder on the dekstop."
@@ -321,7 +376,7 @@ goto :at_back
 
 cls
 mode con cols=115 lines=32
-%nul% %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
+%psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
 title  Fix Licensing ^(ClipSVC ^+ Office vNext ^+ SPP ^+ OSPP^)
 
 echo:
@@ -354,7 +409,7 @@ cls
 echo:
 echo %line%
 echo:
-call :_color %Magenta% "Rebuilding ClipSVC Licences"
+call :_color %Blue% "Rebuilding ClipSVC Licences"
 echo:
 
 if %winbuild% LSS 10240 (
@@ -363,7 +418,7 @@ echo Skipping...
 goto :cleanvnext
 )
 
-%psc% "(([WMISEARCHER]'SELECT Name FROM SoftwareLicensingProduct WHERE LicenseStatus=1 AND GracePeriodRemaining=0 AND PartialProductKey IS NOT NULL').Get()).Name" 2>nul | findstr /i "Windows" 1>nul && (
+%psc% "(([WMISEARCHER]'SELECT Name FROM SoftwareLicensingProduct WHERE LicenseStatus=1 AND GracePeriodRemaining=0 AND PartialProductKey IS NOT NULL').Get()).Name" %nul2% | findstr /i "Windows" %nul1% && (
 echo Windows is permanently activated.
 echo Skipping rebuilding ClipSVC licences...
 goto :cleanvnext
@@ -460,7 +515,7 @@ for %%# in (wlidsvc LicenseManager) do (net stop %%# /y %nul% & net start %%# /y
 echo:
 echo %line%
 echo:
-call :_color %Magenta% "Clearing Office vNext License"
+call :_color %Blue% "Clearing Office vNext License"
 echo:
 
 setlocal DisableDelayedExpansion
@@ -515,7 +570,7 @@ echo Not Found Registry - %%#
 echo:
 echo %line%
 echo:
-call :_color %Magenta% "Rebuilding SPP Licensing Tokens"
+call :_color %Blue% "Rebuilding SPP Licensing Tokens"
 echo:
 
 call :scandat check
@@ -529,7 +584,7 @@ echo tokens.dat file: [%token%]
 if %winbuild% GEQ 14393 (
 set wpaerror=
 set /a count=0
-for /f %%a in ('reg query "HKLM\SYSTEM\WPA" 2^>nul') do set /a count+=1
+for /f %%a in ('reg query "HKLM\SYSTEM\WPA" %nul6%') do set /a count+=1
 for /L %%# in (1,1,!count!) do (
 reg query "HKLM\SYSTEM\WPA\8DEC0AF1-0341-4b93-85CD-72606C2DF94C-7P-%%#" /ve /t REG_BINARY %nul% || set wpaerror=1
 )
@@ -542,7 +597,7 @@ call :_color %Red% "[Error Found] [Registry Count - !count!]"
 )
 
 set tokenstore=
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore 2^>nul') do call set "tokenstore=%%b"
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore %nul6%') do call set "tokenstore=%%b"
 
 ::  Check sppsvc permissions and apply fixes
 
@@ -580,7 +635,7 @@ call :_color %Red% "[Failed To Fix]"
 echo [Successfully Fixed]
 )
 ) else (
-echo [Error Not Found]
+echo [No Error Found]
 )
 )
 
@@ -624,7 +679,7 @@ echo tokens.dat file was rebuilt successfully.
 echo:
 echo %line%
 echo:
-call :_color %Magenta% "Rebuilding OSPP Licensing Tokens"
+call :_color %Blue% "Rebuilding OSPP Licensing Tokens"
 echo:
 
 sc qc osppsvc %nul% || (
@@ -681,7 +736,7 @@ echo tokens.dat file was rebuilt successfully.
 echo:
 echo %line%
 echo:
-call :_color %Magenta% "Repairing Office Licenses"
+call :_color %Blue% "Repairing Office Licenses"
 echo:
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
@@ -723,10 +778,7 @@ set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
 
 set uwp16=
 if %winbuild% GEQ 10240 (
-dir /b "%ProgramFiles%\WindowsApps\Microsoft.Office.Desktop*" %nul% && set uwp16=Office 16.0 UWP
-dir /b "%ProgramW6432%\WindowsApps\Microsoft.Office.Desktop*" %nul% && set uwp16=Office 16.0 UWP
-dir /b "%ProgramFiles(x86)%\WindowsApps\Microsoft.Office.Desktop*" %nul% && set uwp16=Office 16.0 UWP
-%psc% "Get-AppxPackage -name "Microsoft.Office.Desktop"" | find /i "Office" 1>nul && set uwp16=Office 16.0 UWP
+%psc% "Get-AppxPackage -name "Microsoft.Office.Desktop"" | find /i "Office" %nul1% && set uwp16=Office 16.0 UWP
 )
 
 set /a counter=0
@@ -774,7 +826,7 @@ echo:
 call :_color %_Yellow% "A Window will popup, in that Window you need to select [Quick] Repair Option..."
 call :_color %_Yellow% "Press any key to continue..."
 echo:
-pause >nul
+pause %nul1%
 )
 
 if defined uwp16 (
@@ -843,12 +895,15 @@ goto :at_back
 
 echo:
 echo Checking WMI
+call :checkwmi
 
-set error=
-wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
-if %errorlevel% NEQ 0 set error=1
-winmgmt /verifyrepository %nul%
-if %errorlevel% NEQ 0 set error=1
+::  Apply basic fix first and check
+
+if defined error (
+call :_stopservice Winmgmt
+winmgmt /salvagerepository %nul%
+call :checkwmi
+)
 
 if not defined error (
 echo [Working]
@@ -858,10 +913,16 @@ goto :at_back
 
 call :_color %Red% "[Not Responding]"
 
+set _corrupt=
+sc start Winmgmt %nul%
+if %errorlevel% EQU 1060 set _corrupt=1
+sc query Winmgmt %nul% || set _corrupt=1
+for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type) do if not defined _corrupt (reg query HKLM\SYSTEM\CurrentControlSet\Services\Winmgmt /v %%G %nul% || set _corrupt=1)
+
 echo:
-sc query Winmgmt %nul% || (
+if defined _corrupt (
 %eline%
-echo Winmgmt service is not installed. Aborting...
+echo Winmgmt service is corrupted. Aborting...
 goto :at_back
 )
 
@@ -880,12 +941,12 @@ echo Stopping Winmgmt service
 call :_stopservice Winmgmt
 call :_stopservice Winmgmt
 call :_stopservice Winmgmt
-sc query Winmgmt | find /i "1  STOPPED" %nul% && (
+sc query Winmgmt | find /i "STOPPED" %nul% && (
 echo [Successful]
 ) || (
 call :_color %Red% "[Failed]"
 echo:
-call :_color %Magenta% "Its recommended to select [Restart] option and then apply Fix WMI option again."
+call :_color %Blue% "Its recommended to select [Restart] option and then apply Fix WMI option again."
 echo %line%
 echo:
 choice /C:21 /N /M "> [1] Restart  [2] Revert Back Changes :"
@@ -914,8 +975,8 @@ echo [Successful]
 call :_color %Red% "[Failed]"
 )
 
-wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
-if %errorlevel% EQU 0 (
+call :checkwmi
+if not defined error (
 echo:
 echo Checking WMI
 call :_color %Green% "[Working]"
@@ -928,8 +989,8 @@ call :registerobj %nul%
 
 echo:
 echo Checking WMI
-wmic path Win32_ComputerSystem get CreationClassName /value 2>nul | find /i "computersystem" 1>nul
-if %errorlevel% NEQ 0 (
+call :checkwmi
+if defined error (
 call :_color %Red% "[Not Responding]"
 echo:
 echo Run [Dism RestoreHealth] and [SFC Scannow] options and make sure there are no errors.
@@ -959,6 +1020,22 @@ winmgmt /salvagerepository
 winmgmt /resetrepository
 exit /b
 
+:checkwmi
+
+::  https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
+
+set error=
+wmic path Win32_ComputerSystem get CreationClassName /value %nul2% | find /i "computersystem" %nul1%
+if %errorlevel% NEQ 0 (set error=1& exit /b)
+winmgmt /verifyrepository %nul%
+if %errorlevel% NEQ 0 (set error=1& exit /b)
+
+cscript //nologo %windir%\system32\slmgr.vbs /dlv %nul%
+cmd /c exit /b %errorlevel%
+echo "0x%=ExitCode%" | findstr /i "0x800410 0x800440" %nul1%
+if %errorlevel% EQU 0 set error=1
+exit /b
+
 ::========================================================================================================================================
 
 :at_back
@@ -967,7 +1044,7 @@ echo:
 echo %line%
 echo:
 call :_color %_Yellow% "Press any key to go back..."
-pause >nul
+pause %nul1%
 goto :at_menu
 
 ::========================================================================================================================================
@@ -976,7 +1053,39 @@ goto :at_menu
 
 echo:
 echo Press any key to %_exitmsg%...
-pause >nul
+pause %nul1%
+exit /b
+
+::========================================================================================================================================
+
+:compresslog
+
+::  https://stackoverflow.com/a/46268232
+
+set "ddf="%SystemRoot%\Temp\ddf""
+%nul% del /q /f %ddf%
+echo/.New Cabinet>%ddf%
+echo/.set Cabinet=ON>>%ddf%
+echo/.set CabinetFileCountThreshold=0;>>%ddf%
+echo/.set Compress=ON>>%ddf%
+echo/.set CompressionType=LZX>>%ddf%
+echo/.set CompressionLevel=7;>>%ddf%
+echo/.set CompressionMemory=21;>>%ddf%
+echo/.set FolderFileCountThreshold=0;>>%ddf%
+echo/.set FolderSizeThreshold=0;>>%ddf%
+echo/.set GenerateInf=OFF>>%ddf%
+echo/.set InfFileName=nul>>%ddf%
+echo/.set MaxCabinetSize=0;>>%ddf%
+echo/.set MaxDiskFileCount=0;>>%ddf%
+echo/.set MaxDiskSize=0;>>%ddf%
+echo/.set MaxErrors=1;>>%ddf%
+echo/.set RptFileName=nul>>%ddf%
+echo/.set UniqueFiles=ON>>%ddf%
+for /f "tokens=* delims=" %%D in ('dir /a:-D/b/s "%SystemRoot%\logs\%1"') do (
+ echo/"%%~fD"  /inf=no;>>%ddf%
+)
+makecab /F %ddf% /D DiskDirectory1="" /D CabinetNameTemplate="!desktop!\AT_Logs\%2_%_time%.cab"
+del /q /f %ddf%
 exit /b
 
 ::========================================================================================================================================
@@ -1202,3 +1311,4 @@ set "_Yellow="0E""
 exit /b
 
 ::========================================================================================================================================
+:: Leave empty line below
