@@ -229,7 +229,7 @@ setlocal EnableDelayedExpansion
 
 cls
 color 07
-title  Microsoft_Activation_Scripts 1.9
+title  Microsoft_Activation_Scripts 2.0
 mode 76, 30
 
 echo:
