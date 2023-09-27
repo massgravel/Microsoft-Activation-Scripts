@@ -5,6 +5,10 @@
 <p align="center">A Windows and Office activator using HWID / Ohook / KMS38 / Online KMS activation methods, with a focus on open-source code and fewer antivirus detections.</p>
 <hr>
 
+## Note:
+
+Microsoft servers are currently rejecting HWID activation requests when activating through MAS, we're checking what's going on now. Use the KMS38 activation option for now. 
+
 ## Download / How to use it?
 
 ### Method 1 - PowerShell (Recommended)
