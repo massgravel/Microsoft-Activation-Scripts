@@ -53,7 +53,7 @@ exit /b
 ::========================================================================================================================================
 
 set "blank="
-set "mas=mass%blank%grave.dev"
+set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 
 ::  Check if Null service is working, it's important for the batch script
 
@@ -63,7 +63,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - https://%mas%/troubleshoot.html
+echo Help - %mas%troubleshoot.html
 echo:
 echo:
 ping 127.0.0.1 -n 10
@@ -242,12 +242,12 @@ choice /C:1234560 /N
 set _erl=%errorlevel%
 
 if %_erl%==7 exit /b
-if %_erl%==6 start https://%mas%/fix-wpa-registry.html &goto at_menu
+if %_erl%==6 start %mas%fix-wpa-registry.html &goto at_menu
 if %_erl%==5 goto:retokens
 if %_erl%==4 goto:fixwmi
 if %_erl%==3 goto:sfcscan
 if %_erl%==2 goto:dism_rest
-if %_erl%==1 start https://%mas%/troubleshoot.html &goto at_menu
+if %_erl%==1 start %mas%troubleshoot.html &goto at_menu
 goto :at_menu
 
 ::========================================================================================================================================

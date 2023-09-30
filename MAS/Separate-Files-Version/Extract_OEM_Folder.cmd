@@ -53,7 +53,7 @@ exit /b
 ::========================================================================================================================================
 
 set "blank="
-set "mas=mass%blank%grave.dev"
+set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 
 ::  Check if Null service is working, it's important for the batch script
 
@@ -63,7 +63,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - https://%mas%/troubleshoot.html
+echo Help - %mas%troubleshoot.html
 echo:
 echo:
 ping 127.0.0.1 -n 10
@@ -300,7 +300,7 @@ choice /C:123456789R0 /N
 set _erl=%errorlevel%
 
 if %_erl%==11 exit /b
-if %_erl%==10 start https://%mas%/oem-folder.html &goto :Menu
+if %_erl%==10 start %mas%oem-folder.html &goto :Menu
 if %_erl%==9 goto:kms_ohook
 if %_erl%==8 goto:kms38_kms
 if %_erl%==7 goto:kms38_ohook
@@ -635,7 +635,7 @@ call :ex_color %Green% "$OEM$ folder is successfully created on the Desktop."
 echo "%oem%" | find /i "38" %nul% && (
 echo:
 echo To KMS38 activate Server Cor/Acor editions ^(No GUI Versions^),
-echo Check this page https://%mas%/oem-folder
+echo Check this page %mas%oem-folder
 )
 echo ______________________________________________________________
 

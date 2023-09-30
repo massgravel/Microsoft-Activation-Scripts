@@ -66,7 +66,7 @@ exit /b
 ::========================================================================================================================================
 
 set "blank="
-set "mas=mass%blank%grave.dev"
+set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 
 ::  Check if Null service is working, it's important for the batch script
 
@@ -76,7 +76,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - https://%mas%/troubleshoot.html
+echo Help - %mas%troubleshoot.html
 echo:
 echo:
 ping 127.0.0.1 -n 10
@@ -337,7 +337,7 @@ echo Evaluation Editions cannot be activated.
 echo You need to install full version of %winos%
 echo:
 echo Download it from here,
-echo https://%mas%/genuine-installation-media.html
+echo %mas%genuine-installation-media.html
 )
 goto dk_done
 )
@@ -356,7 +356,7 @@ if not exist "!_work!\clipup.exe" (
 echo clipup.exe doesn't exist in Server Cor/Acor [No GUI] version.
 echo It's required for KMS38 Activation.
 echo Check below page on how to activate it.
-echo https://%mas%/kms38.html
+echo %mas%kms38.html
 goto dk_done
 )
 )
@@ -469,7 +469,7 @@ if not defined key if not defined _gvlk (
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 echo Unable to find this product in the supported product list.
 echo Make sure you are using updated version of the script.
-echo https://%mas%
+echo %mas%
 echo:
 goto dk_done
 )
@@ -697,7 +697,7 @@ goto :k_final
 
 call :dk_color %Red% "Activation Failed"
 if not defined error call :dk_color %Blue% "%_fixmsg%"
-call :dk_color2 %Blue% "Check this page for help" %_Yellow% " https://%mas%/troubleshoot"
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%troubleshoot"
 
 ::========================================================================================================================================
 
@@ -722,7 +722,7 @@ if defined _k38 (
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([ScriptBlock]::Create($f[1])) -protect;"
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg query "HKLM\%specific_kms%" && (
-call :dk_color %Blue% "Protect KMS38 From KMS                  [Successful] [Locked A Registry Key]"
+echo Protect KMS38 From KMS                  [Successful] [Locked A Registry Key]
 ) || (
 call :dk_color %Red% "Protect KMS38 From KMS                  [Failed To Lock A Registry Key]"
 )
@@ -855,19 +855,6 @@ if %_wmic% EQU 1 set "chkapp=for /f "tokens=2 delims==" %%a in ('"wmic path Soft
 if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT ID FROM SoftwareLicensingProduct WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f''').Get()).ID ^| %% {echo ('ID='+$_)}" %nul6%')"
 %chkapp% do (if defined applist (call set "applist=!applist! %%a") else (call set "applist=%%a"))
 exit /b
-
-::  Get SvcRestartTask info
-
-:gettaskinfo:
-$task = Get-ScheduledTask | Where-Object { $_.TaskName -eq 'SvcRestartTask' -and $_.TaskPath -eq '\Microsoft\Windows\SoftwareProtectionPlatform\' }
-$info = $task | Get-ScheduledTaskInfo
-if ($info.LastRunTime -match 99) {
-$task | Start-ScheduledTask
-Start-Sleep -Seconds 3
-$info = $task | Get-ScheduledTaskInfo
-}
-"$($task.State) $($info.LastTaskResult) $($info.LastRunTime)"
-:gettaskinfo:
 
 ::  Check wmic.exe
 
@@ -1088,7 +1075,7 @@ if /i %dism_error%==[0x800F0805] (
 for %%# in (4 125 126 188 191 205) do if "%osSKU%"=="%%#" (
 call :dk_color %Blue% "Evaluation Windows can not be activated and different License install may lead to errors."
 call :dk_color %Blue% "It is recommended to install full version of %winos%."
-call :dk_color %Blue% "You can download it from https://%mas%/genuine-installation-media.html"
+call :dk_color %Blue% "You can download it from %mas%genuine-installation-media.html"
 set showfix=1
 )
 )
@@ -1156,7 +1143,7 @@ set error=1
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
-call :dk_color %Blue% "Possibly Caused By Gaming Spoofers. Help: https://%mas%/troubleshoot"
+call :dk_color %Blue% "Possibly Caused By Gaming Spoofers. Help: %mas%troubleshoot"
 set error=1
 set showfix=1
 )
@@ -1201,19 +1188,6 @@ if not exist %SystemRoot%\system32\sppsvc.exe (
 set error=1
 set showfix=1
 call :dk_color %Red% "Checking sppsvc.exe File                [Not Found]"
-)
-
-
-set task=
-set taskerror=
-if not defined wmifailed if not defined officeact (
-for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':gettaskinfo\:.*';iex ($f[1]);"') do (set task=%%a)
-echo "!task!" | find /i "Ready 0 " %nul% || set taskerror=1
-echo "!task!" | find "99" %nul% && set taskerror=1
-if defined taskerror (
-call :dk_color %Gray% "Checking SvcRestartTask Last Run        [Issues Found, !task!]"
-call :dk_color %Gray% "Windows may face issues in keeping activation. Help: https://%mas%/troubleshoot"
-)
 )
 
 

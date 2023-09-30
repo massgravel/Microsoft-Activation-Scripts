@@ -59,7 +59,7 @@ exit /b
 ::========================================================================================================================================
 
 set "blank="
-set "mas=mass%blank%grave.dev"
+set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 
 ::  Check if Null service is working, it's important for the batch script
 
@@ -69,7 +69,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - https://%mas%/troubleshoot.html
+echo Help - %mas%troubleshoot.html
 echo:
 echo:
 ping 127.0.0.1 -n 10

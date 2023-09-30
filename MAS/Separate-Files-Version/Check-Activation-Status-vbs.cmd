@@ -99,7 +99,7 @@ echo %line2%
 echo ***            Office Ohook Activation Status            ***
 echo %line2%
 echo.
-powershell "write-host -back 'Black' -fore 'Yellow' 'Office is permanently activated with Ohook activation.'; write-host -back 'Black' -fore 'Yellow' 'You can ignore below Office activation status.'"
+powershell "write-host -back 'Black' -fore 'Yellow' 'Ohook for permanent Office activation is installed.'; write-host -back 'Black' -fore 'Yellow' 'You can ignore below Office activation status.'"
 echo.
 )
 

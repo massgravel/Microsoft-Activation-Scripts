@@ -57,7 +57,7 @@ exit /b
 ::========================================================================================================================================
 
 set "blank="
-set "mas=mass%blank%grave.dev"
+set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 
 ::  Check if Null service is working, it's important for the batch script
 
@@ -67,7 +67,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - https://%mas%/troubleshoot.html
+echo Help - %mas%troubleshoot.html
 echo:
 echo:
 ping 127.0.0.1 -n 10
@@ -229,7 +229,7 @@ setlocal EnableDelayedExpansion
 
 cls
 color 07
-title  Microsoft_Activation_Scripts 2.0
+title  Microsoft_Activation_Scripts 2.1
 mode 76, 30
 
 echo:
@@ -240,10 +240,10 @@ echo:       ______________________________________________________________
 echo:
 echo:                 Activation Methods:
 echo:
-echo:             [1] HWID        ^|  Windows           ^|   Permanent
+echo:             [1] KMS38       ^|  Windows           ^|   Year 2038
 echo:             [2] Ohook       ^|  Office            ^|   Permanent
-echo:             [3] KMS38       ^|  Windows           ^|   Year 2038
-echo:             [4] Online KMS  ^|  Windows / Office  ^|    180 Days
+echo:             [3] Online KMS  ^|  Windows / Office  ^|    180 Days
+echo:             [4] HWID        ^|  Windows           ^| Not Working
 echo:             __________________________________________________      
 echo:
 echo:             [5] Activation Status
@@ -258,14 +258,15 @@ choice /C:123456780 /N
 set _erl=%errorlevel%
 
 if %_erl%==9 exit /b
-if %_erl%==8 start https://%mas%/troubleshoot.html & goto :MainMenu
+if %_erl%==8 start %mas%troubleshoot.html & goto :MainMenu
 if %_erl%==7 goto:Extras
 if %_erl%==6 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
 if %_erl%==5 setlocal & call :_Check_Status_wmi & cls & endlocal & goto :MainMenu
-if %_erl%==4 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
-if %_erl%==3 setlocal & call :KMS38Activation   & cls & endlocal & goto :MainMenu
+if %_erl%==4 setlocal & call :HWIDActivation    & cls & endlocal & goto :MainMenu
+if %_erl%==3 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
 if %_erl%==2 setlocal & call :OhookActivation   & cls & endlocal & goto :MainMenu
-if %_erl%==1 setlocal & call :HWIDActivation    & cls & endlocal & goto :MainMenu
+if %_erl%==1 setlocal & call :KMS38Activation   & cls & endlocal & goto :MainMenu
+
 goto :MainMenu
 
 ::========================================================================================================================================
@@ -299,7 +300,7 @@ choice /C:12340 /N
 set _erl=%errorlevel%
 
 if %_erl%==5 goto :MainMenu
-if %_erl%==4 start https://%mas%/genuine-installation-media.html & goto :Extras
+if %_erl%==4 start %mas%genuine-installation-media.html & goto :Extras
 if %_erl%==3 setlocal & call :_Check_Status_vbs & cls & endlocal & goto :Extras
 if %_erl%==2 goto:Extract$OEM$
 if %_erl%==1 setlocal & call :change_edition    & cls & endlocal & goto :Extras
@@ -365,7 +366,7 @@ choice /C:123456789R0 /N
 set _erl=%errorlevel%
 
 if %_erl%==11 goto:Extras
-if %_erl%==10 start https://%mas%/oem-folder.html &goto:Extract$OEM$2
+if %_erl%==10 start %mas%oem-folder.html &goto:Extract$OEM$2
 if %_erl%==9 (set "_oem=Online KMS [Windows] + Ohook [Office]" & set "para=/KMS-ActAndRenewalTask /KMS-Windows /Ohook" &goto:Extract$OEM$3)
 if %_erl%==8 (set "_oem=KMS38 [Windows] + Online KMS [Office]" & set "para=/KMS38 /KMS-ActAndRenewalTask /KMS-Office" &goto:Extract$OEM$3)
 if %_erl%==7 (set "_oem=KMS38 [Windows] + Ohook [Office]" & set "para=/KMS38 /Ohook" &goto:Extract$OEM$3)
@@ -409,7 +410,7 @@ call :_color %Green% "$OEM$ folder is successfully created on the Desktop."
 echo "%_oem%" | find /i "KMS38" 1>nul && (
 echo:
 echo To KMS38 activate Server Cor/Acor editions ^(No GUI Versions^),
-echo Check this page https://%mas%/oem-folder
+echo Check this page %mas%oem-folder
 )
 echo ___________________________________________________________________
 echo:
@@ -587,7 +588,7 @@ echo Evaluation Editions cannot be activated.
 echo You need to install full version of %winos%
 echo:
 echo Download it from here,
-echo https://%mas%/genuine-installation-media.html
+echo %mas%genuine-installation-media.html
 goto dk_done
 )
 )
@@ -742,7 +743,7 @@ if not defined key (
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 echo Unable to find this product in the supported product list.
 echo Make sure you are using updated version of the script.
-echo https://%mas%
+echo %mas%
 echo:
 goto dk_done
 )
@@ -917,7 +918,7 @@ if defined resfail (
 set error=1
 echo:
 call :dk_color %Red% "Checking Licensing Servers              [Failed To Connect]"
-call :dk_color2 %Blue% "Check this page for help" %_Yellow% " https://%mas%/licensing-servers-issue"
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%licensing-servers-issue"
 )
 )
 
@@ -950,7 +951,7 @@ echo "%error_code%" | findstr /i "0x80072e 0x80072f" %nul% && (
 set error=1
 echo:
 call :dk_color %Red% "Checking Internet Issues                [Found] [%error_code%]"
-call :dk_color2 %Blue% "Check this page for help" %_Yellow% " https://%mas%/licensing-servers-issue"
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%licensing-servers-issue"
 )
 )
 
@@ -965,8 +966,9 @@ if defined notworking (
 call :dk_color %Blue% "At the time of writing this, HWID Activation was not supported for this product."
 call :dk_color %Blue% "Use KMS38 Activation option."
 ) else (
-if not defined error call :dk_color %Blue% "%_fixmsg%"
-call :dk_color2 %Blue% "Check this page for help" %_Yellow% " https://%mas%/troubleshoot"
+call :dk_color %Blue% "HWID Activation is not working. Use KMS38 Activation option for now."
+REM if not defined error call :dk_color %Blue% "%_fixmsg%"
+call :dk_color2 %_White% "Check this page for help" %_White% " %mas%troubleshoot"
 )
 )
 
@@ -1047,19 +1049,6 @@ $guids = $guids | Select-Object -Unique
 $guidsString = $guids -join " "
 $guidsString
 :getactivationid:
-
-::  Get SvcRestartTask info
-
-:gettaskinfo:
-$task = Get-ScheduledTask | Where-Object { $_.TaskName -eq 'SvcRestartTask' -and $_.TaskPath -eq '\Microsoft\Windows\SoftwareProtectionPlatform\' }
-$info = $task | Get-ScheduledTaskInfo
-if ($info.LastRunTime -match 99) {
-$task | Start-ScheduledTask
-Start-Sleep -Seconds 3
-$info = $task | Get-ScheduledTaskInfo
-}
-"$($task.State) $($info.LastTaskResult) $($info.LastRunTime)"
-:gettaskinfo:
 
 ::  Check wmic.exe
 
@@ -1235,7 +1224,7 @@ if /i %dism_error%==[0x800F0805] (
 for %%# in (4 125 126 188 191 205) do if "%osSKU%"=="%%#" (
 call :dk_color %Blue% "Evaluation Windows can not be activated and different License install may lead to errors."
 call :dk_color %Blue% "It is recommended to install full version of %winos%."
-call :dk_color %Blue% "You can download it from https://%mas%/genuine-installation-media.html"
+call :dk_color %Blue% "You can download it from %mas%genuine-installation-media.html"
 set showfix=1
 )
 )
@@ -1303,7 +1292,7 @@ set error=1
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
-call :dk_color %Blue% "Possibly Caused By Gaming Spoofers. Help: https://%mas%/troubleshoot"
+call :dk_color %Blue% "Possibly Caused By Gaming Spoofers. Help: %mas%troubleshoot"
 set error=1
 set showfix=1
 )
@@ -1348,19 +1337,6 @@ if not exist %SystemRoot%\system32\sppsvc.exe (
 set error=1
 set showfix=1
 call :dk_color %Red% "Checking sppsvc.exe File                [Not Found]"
-)
-
-
-set task=
-set taskerror=
-if not defined wmifailed if not defined officeact (
-for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':gettaskinfo\:.*';iex ($f[1]);"') do (set task=%%a)
-echo "!task!" | find /i "Ready 0 " %nul% || set taskerror=1
-echo "!task!" | find "99" %nul% && set taskerror=1
-if defined taskerror (
-call :dk_color %Gray% "Checking SvcRestartTask Last Run        [Issues Found, !task!]"
-call :dk_color %Gray% "Windows may face issues in keeping activation. Help: https://%mas%/troubleshoot"
-)
 )
 
 
@@ -1686,7 +1662,7 @@ call :dk_color2 %_White% "              " %_Green% "Enter a menu option in the K
 choice /C:1230 /N
 set _el=!errorlevel!
 if !_el!==4  exit /b
-if !_el!==3  start https://%mas%/genuine-installation-media.html &goto :oh_menu
+if !_el!==3  start %mas%genuine-installation-media.html &goto :oh_menu
 if !_el!==2  goto :oh_uninstall
 if !_el!==1  goto :oh_menu2
 goto :oh_menu
@@ -1767,7 +1743,6 @@ if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.Office.Desktop""
 
 if not "%o14msi%%o14c2r%%o16uwp%"=="" (
 echo:
-set error=1
 call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%%o16uwp%]"
 )
 
@@ -1811,7 +1786,7 @@ echo You have only Office dashboard app installed, you need to install full Offi
 echo:
 call :dk_color %Blue% "Download and install Office from below URL and try again."
 echo:
-echo https://%mas%/genuine-installation-media.html
+echo %mas%genuine-installation-media.html
 goto dk_done
 )
 
@@ -1933,10 +1908,10 @@ echo Removing Office vNext Block             [Successful]
 
 ::========================================================================================================================================
 
-::  O365 products attempt to validate the license and may show a banner "There was a problem checking this device's license status.", other products don't do that.
+::  Subscription licenses attempt to validate the license and may show a banner "There was a problem checking this device's license status.", other products don't do that.
 ::  A simple registry entry can skip this check
 
-echo "%_lic%" | find /i "Subscription" %nul% && (
+if defined _sublic (
 echo Adding a Reg To Skip License Check      [Successful]
 reg add HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /v "TimeOfLastHeartbeatFailure" /t REG_SZ /d "2033-08-18T22:18:45Z" /f %nul%
 )
@@ -2007,12 +1982,12 @@ if !errorlevel! NEQ 0 cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
 echo:
 if not defined error (
 call :dk_color %Green% "Office is permanently activated."
-echo Help: https://%mas%/troubleshoot
+echo Help: %mas%troubleshoot
 ) else (
 call :dk_color %Red% "Some errors were detected."
 if not defined ierror if not defined showfix if not defined serv_cor if not defined serv_cste call :dk_color %Blue% "%_fixmsg%"
 echo:
-call :dk_color2 %Blue% "Check this page for help" %_Yellow% " https://%mas%/troubleshoot"
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%troubleshoot"
 )
 
 goto :dk_done
@@ -2150,7 +2125,7 @@ if %errorcode% EQU 0 (
 call :dk_refresh
 echo Installing Generic Product Key          [%_key%] [%_prod%] [%_lic%] [Successful]
 ) else (
-call :dk_color %Red% "Installing Generic Product Key          [%_key%] [%_prod%] [%_lic%] [Failed] %errorcode%"
+call :dk_color %Red% "Installing Generic Product Key          [%_key%] [%_prod%] [Failed] %errorcode%"
 if not defined error (
 call :dk_color %Blue% "%_fixmsg%"
 set showfix=1
@@ -2166,7 +2141,16 @@ exit /b
 
 if not defined _oLPath exit /b
 
-set _License=%_prod:Retail=R_%
+set _License=%_prod:XVolume=XC2RVL_%
+
+set _License=%_License:O365EduCloudRetail=O365EduCloudEDUR_%
+
+set _License=%_License:ProjectProRetail=ProjectProO365R_%
+set _License=%_License:ProjectStdRetail=ProjectStdO365R_%
+set _License=%_License:VisioProRetail=VisioProO365R_%
+set _License=%_License:VisioStdRetail=VisioStdO365R_%
+
+set _License=%_License:Retail=R_%
 set _License=%_License:Volume=VL_%
 
 for %%# in ("!_oLPath!\client-issuance-*.xrm-ms") do (
@@ -2331,7 +2315,7 @@ exit /b
 
 ::  1st column = Office version number
 ::  2nd column = Activation ID
-::  3rd column = Generic key. Preference is given in this order, Retail > OEM:NONSLP > Volume:MAK > Volume:GVLK > Retail:TB:Sub
+::  3rd column = Generic key. Preference is given in this order, Retail:TB:Sub > Retail > OEM:NONSLP > Volume:MAK > Volume:GVLK
 ::  4th column = Last part of license description
 ::  5th column = Edition
 ::  Separator  = "_"
@@ -2340,176 +2324,189 @@ exit /b
 
 set f=
 for %%# in (
-15_ab4d047b-97cf-4126-a69f-34df08e2f254_B7R%f%FY-7N%f%XPK-Q43%f%42-Y9%f%X2H-3JX%f%4X_Retail________AccessRetail
-15_4374022d-56b8-48c1-9bb7-d8f2fc726343_9MF%f%9G-CN%f%32B-HV7%f%XT-9X%f%J8T-9KV%f%F4_MAK___________AccessVolume
-15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_NT8%f%89-MB%f%H4X-8MD%f%4H-X8%f%R2D-WQH%f%F8_Retail________ExcelRetail
-15_ac1ae7fd-b949-4e04-a330-849bc40638cf_Y3N%f%36-YC%f%HDK-XYW%f%BG-KY%f%QVV-BDT%f%J2_MAK___________ExcelVolume
-15_cfaf5356-49e3-48a8-ab3c-e729ab791250_BMK%f%4W-6N%f%88B-BP9%f%QR-PH%f%FCK-MG7%f%GF_Retail________GrooveRetail
-15_4825ac28-ce41-45a7-9e6e-1fed74057601_RN8%f%4D-7H%f%CWY-FTC%f%BK-JM%f%XWM-HT7%f%GJ_MAK___________GrooveVolume
-15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_2WQ%f%NF-GB%f%K4B-XVG%f%6F-BB%f%MX7-M4F%f%2Y_OEM-Perp______HomeBusinessPipcRetail
-15_cd256150-a898-441f-aac0-9f8f33390e45_NVT%f%DK-QB%f%8J9-M28%f%GR-92%f%BPC-BR9%f%6Q_Retail________HomeBusinessRetail
-15_98685d21-78bd-4c62-bc4f-653344a63035_R29%f%WQ-CM%f%NCM-2TH%f%CT-K4%f%H92-FX6%f%KR_Retail________HomeStudentRetail
-15_44984381-406e-4a35-b1c3-e54f499556e2_RV7%f%NQ-HY%f%3WW-7CK%f%WH-QT%f%VMW-29V%f%HC_Retail________InfoPathRetail
-15_9e016989-4007-42a6-8051-64eb97110cf2_C4T%f%GN-QQ%f%W6Y-FYK%f%XC-6W%f%JW7-X73%f%VG_MAK___________InfoPathVolume
-15_9103f3ce-1084-447a-827e-d6097f68c895_6MD%f%N4-WF%f%3FV-4WH%f%3Q-W6%f%99V-RGC%f%MY_PrepidBypass__LyncAcademicRetail
-15_ff693bf4-0276-4ddb-bb42-74ef1a0c9f4d_N42%f%BF-CB%f%Y9F-W2C%f%7R-X3%f%97X-DYF%f%QW_PrepidBypass__LyncEntryRetail
-15_fada6658-bfc6-4c4e-825a-59a89822cda8_89P%f%23-2N%f%K2R-JXM%f%2M-3Q%f%8R8-BWM%f%3Y_Retail________LyncRetail
-15_e1264e10-afaf-4439-a98b-256df8bb156f_3WK%f%CD-RN%f%489-4M7%f%XJ-GJ%f%2GQ-YBF%f%Q6_MAK___________LyncVolume
-15_3169c8df-f659-4f95-9cc6-3115e6596e83_YYH%f%XG-KT%f%NKF-XGR%f%T7-H2%f%99D-8K6%f%MM_Retail________MondoRetail
-15_f33485a0-310b-4b72-9a0e-b1d605510dbd_2YN%f%YQ-FQ%f%MVG-CB8%f%KW-6X%f%KYD-M7R%f%RJ_MAK___________MondoVolume
-15_3391e125-f6e4-4b1e-899c-a25e6092d40d_4TG%f%WV-6N%f%9P6-G2H%f%8Y-2H%f%WKB-B4F%f%F4_Bypass________OneNoteFreeRetail
-15_8b524bcc-67ea-4876-a509-45e46f6347e8_3KX%f%XQ-PV%f%N2C-8P7%f%YY-HC%f%V88-GVG%f%Q6_Retail________OneNoteRetail
-15_b067e965-7521-455b-b9f7-c740204578a2_JDM%f%WF-NJ%f%C7B-HRC%f%HY-WF%f%T8G-BPX%f%D9_MAK___________OneNoteVolume
-15_12004b48-e6c8-4ffa-ad5a-ac8d4467765a_9N4%f%RQ-CF%f%8R2-HBV%f%CB-J3%f%C9V-94P%f%4D_Retail________OutlookRetail
-15_8d577c50-ae5e-47fd-a240-24986f73d503_HNG%f%29-GG%f%WRG-RFC%f%8C-JT%f%FP4-2J9%f%FH_MAK___________OutlookVolume
-15_5aab8561-1686-43f7-9ff5-2c861da58d17_9CY%f%B3-NF%f%MRW-YFD%f%G6-XC%f%7TF-BY3%f%6J_OEM-Perp______PersonalPipcRetail
-15_17e9df2d-ed91-4382-904b-4fed6a12caf0_2NC%f%QJ-MF%f%RMH-TXV%f%83-J7%f%V4C-RVR%f%WC_Retail________PersonalRetail
-15_31743b82-bfbc-44b6-aa12-85d42e644d5b_HVM%f%N2-KP%f%HQH-DVQ%f%MK-7B%f%3CM-FGB%f%FC_Retail________PowerPointRetail
-15_e40dcb44-1d5c-4085-8e8f-943f33c4f004_47D%f%KN-HP%f%JP7-RF9%f%M3-VC%f%YT2-TMQ%f%4G_MAK___________PowerPointVolume
-15_064383fa-1538-491c-859b-0ecab169a0ab_N3Q%f%MM-GK%f%DT3-JQG%f%X6-7X%f%3MQ-4GB%f%G3_Retail________ProPlusRetail
-15_2b88c4f2-ea8f-43cd-805e-4d41346e18a7_QKH%f%NX-M9%f%GGH-T3Q%f%MW-YP%f%K4Q-QRP%f%9V_MAK___________ProPlusVolume
-15_4e26cac1-e15a-4467-9069-cb47b67fe191_CF9%f%DD-6C%f%NW2-BJW%f%JQ-CV%f%CFX-Y7T%f%XD_OEM-Perp______ProfessionalPipcRetail
-15_44bc70e2-fb83-4b09-9082-e5557e0c2ede_MBQ%f%BN-CQ%f%PT6-PXR%f%MC-TY%f%JFR-3C8%f%MY_Retail________ProfessionalRetail
-15_f2435de4-5fc0-4e5b-ac97-34f515ec5ee7_B4R%f%N4-H4%f%JYG-YMQ%f%MC-CY%f%GKH-46W%f%PH_Retail________ProjectProRetail
-15_ed34dc89-1c27-4ecd-8b2f-63d0f4cedc32_WFC%f%T2-NB%f%FQ7-JD7%f%VV-MF%f%JX6-6F2%f%CM_MAK___________ProjectProVolume
-15_5517e6a2-739b-4822-946f-7f0f1c5934b1_2B9%f%6V-X9%f%NJY-WFB%f%RC-Q8%f%MP2-7CC%f%C4_Retail________ProjectStdRetail
-15_2b9e4a37-6230-4b42-bee2-e25ce86c8c7a_3CN%f%QX-T3%f%4TY-99R%f%H4-C4%f%YD2-KWY%f%GV_MAK___________ProjectStdVolume
-15_c3a0814a-70a4-471f-af37-2313a6331111_TWN%f%CJ-YR%f%84W-X7P%f%PF-6D%f%PRP-D67%f%VC_Retail________PublisherRetail
-15_38ea49f6-ad1d-43f1-9888-99a35d7c9409_DJP%f%HV-NC%f%JV6-GWP%f%T6-K2%f%6JX-C7G%f%X6_MAK___________PublisherVolume
-15_ba3e3833-6a7e-445a-89d0-7802a9a68588_3NY%f%6J-WH%f%T3F-47B%f%DV-JH%f%F36-234%f%3W_PrepidBypass__SPDRetail
-15_32255c0a-16b4-4ce2-b388-8a4267e219eb_V6V%f%WN-KC%f%2HR-YYD%f%D6-9V%f%7HQ-7T7%f%VP_Retail________StandardRetail
-15_a24cca51-3d54-4c41-8a76-4031f5338cb2_9TN%f%6B-PC%f%YH4-MCV%f%DQ-KT%f%83C-TMQ%f%7T_MAK___________StandardVolume
-15_15d12ad4-622d-4257-976c-5eb3282fb93d_JRJ%f%NJ-33%f%M7C-R73%f%X3-P9%f%XF7-R89%f%MY_Retail________VisioProRetail
-15_3e4294dd-a765-49bc-8dbd-cf8b62a4bd3d_YN7%f%CF-XR%f%H6R-CGK%f%RY-GK%f%PV3-BG7%f%WF_MAK___________VisioProVolume
-15_dae597ce-5823-4c77-9580-7268b93a4b23_G2N%f%2Q-4Q%f%D2T-DY4%f%TP-GY%f%489-3RQ%f%CG_Retail________VisioStdRetail
-15_44a1f6ff-0876-4edb-9169-dbb43101ee89_RX6%f%3Y-4N%f%FK2-XTY%f%C8-C6%f%B3W-YPX%f%PJ_MAK___________VisioStdVolume
-15_191509f2-6977-456f-ab30-cf0492b1e93a_NB7%f%7V-RP%f%FQ6-PMM%f%KQ-T8%f%7DV-M4D%f%84_Retail________WordRetail
-15_9cedef15-be37-4ff0-a08a-13a045540641_RPH%f%PB-Y7%f%NC4-3VY%f%FM-DW%f%7VD-G8Y%f%J8_MAK___________WordVolume
-15_befee371-a2f5-4648-85db-a2c55fdf324c_JXR%f%8H-NJ%f%3MK-X66%f%W8-78%f%CWD-QRQ%f%6C_Retail________O365BusinessRetail
-15_537ea5b5-7d50-4876-bd38-a53a77caca32_J2W%f%28-TN%f%9C8-26P%f%WV-F7%f%J4G-72X%f%CB_Subscription1_O365HomePremRetail
-15_0c4e5e7a-b436-4776-bb89-88e4b14687e2_T6J%f%JW-DY%f%N99-WK4%f%6B-9M%f%KKV-94P%f%2Y_Retail________O365ProPlusRetail
-15_7a75647f-636f-4607-8e54-e1b7d1ad8930_B9V%f%9Q-F6%f%ND8-T4K%f%4K-88%f%68M-HT7%f%KT_Retail________O365SmallBusPremRetail
-16_bfa358b0-98f1-4125-842e-585fa13032e6_WHK%f%4N-YQ%f%GHB-XWX%f%CC-G3%f%HYC-6JF%f%94_Retail________AccessRetail
-16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_RNB%f%7V-P4%f%8F4-3FY%f%Y6-2P%f%3R3-63B%f%QV_PrepidBypass__AccessRuntimeRetail
-16_3b2fa33f-cd5a-43a5-bd95-f49f3f546b0b_JJ2%f%Y4-N8%f%KM3-Y8K%f%Y3-Y2%f%2FR-R3K%f%VK_MAK___________AccessVolume
-16_424d52ff-7ad2-4bc7-8ac6-748d767b455d_RKJ%f%BN-VW%f%TM2-BDK%f%XX-RK%f%QFD-JTY%f%Q2_Retail________ExcelRetail
-16_685062a7-6024-42e7-8c5f-6bb9e63e697f_FVG%f%NR-X8%f%2B2-6PR%f%JM-YT%f%4W7-8HV%f%36_MAK___________ExcelVolume
-16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_2WQ%f%NF-GB%f%K4B-XVG%f%6F-BB%f%MX7-M4F%f%2Y_OEM-Perp______HomeBusinessPipcRetail
-16_86834d00-7896-4a38-8fae-32f20b86fa2b_HM6%f%FM-NV%f%F78-KV9%f%PM-F3%f%6B8-D9M%f%XD_Retail________HomeBusinessRetail
-16_c28acdb8-d8b3-4199-baa4-024d09e97c99_PNP%f%RV-F2%f%627-Q8J%f%VC-3D%f%GR9-WTY%f%RK_Retail________HomeStudentRetail
-16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_YWD%f%4R-CN%f%KVT-VG8%f%VJ-93%f%33B-RC3%f%B8_Retail________HomeStudentVNextRetail
-16_b21367df-9545-4f02-9f24-240691da0e58_Y3X%f%PN-P7%f%PC4-MGP%f%TJ-2B%f%Y3Q-RJR%f%FV_Retail________MondoRetail
-16_2cd0ea7e-749f-4288-a05e-567c573b2a6c_FMT%f%QQ-84%f%NR8-274%f%4R-MX%f%F4P-PGY%f%R3_MAK___________MondoVolume
-16_436366de-5579-4f24-96db-3893e4400030_XYN%f%TG-R9%f%6FY-369%f%HX-YF%f%PHY-F9C%f%PM_Bypass________OneNoteFreeRetail
-16_83ac4dd9-1b93-40ed-aa55-ede25bb6af38_FXF%f%6F-CN%f%C26-W64%f%3C-K6%f%KB7-6XX%f%W3_Retail________OneNoteRetail
-16_23b672da-a456-4860-a8f3-e062a501d7e8_9TY%f%VN-D7%f%6HK-BVM%f%WT-Y7%f%G88-9TP%f%PV_MAK___________OneNoteVolume
-16_5a670809-0983-4c2d-8aad-d3c2c5b7d5d1_7N4%f%KG-P2%f%QDH-86V%f%9C-DJ%f%FVF-369%f%W9_Retail________OutlookRetail
-16_50059979-ac6f-4458-9e79-710bcb41721a_7QP%f%NR-3H%f%FDG-YP6%f%T9-JQ%f%CKQ-KKX%f%XC_MAK___________OutlookVolume
-16_5aab8561-1686-43f7-9ff5-2c861da58d17_9CY%f%B3-NF%f%MRW-YFD%f%G6-XC%f%7TF-BY3%f%6J_OEM-Perp______PersonalPipcRetail
-16_a9f645a1-0d6a-4978-926a-abcb363b72a6_FT7%f%VF-XB%f%N92-HPD%f%JV-RH%f%MBY-6VK%f%BF_Retail________PersonalRetail
-16_f32d1284-0792-49da-9ac6-deb2bc9c80b6_N7G%f%CB-WQ%f%T7K-QRH%f%WG-TT%f%PYD-7T9%f%XF_Retail________PowerPointRetail
-16_9b4060c9-a7f5-4a66-b732-faf248b7240f_X3R%f%T9-ND%f%G64-VMK%f%2M-KQ%f%6XY-DPF%f%GV_MAK___________PowerPointVolume
-16_de52bd50-9564-4adc-8fcb-a345c17f84f9_GM4%f%3N-F7%f%42Q-6JD%f%DK-M6%f%22J-J8G%f%DV_Retail________ProPlusRetail
-16_c47456e3-265d-47b6-8ca0-c30abbd0ca36_FNV%f%K8-8D%f%VCJ-F7X%f%3J-KG%f%VQB-RC2%f%QY_MAK___________ProPlusVolume
-16_4e26cac1-e15a-4467-9069-cb47b67fe191_CF9%f%DD-6C%f%NW2-BJW%f%JQ-CV%f%CFX-Y7T%f%XD_OEM-Perp______ProfessionalPipcRetail
-16_d64edc00-7453-4301-8428-197343fafb16_NXF%f%TK-YD%f%9Y7-X9M%f%MJ-9B%f%WM6-J2Q%f%VH_Retail________ProfessionalRetail
-16_0f42f316-00b1-48c5-ada4-2f52b5720ad0_WKK%f%GF-TT%f%N8F-QC9%f%T2-6C%f%2DC-3YH%f%63_Retail________ProjectProRetail
-16_82f502b5-b0b0-4349-bd2c-c560df85b248_PKC%f%3N-8F%f%99H-28M%f%VY-J4%f%RYY-CWG%f%DH_MAK___________ProjectProVolume
-16_16728639-a9ab-4994-b6d8-f81051e69833_JBN%f%PH-YF%f%2F7-Q9Y%f%29-86%f%CTG-C9Y%f%GV_MAKC2R________ProjectProXVolume
-16_e9f0b3fc-962f-4944-ad06-05c10b6bcd5e_4H6%f%NF-QD%f%PG8-83W%f%97-9K%f%8XY-XBT%f%9Y_Retail________ProjectStdRetail
-16_82e6b314-2a62-4e51-9220-61358dd230e6_4TG%f%WV-6N%f%9P6-G2H%f%8Y-2H%f%WKB-B4G%f%93_MAK___________ProjectStdVolume
-16_431058f0-c059-44c5-b9e7-ed2dd46b6789_N3W%f%2Q-69%f%MBT-27R%f%D9-BH%f%8V3-JT2%f%C8_MAKC2R________ProjectStdXVolume
-16_6e0c1d99-c72e-4968-bcb7-ab79e03e201e_WKW%f%ND-X6%f%G9G-CDM%f%TV-CP%f%GYJ-6MV%f%BF_Retail________PublisherRetail
-16_fcc1757b-5d5f-486a-87cf-c4d6dedb6032_9QV%f%N2-PX%f%XRX-8V4%f%W8-Q7%f%926-TJG%f%D8_MAK___________PublisherVolume
-16_9103f3ce-1084-447a-827e-d6097f68c895_6MD%f%N4-WF%f%3FV-4WH%f%3Q-W6%f%99V-RGC%f%MY_PrepidBypass__SkypeServiceBypassRetail
-16_971cd368-f2e1-49c1-aedd-330909ce18b6_4N4%f%D8-3J%f%7Y3-YYW%f%7C-73%f%HD2-V8R%f%HY_PrepidBypass__SkypeforBusinessEntryRetail
-16_418d2b9f-b491-4d7f-84f1-49e27cc66597_PBJ%f%79-77%f%NY4-VRG%f%FG-Y8%f%WYC-CKC%f%RC_Retail________SkypeforBusinessRetail
-16_03ca3b9a-0869-4749-8988-3cbc9d9f51bb_DMT%f%CJ-KN%f%RKR-JV8%f%TQ-V2%f%CR2-VFT%f%FH_MAK___________SkypeforBusinessVolume
-16_4a31c291-3a12-4c64-b8ab-cd79212be45e_2FP%f%WN-4H%f%6CM-KD8%f%QQ-8H%f%CHC-P9X%f%YW_Retail________StandardRetail
-16_0ed94aac-2234-4309-ba29-74bdbb887083_WHG%f%MQ-JN%f%MGT-MDQ%f%VF-WD%f%R69-KQB%f%WC_MAK___________StandardVolume
-16_2dfe2075-2d04-4e43-816a-eb60bbb77574_7TM%f%6H-KN%f%R4K-Q7H%f%BX-72%f%T2Q-H22%f%RV_Retail________VisioProRetail
-16_295b2c03-4b1c-4221-b292-1411f468bd02_NRK%f%T9-C8%f%GP2-XDY%f%XQ-YW%f%72K-MG9%f%2B_MAK___________VisioProVolume
-16_0594dc12-8444-4912-936a-747ca742dbdb_G98%f%Q2-B6%f%N77-CFH%f%9J-K8%f%24G-XQC%f%C4_MAKC2R________VisioProXVolume
-16_c76dbcbc-d71b-4f45-b5b3-b7494cb4e23e_Q8R%f%4N-GJ%f%CPG-CF3%f%2R-JF%f%CYR-K4T%f%F3_Retail________VisioStdRetail
-16_44151c2d-c398-471f-946f-7660542e3369_XNC%f%JB-YY%f%883-JRW%f%64-DP%f%XMX-JXC%f%R6_MAK___________VisioStdVolume
-16_1d1c6879-39a3-47a5-9a6d-aceefa6a289d_B2H%f%TN-JP%f%H8C-J6Y%f%6V-HC%f%HKB-43M%f%GT_MAKC2R________VisioStdXVolume
-16_cacaa1bf-da53-4c3b-9700-11738ef1c2a5_P8K%f%82-NQ%f%7GG-JKY%f%8T-6V%f%HVY-88G%f%GD_Retail________WordRetail
-16_c3000759-551f-4f4a-bcac-a4b42cbf1de2_YHM%f%WC-YN%f%6V9-WJP%f%XD-3W%f%QKP-TMV%f%CV_MAK___________WordVolume
-16_518687bd-dc55-45b9-8fa6-f918e1082e83_WRY%f%J6-G3%f%NP7-7VH%f%94-8X%f%7KP-JB7%f%HC_Retail________Access2019Retail
-16_385b91d6-9c2c-4a2e-86b5-f44d44a48c5f_6FW%f%HX-NK%f%YXK-BW3%f%4Q-7X%f%C9F-Q9P%f%X7_MAK-AE________Access2019Volume
-16_22e6b96c-1011-4cd5-8b35-3c8fb6366b86_FGQ%f%NJ-JW%f%JCG-7Q8%f%MG-RM%f%RGJ-9TQ%f%VF_PrepidBypass__AccessRuntime2019Retail
-16_c201c2b7-02a1-41a8-b496-37c72910cd4a_KBP%f%NW-64%f%CMM-8KW%f%CB-23%f%F44-8B7%f%HM_Retail________Excel2019Retail
-16_05cb4e1d-cc81-45d5-a769-f34b09b9b391_8NT%f%4X-GQ%f%MCK-62X%f%4P-TW%f%6QP-YKP%f%YF_MAK-AE________Excel2019Volume
-16_7fe09eef-5eed-4733-9a60-d7019df11cac_QBN%f%2Y-9B%f%284-9KW%f%78-K4%f%8PB-R62%f%YT_Retail________HomeBusiness2019Retail
-16_4539aa2c-5c31-4d47-9139-543a868e5741_XNW%f%PM-32%f%XQC-Y7Q%f%JC-QG%f%GBV-YY7%f%JK_Retail________HomeStudent2019Retail
-16_20e359d5-927f-47c0-8a27-38adbdd27124_WR4%f%3D-NM%f%WQQ-HCQ%f%R2-VK%f%XDR-37B%f%7H_Retail________Outlook2019Retail
-16_92a99ed8-2923-4cb7-a4c5-31da6b0b8cf3_RN3%f%QB-GT%f%6D7-YB3%f%VH-F3%f%RPB-3GQ%f%YB_MAK-AE________Outlook2019Volume
-16_2747b731-0f1f-413e-a92d-386ec1277dd8_NMB%f%Y8-V3%f%CV7-BX6%f%K6-29%f%22Y-43M%f%7T_Retail________Personal2019Retail
-16_7e63cc20-ba37-42a1-822d-d5f29f33a108_HN2%f%7K-JH%f%J8R-7T7%f%KK-WJ%f%YC3-FM7%f%MM_Retail________PowerPoint2019Retail
-16_13c2d7bf-f10d-42eb-9e93-abf846785434_29G%f%NM-VM%f%33V-WR2%f%3K-HG%f%2DT-KTQ%f%YR_MAK-AE________PowerPoint2019Volume
-16_a3072b8f-adcc-4e75-8d62-fdeb9bdfae57_BN4%f%XJ-R9%f%DYY-96W%f%48-YK%f%8DM-MY7%f%PY_Retail________ProPlus2019Retail
-16_6755c7a7-4dfe-46f5-bce8-427be8e9dc62_T8Y%f%BN-4Y%f%V3X-KK2%f%4Q-QX%f%BD7-T3C%f%63_MAK-AE________ProPlus2019Volume
-16_1717c1e0-47d3-4899-a6d3-1022db7415e0_9NX%f%DK-MR%f%Y98-2VJ%f%V8-GF%f%73J-TQ9%f%FK_Retail________Professional2019Retail
-16_0d270ef7-5aaf-4370-a372-bc806b96adb7_JDT%f%NC-PP%f%77T-T9H%f%2W-G4%f%J2J-VH8%f%JK_Retail________ProjectPro2019Retail
-16_d4ebadd6-401b-40d5-adf4-a5d4accd72d1_TBX%f%BD-FN%f%WKJ-WRH%f%BD-KB%f%PHH-XD9%f%F2_MAK-AE________ProjectPro2019Volume
-16_bb7ffe5f-daf9-4b79-b107-453e1c8427b5_R3J%f%NT-8P%f%BDP-MTW%f%CK-VD%f%2V8-HMK%f%F9_Retail________ProjectStd2019Retail
-16_fdaa3c03-dc27-4a8d-8cbf-c3d843a28ddc_RBR%f%FX-MQ%f%NDJ-4XF%f%HF-7Q%f%VDR-JHX%f%GC_MAK-AE________ProjectStd2019Volume
-16_f053a7c7-f342-4ab8-9526-a1d6e5105823_4QC%f%36-NW%f%3YH-D2Y%f%9D-RJ%f%PC7-VVB%f%9D_Retail________Publisher2019Retail
-16_40055495-be00-444e-99cc-07446729b53e_K8F%f%2D-NB%f%M32-BF2%f%6V-YC%f%KFJ-29Y%f%9W_MAK-AE________Publisher2019Volume
-16_b639e55c-8f3e-47fe-9761-26c6a786ad6b_JBD%f%KF-6N%f%CD6-49K%f%3G-2T%f%V79-BKP%f%73_Retail________SkypeforBusiness2019Retail
-16_15a430d4-5e3f-4e6d-8a0a-14bf3caee4c7_9MN%f%Q7-YP%f%Q3B-6WJ%f%XM-G8%f%3T3-CBB%f%DK_MAK-AE________SkypeforBusiness2019Volume
-16_f88cfdec-94ce-4463-a969-037be92bc0e7_N97%f%22-BV%f%9H6-WTJ%f%TT-FP%f%B93-978%f%MK_PrepidBypass__SkypeforBusinessEntry2019Retail
-16_fdfa34dd-a472-4b85-bee6-cf07bf0aaa1c_NDG%f%VM-MD%f%27H-2XH%f%VC-KD%f%DX2-YKP%f%74_Retail________Standard2019Retail
-16_beb5065c-1872-409e-94e2-403bcfb6a878_NT3%f%V6-XM%f%BK7-Q66%f%MF-VM%f%KR4-FC3%f%3M_MAK-AE________Standard2019Volume
-16_a6f69d68-5590-4e02-80b9-e7233dff204e_2NW%f%VW-QG%f%F4T-9CP%f%MB-WY%f%DQ9-7XP%f%79_Retail________VisioPro2019Retail
-16_f41abf81-f409-4b0d-889d-92b3e3d7d005_33Y%f%F4-GN%f%CQ3-J6G%f%DM-J6%f%7P3-FM7%f%QP_MAK-AE________VisioPro2019Volume
-16_4a582021-18c2-489f-9b3d-5186de48f1cd_263%f%WK-3N%f%797-7R4%f%37-28%f%BKG-3V8%f%M8_Retail________VisioStd2019Retail
-16_933ed0e3-747d-48b0-9c2c-7ceb4c7e473d_BGN%f%HX-QT%f%PRJ-F9C%f%9G-R8%f%QQG-8T2%f%7F_MAK-AE________VisioStd2019Volume
-16_72cee1c2-3376-4377-9f25-4024b6baadf8_JXR%f%8H-NJ%f%3MK-X66%f%W8-78%f%CWD-QRV%f%R2_Retail________Word2019Retail
-16_fe5fe9d5-3b06-4015-aa35-b146f85c4709_9F3%f%6R-PN%f%VHH-3DX%f%GQ-7C%f%D2H-R9D%f%3V_MAK-AE________Word2019Volume
-16_f634398e-af69-48c9-b256-477bea3078b5_P28%f%6B-N3%f%XYP-36Q%f%RQ-29%f%CMP-RVX%f%9M_Retail________Access2021Retail
-16_ae17db74-16b0-430b-912f-4fe456e271db_JBH%f%3N-P9%f%7FP-FRT%f%JD-MG%f%K2C-VFW%f%G6_MAK-AE________Access2021Volume
-16_fb099c19-d48b-4a2f-a160-4383011060aa_V6Q%f%FB-7N%f%7G9-PF7%f%W9-M8%f%FQM-MY8%f%G9_Retail________Excel2021Retail
-16_9da1ecdb-3a62-4273-a234-bf6d43dc0778_WNY%f%R4-KM%f%R9H-KVC%f%8W-7H%f%J8B-K79%f%DQ_MAK-AE________Excel2021Volume
-16_0e878942-3ba1-48ee-a215-f64d10a9f97b_QV2%f%VN-37%f%WPX-DHH%f%4K-B8%f%2H6-PDP%f%3T_Retail1_______HomeBusiness2021Retail
-16_9e7d5312-95fc-4443-a551-69c20624ec6b_3QN%f%G6-8F%f%JTH-88B%f%F9-KB%f%BVM-JMB%f%78_Retail________HomeStudent2021Retail
-16_279706f4-3a4b-4877-949b-f8c299cf0cc5_NB2%f%TQ-3Y%f%79C-77C%f%6M-QM%f%Y7H-7QY%f%8P_Retail________OneNote2021Retail
-16_ecea2cfa-d406-4a7f-be0d-c6163250d126_4NC%f%WR-9V%f%92Y-34V%f%B2-RP%f%THR-YTG%f%R7_Retail________Outlook2021Retail
-16_45bf67f9-0fc8-4335-8b09-9226cef8a576_JQ9%f%MJ-QY%f%N6B-67P%f%X9-GY%f%FVY-QJ6%f%TB_MAK-AE________Outlook2021Volume
-16_8f89391e-eedb-429d-af90-9d36fbf94de6_RRR%f%YB-DN%f%749-GCP%f%W4-9H%f%6VK-HCH%f%PT_Retail________Personal2021Retail
-16_c9bf5e86-f5e3-4ac6-8d52-e114a604d7bf_3KX%f%XQ-PV%f%N2C-8P7%f%YY-HC%f%V88-GVM%f%96_Retail1_______PowerPoint2021Retail
-16_716f2434-41b6-4969-ab73-e61e593a3875_39G%f%2N-3B%f%D9C-C4X%f%CM-BD%f%4QG-FVY%f%DY_MAK-AE________PowerPoint2021Volume
-16_c2f04adf-a5de-45c5-99a5-f5fddbda74a8_8WX%f%TP-MN%f%628-KY4%f%4G-VJ%f%WCK-C7P%f%CF_Retail________ProPlus2021Retail
-16_3f180b30-9b05-4fe2-aa8d-0c1c4790f811_RNH%f%JY-DT%f%FXW-HW9%f%F8-49%f%82D-MD2%f%CW_MAK-AE1_______ProPlus2021Volume
-16_96097a68-b5c5-4b19-8600-2e8d6841a0db_JRJ%f%NJ-33%f%M7C-R73%f%X3-P9%f%XF7-R9F%f%6M_MAK-AE________ProPlusSPLA2021Volume
-16_711e48a6-1a79-4b00-af10-73f4ca3aaac4_DJP%f%HV-NC%f%JV6-GWP%f%T6-K2%f%6JX-C7P%f%BG_Retail________Professional2021Retail
-16_3747d1d5-55a8-4bc3-b53d-19fff1913195_QKH%f%NX-M9%f%GGH-T3Q%f%MW-YP%f%K4Q-QRW%f%MV_Retail________ProjectPro2021Retail
-16_17739068-86c4-4924-8633-1e529abc7efc_HVC%f%34-CV%f%NPG-RVC%f%MT-X2%f%JRF-CR7%f%RK_MAK-AE1_______ProjectPro2021Volume
-16_4ea64dca-227c-436b-813f-b6624be2d54c_2B9%f%6V-X9%f%NJY-WFB%f%RC-Q8%f%MP2-7CH%f%RR_Retail________ProjectStd2021Retail
-16_84313d1e-47c8-4e27-8ced-0476b7ee46c4_3CN%f%QX-T3%f%4TY-99R%f%H4-C4%f%YD2-KW6%f%WH_MAK-AE________ProjectStd2021Volume
-16_b769b746-53b1-4d89-8a68-41944dafe797_CDN%f%FG-77%f%T8D-VKQ%f%JX-B7%f%KT3-KK2%f%8V_Retail1_______Publisher2021Retail
-16_a0234cfe-99bd-4586-a812-4f296323c760_2KX%f%JH-3N%f%HTW-RDB%f%PX-QF%f%RXJ-MTG%f%XF_MAK-AE________Publisher2021Volume
-16_c3fb48b2-1fd4-4dc8-af39-819edf194288_DVB%f%XN-HF%f%T43-CVP%f%RQ-J8%f%9TF-VMM%f%HG_Retail________SkypeforBusiness2021Retail
-16_6029109c-ceb8-4ee5-b324-f8eb2981e99a_R3F%f%CY-NH%f%GC7-CBP%f%VP-8Q%f%934-YTG%f%XG_MAK-AE________SkypeforBusiness2021Volume
-16_9e7e7b8e-a0e7-467b-9749-d0de82fb7297_HXN%f%XB-J4%f%JGM-TCF%f%44-2X%f%2CV-FJV%f%VH_Retail________Standard2021Retail
-16_223a60d8-9002-4a55-abac-593f5b66ca45_2CJ%f%N4-C9%f%XK2-HFP%f%Q6-YH%f%498-82T%f%XH_MAK-AE________Standard2021Volume
-16_b99ba8c4-e257-4b70-a31a-8bd308ce7073_BQW%f%DW-NJ%f%9YF-P7Y%f%79-H6%f%DCT-MKQ%f%9C_MAK-AE________StandardSPLA2021Volume
-16_814014d3-c30b-4f63-a493-3708e0dc0ba8_T6P%f%26-NJ%f%VBR-76B%f%K8-WB%f%CDY-TX3%f%BC_Retail________VisioPro2021Retail
-16_c590605a-a08a-4cc7-8dc2-f1ffb3d06949_JNK%f%BX-MH%f%9P4-K8Y%f%YV-8C%f%G2Y-VQ2%f%C8_MAK-AE________VisioPro2021Volume
-16_16d43989-a5ef-47e2-9ff1-272784caee24_89N%f%YY-KB%f%93R-7X2%f%2F-93%f%QDF-DJ6%f%YM_Retail________VisioStd2021Retail
-16_d55f90ee-4ba2-4d02-b216-1300ee50e2af_BW4%f%3B-4P%f%NFP-V63%f%7F-23%f%TR2-J47%f%TX_MAK-AE________VisioStd2021Volume
-16_fb33d997-4aa3-494e-8b58-03e9ab0f181d_VNC%f%C4-CJ%f%QVK-BKX%f%34-77%f%Y8H-CYX%f%MR_Retail________Word2021Retail
-16_0c728382-95fb-4a55-8f12-62e605f91727_BJG%f%97-NW%f%3GM-8QQ%f%Q7-FH%f%76G-686%f%XM_MAK-AE________Word2021Volume
-16_6337137e-7c07-4197-8986-bece6a76fc33_2P3%f%C9-BQ%f%NJH-VCV%f%PH-YD%f%Y6M-43J%f%PQ_Subscription__O365BusinessRetail
-16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_W62%f%NQ-26%f%7QR-RTF%f%74-PF%f%2MH-JQM%f%TH_Subscription__O365EduCloudRetail
-16_537ea5b5-7d50-4876-bd38-a53a77caca32_J2W%f%28-TN%f%9C8-26P%f%WV-F7%f%J4G-72X%f%CB_Subscription1_O365HomePremRetail
-16_149dbce7-a48e-44db-8364-a53386cd4580_2N3%f%82-D6%f%PKK-QTX%f%4D-2J%f%JYK-M96%f%P2_Subscription1_O365ProPlusRetail
-16_bacd4614-5bef-4a5e-bafc-de4c788037a2_HN8%f%JP-87%f%TQJ-PBF%f%3P-Y6%f%6KC-W2K%f%9V_Subscription1_O365SmallBusPremRetail
+15_ab4d047b-97cf-4126-a69f-34df08e2f254_B7%f%RFY-7N%f%XPK-Q43%f%42-Y9%f%X2H-3JX%f%4X_Retail________AccessRetail
+15_4374022d-56b8-48c1-9bb7-d8f2fc726343_9M%f%F9G-CN%f%32B-HV7%f%XT-9X%f%J8T-9KV%f%F4_MAK___________AccessVolume
+15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_NT%f%889-MB%f%H4X-8MD%f%4H-X8%f%R2D-WQH%f%F8_Retail________ExcelRetail
+15_ac1ae7fd-b949-4e04-a330-849bc40638cf_Y3%f%N36-YC%f%HDK-XYW%f%BG-KY%f%QVV-BDT%f%J2_MAK___________ExcelVolume
+15_cfaf5356-49e3-48a8-ab3c-e729ab791250_BM%f%K4W-6N%f%88B-BP9%f%QR-PH%f%FCK-MG7%f%GF_Retail________GrooveRetail
+15_4825ac28-ce41-45a7-9e6e-1fed74057601_RN%f%84D-7H%f%CWY-FTC%f%BK-JM%f%XWM-HT7%f%GJ_MAK___________GrooveVolume
+15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_2W%f%QNF-GB%f%K4B-XVG%f%6F-BB%f%MX7-M4F%f%2Y_OEM-Perp______HomeBusinessPipcRetail
+15_a2b90e7a-a797-4713-af90-f0becf52a1dd_YW%f%D4R-CN%f%KVT-VG8%f%VJ-93%f%33B-RCW%f%9F_Subscription__HomeBusinessRetail
+15_f2de350d-3028-410a-bfae-283e00b44d0e_6W%f%W3N-BD%f%GM9-PCC%f%HD-9Q%f%PP9-P34%f%QG_Subscription__HomeStudentRetail
+15_44984381-406e-4a35-b1c3-e54f499556e2_RV%f%7NQ-HY%f%3WW-7CK%f%WH-QT%f%VMW-29V%f%HC_Retail________InfoPathRetail
+15_9e016989-4007-42a6-8051-64eb97110cf2_C4%f%TGN-QQ%f%W6Y-FYK%f%XC-6W%f%JW7-X73%f%VG_MAK___________InfoPathVolume
+15_9103f3ce-1084-447a-827e-d6097f68c895_6M%f%DN4-WF%f%3FV-4WH%f%3Q-W6%f%99V-RGC%f%MY_PrepidBypass__LyncAcademicRetail
+15_ff693bf4-0276-4ddb-bb42-74ef1a0c9f4d_N4%f%2BF-CB%f%Y9F-W2C%f%7R-X3%f%97X-DYF%f%QW_PrepidBypass__LyncEntryRetail
+15_fada6658-bfc6-4c4e-825a-59a89822cda8_89%f%P23-2N%f%K2R-JXM%f%2M-3Q%f%8R8-BWM%f%3Y_Retail________LyncRetail
+15_e1264e10-afaf-4439-a98b-256df8bb156f_3W%f%KCD-RN%f%489-4M7%f%XJ-GJ%f%2GQ-YBF%f%Q6_MAK___________LyncVolume
+15_69ec9152-153b-471a-bf35-77ec88683eae_VN%f%WHF-FK%f%FBW-Q2R%f%GD-HY%f%HWF-R3H%f%H2_Subscription__MondoRetail
+15_f33485a0-310b-4b72-9a0e-b1d605510dbd_2Y%f%NYQ-FQ%f%MVG-CB8%f%KW-6X%f%KYD-M7R%f%RJ_MAK___________MondoVolume
+15_3391e125-f6e4-4b1e-899c-a25e6092d40d_4T%f%GWV-6N%f%9P6-G2H%f%8Y-2H%f%WKB-B4F%f%F4_Bypass________OneNoteFreeRetail
+15_8b524bcc-67ea-4876-a509-45e46f6347e8_3K%f%XXQ-PV%f%N2C-8P7%f%YY-HC%f%V88-GVG%f%Q6_Retail________OneNoteRetail
+15_b067e965-7521-455b-b9f7-c740204578a2_JD%f%MWF-NJ%f%C7B-HRC%f%HY-WF%f%T8G-BPX%f%D9_MAK___________OneNoteVolume
+15_12004b48-e6c8-4ffa-ad5a-ac8d4467765a_9N%f%4RQ-CF%f%8R2-HBV%f%CB-J3%f%C9V-94P%f%4D_Retail________OutlookRetail
+15_8d577c50-ae5e-47fd-a240-24986f73d503_HN%f%G29-GG%f%WRG-RFC%f%8C-JT%f%FP4-2J9%f%FH_MAK___________OutlookVolume
+15_5aab8561-1686-43f7-9ff5-2c861da58d17_9C%f%YB3-NF%f%MRW-YFD%f%G6-XC%f%7TF-BY3%f%6J_OEM-Perp______PersonalPipcRetail
+15_17e9df2d-ed91-4382-904b-4fed6a12caf0_2N%f%CQJ-MF%f%RMH-TXV%f%83-J7%f%V4C-RVR%f%WC_Retail________PersonalRetail
+15_31743b82-bfbc-44b6-aa12-85d42e644d5b_HV%f%MN2-KP%f%HQH-DVQ%f%MK-7B%f%3CM-FGB%f%FC_Retail________PowerPointRetail
+15_e40dcb44-1d5c-4085-8e8f-943f33c4f004_47%f%DKN-HP%f%JP7-RF9%f%M3-VC%f%YT2-TMQ%f%4G_MAK___________PowerPointVolume
+15_064383fa-1538-491c-859b-0ecab169a0ab_N3%f%QMM-GK%f%DT3-JQG%f%X6-7X%f%3MQ-4GB%f%G3_Retail________ProPlusRetail
+15_2b88c4f2-ea8f-43cd-805e-4d41346e18a7_QK%f%HNX-M9%f%GGH-T3Q%f%MW-YP%f%K4Q-QRP%f%9V_MAK___________ProPlusVolume
+15_4e26cac1-e15a-4467-9069-cb47b67fe191_CF%f%9DD-6C%f%NW2-BJW%f%JQ-CV%f%CFX-Y7T%f%XD_OEM-Perp______ProfessionalPipcRetail
+15_44bc70e2-fb83-4b09-9082-e5557e0c2ede_MB%f%QBN-CQ%f%PT6-PXR%f%MC-TY%f%JFR-3C8%f%MY_Retail________ProfessionalRetail
+15_2f72340c-b555-418d-8b46-355944fe66b8_WP%f%Y8N-PD%f%PY4-FC7%f%TF-KM%f%P7P-KWY%f%FY_Subscription__ProjectProRetail
+15_ed34dc89-1c27-4ecd-8b2f-63d0f4cedc32_WF%f%CT2-NB%f%FQ7-JD7%f%VV-MF%f%JX6-6F2%f%CM_MAK___________ProjectProVolume
+15_58d95b09-6af6-453d-a976-8ef0ae0316b1_NT%f%HQT-VK%f%K6W-BRB%f%87-HV%f%346-Y96%f%W8_Subscription__ProjectStdRetail
+15_2b9e4a37-6230-4b42-bee2-e25ce86c8c7a_3C%f%NQX-T3%f%4TY-99R%f%H4-C4%f%YD2-KWY%f%GV_MAK___________ProjectStdVolume
+15_c3a0814a-70a4-471f-af37-2313a6331111_TW%f%NCJ-YR%f%84W-X7P%f%PF-6D%f%PRP-D67%f%VC_Retail________PublisherRetail
+15_38ea49f6-ad1d-43f1-9888-99a35d7c9409_DJ%f%PHV-NC%f%JV6-GWP%f%T6-K2%f%6JX-C7G%f%X6_MAK___________PublisherVolume
+15_ba3e3833-6a7e-445a-89d0-7802a9a68588_3N%f%Y6J-WH%f%T3F-47B%f%DV-JH%f%F36-234%f%3W_PrepidBypass__SPDRetail
+15_32255c0a-16b4-4ce2-b388-8a4267e219eb_V6%f%VWN-KC%f%2HR-YYD%f%D6-9V%f%7HQ-7T7%f%VP_Retail________StandardRetail
+15_a24cca51-3d54-4c41-8a76-4031f5338cb2_9T%f%N6B-PC%f%YH4-MCV%f%DQ-KT%f%83C-TMQ%f%7T_MAK___________StandardVolume
+15_a56a3b37-3a35-4bbb-a036-eee5f1898eee_NV%f%K2G-2M%f%Y4G-7JX%f%2P-7D%f%6F2-VFQ%f%BR_Subscription__VisioProRetail
+15_3e4294dd-a765-49bc-8dbd-cf8b62a4bd3d_YN%f%7CF-XR%f%H6R-CGK%f%RY-GK%f%PV3-BG7%f%WF_MAK___________VisioProVolume
+15_980f9e3e-f5a8-41c8-8596-61404addf677_NC%f%RB7-VP%f%48F-43F%f%YY-62%f%P3R-367%f%WK_Subscription__VisioStdRetail
+15_44a1f6ff-0876-4edb-9169-dbb43101ee89_RX%f%63Y-4N%f%FK2-XTY%f%C8-C6%f%B3W-YPX%f%PJ_MAK___________VisioStdVolume
+15_191509f2-6977-456f-ab30-cf0492b1e93a_NB%f%77V-RP%f%FQ6-PMM%f%KQ-T8%f%7DV-M4D%f%84_Retail________WordRetail
+15_9cedef15-be37-4ff0-a08a-13a045540641_RP%f%HPB-Y7%f%NC4-3VY%f%FM-DW%f%7VD-G8Y%f%J8_MAK___________WordVolume
+15_6337137e-7c07-4197-8986-bece6a76fc33_2P%f%3C9-BQ%f%NJH-VCV%f%PH-YD%f%Y6M-43J%f%PQ_Subscription__O365BusinessRetail
+15_537ea5b5-7d50-4876-bd38-a53a77caca32_J2%f%W28-TN%f%9C8-26P%f%WV-F7%f%J4G-72X%f%CB_Subscription1_O365HomePremRetail
+15_149dbce7-a48e-44db-8364-a53386cd4580_2N%f%382-D6%f%PKK-QTX%f%4D-2J%f%JYK-M96%f%P2_Subscription1_O365ProPlusRetail
+15_bacd4614-5bef-4a5e-bafc-de4c788037a2_HN%f%8JP-87%f%TQJ-PBF%f%3P-Y6%f%6KC-W2K%f%9V_Subscription1_O365SmallBusPremRetail
+16_bfa358b0-98f1-4125-842e-585fa13032e6_WH%f%K4N-YQ%f%GHB-XWX%f%CC-G3%f%HYC-6JF%f%94_Retail________AccessRetail
+16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_RN%f%B7V-P4%f%8F4-3FY%f%Y6-2P%f%3R3-63B%f%QV_PrepidBypass__AccessRuntimeRetail
+16_3b2fa33f-cd5a-43a5-bd95-f49f3f546b0b_JJ%f%2Y4-N8%f%KM3-Y8K%f%Y3-Y2%f%2FR-R3K%f%VK_MAK___________AccessVolume
+16_424d52ff-7ad2-4bc7-8ac6-748d767b455d_RK%f%JBN-VW%f%TM2-BDK%f%XX-RK%f%QFD-JTY%f%Q2_Retail________ExcelRetail
+16_685062a7-6024-42e7-8c5f-6bb9e63e697f_FV%f%GNR-X8%f%2B2-6PR%f%JM-YT%f%4W7-8HV%f%36_MAK___________ExcelVolume
+16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_2W%f%QNF-GB%f%K4B-XVG%f%6F-BB%f%MX7-M4F%f%2Y_OEM-Perp______HomeBusinessPipcRetail
+16_86834d00-7896-4a38-8fae-32f20b86fa2b_HM%f%6FM-NV%f%F78-KV9%f%PM-F3%f%6B8-D9M%f%XD_Retail________HomeBusinessRetail
+16_c28acdb8-d8b3-4199-baa4-024d09e97c99_PN%f%PRV-F2%f%627-Q8J%f%VC-3D%f%GR9-WTY%f%RK_Retail________HomeStudentRetail
+16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_YW%f%D4R-CN%f%KVT-VG8%f%VJ-93%f%33B-RC3%f%B8_Retail________HomeStudentVNextRetail
+16_69ec9152-153b-471a-bf35-77ec88683eae_VN%f%WHF-FK%f%FBW-Q2R%f%GD-HY%f%HWF-R3H%f%H2_Subscription__MondoRetail
+16_2cd0ea7e-749f-4288-a05e-567c573b2a6c_FM%f%TQQ-84%f%NR8-274%f%4R-MX%f%F4P-PGY%f%R3_MAK___________MondoVolume
+16_436366de-5579-4f24-96db-3893e4400030_XY%f%NTG-R9%f%6FY-369%f%HX-YF%f%PHY-F9C%f%PM_Bypass________OneNoteFreeRetail
+16_83ac4dd9-1b93-40ed-aa55-ede25bb6af38_FX%f%F6F-CN%f%C26-W64%f%3C-K6%f%KB7-6XX%f%W3_Retail________OneNoteRetail
+16_23b672da-a456-4860-a8f3-e062a501d7e8_9T%f%YVN-D7%f%6HK-BVM%f%WT-Y7%f%G88-9TP%f%PV_MAK___________OneNoteVolume
+16_5a670809-0983-4c2d-8aad-d3c2c5b7d5d1_7N%f%4KG-P2%f%QDH-86V%f%9C-DJ%f%FVF-369%f%W9_Retail________OutlookRetail
+16_50059979-ac6f-4458-9e79-710bcb41721a_7Q%f%PNR-3H%f%FDG-YP6%f%T9-JQ%f%CKQ-KKX%f%XC_MAK___________OutlookVolume
+16_5aab8561-1686-43f7-9ff5-2c861da58d17_9C%f%YB3-NF%f%MRW-YFD%f%G6-XC%f%7TF-BY3%f%6J_OEM-Perp______PersonalPipcRetail
+16_a9f645a1-0d6a-4978-926a-abcb363b72a6_FT%f%7VF-XB%f%N92-HPD%f%JV-RH%f%MBY-6VK%f%BF_Retail________PersonalRetail
+16_f32d1284-0792-49da-9ac6-deb2bc9c80b6_N7%f%GCB-WQ%f%T7K-QRH%f%WG-TT%f%PYD-7T9%f%XF_Retail________PowerPointRetail
+16_9b4060c9-a7f5-4a66-b732-faf248b7240f_X3%f%RT9-ND%f%G64-VMK%f%2M-KQ%f%6XY-DPF%f%GV_MAK___________PowerPointVolume
+16_de52bd50-9564-4adc-8fcb-a345c17f84f9_GM%f%43N-F7%f%42Q-6JD%f%DK-M6%f%22J-J8G%f%DV_Retail________ProPlusRetail
+16_c47456e3-265d-47b6-8ca0-c30abbd0ca36_FN%f%VK8-8D%f%VCJ-F7X%f%3J-KG%f%VQB-RC2%f%QY_MAK___________ProPlusVolume
+16_4e26cac1-e15a-4467-9069-cb47b67fe191_CF%f%9DD-6C%f%NW2-BJW%f%JQ-CV%f%CFX-Y7T%f%XD_OEM-Perp______ProfessionalPipcRetail
+16_d64edc00-7453-4301-8428-197343fafb16_NX%f%FTK-YD%f%9Y7-X9M%f%MJ-9B%f%WM6-J2Q%f%VH_Retail________ProfessionalRetail
+16_2f72340c-b555-418d-8b46-355944fe66b8_WP%f%Y8N-PD%f%PY4-FC7%f%TF-KM%f%P7P-KWY%f%FY_Subscription__ProjectProRetail
+16_82f502b5-b0b0-4349-bd2c-c560df85b248_PK%f%C3N-8F%f%99H-28M%f%VY-J4%f%RYY-CWG%f%DH_MAK___________ProjectProVolume
+16_16728639-a9ab-4994-b6d8-f81051e69833_JB%f%NPH-YF%f%2F7-Q9Y%f%29-86%f%CTG-C9Y%f%GV_MAKC2R________ProjectProXVolume
+16_58d95b09-6af6-453d-a976-8ef0ae0316b1_NT%f%HQT-VK%f%K6W-BRB%f%87-HV%f%346-Y96%f%W8_Subscription__ProjectStdRetail
+16_82e6b314-2a62-4e51-9220-61358dd230e6_4T%f%GWV-6N%f%9P6-G2H%f%8Y-2H%f%WKB-B4G%f%93_MAK___________ProjectStdVolume
+16_431058f0-c059-44c5-b9e7-ed2dd46b6789_N3%f%W2Q-69%f%MBT-27R%f%D9-BH%f%8V3-JT2%f%C8_MAKC2R________ProjectStdXVolume
+16_6e0c1d99-c72e-4968-bcb7-ab79e03e201e_WK%f%WND-X6%f%G9G-CDM%f%TV-CP%f%GYJ-6MV%f%BF_Retail________PublisherRetail
+16_fcc1757b-5d5f-486a-87cf-c4d6dedb6032_9Q%f%VN2-PX%f%XRX-8V4%f%W8-Q7%f%926-TJG%f%D8_MAK___________PublisherVolume
+16_9103f3ce-1084-447a-827e-d6097f68c895_6M%f%DN4-WF%f%3FV-4WH%f%3Q-W6%f%99V-RGC%f%MY_PrepidBypass__SkypeServiceBypassRetail
+16_971cd368-f2e1-49c1-aedd-330909ce18b6_4N%f%4D8-3J%f%7Y3-YYW%f%7C-73%f%HD2-V8R%f%HY_PrepidBypass__SkypeforBusinessEntryRetail
+16_418d2b9f-b491-4d7f-84f1-49e27cc66597_PB%f%J79-77%f%NY4-VRG%f%FG-Y8%f%WYC-CKC%f%RC_Retail________SkypeforBusinessRetail
+16_03ca3b9a-0869-4749-8988-3cbc9d9f51bb_DM%f%TCJ-KN%f%RKR-JV8%f%TQ-V2%f%CR2-VFT%f%FH_MAK___________SkypeforBusinessVolume
+16_4a31c291-3a12-4c64-b8ab-cd79212be45e_2F%f%PWN-4H%f%6CM-KD8%f%QQ-8H%f%CHC-P9X%f%YW_Retail________StandardRetail
+16_0ed94aac-2234-4309-ba29-74bdbb887083_WH%f%GMQ-JN%f%MGT-MDQ%f%VF-WD%f%R69-KQB%f%WC_MAK___________StandardVolume
+16_a56a3b37-3a35-4bbb-a036-eee5f1898eee_NV%f%K2G-2M%f%Y4G-7JX%f%2P-7D%f%6F2-VFQ%f%BR_Subscription__VisioProRetail
+16_295b2c03-4b1c-4221-b292-1411f468bd02_NR%f%KT9-C8%f%GP2-XDY%f%XQ-YW%f%72K-MG9%f%2B_MAK___________VisioProVolume
+16_0594dc12-8444-4912-936a-747ca742dbdb_G9%f%8Q2-B6%f%N77-CFH%f%9J-K8%f%24G-XQC%f%C4_MAKC2R________VisioProXVolume
+16_980f9e3e-f5a8-41c8-8596-61404addf677_NC%f%RB7-VP%f%48F-43F%f%YY-62%f%P3R-367%f%WK_Subscription__VisioStdRetail
+16_44151c2d-c398-471f-946f-7660542e3369_XN%f%CJB-YY%f%883-JRW%f%64-DP%f%XMX-JXC%f%R6_MAK___________VisioStdVolume
+16_1d1c6879-39a3-47a5-9a6d-aceefa6a289d_B2%f%HTN-JP%f%H8C-J6Y%f%6V-HC%f%HKB-43M%f%GT_MAKC2R________VisioStdXVolume
+16_cacaa1bf-da53-4c3b-9700-11738ef1c2a5_P8%f%K82-NQ%f%7GG-JKY%f%8T-6V%f%HVY-88G%f%GD_Retail________WordRetail
+16_c3000759-551f-4f4a-bcac-a4b42cbf1de2_YH%f%MWC-YN%f%6V9-WJP%f%XD-3W%f%QKP-TMV%f%CV_MAK___________WordVolume
+16_518687bd-dc55-45b9-8fa6-f918e1082e83_WR%f%YJ6-G3%f%NP7-7VH%f%94-8X%f%7KP-JB7%f%HC_Retail________Access2019Retail
+16_385b91d6-9c2c-4a2e-86b5-f44d44a48c5f_6F%f%WHX-NK%f%YXK-BW3%f%4Q-7X%f%C9F-Q9P%f%X7_MAK-AE________Access2019Volume
+16_22e6b96c-1011-4cd5-8b35-3c8fb6366b86_FG%f%QNJ-JW%f%JCG-7Q8%f%MG-RM%f%RGJ-9TQ%f%VF_PrepidBypass__AccessRuntime2019Retail
+16_c201c2b7-02a1-41a8-b496-37c72910cd4a_KB%f%PNW-64%f%CMM-8KW%f%CB-23%f%F44-8B7%f%HM_Retail________Excel2019Retail
+16_05cb4e1d-cc81-45d5-a769-f34b09b9b391_8N%f%T4X-GQ%f%MCK-62X%f%4P-TW%f%6QP-YKP%f%YF_MAK-AE________Excel2019Volume
+16_7fe09eef-5eed-4733-9a60-d7019df11cac_QB%f%N2Y-9B%f%284-9KW%f%78-K4%f%8PB-R62%f%YT_Retail________HomeBusiness2019Retail
+16_4539aa2c-5c31-4d47-9139-543a868e5741_XN%f%WPM-32%f%XQC-Y7Q%f%JC-QG%f%GBV-YY7%f%JK_Retail________HomeStudent2019Retail
+16_20e359d5-927f-47c0-8a27-38adbdd27124_WR%f%43D-NM%f%WQQ-HCQ%f%R2-VK%f%XDR-37B%f%7H_Retail________Outlook2019Retail
+16_92a99ed8-2923-4cb7-a4c5-31da6b0b8cf3_RN%f%3QB-GT%f%6D7-YB3%f%VH-F3%f%RPB-3GQ%f%YB_MAK-AE________Outlook2019Volume
+16_2747b731-0f1f-413e-a92d-386ec1277dd8_NM%f%BY8-V3%f%CV7-BX6%f%K6-29%f%22Y-43M%f%7T_Retail________Personal2019Retail
+16_7e63cc20-ba37-42a1-822d-d5f29f33a108_HN%f%27K-JH%f%J8R-7T7%f%KK-WJ%f%YC3-FM7%f%MM_Retail________PowerPoint2019Retail
+16_13c2d7bf-f10d-42eb-9e93-abf846785434_29%f%GNM-VM%f%33V-WR2%f%3K-HG%f%2DT-KTQ%f%YR_MAK-AE________PowerPoint2019Volume
+16_a3072b8f-adcc-4e75-8d62-fdeb9bdfae57_BN%f%4XJ-R9%f%DYY-96W%f%48-YK%f%8DM-MY7%f%PY_Retail________ProPlus2019Retail
+16_6755c7a7-4dfe-46f5-bce8-427be8e9dc62_T8%f%YBN-4Y%f%V3X-KK2%f%4Q-QX%f%BD7-T3C%f%63_MAK-AE________ProPlus2019Volume
+16_1717c1e0-47d3-4899-a6d3-1022db7415e0_9N%f%XDK-MR%f%Y98-2VJ%f%V8-GF%f%73J-TQ9%f%FK_Retail________Professional2019Retail
+16_0d270ef7-5aaf-4370-a372-bc806b96adb7_JD%f%TNC-PP%f%77T-T9H%f%2W-G4%f%J2J-VH8%f%JK_Retail________ProjectPro2019Retail
+16_d4ebadd6-401b-40d5-adf4-a5d4accd72d1_TB%f%XBD-FN%f%WKJ-WRH%f%BD-KB%f%PHH-XD9%f%F2_MAK-AE________ProjectPro2019Volume
+16_bb7ffe5f-daf9-4b79-b107-453e1c8427b5_R3%f%JNT-8P%f%BDP-MTW%f%CK-VD%f%2V8-HMK%f%F9_Retail________ProjectStd2019Retail
+16_fdaa3c03-dc27-4a8d-8cbf-c3d843a28ddc_RB%f%RFX-MQ%f%NDJ-4XF%f%HF-7Q%f%VDR-JHX%f%GC_MAK-AE________ProjectStd2019Volume
+16_f053a7c7-f342-4ab8-9526-a1d6e5105823_4Q%f%C36-NW%f%3YH-D2Y%f%9D-RJ%f%PC7-VVB%f%9D_Retail________Publisher2019Retail
+16_40055495-be00-444e-99cc-07446729b53e_K8%f%F2D-NB%f%M32-BF2%f%6V-YC%f%KFJ-29Y%f%9W_MAK-AE________Publisher2019Volume
+16_b639e55c-8f3e-47fe-9761-26c6a786ad6b_JB%f%DKF-6N%f%CD6-49K%f%3G-2T%f%V79-BKP%f%73_Retail________SkypeforBusiness2019Retail
+16_15a430d4-5e3f-4e6d-8a0a-14bf3caee4c7_9M%f%NQ7-YP%f%Q3B-6WJ%f%XM-G8%f%3T3-CBB%f%DK_MAK-AE________SkypeforBusiness2019Volume
+16_f88cfdec-94ce-4463-a969-037be92bc0e7_N9%f%722-BV%f%9H6-WTJ%f%TT-FP%f%B93-978%f%MK_PrepidBypass__SkypeforBusinessEntry2019Retail
+16_fdfa34dd-a472-4b85-bee6-cf07bf0aaa1c_ND%f%GVM-MD%f%27H-2XH%f%VC-KD%f%DX2-YKP%f%74_Retail________Standard2019Retail
+16_beb5065c-1872-409e-94e2-403bcfb6a878_NT%f%3V6-XM%f%BK7-Q66%f%MF-VM%f%KR4-FC3%f%3M_MAK-AE________Standard2019Volume
+16_a6f69d68-5590-4e02-80b9-e7233dff204e_2N%f%WVW-QG%f%F4T-9CP%f%MB-WY%f%DQ9-7XP%f%79_Retail________VisioPro2019Retail
+16_f41abf81-f409-4b0d-889d-92b3e3d7d005_33%f%YF4-GN%f%CQ3-J6G%f%DM-J6%f%7P3-FM7%f%QP_MAK-AE________VisioPro2019Volume
+16_4a582021-18c2-489f-9b3d-5186de48f1cd_26%f%3WK-3N%f%797-7R4%f%37-28%f%BKG-3V8%f%M8_Retail________VisioStd2019Retail
+16_933ed0e3-747d-48b0-9c2c-7ceb4c7e473d_BG%f%NHX-QT%f%PRJ-F9C%f%9G-R8%f%QQG-8T2%f%7F_MAK-AE________VisioStd2019Volume
+16_72cee1c2-3376-4377-9f25-4024b6baadf8_JX%f%R8H-NJ%f%3MK-X66%f%W8-78%f%CWD-QRV%f%R2_Retail________Word2019Retail
+16_fe5fe9d5-3b06-4015-aa35-b146f85c4709_9F%f%36R-PN%f%VHH-3DX%f%GQ-7C%f%D2H-R9D%f%3V_MAK-AE________Word2019Volume
+16_f634398e-af69-48c9-b256-477bea3078b5_P2%f%86B-N3%f%XYP-36Q%f%RQ-29%f%CMP-RVX%f%9M_Retail________Access2021Retail
+16_ae17db74-16b0-430b-912f-4fe456e271db_JB%f%H3N-P9%f%7FP-FRT%f%JD-MG%f%K2C-VFW%f%G6_MAK-AE________Access2021Volume
+16_fb099c19-d48b-4a2f-a160-4383011060aa_V6%f%QFB-7N%f%7G9-PF7%f%W9-M8%f%FQM-MY8%f%G9_Retail________Excel2021Retail
+16_9da1ecdb-3a62-4273-a234-bf6d43dc0778_WN%f%YR4-KM%f%R9H-KVC%f%8W-7H%f%J8B-K79%f%DQ_MAK-AE________Excel2021Volume
+16_38b92b63-1dff-4be7-8483-2a839441a2bc_JM%f%99N-4M%f%MD8-DQC%f%GJ-VM%f%YFY-R63%f%YK_Subscription__HomeBusiness2021Retail
+16_2f258377-738f-48dd-9397-287e43079958_N3%f%CWD-38%f%XVH-KRX%f%2Y-YR%f%P74-6RB%f%B2_Subscription__HomeStudent2021Retail
+16_279706f4-3a4b-4877-949b-f8c299cf0cc5_NB%f%2TQ-3Y%f%79C-77C%f%6M-QM%f%Y7H-7QY%f%8P_Retail________OneNote2021Retail
+16_ecea2cfa-d406-4a7f-be0d-c6163250d126_4N%f%CWR-9V%f%92Y-34V%f%B2-RP%f%THR-YTG%f%R7_Retail________Outlook2021Retail
+16_45bf67f9-0fc8-4335-8b09-9226cef8a576_JQ%f%9MJ-QY%f%N6B-67P%f%X9-GY%f%FVY-QJ6%f%TB_MAK-AE________Outlook2021Volume
+16_8f89391e-eedb-429d-af90-9d36fbf94de6_RR%f%RYB-DN%f%749-GCP%f%W4-9H%f%6VK-HCH%f%PT_Retail________Personal2021Retail
+16_c9bf5e86-f5e3-4ac6-8d52-e114a604d7bf_3K%f%XXQ-PV%f%N2C-8P7%f%YY-HC%f%V88-GVM%f%96_Retail1_______PowerPoint2021Retail
+16_716f2434-41b6-4969-ab73-e61e593a3875_39%f%G2N-3B%f%D9C-C4X%f%CM-BD%f%4QG-FVY%f%DY_MAK-AE________PowerPoint2021Volume
+16_c2f04adf-a5de-45c5-99a5-f5fddbda74a8_8W%f%XTP-MN%f%628-KY4%f%4G-VJ%f%WCK-C7P%f%CF_Retail________ProPlus2021Retail
+16_3f180b30-9b05-4fe2-aa8d-0c1c4790f811_RN%f%HJY-DT%f%FXW-HW9%f%F8-49%f%82D-MD2%f%CW_MAK-AE1_______ProPlus2021Volume
+16_96097a68-b5c5-4b19-8600-2e8d6841a0db_JR%f%JNJ-33%f%M7C-R73%f%X3-P9%f%XF7-R9F%f%6M_MAK-AE________ProPlusSPLA2021Volume
+16_711e48a6-1a79-4b00-af10-73f4ca3aaac4_DJ%f%PHV-NC%f%JV6-GWP%f%T6-K2%f%6JX-C7P%f%BG_Retail________Professional2021Retail
+16_3747d1d5-55a8-4bc3-b53d-19fff1913195_QK%f%HNX-M9%f%GGH-T3Q%f%MW-YP%f%K4Q-QRW%f%MV_Retail________ProjectPro2021Retail
+16_17739068-86c4-4924-8633-1e529abc7efc_HV%f%C34-CV%f%NPG-RVC%f%MT-X2%f%JRF-CR7%f%RK_MAK-AE1_______ProjectPro2021Volume
+16_4ea64dca-227c-436b-813f-b6624be2d54c_2B%f%96V-X9%f%NJY-WFB%f%RC-Q8%f%MP2-7CH%f%RR_Retail________ProjectStd2021Retail
+16_84313d1e-47c8-4e27-8ced-0476b7ee46c4_3C%f%NQX-T3%f%4TY-99R%f%H4-C4%f%YD2-KW6%f%WH_MAK-AE________ProjectStd2021Volume
+16_b769b746-53b1-4d89-8a68-41944dafe797_CD%f%NFG-77%f%T8D-VKQ%f%JX-B7%f%KT3-KK2%f%8V_Retail1_______Publisher2021Retail
+16_a0234cfe-99bd-4586-a812-4f296323c760_2K%f%XJH-3N%f%HTW-RDB%f%PX-QF%f%RXJ-MTG%f%XF_MAK-AE________Publisher2021Volume
+16_c3fb48b2-1fd4-4dc8-af39-819edf194288_DV%f%BXN-HF%f%T43-CVP%f%RQ-J8%f%9TF-VMM%f%HG_Retail________SkypeforBusiness2021Retail
+16_6029109c-ceb8-4ee5-b324-f8eb2981e99a_R3%f%FCY-NH%f%GC7-CBP%f%VP-8Q%f%934-YTG%f%XG_MAK-AE________SkypeforBusiness2021Volume
+16_9e7e7b8e-a0e7-467b-9749-d0de82fb7297_HX%f%NXB-J4%f%JGM-TCF%f%44-2X%f%2CV-FJV%f%VH_Retail________Standard2021Retail
+16_223a60d8-9002-4a55-abac-593f5b66ca45_2C%f%JN4-C9%f%XK2-HFP%f%Q6-YH%f%498-82T%f%XH_MAK-AE________Standard2021Volume
+16_b99ba8c4-e257-4b70-a31a-8bd308ce7073_BQ%f%WDW-NJ%f%9YF-P7Y%f%79-H6%f%DCT-MKQ%f%9C_MAK-AE________StandardSPLA2021Volume
+16_814014d3-c30b-4f63-a493-3708e0dc0ba8_T6%f%P26-NJ%f%VBR-76B%f%K8-WB%f%CDY-TX3%f%BC_Retail________VisioPro2021Retail
+16_c590605a-a08a-4cc7-8dc2-f1ffb3d06949_JN%f%KBX-MH%f%9P4-K8Y%f%YV-8C%f%G2Y-VQ2%f%C8_MAK-AE________VisioPro2021Volume
+16_16d43989-a5ef-47e2-9ff1-272784caee24_89%f%NYY-KB%f%93R-7X2%f%2F-93%f%QDF-DJ6%f%YM_Retail________VisioStd2021Retail
+16_d55f90ee-4ba2-4d02-b216-1300ee50e2af_BW%f%43B-4P%f%NFP-V63%f%7F-23%f%TR2-J47%f%TX_MAK-AE________VisioStd2021Volume
+16_fb33d997-4aa3-494e-8b58-03e9ab0f181d_VN%f%CC4-CJ%f%QVK-BKX%f%34-77%f%Y8H-CYX%f%MR_Retail________Word2021Retail
+16_0c728382-95fb-4a55-8f12-62e605f91727_BJ%f%G97-NW%f%3GM-8QQ%f%Q7-FH%f%76G-686%f%XM_MAK-AE________Word2021Volume
+16_6337137e-7c07-4197-8986-bece6a76fc33_2P%f%3C9-BQ%f%NJH-VCV%f%PH-YD%f%Y6M-43J%f%PQ_Subscription__O365BusinessRetail
+16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_W6%f%2NQ-26%f%7QR-RTF%f%74-PF%f%2MH-JQM%f%TH_Subscription__O365EduCloudRetail
+16_537ea5b5-7d50-4876-bd38-a53a77caca32_J2%f%W28-TN%f%9C8-26P%f%WV-F7%f%J4G-72X%f%CB_Subscription1_O365HomePremRetail
+16_149dbce7-a48e-44db-8364-a53386cd4580_2N%f%382-D6%f%PKK-QTX%f%4D-2J%f%JYK-M96%f%P2_Subscription1_O365ProPlusRetail
+16_bacd4614-5bef-4a5e-bafc-de4c788037a2_HN%f%8JP-87%f%TQJ-PBF%f%3P-Y6%f%6KC-W2K%f%9V_Subscription1_O365SmallBusPremRetail
 ) do (
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do (
-if %1==getinfo if %oVer%==%%A if "%2"=="%%E" (set _key=%%C& set _actid=%%B& set _allactid=!_allactid! %%B&set _lic=%%D)
 
-if %1==getmsiprod if %oVer%==%%A (find /i "%%E" %msitemp% %nul% && (if defined _oIds (set _oIds=!_oIds! %%E) else (set _oIds=%%E)))
+if %1==getinfo if not defined _key (
+if %oVer%==%%A if /i "%2"=="%%E" (
+set _key=%%C
+set _actid=%%B
+set _allactid=!_allactid! %%B
+set _lic=%%D
+if %oVer%==16 (echo "%%D" | find /i "Subscription" %nul% && set _sublic=1)
+)
+)
+
+if %1==getmsiprod if %oVer%==%%A (
+find /i "%%E" %msitemp% %nul% && (
+if defined _oIds (set _oIds=!_oIds! %%E) else (set _oIds=%%E)
+)
+)
 
 )
 )
@@ -2751,7 +2748,6 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 :+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 :KMS38Activation
-
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -2959,7 +2955,7 @@ echo Evaluation Editions cannot be activated.
 echo You need to install full version of %winos%
 echo:
 echo Download it from here,
-echo https://%mas%/genuine-installation-media.html
+echo %mas%genuine-installation-media.html
 )
 goto dk_done
 )
@@ -2978,7 +2974,7 @@ if not exist "!_work!\clipup.exe" (
 echo clipup.exe doesn't exist in Server Cor/Acor [No GUI] version.
 echo It's required for KMS38 Activation.
 echo Check below page on how to activate it.
-echo https://%mas%/kms38.html
+echo %mas%kms38.html
 goto dk_done
 )
 )
@@ -3091,7 +3087,7 @@ if not defined key if not defined _gvlk (
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 echo Unable to find this product in the supported product list.
 echo Make sure you are using updated version of the script.
-echo https://%mas%
+echo %mas%
 echo:
 goto dk_done
 )
@@ -3319,7 +3315,7 @@ goto :k_final
 
 call :dk_color %Red% "Activation Failed"
 if not defined error call :dk_color %Blue% "%_fixmsg%"
-call :dk_color2 %Blue% "Check this page for help" %_Yellow% " https://%mas%/troubleshoot"
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%troubleshoot"
 
 ::========================================================================================================================================
 
@@ -3344,7 +3340,7 @@ if defined _k38 (
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([ScriptBlock]::Create($f[1])) -protect;"
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg query "HKLM\%specific_kms%" && (
-call :dk_color %Blue% "Protect KMS38 From KMS                  [Successful] [Locked A Registry Key]"
+echo Protect KMS38 From KMS                  [Successful] [Locked A Registry Key]
 ) || (
 call :dk_color %Red% "Protect KMS38 From KMS                  [Failed To Lock A Registry Key]"
 )
@@ -7777,7 +7773,7 @@ echo %line2%
 echo ***            Office Ohook Activation Status            ***
 echo %line2%
 echo.
-powershell "write-host -back 'Black' -fore 'Yellow' 'Office is permanently activated with Ohook activation.'; write-host -back 'Black' -fore 'Yellow' 'You can ignore below Office activation status.'"
+powershell "write-host -back 'Black' -fore 'Yellow' 'Ohook for permanent Office activation is installed.'; write-host -back 'Black' -fore 'Yellow' 'You can ignore below Office activation status.'"
 echo.
 )
 
@@ -8080,7 +8076,7 @@ echo %line2%
 echo ***            Office Ohook Activation Status            ***
 echo %line2%
 echo.
-powershell "write-host -back 'Black' -fore 'Yellow' 'Office is permanently activated with Ohook activation.'; write-host -back 'Black' -fore 'Yellow' 'You can ignore below Office activation status.'"
+powershell "write-host -back 'Black' -fore 'Yellow' 'Ohook for permanent Office activation is installed.'; write-host -back 'Black' -fore 'Yellow' 'You can ignore below Office activation status.'"
 echo.
 )
 
@@ -8569,12 +8565,12 @@ choice /C:1234560 /N
 set _erl=%errorlevel%
 
 if %_erl%==7 exit /b
-if %_erl%==6 start https://%mas%/fix-wpa-registry.html &goto at_menu
+if %_erl%==6 start %mas%fix-wpa-registry.html &goto at_menu
 if %_erl%==5 goto:retokens
 if %_erl%==4 goto:fixwmi
 if %_erl%==3 goto:sfcscan
 if %_erl%==2 goto:dism_rest
-if %_erl%==1 start https://%mas%/troubleshoot.html &goto at_menu
+if %_erl%==1 start %mas%troubleshoot.html &goto at_menu
 goto :at_menu
 
 ::========================================================================================================================================
@@ -9648,7 +9644,7 @@ if not defined applist (
 %eline%
 echo Activation IDs not found. Aborting...
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 )
@@ -9714,7 +9710,7 @@ cmd /c exit /b !errorlevel!
 echo DISM command failed [Error Code - 0x!=ExitCode!]
 echo OS Edition was not detected properly. Aborting...
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 
@@ -9729,7 +9725,7 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 %eline%
 echo PowerShell is not responding properly. Aborting...
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 
@@ -9853,7 +9849,7 @@ if not defined key (
 echo [%targetedition% ^| %winbuild%]
 echo Unable to get product key from pkeyhelper.dll
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 
@@ -9899,7 +9895,7 @@ echo:
 call :dk_color %Gray% "Reboot is required to properly change the Edition."
 ) else (
 call :dk_color %Red% "[Unsuccessful] [Error Code: 0x!=ExitCode!]"
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 )
 )
 
@@ -9911,7 +9907,7 @@ echo:
 timeout /t 3 %nul1%
 echo:
 call :dk_color %Blue% "Incase of errors, you must restart your system before trying again."
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 )
 %line%
 
@@ -9941,7 +9937,7 @@ if %_stg%==0 (set stage=) else (set stage=-StageCurrent)
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':cbsxml\:.*';& ([ScriptBlock]::Create($f[1])) -SetEdition %targetedition% %stage%;"
 echo:
 call :dk_color %Blue% "Incase of errors, you must restart your system before trying again."
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 %line%
 
 goto ced_done
@@ -9968,7 +9964,7 @@ if not defined key (
 echo [%targetedition% ^| %winbuild%]
 echo Unable to get product key from pkeyhelper.dll
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 
@@ -9983,7 +9979,7 @@ echo DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 
 call :dk_color %Blue% "You must restart the system at this stage."
-echo Help: https://%mas%/troubleshoot
+echo Help: %mas%troubleshoot
 
 ::========================================================================================================================================
 

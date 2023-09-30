@@ -58,7 +58,7 @@ exit /b
 ::========================================================================================================================================
 
 set "blank="
-set "mas=mass%blank%grave.dev"
+set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 
 ::  Check if Null service is working, it's important for the batch script
 
@@ -68,7 +68,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - https://%mas%/troubleshoot.html
+echo Help - %mas%troubleshoot.html
 echo:
 echo:
 ping 127.0.0.1 -n 10
@@ -248,7 +248,7 @@ if not defined applist (
 %eline%
 echo Activation IDs not found. Aborting...
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 )
@@ -314,7 +314,7 @@ cmd /c exit /b !errorlevel!
 echo DISM command failed [Error Code - 0x!=ExitCode!]
 echo OS Edition was not detected properly. Aborting...
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 
@@ -329,7 +329,7 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 %eline%
 echo PowerShell is not responding properly. Aborting...
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 
@@ -453,7 +453,7 @@ if not defined key (
 echo [%targetedition% ^| %winbuild%]
 echo Unable to get product key from pkeyhelper.dll
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 
@@ -499,7 +499,7 @@ echo:
 call :dk_color %Gray% "Reboot is required to properly change the Edition."
 ) else (
 call :dk_color %Red% "[Unsuccessful] [Error Code: 0x!=ExitCode!]"
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 )
 )
 
@@ -511,7 +511,7 @@ echo:
 timeout /t 3 %nul1%
 echo:
 call :dk_color %Blue% "Incase of errors, you must restart your system before trying again."
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 )
 %line%
 
@@ -541,7 +541,7 @@ if %_stg%==0 (set stage=) else (set stage=-StageCurrent)
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':cbsxml\:.*';& ([ScriptBlock]::Create($f[1])) -SetEdition %targetedition% %stage%;"
 echo:
 call :dk_color %Blue% "Incase of errors, you must restart your system before trying again."
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 %line%
 
 goto ced_done
@@ -568,7 +568,7 @@ if not defined key (
 echo [%targetedition% ^| %winbuild%]
 echo Unable to get product key from pkeyhelper.dll
 echo:
-echo Check this page for help. https://%mas%/troubleshoot
+echo Check this page for help. %mas%troubleshoot
 goto ced_done
 )
 
@@ -583,7 +583,7 @@ echo DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 
 call :dk_color %Blue% "You must restart the system at this stage."
-echo Help: https://%mas%/troubleshoot
+echo Help: %mas%troubleshoot
 
 ::========================================================================================================================================
 

@@ -5,9 +5,8 @@
 <p align="center">A Windows and Office activator using HWID / Ohook / KMS38 / Online KMS activation methods, with a focus on open-source code and fewer antivirus detections.</p>
 <hr>
 
-## Note:
-
-Microsoft servers are currently rejecting HWID activation requests when activating through MAS, we're checking what's going on now. Use the KMS38 activation option for now. 
+## Note: HWID Activation is not working, use KMS38 option for now
+HWID activation is not working because of server-side changes at Microsoft. Use the KMS38 option for now. Your previously established HWID is safe. This happened because of [recent change](https://devicepartner.microsoft.com/en-us/communications/comm-windows-ends-installation-path-for-free-windows-7-8-upgrade) to not allow Windows 7/8 free upgrades.
 
 ## Download / How to use it?
 
@@ -31,8 +30,8 @@ Microsoft servers are currently rejecting HWID activation requests when activati
 To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches.html)
 
 ```
-Latest Version: 2.0
-Release date: 25-Sep-2023
+Latest Version: 2.1
+Release date: 30-Sep-2023
 ```
 
 ### [Troubleshooting / Help](https://massgrave.dev/troubleshoot.html)
