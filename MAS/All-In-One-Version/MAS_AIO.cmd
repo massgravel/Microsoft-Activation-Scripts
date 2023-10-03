@@ -229,7 +229,7 @@ setlocal EnableDelayedExpansion
 
 cls
 color 07
-title  Microsoft_Activation_Scripts 2.1
+title  Microsoft_Activation_Scripts 2.2
 mode 76, 30
 
 echo:
@@ -240,10 +240,10 @@ echo:       ______________________________________________________________
 echo:
 echo:                 Activation Methods:
 echo:
-echo:             [1] KMS38       ^|  Windows           ^|   Year 2038
+echo:             [1] HWID        ^|  Windows           ^|   Permanent
 echo:             [2] Ohook       ^|  Office            ^|   Permanent
-echo:             [3] Online KMS  ^|  Windows / Office  ^|    180 Days
-echo:             [4] HWID        ^|  Windows           ^| Not Working
+echo:             [3] KMS38       ^|  Windows           ^|   Year 2038
+echo:             [4] Online KMS  ^|  Windows / Office  ^|    180 Days
 echo:             __________________________________________________      
 echo:
 echo:             [5] Activation Status
@@ -258,15 +258,14 @@ choice /C:123456780 /N
 set _erl=%errorlevel%
 
 if %_erl%==9 exit /b
-if %_erl%==8 start %mas%troubleshoot.html & goto :MainMenu
+if %_erl%==8 start https://%mas%/troubleshoot.html & goto :MainMenu
 if %_erl%==7 goto:Extras
 if %_erl%==6 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
 if %_erl%==5 setlocal & call :_Check_Status_wmi & cls & endlocal & goto :MainMenu
-if %_erl%==4 setlocal & call :HWIDActivation    & cls & endlocal & goto :MainMenu
-if %_erl%==3 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
+if %_erl%==4 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
+if %_erl%==3 setlocal & call :KMS38Activation   & cls & endlocal & goto :MainMenu
 if %_erl%==2 setlocal & call :OhookActivation   & cls & endlocal & goto :MainMenu
-if %_erl%==1 setlocal & call :KMS38Activation   & cls & endlocal & goto :MainMenu
-
+if %_erl%==1 setlocal & call :HWIDActivation    & cls & endlocal & goto :MainMenu
 goto :MainMenu
 
 ::========================================================================================================================================
@@ -806,6 +805,7 @@ call :dk_color %Red% "Changing Windows Region To USA          [Failed]"
 
 if not exist %SystemRoot%\system32\ClipUp.exe (
 call :dk_color %Red% "Checking ClipUp.exe File                [Not found, aborting the process]"
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%troubleshoot"
 goto :dl_final
 )
 
@@ -950,7 +950,7 @@ if not defined error if not defined _perm (
 echo "%error_code%" | findstr /i "0x80072e 0x80072f" %nul% && (
 set error=1
 echo:
-call :dk_color %Red% "Checking Internet Issues                [Found] [%error_code%]"
+call :dk_color %Red% "Checking Internet Issues                [Found] %error_code%"
 call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%licensing-servers-issue"
 )
 )
@@ -966,9 +966,8 @@ if defined notworking (
 call :dk_color %Blue% "At the time of writing this, HWID Activation was not supported for this product."
 call :dk_color %Blue% "Use KMS38 Activation option."
 ) else (
-call :dk_color %Blue% "HWID Activation is not working. Use KMS38 Activation option for now."
-REM if not defined error call :dk_color %Blue% "%_fixmsg%"
-call :dk_color2 %_White% "Check this page for help" %_White% " %mas%troubleshoot"
+if not defined error call :dk_color %Blue% "%_fixmsg%"
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%troubleshoot"
 )
 )
 
@@ -1426,41 +1425,41 @@ exit /b
 
 set f=
 for %%# in (
-8b351c9c-f398-4515-9900-09df49427262_XGV%f%PP-NM%f%H47-7TT%f%HJ-W3%f%FW7-8H%f%V2C___4_X19-99683_X9J5T0gPQprYpz2euPvoJGlkurIO9h6N8ypE0KWYVpy0nbCKYnqSUCD7u8ReXAmc085jX2uM5PKurSee9Yq/PxesgiysQHDBsOhr98MXZZiIgy4ssnz2gZF70KB8tO3X7kk9LHwxXfz3rlquYPod9swe90nqvVaJMWCpQK0InUw_0_OEM:NONSLP_Enterprise
-c83cef07-6b72-4bbc-a28f-a00386872839_3V6%f%Q6-NQ%f%XCX-V8Y%f%XR-9Q%f%CYV-QP%f%FCT__27_X19-98746_WFZBjlVtHQumoaVE28/NHsRvv1lgkkfav6NPHqr6OC2u4vxkjjJkkl9OTF6DpHJu0IFrrQv+HYcdZ/WC5EzhOMqMxcujTBSAN7xLIVEbs72Db0Bi5iDAbOltJpk8QKKe18otQJ6vajW5WOPXjbgSJfDFaZQfiwvIJ1ICXt+stog_0_Volume:MAK_EnterpriseN
-4de7cb65-cdf1-4de9-8ae8-e3cce27b9f2c_VK7%f%JG-NP%f%HTM-C97%f%JM-9M%f%PGT-3V%f%66T__48_X19-98841_K3qev/5gQpX1RK1F9M9beEWWv/di1GsRF7OUcEMGTGDTYnaRenRcJaO8zOHQQvKDc57fon/v77ZpHQHT/jWWhWnLm7Ssory+s8tOs72fPjivVBDwpSPIEC1v+8Vpb4a3XCZet2e/Z5wmpCq9XDkowys3IcxYM0mHWBaNPu8gIe4_0_____Retail_Professional
-9fbaf5d6-4d83-4422-870d-fdda6e5858aa_2B8%f%7N-8K%f%FHP-DKV%f%6R-Y2%f%C8J-PK%f%CKT__49_X19-98859_WcAcor6kQgxgkTRzcoxnb8UIoo5/ueYeaOKqy9/xAzlruHAKxhatXeGtSI58lXcCK5hxXkDmcyrRFwWSwdvg0txwTi7VusYcTNCLdmNWU/62iDrBhzMrCYtuhW9EV/g4+TlbjSm4PBJ0HMlI4YzAEnyJiBgKPDgBQ8Gj9LRbEgU_0_____Retail_ProfessionalN
-f742e4ff-909d-4fe9-aacb-3231d24a0c58_4CP%f%RK-NM%f%3K3-X6X%f%XQ-RX%f%X86-WX%f%CHW__98_X19-98877_MBDSEqlayxtVVEgIeAl8milgjS/BVHow6+MmpCyh9nweuctlT1+LbEHmDlnqDeLr9FQrN2FpEJtNr26rE0niMdvcAP51MfJsREyhWOEbrWwWyMH0KwDAci2WxWZTJp/SEZnq5HYYT1pPPLMWAkKRHJksJJFtg4zBtoyHvLjc35c_0_____Retail_CoreN
-1d1bac85-7365-4fea-949a-96978ec91ae0_N24%f%34-X9%f%D7W-8PF%f%6X-8D%f%V9T-8T%f%YMD__99_X19-99652_mpjCoh6soA/rwJutsjekZpA9vDUD8znR20V/c8FwSjuCcSbPhmP6bpJR9rfptAZqpagliMxA/OUZsx0Knt0n/hgOy2mv8pr24gI9uYXK8EfhG74bVdsyvZz1tyA6CaVR02ZahQvbKYzCmXUvsI+Wge3bHbKbVpn9Mvl+itn2a4g_0_____Retail_CoreCountrySpecific
-3ae2cc14-ab2d-41f4-972f-5e20142771dc_BT7%f%9Q-G7%f%N6G-PGB%f%YW-4Y%f%WX6-6F%f%4BT_100_X19-99661_KaUs6KwvtthPOsxd3x0tU/baKSv1DWSFOqbq7PbU/uYEY95p0Skzv3y4aXq+xVmfwSt8STL/4vSfFIAlsaRh7Vnq6Y/Ael8joeqI8hBN461fykoHxSELRMJ+eed50T0cJUS79ol6OTBOCCVeHgmtGVbHuL88TMWW69fGNdIMM3U_0_____Retail_CoreSingleLanguage
-2b1f36bb-c1cd-4306-bf5c-a0367c2d97d8_YTM%f%G3-N6%f%DKC-DKB%f%77-7M%f%9GH-8H%f%VX7_101_X19-98868_NpHxrAtA+GL6kawAP5Z2UdfUVcKFvf9UzEe6FIV/HztZqxpMBDFv2hdxCjD9+T8PKcW8j3n04McelOAgr3lD37Fu+wrvJIGX0dG3xEtU/MG9L9X5baBS8H6AmC6rq2+w5NUY8EchK9W2oatBflFb8IcfCSeAyOfsJei6bdu4mp8_0_____Retail_Core
-2a6137f3-75c0-4f26-8e3e-d83d802865a4_XKC%f%NC-J2%f%6Q9-KFH%f%D2-FK%f%THY-KD%f%72Y_119_X19-99606_gtywgqIP3j+bliKdunuseeZWtsOzWhj+DmSBq7nqeNarHutgbWEwvcRiGo+nwxONt9Ak/VyuO76ZWH/db3iRVTk1y61vFv15gVlOy1ovLjVHBvmPVdQXIne2N+pIMb0eBhZWHRX63mYdkZRZ0wg/+bj4xsjJv+qLpWhVCzNMge4_0_OEM:NONSLP_PPIPro
-e558417a-5123-4f6f-91e7-385c1c7ca9d4_YNM%f%GQ-8R%f%YV3-4PG%f%Q3-C8%f%XTP-7C%f%FBY_121_X19-98886_VuBmoSUdF63Cvwm9wNlc2yhD2tP9B72iVVWFNcbAwDGXF6o06oNMsIJ0VqGJDdBzZjVGw2wHokMabxZNDyIl90CO7trwgV8S0lLJVLymxyUaE3ThvN3YUsi9Q3H+5Kr0RpsojCWb+UQd/GY4bSXfyStXFylj6im7yv0db/ZWGbw_0_____Retail_Education
-c5198a66-e435-4432-89cf-ec777c9d0352_84N%f%GF-MH%f%BT6-FXB%f%X8-QW%f%JK7-DR%f%R8H_122_X19-98892_jQ6S2bbNoVrp/zvi8BEUwCf7fge1nAdspcjXyTeTySUiR+hXPiKQEWgyLqAdZ5Or+X2JGT/LZN1/eZ9P+REmzG/WQotZ+fyyPguoSsES+d312RkfmQoI5gVanEkGjZSU4YohREM/Vyf9MOO7dbH9MMEpFm2mje6OnhyJo2gux0g_0_____Retail_EducationN
-f6e29426-a256-4316-88bf-cc5b0f95ec0c_PJB%f%47-8P%f%N2T-MCG%f%DY-JT%f%Y3D-CB%f%CPV_125_X23-50331_Txrh+25Ej9T5ZZXUNxSh/t9ZV18K112m3pOtVVwAeXk4rqjovoYEKcR4DZxUrQ85tNnqSJ+mLlCfnHa9ghb7OTLCaba+d+LA8HBrFfG0g1Ya1gBBL3ZsACHBRPdDiXOGl8uil+5EkOx2sKX941S5fnNK/278XBFRm2NKwfJ7hhI_1_Volume:MAK_EnterpriseS_Ge
-cce9d2de-98ee-4ce2-8113-222620c64a27_KCN%f%VH-YK%f%WX8-GJJ%f%B9-H9%f%FDT-6F%f%7W2_125_X22-66075_wJ/BPDFz+13PVJtBqBo+E4LCm3LoMVALCQUun9kXGBULr7V8FQ5nKUudUGHDLNNVIIicdw9Uh26BKAt0/hnE7BpBkzwdi4qAdZgKXQ1t06Ek4+zXmoT225NvpaHsuhDkE687TtCB1ZWvAulA8G9ehE3HTJSoNm4wCFOQyIQQtqQ_1_Volume:MAK_EnterpriseS_VB
-d06934ee-5448-4fd1-964a-cd077618aa06_43T%f%BQ-NH%f%92J-XKT%f%M7-KT%f%3KK-P3%f%9PB_125_X21-83233_V+y0SFmAnGwRwgNz+0sO0mj+XxSjbdRDpom1Iqx2BJcsf96Q5ittJOcMhKiNswyKuq5suM5vy60tA/AUdb1mrnnrnXfmz7nFam/BIOOfa18GA7vd1aNFufhpmCiMWxoGSewH/T1pnCZrsvGYIj//qC7aiQVKYBngO7UYWGaytgc_0_OEM:NONSLP_EnterpriseS_RS5
-706e0cfd-23f4-43bb-a9af-1a492b9f1302_NK9%f%6Y-D9%f%CD8-W44%f%CQ-R8%f%YTK-DY%f%JWX_125_X21-05035_U2DIv+LAhSGz0rNbTiMQYaP3M41+0+ZioF7vh0COeeJSIruDFCZ3Li7ZM3dSleg6QTCxG04uZ3i3r1bCZv0+WAfU9rG+3BqLAwKlJS/31rETeRWvrxB1UK4mTMHwAJc9txDAc15ureqF+2b9pIIpwLljmFer6fI7z0iI6I/ZuTU_0_OEM:NONSLP_EnterpriseS_RS1
-faa57748-75c8-40a2-b851-71ce92aa8b45_FWN%f%7H-PF%f%93Q-4GG%f%P8-M8%f%RF3-MD%f%WWW_125_X19-99617_0frpwr4N/wBVRA/nOvAMqkxmRj6Vv9mA+jVNtnurAL1TjkPN/y+6YVUd5MP/Y4As4kddHoHiZXI+2siKHJsaV95ppXoHKR8d7FRVitr1F+82TbB7OVvdCclGrRZymnq25HvtSC3BROHt7ZXTgSCWMyB7MlbLiqHiTymOj5OMX1g_0_OEM:NONSLP_EnterpriseS_TH
-837766ff-61c5-427d-87c3-a2acbd44767a_XFC%f%77-XN%f%RXM-2Q3%f%6W-FC%f%M9T-YH%f%DJ9_126_X23-50304_fIijy15jUocqsDIBLyz5/6FKqkNU1uoYYTqqnbBnk5bPUHKzjIbMGldJEjNgd7lKnHG9qhIjl0q1OHyTna4eY0ydD/b9MfLtD2hmfVvG7gJL8PNaZDa0MuGorxbQilR3nczXmeL/5gsvw5Q/uCfSY5p4UuPnjasKV8eITIPfu1k_1_Volume:MAK_EnterpriseSN_Ge
-2c060131-0e43-4e01-adc1-cf5ad1100da8_RQF%f%NW-9T%f%PM3-JQ7%f%3T-QV%f%4VQ-DV%f%9PT_126_X22-66108_UeA6O2iIW6zFMJzLMCQjVA7gUHOGRTiFB6LPrgjhgfJEXSZnDjxw8wsR+tp+JQWeaQDsVt06c2byH3z7Ft2wNk8n3gcXUknIjlcCckNjw05WDI64/wCqz+gtf1RajMEoV/mODpBx7rdLtCg03FyV7Z9LOib4/WLSmnxjDPKMG7s_1_Volume:MAK_EnterpriseSN_VB
-e8f74caa-03fb-4839-8bcc-2e442b317e53_M33%f%WV-NH%f%Y3C-R7F%f%PM-BQ%f%GPT-23%f%9PG_126_X21-83264_NtP6sMWmOTCdABAbgIZfxZzRs8zaqzfaabLeFXQJvfJvQPLQPk2UxMliASJG+7YwwbTD8pyhUoQqUYrlCzJZ6jDSDyUTJkXgo9akR4fBOg6Z5wn5fW8NGAMDcLND5d9XxHl0gWH/HZNIs/GZaPJsCVVqPr7X8bk/y0DeIofxICU_1_Volume:MAK_EnterpriseSN_RS5
-3d1022d8-969f-4222-b54b-327f5a5af4c9_2DB%f%W3-N2%f%PJG-MVH%f%W3-G7%f%TDK-9H%f%KR4_126_X21-04921_WeNSkuiC3iyNT9tDqlj6KvM17UYMsYjEelyyMEyPEXSAbYA08lYtYJjCzxSE9T30p9dxqPIuj370OwHhAxG8a51/HoLNWR0grj08HmdOXUA8Ap4clEivxKM0zRvwPR6L2M2HQP0nN54c9It7ikzweJ0X2HHOb58oEw9LbMeUM/Y_0_Volume:MAK_EnterpriseSN_RS1
-60c243e1-f90b-4a1b-ba89-387294948fb6_NTX%f%6B-BR%f%YC2-K67%f%86-F6%f%MVQ-M7%f%V2X_126_X19-98770_QLG40WW/TtUqtir9K6FJCQXU1mfn27uutdOunHJ3gXk6v0Mbxaqu9GKqpg5xFzdFiOPb/8Bmk/ylwceXgoaUx1nKcBGb/Bg+jICiNMEYIbGyMuYiHb0iJeVbjbBLLfWuAAuUPftfnKPH3dAu1YvhaS5nv7a5wICrXdJWeVNpBxk_0_Volume:MAK_EnterpriseSN_TH
-01eb852c-424d-4060-94b8-c10d799d7364_3XP%f%6D-CR%f%ND4-DRY%f%M2-GM%f%84D-4G%f%G8Y_139_X23-37869_bpWJRMPuEeHIx4X+imsfTHaUXtdSGX9/+kuFDpkJ0rIQXKBf+pprkICUG/FJVciv60VXAMaQPBgn4zGfpfVTvJ0DTPxdRcS4WltLnz5L3fG6jXPjI5lArAFWlx7m93ch1zINoxbroU3inMo5JjsJaMZt01Gae6Of4k9DrgYC8U0_1_____Retail_ProfessionalCountrySpecific_Zn
-eb6d346f-1c60-4643-b960-40ec31596c45_DXG%f%7C-N3%f%6C4-C4H%f%TG-X4%f%T3X-2Y%f%V77_161_X21-43626_vHO/5UEtrsDzGC30A2Ya5DYXlNMs7hVYiLvM7X31xkaFMxogbiy3ZDxBbjRku3VXyW+TYsFX/D/wdJgFmMrhsNrObkxqzYMMRjx+BpwOx2PspKpS2RyzovyRl8v93SvHB5IyoO2/3pm2YqJDK1hXLhms6+DDPuiofQt36q47reQ_0_____Retail_ProfessionalWorkstation
-89e87510-ba92-45f6-8329-3afa905e3e83_WYP%f%NQ-8C%f%467-V2W%f%6J-TX%f%4WX-WT%f%2RQ_162_X21-43644_phlxNLr+sk8cCCmAVU3k3XrtD6sFDeoaODc+21soKqePbVQbzPHgokS73ccok6/gDfu/u5UKc7omL8pm2IhIhf70oC+8M/FFp0zRFeC/ZFXdF2tL23oKWI9kZbvcaoZBiqaDGc1bNYi5KAZYaJU8wwqw16ZnohQJZ7QR9cgUfFQ_0_____Retail_ProfessionalWorkstationN
-62f0c100-9c53-4e02-b886-a3528ddfe7f6_8PT%f%T6-RN%f%W4C-6V7%f%J2-C2%f%D3X-MH%f%BPB_164_X21-04955_Px7QWdfy0esrMzQoydKlmIcGdfV0pQvbnumyrh4evDNF9gpENm8OIfZfljIynury0qZAkw4AG3uGyp+5IxZGIh6U3dz41uNVfEcA9NZ34OEBXMtjEOU1ZbJ8wp8JecQKwlORclvsri9OOi0GbGc0TYRanlci2jJL/3x/gSuWXCs_0_____Retail_ProfessionalEducation
-13a38698-4a49-4b9e-8e83-98fe51110953_GJT%f%YN-HD%f%MQY-FRR%f%76-HV%f%GC7-QP%f%F8P_165_X21-04956_GRSYno4+yqU/JMxHLDKdvdFWRz1uT90n5JkTvSqztDvXMf/mBhSV/OpppJWGo6UL0FwqYcu9oXl+Vx336pLAE5/EDzQHh+QCwOCDJiTKnd3hW/zrGMe6Sb0OAIkNNML9gcOBbr1IHFWhN99r8ZWl5JjpzMs2nPjejB1Ec8NCcpE_0_____Retail_ProfessionalEducationN
-df96023b-dcd9-4be2-afa0-c6c871159ebe_NJC%f%F7-PW%f%8QT-332%f%4D-68%f%8JX-2Y%f%V66_175_X21-41295_kkJyX1AwYgDYcGK1eIRdocybkbAfEtQkDxhRUhY89X2i2PSD9jcsGQgHWyD3KUKWb3bzR8QkDS3MTeieOw3EzD0RyAQhHc6lRR+rk18lh5UOVCgrZ6byxn29Ur+jAh0LJXImggC9JMGb2cTYaZckxzm3ICoAKwrmI9JnrzBTVmY_0_____Retail_ServerRdsh
-d4ef7282-3d2c-4cf0-9976-8854e64a8d1e_V3W%f%VW-N2%f%PV2-CGW%f%C3-34%f%QGF-VM%f%J2C_178_X21-32983_YIMgXu2dZ9x1r1NLs3egTc/8EYc1RndYDvoX7QquQQLnhnhbSNBw3hmlqrQ0zNsTLut3EKpGZK2CwPspJJWE60lecdxI4211K748P6vkuqHPL4uFqXyKxTG3qRrtDIra5nnMn4GqG2fWuguzTXaumu8cJU3H1uTOsR1E/DQnJJ0_0_____Retail_Cloud
-af5c9381-9240-417d-8d35-eb40cd03e484_NH9%f%J3-68%f%WK7-6FB%f%93-4K%f%3DF-DJ%f%4F6_179_X21-32987_H0qrFdf+FQxcSRJDtEwd8OfwC4iH/25Q01jz3QuB9yhEqB0W1i83u0WDpVK04pvU1EDCCRRI/DhXynbkWpLC0chdTOW4k5jIy+aa0cD3fccz9ChSjVHMzyTg3abEVFAvy9rttUyxcFIOKcINXHTxTRp5cZPwOa393tlJyBiliAo_0_____Retail_CloudN
-8ab9bdd1-1f67-4997-82d9-8878520837d9_XQQ%f%YW-NF%f%FMW-XJP%f%BH-K8%f%732-CK%f%FFD_188_X21-99378_Bwx3E7qmE6M8UR6+KPqLnnavI6ThNHHUO717RJY9di2YI9rzC3O0LceXOHjshSKwfwxosqFsD/p/inrJmabed1yA/ZWwISyGtAIGTtRgpuSE4TAfW6KEW0v7rcr2wwwDq7DHSuz4QN4odEGe9bvtx4zIZKufQzzN4TN2rd/BJkE_0_____OEM:DM_IoTEnterprise
-ed655016-a9e8-4434-95d9-4345352c2552_QPM%f%6N-7J%f%2WJ-P88%f%HH-P3%f%YRH-YY%f%74H_191_X21-99682_lE8qL1p4m68mv9wcxU2sdKZPIccybtOjr+aMAdV+sLHs9wzE26oz5GiSZ3UzpU7yoYrNMqwGkKX6mrCEGRLh+XR2Ricp7ELA1PkzaGm0FLUqaK2GNVQ00i+s6KcA2XRr/gWOhhGTqSCjpSi9cMiqMbftf9Bo/BJVK3ib9xU4OQw_0_OEM:NONSLP_IoTEnterpriseS_VB
-6c4de1b8-24bb-4c17-9a77-7b939414c298_CGK%f%42-GY%f%N6Y-VD2%f%2B-BX%f%98W-J8%f%JXD_191_X23-12617_QEqj4TJNDYZnR8WdPp2TYu5UyiJtUmKER75/DuR5L5SZ1Qg/LUff0Nse+iT+cDVld/YA8RS1CxeMF1W/SLuPHqZvEzkPmYxGVy2U1iCbztfonAA2FZ3v76gbroMOr6bqMmeKNkhsUMG5sEz5uYXW0+K7Ke2z5GSMiEQHQN2yDA4_0_OEM:NONSLP_IoTEnterpriseS_Ge
-d4bdc678-0a4b-4a32-a5b3-aaa24c3b0f24_K9V%f%KN-3B%f%GWV-Y62%f%4W-MC%f%RMQ-BH%f%DCD_202_X22-53884_hPcIn0dF9Dq6zlXd3RxBqVDPDnf5sTasTjUqhD6lGc9IkTc8476NHd1PV1Ds++VO34/dw2H2PWk33LT5Es6PnUi32Ypva4POy4QJo5W3qyduiJiHUOM5GS9yAkKfdHFgUXaUVwopYKq+EwmgxFmEvHYdWgREHgIMyNoKAZQK0Ok_0_____Retail_CloudEditionN
-92fb8726-92a8-4ffc-94ce-f82e07444653_KY7%f%PN-VR%f%6RX-83W%f%6Y-6D%f%DYQ-T6%f%R4W_203_X22-53847_DCP6QzPj+BD1EEmlBelBt7x9AmvQOfd7kdkUB0b0x6/TNHRnZtdyix3pNX2IDQtJbLnNLc2ZlMmupbZQrtyxe3xl8+xlCnHByXZpzFty9sGzq3MozHHA9u9WsJEf5R7tnFDplNM1UitlTVTAyuCGk83brY4zjmz/52pUQyQHzjI_0_____Retail_CloudEdition
-d4f9b41f-205c-405e-8e08-3d16e88e02be_J7N%f%JW-V6%f%KBM-CC8%f%RW-Y2%f%9Y4-HQ%f%2MJ_205_X23-15027_U9eyfIBXrs++lyP6OjHHaF/wjieAxQeSKwzSkGBeTTpyCDcenq8t4cKvqDHnauSZzaVPWNoVcASkMCdlJi3EkR29KSgvx9/K2OB8LVH2PPpqvwjm1ZZdrvLMGhW83A/KRrtN9AOx7bnPC8MNLErnzbRRS9/aOrmp4Uzo8EIVagI_0_OEM:NONSLP_IoTEnterpriseSK
+8b351c9c-f398-4515-9900-09df49427262_XGV%f%PP-NM%f%H47-7TT%f%HJ-W3%f%FW7-8H%f%V2C___4_X19-99683_HGNKjkKcKQHO6n8srMUrDh/MElffBZarLqCMD9rWtgFKf3YzYOLDPEMGhuO/auNMKCeiU7ebFbQALS/MyZ7TvidMQ2dvzXeXXKzPBjfwQx549WJUU7qAQ9Txg9cR9SAT8b12Pry2iBk+nZWD9VtHK3kOnEYkvp5WTCTsrSi6Re4_0_OEM:NONSLP_Enterprise
+c83cef07-6b72-4bbc-a28f-a00386872839_3V6%f%Q6-NQ%f%XCX-V8Y%f%XR-9Q%f%CYV-QP%f%FCT__27_X19-98746_NHn2n0N1UfVf00CfaI5LCDMDsKdVAWpD/HAfUrcTAKsw9d2Sks4h5MhyH/WUx+B6dFi8ol7D3AHorR8y9dqVS1Bd2FdZNJl/tTR1PGwYn6KL88NS19aHmFNdX8s4438vaa+Ty8Qk8EDcwm/wscC8lQmi3/RgUKYdyGFvpbGSVlk_0_Volume:MAK_EnterpriseN
+4de7cb65-cdf1-4de9-8ae8-e3cce27b9f2c_VK7%f%JG-NP%f%HTM-C97%f%JM-9M%f%PGT-3V%f%66T__48_X19-98841_Yl/jNfxJ1SnaIZCIZ4m6Pf3ySNoQXifNeqfltNaNctx+onwiivOx7qcSn8dFtURzgMzSOFnsRQzb5IrvuqHoxWWl1S3JIQn56FvKsvSx7aFXIX3+2Q98G1amPV/WEQ0uHA5d7Ya6An+g0Z0zRP7evGoomTs4YuweaWiZQjQzSpA_0_____Retail_Professional
+9fbaf5d6-4d83-4422-870d-fdda6e5858aa_2B8%f%7N-8K%f%FHP-DKV%f%6R-Y2%f%C8J-PK%f%CKT__49_X19-98859_Ge0mRQbW8ALk7T09V+1k1yg66qoS0lhkgPIROOIOgxKmWPAvsiLAYPKDqM4+neFCA/qf1dHFmdh0VUrwFBPYsK251UeWuElj4bZFVISL6gUt1eZwbGfv5eurQ0i+qZiFv+CcQOEFsd5DD4Up6xPLLQS3nAXODL5rSrn2sHRoCVY_0_____Retail_ProfessionalN
+f742e4ff-909d-4fe9-aacb-3231d24a0c58_4CP%f%RK-NM%f%3K3-X6X%f%XQ-RX%f%X86-WX%f%CHW__98_X19-98877_vel4ytVtnE8FhvN87Cflz9sbh5QwHD1YGOeej9QP7hF3vlBR4EX2/S/09gRneeXVbQnjDOCd2KFMKRUWHLM7ZhFBk8AtlG+kvUawPZ+CIrwrD3mhi7NMv8UX/xkLK3HnBupMEuEwsMJgCUD8Pn6om1mEiQebHBAqu4cT7GN9Y0g_0_____Retail_CoreN
+1d1bac85-7365-4fea-949a-96978ec91ae0_N24%f%34-X9%f%D7W-8PF%f%6X-8D%f%V9T-8T%f%YMD__99_X19-99652_Nv17eUTrr1TmUX6frlI7V69VR6yWb7alppCFJPcdjfI+xX4/Cf2np3zm7jmC+zxFb9nELUs477/ydw2KCCXFfM53bKpBQZKHE5+MdGJGxebOCcOtJ3hrkDJtwlVxTQmUgk5xnlmpk8PHg82M2uM5B7UsGLxGKK4d3hi0voSyKeI_0_____Retail_CoreCountrySpecific
+3ae2cc14-ab2d-41f4-972f-5e20142771dc_BT7%f%9Q-G7%f%N6G-PGB%f%YW-4Y%f%WX6-6F%f%4BT_100_X19-99661_FV2Eao/R5v8sGrfQeOjQ4daokVlNOlqRCDZXuaC45bQd5PsNU3t1b4AwWeYM8TAwbHauzr4tPG0UlsUqUikCZHy0poROx35bBBMBym6Zbm9wDBVyi7nCzBtwS86eOonQ3cU6WfZxhZRze0POdR33G3QTNPrnVIM2gf6nZJYqDOA_0_____Retail_CoreSingleLanguage
+2b1f36bb-c1cd-4306-bf5c-a0367c2d97d8_YTM%f%G3-N6%f%DKC-DKB%f%77-7M%f%9GH-8H%f%VX7_101_X19-98868_GH/jwFxIcdQhNxJIlFka8c1H48PF0y7TgJwaryAUzqSKXynONLw7MVciDJFVXTkCjbXSdxLSWpPIC50/xyy1rAf8aC7WuN/9cRNAvtFPC1IVAJaMeq1vf4mCqRrrxJQP6ZEcuAeHFzLe/LLovGWCd8rrs6BbBwJXCvAqXImvycQ_0_____Retail_Core
+2a6137f3-75c0-4f26-8e3e-d83d802865a4_XKC%f%NC-J2%f%6Q9-KFH%f%D2-FK%f%THY-KD%f%72Y_119_X19-99606_hci78IRWDLBtdbnAIKLDgV9whYgtHc1uYyp9y6FszE9wZBD5Nc8CUD2pI2s2RRd3M04C4O7M3tisB3Ov/XVjpAbxlX3MWfUR5w4MH0AphbuQX0p5MuHEDYyfqlRgBBRzOKePF06qfYvPQMuEfDpKCKFwNojQxBV8O0Arf5zmrIw_0_OEM:NONSLP_PPIPro
+e558417a-5123-4f6f-91e7-385c1c7ca9d4_YNM%f%GQ-8R%f%YV3-4PG%f%Q3-C8%f%XTP-7C%f%FBY_121_X19-98886_x9tPFDZmjZMf29zFeHV5SHbXj8Wd8YAcCn/0hbpLcId4D7OWqkQKXxXHIegRlwcWjtII0sZ6WYB0HQV2KH3LvYRnWKpJ5SxeOgdzBIJ6fhegYGGyiXsBv9sEb3/zidPU6ZK9LugVGAcRZ6HQOiXyOw+Yf5H35iM+2oDZXSpjvJw_0_____Retail_Education
+c5198a66-e435-4432-89cf-ec777c9d0352_84N%f%GF-MH%f%BT6-FXB%f%X8-QW%f%JK7-DR%f%R8H_122_X19-98892_jkL4YZkmBCJtvL1fT30ZPBcjmzshBSxjwrE0Q00AZ1hYnhrH+npzo1MPCT6ZRHw19ZLTz7wzyBb0qqcBVbtEjZW0Xs2MYLxgriyoONkhnPE6KSUJBw7C0enFVLHEqnVu/nkaOFfockN3bc+Eouw6W2lmHjklPHc9c6Clo04jul0_0_____Retail_EducationN
+f6e29426-a256-4316-88bf-cc5b0f95ec0c_PJB%f%47-8P%f%N2T-MCG%f%DY-JT%f%Y3D-CB%f%CPV_125_X23-50331_OPGhsyx+Ctw7w/KLMRNrY+fNBmKPjUG0R9RqkWk4e8ez+ExSJxSLLex5WhO5QSNgXLmEra+cCsN6C638aLjIdH2/L7D+8z/C6EDgRvbHMmidHg1lX3/O8lv0JudHkGtHJYewjorn/xXGY++vOCTQdZNk6qzEgmYSvPehKfdg8js_1_Volume:MAK_EnterpriseS_Ge
+cce9d2de-98ee-4ce2-8113-222620c64a27_KCN%f%VH-YK%f%WX8-GJJ%f%B9-H9%f%FDT-6F%f%7W2_125_X22-66075_GCqWmJOsTVun9z4QkE9n2XqBvt3ZWSPl9QmIh9Q2mXMG/QVt2IE7S+ES/NWlyTSNjLVySr1D2sGjxgEzy9kLwn7VENQVJ736h1iOdMj/3rdqLMSpTa813+nPSQgKpqJ3uMuvIvRP0FdB7Y4qt8qf9kNKK25A1QknioD/6YubL/4_1_Volume:MAK_EnterpriseS_VB
+d06934ee-5448-4fd1-964a-cd077618aa06_43T%f%BQ-NH%f%92J-XKT%f%M7-KT%f%3KK-P3%f%9PB_125_X21-83233_EpB6qOCo8pRgO5kL4vxEHck2J1vxyd9OqvxUenDnYO9AkcGWat/D74ZcFg5SFlIya1U8l5zv+tsvZ4wAvQ1IaFW1PwOKJLOaGgejqZ41TIMdFGGw+G+s1RHsEnrWr3UOakTodby1aIMUMoqf3NdaM5aWFo8fOmqWC5/LnCoighs_0_OEM:NONSLP_EnterpriseS_RS5
+706e0cfd-23f4-43bb-a9af-1a492b9f1302_NK9%f%6Y-D9%f%CD8-W44%f%CQ-R8%f%YTK-DY%f%JWX_125_X21-05035_ntcKmazIvLpZOryft28gWBHu1nHSbR+Gp143f/BiVe+BD2UjHBZfSR1q405xmQZsygz6VRK6+zm8FPR++71pkmArgCLhodCQJ5I4m7rAJNw/YX99pILphi1yCRcvHsOTGa825GUVXgf530tHT6hr0HQ1lGeGgG1hPekpqqBbTlg_0_OEM:NONSLP_EnterpriseS_RS1
+faa57748-75c8-40a2-b851-71ce92aa8b45_FWN%f%7H-PF%f%93Q-4GG%f%P8-M8%f%RF3-MD%f%WWW_125_X19-99617_Fe9CDClilrAmwwT7Yhfx67GafWRQEpwyj8R+a4eaTqbpPcAt7d1hv1rx8Sa9AzopEGxIrb7IhiPoDZs0XaT1HN0/olJJ/MnD73CfBP4sdQdLTsSJE3dKMWYTQHpnjqRaS/pNBYRr8l9Mv8yfcP8uS2MjIQ1cRTqRmC7WMpShyCg_0_OEM:NONSLP_EnterpriseS_TH
+837766ff-61c5-427d-87c3-a2acbd44767a_XFC%f%77-XN%f%RXM-2Q3%f%6W-FC%f%M9T-YH%f%DJ9_126_X23-50304_h6V6Q4DL/hlvcD3GyVxrVfP1BEL4a5TdyNCMlbq/OZnky/HowuRAcHMpN59fwqLS98+7WEDooWCrxriXcATwo0fwOGs/fEfP/Pa5SKP+Xnng1eoPm1PkjuZaqA8p2dPQv32wJ0u3QW7VMQM9BzzpyqtNAsqNS/wl7vfN7tyLbDo_1_Volume:MAK_EnterpriseSN_Ge
+2c060131-0e43-4e01-adc1-cf5ad1100da8_RQF%f%NW-9T%f%PM3-JQ7%f%3T-QV%f%4VQ-DV%f%9PT_126_X22-66108_w/HFPDNCz4EogszDYZ8xUJh8aylfpgh6gzm9k8JSteprY5UumLc5n6KUwiSE3/5NaiI9gZ3xmTJq+g1OSPsdGwhuA+8LA2pQhA+wU8VO/ZaYxe1T4WF6oip/c0n6xA1sx/mWYNwd/WBDJpslTw5NRNLc5wWh0FV5RtxCaXE07lM_1_Volume:MAK_EnterpriseSN_VB
+e8f74caa-03fb-4839-8bcc-2e442b317e53_M33%f%WV-NH%f%Y3C-R7F%f%PM-BQ%f%GPT-23%f%9PG_126_X21-83264_Fl7tjifybEI9hArxMVFKqIqmI6mrCZy4EtJyVjpo2eSfeMTBli55+E0i2AaPfE2FJknUig7HuiNC1Pu2IWZcj5ShVFQEKPY6K//RucX8oPQfh0zK5r1aNJNvV4gMlqvOyGD8sXttLBZv8wg1w/++cNk/z38DE2shiDf7LYnK4w0_1_Volume:MAK_EnterpriseSN_RS5
+3d1022d8-969f-4222-b54b-327f5a5af4c9_2DB%f%W3-N2%f%PJG-MVH%f%W3-G7%f%TDK-9H%f%KR4_126_X21-04921_zLPNvcl1iqOefy0VLg+WZgNtRNhuGpn8+BFKjMqjaNOSKiuDcR6GNDS5FF1Aqk6/e6shJ+ohKzuwrnmYq3iNQ3I2MBlYjM5kuNfKs8Vl9dCjSpQr//GBGps6HtF2xrG/2g/yhtYC7FbtGDIE16uOeNKFcVg+XMb0qHE/5Etyfd8_0_Volume:MAK_EnterpriseSN_RS1
+60c243e1-f90b-4a1b-ba89-387294948fb6_NTX%f%6B-BR%f%YC2-K67%f%86-F6%f%MVQ-M7%f%V2X_126_X19-98770_kbXfe0z9Vi1S0yfxMWzI5+UtWsJKzxs7wLGUDLjrckFDn1bDQb4MvvuCK1w+Qrq33lemiGpNDspa+ehXiYEeSPFcCvUBpoMlGBFfzurNCHWiv3o1k3jBoawJr/VoDoVZfxhkps0fVoubf9oy6C6AgrkZ7PjCaS58edMcaUWvYYg_0_Volume:MAK_EnterpriseSN_TH
+01eb852c-424d-4060-94b8-c10d799d7364_3XP%f%6D-CR%f%ND4-DRY%f%M2-GM%f%84D-4G%f%G8Y_139_X23-37869_PVW0XnRJnsWYjTqxb6StCi2tge/uUwegjdiFaFUiZpwdJ620RK+MIAsSq5S+egXXzIWNntoy2fB6BO8F1wBFmxP/mm/3rn5C33jtF5QrbNqY7X9HMbqSiC7zhs4v4u2Xa4oZQx8JQkwr8Q2c/NgHrOJKKRASsSckhunxZ+WVEuM_1_____Retail_ProfessionalCountrySpecific_Zn
+eb6d346f-1c60-4643-b960-40ec31596c45_DXG%f%7C-N3%f%6C4-C4H%f%TG-X4%f%T3X-2Y%f%V77_161_X21-43626_MaVqTkRrGnOqYizl15whCOKWzx01+BZTVAalvEuHXM+WV55jnIfhWmd/u1GqCd5OplqXdU959zmipK2Iwgu2nw/g91nW//sQiN/cUcvg1Lxo6pC3gAo1AjTpHmGIIf9XlZMYlD+Vl6gXsi/Auwh3yrSSFh5s7gOczZoDTqQwHXA_0_____Retail_ProfessionalWorkstation
+89e87510-ba92-45f6-8329-3afa905e3e83_WYP%f%NQ-8C%f%467-V2W%f%6J-TX%f%4WX-WT%f%2RQ_162_X21-43644_JVGQowLiCcPtGY9ndbBDV+rTu/q5ljmQTwQWZgBIQsrAeQjLD8jLEk/qse7riZ7tMT6PKFVNXeWqF7PhLAmACbE8O3Lvp65XMd/Oml9Daynj5/4n7unsffFHIHH8TGyO5j7xb4dkFNqC5TX3P8/1gQEkTIdZEOTQQXFu0L2SP5c_0_____Retail_ProfessionalWorkstationN
+62f0c100-9c53-4e02-b886-a3528ddfe7f6_8PT%f%T6-RN%f%W4C-6V7%f%J2-C2%f%D3X-MH%f%BPB_164_X21-04955_CEDgxI8f/fxMBiwmeXw5Of55DG32sbGALzHihXkdbYTDaE3pY37oAA4zwGHALzAFN/t254QImGPYR6hATgl+Cp804f7serJqiLeXY965Zy67I4CKIMBm49lzHLFJeDnVTjDB0wVyN29pvgO3+HLhZ22KYCpkRHFFMy2OKxS68Yc_0_____Retail_ProfessionalEducation
+13a38698-4a49-4b9e-8e83-98fe51110953_GJT%f%YN-HD%f%MQY-FRR%f%76-HV%f%GC7-QP%f%F8P_165_X21-04956_r35zp9OfxKSBcTxKWon3zFtbOiCufAPo6xRGY5DJqCRFKdB0jgZalNQitvjmaZ/Rlez2vjRJnEart4LrvyW4d9rrukAjR3+c3UkeTKwoD3qBl9AdRJbXCa2BdsoXJs1WVS4w4LuVzpB/SZDuggZt0F2DlMB427F5aflook/n1pY_0_____Retail_ProfessionalEducationN
+df96023b-dcd9-4be2-afa0-c6c871159ebe_NJC%f%F7-PW%f%8QT-332%f%4D-68%f%8JX-2Y%f%V66_175_X21-41295_rVpetYUmiRB48YJfCvJHiaZapJ0bO8gQDRoql+rq5IobiSRu//efV1VXqVpBkwILQRKgKIVONSTUF5y2TSxlDLbDSPKp7UHfbz17g6vRKLwOameYEz0ZcK3NTbApN/cMljHvvF/mBag1+sHjWu+eoFzk8H89k9nw8LMeVOPJRDc_0_____Retail_ServerRdsh
+d4ef7282-3d2c-4cf0-9976-8854e64a8d1e_V3W%f%VW-N2%f%PV2-CGW%f%C3-34%f%QGF-VM%f%J2C_178_X21-32983_Xzme9hDZR6H0Yx0deURVdE6LiTOkVqWng5W/OTbkxRc0rq+mSYpo/f/yqhtwYlrkBPWx16Yok5Bvcb34vbKHvEAtxfYp4te20uexLzVOtBcoeEozARv4W/6MhYfl+llZtR5efsktj4N4/G4sVbuGvZ9nzNfQO9TwV6NGgGEj2Ec_0_____Retail_Cloud
+af5c9381-9240-417d-8d35-eb40cd03e484_NH9%f%J3-68%f%WK7-6FB%f%93-4K%f%3DF-DJ%f%4F6_179_X21-32987_QGRDZOU/VZhYLOSdp2xDnFs8HInNZctcQlWCIrORVnxTQr55IJwN4vK3PJHjkfRLQ/bgUrcEIhyFbANqZFUq8yD1YNubb2bjNORgI/m8u85O9V7nDGtxzO/viEBSWyEHnrzLKKWYqkRQKbbSW3ungaZR0Ti5O2mAUI4HzAFej50_0_____Retail_CloudN
+8ab9bdd1-1f67-4997-82d9-8878520837d9_XQQ%f%YW-NF%f%FMW-XJP%f%BH-K8%f%732-CK%f%FFD_188_X21-99378_djy0od0uuKd2rrIl+V1/2+MeRltNgW7FEeTNQsPMkVSL75NBphgoso4uS0JPv2D7Y1iEEvmVq6G842Kyt52QOwXgFWmP/IQ6Sq1dr+fHK/4Et7bEPrrGBEZoCfWqk0kdcZRPBij2KN6qCRWhrk1hX2g+U40smx/EYCLGh9HCi24_0_____OEM:DM_IoTEnterprise
+ed655016-a9e8-4434-95d9-4345352c2552_QPM%f%6N-7J%f%2WJ-P88%f%HH-P3%f%YRH-YY%f%74H_191_X21-99682_qHs/PzfhYWdtSys2edzcz4h+Qs8aDqb8BIiQ/mJ/+0uyoJh1fitbRCIgiFh2WAGZXjdgB8hZeheNwHibd8ChXaXg4u+0XlOdFlaDTgTXblji8fjETzDBk9aGkeMCvyVXRuUYhTSdp83IqGHz7XuLwN2p/6AUArx9JZCoLGV8j3w_0_OEM:NONSLP_IoTEnterpriseS_VB
+6c4de1b8-24bb-4c17-9a77-7b939414c298_CGK%f%42-GY%f%N6Y-VD2%f%2B-BX%f%98W-J8%f%JXD_191_X23-12617_J/fpIRynsVQXbp4qZNKp6RvOgZ/P2klILUKQguMlcwrBZybwNkHg/kM5LNOF/aDzEktbPnLnX40GEvKkYT6/qP4cMhn/SOY0/hYOkIdR34ilzNlVNq5xP7CMjCjaUYJe+6ydHPK6FpOuEoWOYYP5BZENKNGyBy4w4shkMAw19mA_0_OEM:NONSLP_IoTEnterpriseS_Ge
+d4bdc678-0a4b-4a32-a5b3-aaa24c3b0f24_K9V%f%KN-3B%f%GWV-Y62%f%4W-MC%f%RMQ-BH%f%DCD_202_X22-53884_kyoNx2s93U6OUSklB1xn+GXcwCJO1QTEtACYnChi8aXSoxGQ6H2xHfUdHVCwUA1OR0UeNcRrMmOzZBOEUBtdoGWSYPg9AMjvxlxq9JOzYAH+G6lT0UbCWgMSGGrqdcIfmshyEak3aUmsZK6l+uIAFCCZZ/HbbCRkkHC5rWKstMI_0_____Retail_CloudEditionN
+92fb8726-92a8-4ffc-94ce-f82e07444653_KY7%f%PN-VR%f%6RX-83W%f%6Y-6D%f%DYQ-T6%f%R4W_203_X22-53847_gD6HnT4jP4rcNu9u83gvDiQq1xs7QSujcDbo60Di5iSVa9/ihZ7nlhnA0eDEZfnoDXriRiPPqc09T6AhSnFxLYitAkOuPJqL5UMobIrab9dwTKlowqFolxoHhLOO4V92Hsvn/9JLy7rEzoiAWHhX/0cpMr3FCzVYPeUW1OyLT1A_0_____Retail_CloudEdition
+d4f9b41f-205c-405e-8e08-3d16e88e02be_J7N%f%JW-V6%f%KBM-CC8%f%RW-Y2%f%9Y4-HQ%f%2MJ_205_X23-15027_BjCACpBJMs/qftw+cjNvpXmG+++IzXTMqE5kPCTbWuNZXh/d5OSX8Ii3l2yq6xJAdSiYcALItHttLbBBEJ9H8iBj8STQeYHxdp3xU2k3/5Hoe+dPHwf1Qfg/CBd/AkCpiPqFYvjH9OhxvdUk8GvBGL2p2MrAAU4n+CuISSutZKM_0_OEM:NONSLP_IoTEnterpriseSK
 ) do (
 for /f "tokens=1-9 delims=_" %%A in ("%%#") do (
 
@@ -1476,7 +1475,7 @@ set key=%%B
 REM Generate ticket
 
 if %1==ticket if "%key%"=="%%B" (
-set "string=OSMajorVersion=5;OSMinorVersion=1;OSPlatformId=2;PP=0;Pfn=Microsoft.Windows.%%C.%%D_8wekyb3d8bbwe;DownlevelGenuineState=1;$([char]0)"
+set "string=OSMajorVersion=5;OSMinorVersion=1;OSPlatformId=2;PP=0;Pfn=Microsoft.Windows.%%C.%%D_8wekyb3d8bbwe;PKeyIID=465145217131314304264339481117862266242033457260311819664735280;$([char]0)"
 for /f "tokens=* delims=" %%i in ('%psc% [conv%f%ert]::ToBas%f%e64String([Text.En%f%coding]::Uni%f%code.GetBytes("""!string!"""^)^)') do set "encoded=%%i"
 echo "!encoded!" | find "AAAA" %nul1% || exit /b
 
@@ -2760,6 +2759,8 @@ set _rem=0
 ::  To disable changing edition if current edition doesn't support KMS38 activation, change the value to 1 from 0 or run the script with "/KMS38-NoEditionChange" parameter
 set _NoEditionChange=0
 
+::  If value is changed in above lines or parameter is used then script will run in unattended mode
+
 ::========================================================================================================================================
 
 cls
@@ -3141,6 +3142,7 @@ if %_wmic% EQU 0 for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELE
 
 if not defined app (
 call :dk_color %Red% "Checking Installed GVLK Activation ID   [Not Found] Aborting..."
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%troubleshoot"
 goto :dk_done
 )
 
@@ -3195,6 +3197,7 @@ goto :k_final
 
 if not exist %SystemRoot%\system32\ClipUp.exe (
 call :dk_color %Red% "Checking ClipUp.exe File                [Not found, aborting the process]"
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%troubleshoot"
 goto :k_final
 )
 
