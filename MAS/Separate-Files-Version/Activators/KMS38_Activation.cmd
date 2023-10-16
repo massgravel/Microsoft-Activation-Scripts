@@ -1,3 +1,4 @@
+@set masver=2.3
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -100,7 +101,7 @@ popd
 
 cls
 color 07
-title  KMS38 Activation
+title  KMS38 Activation %masver%
 
 set _args=
 set _elev=
@@ -193,7 +194,7 @@ set "_batp=%_batf:'=''%"
 
 set _PSarg="""%~f0""" -el %_args%
 
-set "_ttemp=%temp%"
+set "_ttemp=%userprofile%\AppData\Local\Temp"
 
 setlocal EnableDelayedExpansion
 
@@ -239,6 +240,35 @@ exit /b
 
 ::========================================================================================================================================
 
+::  Check for updates
+
+set -=
+set old=
+
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 updatecheck.mass%-%grave.dev') do (
+if not [%%#]==[] echo "%%#" | find "127.69.%masver%" %nul1% || set old=1
+)
+
+if defined old (
+echo ________________________________________________
+%eline%
+echo You are running outdated version MAS %masver%
+echo ________________________________________________
+echo:
+if not %_unattended%==1 (
+echo [1] Download Latest MAS
+echo [0] Continue Anyway
+echo:
+call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+choice /C:10 /N
+if !errorlevel!==2 rem
+if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+)
+)
+cls
+
+::========================================================================================================================================
+
 if %_rem%==1 goto :k_uninstall
 
 :k_menu
@@ -246,7 +276,7 @@ if %_rem%==1 goto :k_uninstall
 if %_unattended%==0 (
 cls
 mode 76, 25
-title  KMS38 Activation
+title  KMS38 Activation %masver%
 
 echo:
 echo:
@@ -277,7 +307,7 @@ goto :k_menu
 
 cls
 mode 108, 34
-title  KMS38 Activation
+title  KMS38 Activation %masver%
 
 echo:
 echo Initializing...
@@ -754,7 +784,7 @@ goto :dk_done
 
 cls
 mode 99, 28
-title  Remove KMS38 Protection
+title  Remove KMS38 Protection %masver%
 
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg delete "HKU\S-1-5-20\%specific_kms%" /f
@@ -1037,7 +1067,7 @@ set showfix=1
 if defined safeboot_option (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking Boot Mode                      " %Blue% "[System is running in safe mode. Run in normal mode.]"
+call :dk_color2 %Red% "Checking Boot Mode                      " %Blue% "[Safe mode found. Run in normal mode.]"
 )
 
 
@@ -1051,7 +1081,7 @@ call :dk_color2 %Red% "Checking Audit Mode                     " %Blue% "[IMAGE_
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WinPE" /v InstRoot %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[System is running in WinPE mode. Run in normal mode.]"
+call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE mode found. Run in normal mode.]"
 )
 
 

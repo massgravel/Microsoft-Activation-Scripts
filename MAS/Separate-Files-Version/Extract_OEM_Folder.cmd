@@ -1,3 +1,4 @@
+@set masver=2.3
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -87,7 +88,7 @@ popd
 
 cls
 color 07
-title Extract $OEM$ Folder
+title Extract $OEM$ Folder %masver%
 
 set _args=
 set _elev=
@@ -161,7 +162,7 @@ set "_batf=%~f0"
 set "_batp=%_batf:'=''%"
 
 set _PSarg="""%~f0""" -el %_args%
-set "_ttemp=%temp%"
+set "_ttemp=%userprofile%\AppData\Local\Temp"
 
 setlocal EnableDelayedExpansion
 
@@ -203,6 +204,33 @@ start cmd.exe /c ""!_batf!" %_args% -qedit"
 rem quickedit reset code is added at the starting of the script instead of here because it takes time to reflect in some cases
 exit /b
 )
+
+::========================================================================================================================================
+
+::  Check for updates
+
+set -=
+set old=
+
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 updatecheck.mass%-%grave.dev') do (
+if not [%%#]==[] echo "%%#" | find "127.69.%masver%" %nul1% || set old=1
+)
+
+if defined old (
+echo ________________________________________________
+%eline%
+echo You are running outdated version MAS %masver%
+echo ________________________________________________
+echo:
+echo [1] Download Latest MAS
+echo [0] Continue Anyway
+echo:
+call :ex_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+choice /C:10 /N
+if !errorlevel!==2 rem
+if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+)
+cls
 
 ::========================================================================================================================================
 
@@ -336,7 +364,7 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0HWID_Activation.cmd" /HWID
+call "%~dp0HWID_Activation.cmd" /HWID
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -370,7 +398,7 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0Ohook_Activation.cmd" /Ohook
+call "%~dp0Ohook_Activation.cmd" /Ohook
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -400,7 +428,7 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0KMS38_Activation.cmd" /KMS38
+call "%~dp0KMS38_Activation.cmd" /KMS38
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -430,7 +458,7 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-WindowsOffice
+call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-WindowsOffice
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -466,9 +494,9 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0HWID_Activation.cmd" /HWID
+call "%~dp0HWID_Activation.cmd" /HWID
 
-start /b /wait cmd /c "%~dp0Ohook_Activation.cmd" /Ohook
+call "%~dp0Ohook_Activation.cmd" /Ohook
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -500,9 +528,9 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0HWID_Activation.cmd" /HWID
+call "%~dp0HWID_Activation.cmd" /HWID
 
-start /b /wait cmd /c "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
+call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -538,9 +566,9 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0KMS38_Activation.cmd" /KMS38
+call "%~dp0KMS38_Activation.cmd" /KMS38
 
-start /b /wait cmd /c "%~dp0Ohook_Activation.cmd" /Ohook
+call "%~dp0Ohook_Activation.cmd" /Ohook
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -572,9 +600,9 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0KMS38_Activation.cmd" /KMS38
+call "%~dp0KMS38_Activation.cmd" /KMS38
 
-start /b /wait cmd /c "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
+call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -610,9 +638,9 @@ goto done
 
 fltmc >nul || exit /b
 
-start /b /wait cmd /c "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Windows
+call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Windows
 
-start /b /wait cmd /c "%~dp0Ohook_Activation.cmd" /Ohook
+call "%~dp0Ohook_Activation.cmd" /Ohook
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")

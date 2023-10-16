@@ -1,3 +1,4 @@
+@set masver=2.3
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -92,7 +93,7 @@ popd
 
 cls
 color 07
-title  Change Windows Edition
+title  Change Windows Edition %masver%
 
 set _args=
 set _elev=
@@ -169,7 +170,7 @@ set "_batp=%_batf:'=''%"
 
 set _PSarg="""%~f0""" -el %_args%
 
-set "_ttemp=%temp%"
+set "_ttemp=%userprofile%\AppData\Local\Temp"
 
 setlocal EnableDelayedExpansion
 
@@ -210,6 +211,32 @@ reg add HKCU\Console /v QuickEdit /t REG_DWORD /d "0" /f %nul1%
 start cmd.exe /c ""!_batf!" %_args% -qedit"
 rem quickedit reset code is added at the starting of the script instead of here because it takes time to reflect in some cases
 exit /b
+)
+
+::========================================================================================================================================
+
+::  Check for updates
+
+set -=
+set old=
+
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 updatecheck.mass%-%grave.dev') do (
+if not [%%#]==[] echo "%%#" | find "127.69.%masver%" %nul1% || set old=1
+)
+
+if defined old (
+echo ________________________________________________
+%eline%
+echo You are running outdated version MAS %masver%
+echo ________________________________________________
+echo:
+echo [1] Download Latest MAS
+echo [0] Continue Anyway
+echo:
+call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+choice /C:10 /N
+if !errorlevel!==2 rem
+if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
 )
 
 ::========================================================================================================================================
@@ -370,7 +397,7 @@ echo "!_target!" | find /i " %%# " %nul1% || set "_target= !_target! %%# "
 
 if defined _target (
 for %%# in (%_target%) do (
-echo %%# | findstr /i "CountrySpecific CloudEdition" %nul% || (set "_ntarget=!_ntarget! %%#")
+echo %%# | findstr /i "CountrySpecific CloudEdition ServerRdsh" %nul% || (set "_ntarget=!_ntarget! %%#")
 )
 )
 
@@ -462,18 +489,31 @@ goto ced_done
 ::  Changing from Core to Non-Core & Changing editions in Windows build older than 17134 requires "changepk /productkey" or DISM Api method and restart
 ::  In other cases, editions can be changed instantly with "slmgr /ipk"
 
+if %_dismapi%==1 (
+mode con cols=105 lines=40
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':checkrebootflag\:.*';iex ($f[1]);" | find /i "True" %nul% && (
+%eline%
+echo Pending Reboot flags found.
+echo:
+echo Restart the system and try again.
+goto ced_done
+)
+)
+
 cls
 %line%
 echo:
+if defined dismnotworking call :dk_color %_Yellow% "DISM.exe is not responding."
 echo Changing the Current Edition [%osedition%] %winbuild% to [%targetedition%]
 echo:
 
 if %_dismapi%==1 (
-call :dk_color %Blue% "Notes-"
+call :dk_color %Green% "Notes-"
 echo:
 echo  - Save your work before continue, system will auto restart.
 echo:
 echo  - You will need to activate with HWID option once the edition is changed.
+%line%
 echo:
 choice /C:21 /N /M "[1] Continue [2] %_exitmsg% : "
 if !errorlevel!==1 exit /b
@@ -505,7 +545,7 @@ echo Check this page for help. %mas%troubleshoot
 
 if %_dismapi%==1 (
 echo:
-echo Applying the DISM API method with %_chan% Key %key%
+echo Applying the DISM API method with %_chan% Key %key%. Please wait...
 echo:
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':dismapi\:.*';& ([ScriptBlock]::Create($f[1])) %targetedition% %key%;"
 timeout /t 3 %nul1%
@@ -525,7 +565,16 @@ cls
 mode con cols=105 lines=32
 %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
 
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':checkrebootflag\:.*';iex ($f[1]);" | find /i "True" %nul% && (
+%eline%
+echo Pending reboot flags found.
 echo:
+echo Restart the system and try again.
+goto ced_done
+)
+
+echo:
+if defined dismnotworking call :dk_color %_Yellow% "Note - DISM.exe is not responding."
 echo Changing the Current Edition [%osedition%] %winbuild% to [%targetedition%]
 echo:
 call :dk_color %Blue% "Important - Save your work before continue, system will auto reboot."
@@ -574,8 +623,17 @@ goto ced_done
 
 ::========================================================================================================================================
 
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':checkrebootflag\:.*';iex ($f[1]);" | find /i "True" %nul% && (
+%eline%
+echo Pending reboot flags found.
+echo:
+echo Restart the system and try again.
+goto ced_done
+)
+
 cls
 echo:
+if defined dismnotworking call :dk_color %_Yellow% "Note - DISM.exe is not responding."
 echo Changing the Current Edition [%osedition%] %winbuild% to [%targetedition%]
 echo:
 echo Applying the command with %_chan% Key
@@ -660,6 +718,30 @@ set ref=$AssemblyBuilder = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1
 set ref=%ref% $ModuleBuilder = $AssemblyBuilder.DefineDynamicModule(2, $False);
 set ref=%ref% $TypeBuilder = $ModuleBuilder.DefineType(0);
 exit /b
+
+::========================================================================================================================================
+
+::  Check pending reboot flags
+
+:checkrebootflag:
+function Test-PendingReboot
+{
+ if (Test-Path -Path "$env:windir\WinSxS\pending.xml") { return $true }
+ if (Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -EA Ignore) { return $true }
+ if (Get-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -EA Ignore) { return $true }
+ if (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name PendingFileRenameOperations -EA Ignore) { return $true }
+ try { 
+   $util = [wmiclass]"\\.\root\ccm\clientsdk:CCM_ClientUtilities"
+   $status = $util.DetermineIfRebootPending()
+   if(($status -ne $null) -and $status.RebootPending){
+     return $true
+   }
+ }catch{}
+ 
+ return $false
+}
+Test-PendingReboot
+:checkrebootflag:
 
 ::========================================================================================================================================
 

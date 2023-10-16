@@ -1,3 +1,4 @@
+@set masver=2.3
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -93,7 +94,7 @@ popd
 
 cls
 color 07
-title  Online KMS Activation
+title  Online KMS Activation %masver%
 
 ::  You are not supposed to edit anything below this.
 
@@ -180,7 +181,7 @@ set "_batp=%_batf:'=''%"
 
 set _PSarg="""%~f0""" -el %_args%
 
-set "_ttemp=%temp%"
+set "_ttemp=%userprofile%\AppData\Local\Temp"
 set "_Local=%LocalAppData%"
 
 setlocal EnableDelayedExpansion
@@ -224,6 +225,35 @@ start cmd.exe /c ""!_batf!" %_args% -qedit"
 rem quickedit reset code is added at the starting of the script instead of here because it takes time to reflect in some cases
 exit /b
 )
+
+::========================================================================================================================================
+
+::  Check for updates
+
+set -=
+set old=
+
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 updatecheck.mass%-%grave.dev') do (
+if not [%%#]==[] echo "%%#" | find "127.69.%masver%" %nul1% || set old=1
+)
+
+if defined old (
+echo ________________________________________________
+%eline%
+echo You are running outdated version MAS %masver%
+echo ________________________________________________
+echo:
+if not defined _unattended (
+echo [1] Download Latest MAS
+echo [0] Continue Anyway
+echo:
+call :_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+choice /C:10 /N
+if !errorlevel!==2 rem
+if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+)
+)
+cls
 
 ::========================================================================================================================================
 
@@ -274,7 +304,7 @@ if defined _unattended if not defined _unattendedact goto Done
 
 ::========================================================================================================================================
 
-set "_title=Online KMS Activation"
+set "_title=Online KMS Activation %masver%"
 set _gui=
 
 :_KMS_Menu
@@ -483,7 +513,7 @@ mode con cols=98 lines=31
 %psc% "&%_buf%"
 title  %_title%
 ) else (
-title  Online KMS Activation
+title  Online KMS Activation %masver%
 )
 
 if defined _gui if %_Debug%==1 mode con cols=98 lines=30
@@ -3277,7 +3307,7 @@ goto :eof
 
 cls
 mode con: cols=91 lines=30
-title Online KMS Complete Uninstall
+title Online KMS Complete Uninstall %masver%
 
 set "key=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks"
 
@@ -3388,7 +3418,7 @@ exit /b
 
 cls
 mode con cols=91 lines=30
-title  Install Activation Auto-Renewal
+title  Install Activation Auto-Renewal %masver%
 
 set error_=
 set "_dest=%ProgramFiles%\Activation-Renewal"
@@ -3417,7 +3447,7 @@ if exist "%_temp%\.*" rmdir /s /q "%_temp%\" %nul%
 
 call :createInfo.txt
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split \":_extracttask\:.*`r`n\"; [io.file]::WriteAllText('%_dest%\Activation_task.cmd', '@REM Dummy ' + '%random%' + [Environment]::NewLine + $f[1].Trim(), [System.Text.Encoding]::ASCII);"
-title  Install Activation Auto-Renewal
+title  Install Activation Auto-Renewal %masver%
 
 ::========================================================================================================================================
 

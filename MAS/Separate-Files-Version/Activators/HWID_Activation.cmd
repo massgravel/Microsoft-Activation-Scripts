@@ -1,3 +1,4 @@
+@set masver=2.3
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -97,7 +98,7 @@ popd
 
 cls
 color 07
-title  HWID Activation
+title  HWID Activation %masver%
 
 set _args=
 set _elev=
@@ -194,7 +195,7 @@ set "_batp=%_batf:'=''%"
 
 set _PSarg="""%~f0""" -el %_args%
 
-set "_ttemp=%temp%"
+set "_ttemp=%userprofile%\AppData\Local\Temp"
 
 setlocal EnableDelayedExpansion
 
@@ -240,9 +241,37 @@ exit /b
 
 ::========================================================================================================================================
 
+::  Check for updates
+
+set -=
+set old=
+
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 updatecheck.mass%-%grave.dev') do (
+if not [%%#]==[] echo "%%#" | find "127.69.%masver%" %nul1% || set old=1
+)
+
+if defined old (
+echo ________________________________________________
+%eline%
+echo You are running outdated version MAS %masver%
+echo ________________________________________________
+echo:
+if not %_unattended%==1 (
+echo [1] Download Latest MAS
+echo [0] Continue Anyway
+echo:
+call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+choice /C:10 /N
+if !errorlevel!==2 rem
+if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+)
+)
+
+::========================================================================================================================================
+
 cls
 mode 108, 34
-title  HWID Activation
+title  HWID Activation %masver%
 
 ::  Start Windows update service at the beginning and in later checks as well, because in some normal conditions one kick is not enough
 
@@ -891,7 +920,7 @@ set showfix=1
 if defined safeboot_option (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking Boot Mode                      " %Blue% "[System is running in safe mode. Run in normal mode.]"
+call :dk_color2 %Red% "Checking Boot Mode                      " %Blue% "[Safe mode found. Run in normal mode.]"
 )
 
 
@@ -905,7 +934,7 @@ call :dk_color2 %Red% "Checking Audit Mode                     " %Blue% "[IMAGE_
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WinPE" /v InstRoot %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[System is running in WinPE mode. Run in normal mode.]"
+call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE mode found. Run in normal mode.]"
 )
 
 

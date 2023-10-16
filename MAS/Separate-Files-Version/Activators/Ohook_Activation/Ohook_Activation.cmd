@@ -1,3 +1,4 @@
+@set masver=2.3
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -97,7 +98,7 @@ popd
 
 cls
 color 07
-title  Ohook Activation
+title  Ohook Activation %masver%
 
 set _args=
 set _elev=
@@ -186,7 +187,7 @@ set "_batp=%_batf:'=''%"
 
 set _PSarg="""%~f0""" -el %_args%
 
-set "_ttemp=%temp%"
+set "_ttemp=%userprofile%\AppData\Local\Temp"
 
 setlocal EnableDelayedExpansion
 
@@ -232,6 +233,35 @@ exit /b
 
 ::========================================================================================================================================
 
+::  Check for updates
+
+set -=
+set old=
+
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 updatecheck.mass%-%grave.dev') do (
+if not [%%#]==[] echo "%%#" | find "127.69.%masver%" %nul1% || set old=1
+)
+
+if defined old (
+echo ________________________________________________
+%eline%
+echo You are running outdated version MAS %masver%
+echo ________________________________________________
+echo:
+if not %_unattended%==1 (
+echo [1] Download Latest MAS
+echo [0] Continue Anyway
+echo:
+call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+choice /C:10 /N
+if !errorlevel!==2 rem
+if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+)
+)
+cls
+
+::========================================================================================================================================
+
 if %_rem%==1 goto :oh_uninstall
 
 :oh_menu
@@ -239,7 +269,7 @@ if %_rem%==1 goto :oh_uninstall
 if %_unattended%==0 (
 cls
 mode 76, 25
-title  Ohook Activation
+title  Ohook Activation %masver%
 
 echo:
 echo:
@@ -275,7 +305,7 @@ cls
 mode 128, 32
 %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=32;$B.Height=300;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
 
-title  Ohook Activation
+title  Ohook Activation %masver%
 
 ::  Check files
 
@@ -496,34 +526,27 @@ call :oh_hookinstall
 ::========================================================================================================================================
 
 ::  Find remnants of Office vNext license block and remove it because it stops non vNext licenses from appearing
+::  https://learn.microsoft.com/en-us/office/troubleshoot/activation/reset-office-365-proplus-activation-state
 
 set sub_next=
-set kNext=HKCU\SOFTWARE\Microsoft\Office\16.0\Common\Licensing
 
-reg query %kNext%\LicensingNext /v MigrationToV5Done %nul2% | find /i "0x1" %nul% && (
-reg query %kNext%\LicensingNext %nul2% | findstr /i "volume retail" %nul2% | findstr /i "0x2 0x3" %nul% && (
+for /f "tokens=* delims=" %%a in ('%psc% "$userSIDs = Get-WmiObject -Class Win32_UserAccount | ForEach-Object {write-host $_.SID}" %nul6%') do (if defined _sid (set "_sid=!_sid! HKU\%%a") else (set "_sid=HKU\%%a"))
+
+for %%# in (!_sid! HKCU) do if not defined sub_next (
+reg query %%#\Software\Microsoft\Office\16.0\Common\Licensing\LicensingNext /v MigrationToV5Done %nul2% | find /i "0x1" %nul% && (
+reg query %%#\Software\Microsoft\Office\16.0\Common\Licensing\LicensingNext %nul2% | findstr /i "volume retail" %nul2% | findstr /i "0x2 0x3" %nul% && (
 set sub_next=1
-reg delete %kNext% /f %nul%
 )
-)
-
-if defined sub_next (
-reg query %kNext%\LicensingNext %nul% && (
-call :dk_color %Red% "Removing Office vNext Block             [Failed]"
-) || (
-echo Removing Office vNext Block             [Successful]
 )
 )
 
-::========================================================================================================================================
-
-::  Subscription licenses attempt to validate the license and may show a banner "There was a problem checking this device's license status.", other products don't do that.
-::  A simple registry entry can skip this check
-
-if defined _sublic (
-echo Adding a Reg To Skip License Check      [Successful]
-reg add HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /v "TimeOfLastHeartbeatFailure" /t REG_SZ /d "2033-08-18T22:18:45Z" /f %nul%
+if defined sub_next for %%# in (!_sid! HKCU) do (
+reg delete %%#\Software\Microsoft\Office\16.0\Common\Licensing /f %nul%
+reg delete %%#\Software\Microsoft\Office\16.0\Common\Identity /f %nul%
+reg delete %%#\Software\Microsoft\Office\16.0\Registration /f %nul%
 )
+
+if defined sub_next echo Removing Office vNext Block             [Successful]
 
 ::========================================================================================================================================
 
@@ -607,7 +630,7 @@ goto :dk_done
 
 cls
 mode 99, 28
-title  Uninstall Ohook Activation
+title  Uninstall Ohook Activation %masver%
 
 set _present=
 set _unerror=
@@ -644,15 +667,21 @@ if exist "%%~A\Microsoft %%~G\root\vfs\%%#\sppc*dll" (set _present=1& del /s /f 
 )
 )
 
-reg query HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /s %nul2% | find /i "2033" %nul% && (
+reg query HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency %nul% && (
 echo:
-echo Deleting - HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency
+echo Deleting - Registry keys to skip license check
 reg delete HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f
+
+for /f "tokens=* delims=" %%a in ('%psc% "$userSIDs = Get-WmiObject -Class Win32_UserAccount | ForEach-Object {write-host $_.SID}" %nul6%') do (if defined _sid (set "_sid=!_sid! %%a") else (set "_sid=%%a"))
+for %%# in (!_sid!) do (reg query HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency %nul% && (
+reg delete HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f
+)
+)
 )
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663" %nul% && (
 echo:
-echo Deleting - Registry key to prevent non-genuine banner
+echo Deleting - Registry keys to prevent non-genuine banner
 reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663" /f
 )
 
@@ -789,6 +818,9 @@ exit /b
 set ierror=
 set hasherror=
 
+if %_hook%==sppc32.dll set offset=2564
+if %_hook%==sppc64.dll set offset=3588
+
 del /s /q "%_hookPath%\sppcs.dll" %nul%
 del /s /q "%_hookPath%\sppc.dll" %nul%
 
@@ -812,10 +844,12 @@ set error=1
 call :dk_color %Red% "Symlinking Systems sppc.dll             [Failed]"
 call :dk_color %Red% "Copying Custom %_hook%               [Failed]"
 echo ["%_hookPath%\sppc.dll"]
-call :dk_color %Blue% "Close Office apps if they are running and try again."
+echo:
+call :dk_color %Blue% "Close ALL Office apps including Outlook and try again."
+call :dk_color %Blue% "If its still not resolved then restart system and try again."
 )
 
-if not defined ierror call :oh_modify "%_hookPath%\sppc.dll"
+if not defined ierror call :oh_modify "%_hookPath%\sppc.dll" "%offset%"
 
 if not defined ierror (
 if defined hasherror (
@@ -1076,7 +1110,7 @@ set showfix=1
 if defined safeboot_option (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking Boot Mode                      " %Blue% "[System is running in safe mode. Run in normal mode.]"
+call :dk_color2 %Red% "Checking Boot Mode                      " %Blue% "[Safe mode found. Run in normal mode.]"
 )
 
 
@@ -1090,7 +1124,7 @@ call :dk_color2 %Red% "Checking Audit Mode                     " %Blue% "[IMAGE_
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WinPE" /v InstRoot %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[System is running in WinPE mode. Run in normal mode.]"
+call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE mode found. Run in normal mode.]"
 )
 
 
@@ -1487,15 +1521,10 @@ exit /b
 
 :oh_modify
 
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';& ([ScriptBlock]::Create($f[1])) '%1';" %nul2% | find /i "Error found" %nul1% && set hasherror=1
+%psc% "$PePath='%1'; $offset='%2'; $f=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';iex ($f[1]);" %nul2% | find /i "Error found" %nul1% && set hasherror=1
 exit /b
 
 :hexedit:
-param (
-    [Parameter()]
-    [String]$PePath
-)
-
 # Define dynamic assembly, module, and type
 $AssemblyBuilder = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1)
 $ModuleBuilder = $AssemblyBuilder.DefineDynamicModule(2, $False)
@@ -1510,7 +1539,7 @@ $Imagehlp = $TypeBuilder.CreateType()
 # File and offset information
 $PeFile = Get-ChildItem -Path $PePath
 $timestampOffset = 136
-$exportTimestampOffset = 3076
+$exportTimestampOffset = $offset
 $checkSumOffset = 216
 
 # Calculate timestamp
