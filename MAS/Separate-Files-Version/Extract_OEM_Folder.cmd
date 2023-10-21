@@ -1,4 +1,4 @@
-@set masver=2.3
+@set masver=2.4
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -186,7 +186,7 @@ goto done2
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %eline%
-echo This script require admin privileges.
+echo This script requires admin privileges.
 echo To do so, right click on this script and select 'Run as administrator'.
 goto done2
 )
@@ -212,8 +212,8 @@ exit /b
 set -=
 set old=
 
-for /f "delims=[] tokens=2" %%# in ('ping -n 1 updatecheck.mass%-%grave.dev') do (
-if not [%%#]==[] echo "%%#" | find "127.69.%masver%" %nul1% || set old=1
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
+if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
 )
 
 if defined old (
@@ -268,9 +268,7 @@ goto done2
 set HWID_Activation.cmd=Activators\HWID_Activation.cmd
 set KMS38_Activation.cmd=Activators\KMS38_Activation.cmd
 set Online_KMS_Activation.cmd=Activators\Online_KMS_Activation.cmd
-set Ohook_Activation.cmd=Activators\Ohook_Activation\Ohook_Activation.cmd
-set sppc32.dll=Activators\Ohook_Activation\BIN\sppc32.dll
-set sppc64.dll=Activators\Ohook_Activation\BIN\sppc64.dll
+set Ohook_Activation_AIO.cmd=Activators\Ohook_Activation_AIO.cmd
 pushd "!_work!"
 
 set _nofile=
@@ -278,9 +276,7 @@ for %%# in (
 %HWID_Activation.cmd%
 %KMS38_Activation.cmd%
 %Online_KMS_Activation.cmd%
-%Ohook_Activation.cmd%
-%sppc32.dll%
-%sppc64.dll%
+%Ohook_Activation_AIO.cmd%
 ) do (
 if not exist "%%#" set _nofile=1
 )
@@ -375,18 +371,14 @@ cd \
 :ohook
 
 cls
-md "!desktop!\$OEM$\$$\Setup\Scripts\BIN"
+md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
-copy /y /b "%Ohook_Activation.cmd%" "!_dir!\Ohook_Activation.cmd" %nul%
-copy /y /b "%sppc32.dll%" "!_dir!\BIN\sppc32.dll" %nul%
-copy /y /b "%sppc64.dll%" "!_dir!\BIN\sppc64.dll" %nul%
+copy /y /b %Ohook_Activation_AIO.cmd% "!_dir!\Ohook_Activation_AIO.cmd" %nul%
 popd
 call :export ohook_setup
 
 set _error=
-if not exist "!_dir!\Ohook_Activation.cmd" set _error=1
-if not exist "!_dir!\BIN\sppc32.dll" set _error=1
-if not exist "!_dir!\BIN\sppc64.dll" set _error=1
+if not exist "!_dir!\Ohook_Activation_AIO.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
 if defined _error goto errorfound
 
@@ -398,7 +390,7 @@ goto done
 
 fltmc >nul || exit /b
 
-call "%~dp0Ohook_Activation.cmd" /Ohook
+call "%~dp0Ohook_Activation_AIO.cmd" /Ohook
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -469,20 +461,16 @@ cd \
 :hwid_ohook
 
 cls
-md "!desktop!\$OEM$\$$\Setup\Scripts\BIN"
+md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
 copy /y /b "%HWID_Activation.cmd%" "!_dir!\HWID_Activation.cmd" %nul%
-copy /y /b "%Ohook_Activation.cmd%" "!_dir!\Ohook_Activation.cmd" %nul%
-copy /y /b "%sppc32.dll%" "!_dir!\BIN\sppc32.dll" %nul%
-copy /y /b "%sppc64.dll%" "!_dir!\BIN\sppc64.dll" %nul%
+copy /y /b "%Ohook_Activation_AIO.cmd%" "!_dir!\Ohook_Activation_AIO.cmd" %nul%
 popd
 call :export hwid_ohook_setup
 
 set _error=
 if not exist "!_dir!\HWID_Activation.cmd" set _error=1
-if not exist "!_dir!\Ohook_Activation.cmd" set _error=1
-if not exist "!_dir!\BIN\sppc32.dll" set _error=1
-if not exist "!_dir!\BIN\sppc64.dll" set _error=1
+if not exist "!_dir!\Ohook_Activation_AIO.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
 if defined _error goto errorfound
 
@@ -494,9 +482,13 @@ goto done
 
 fltmc >nul || exit /b
 
+setlocal
 call "%~dp0HWID_Activation.cmd" /HWID
+endlocal
 
-call "%~dp0Ohook_Activation.cmd" /Ohook
+setlocal
+call "%~dp0Ohook_Activation_AIO.cmd" /Ohook
+endlocal
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -528,9 +520,13 @@ goto done
 
 fltmc >nul || exit /b
 
+setlocal
 call "%~dp0HWID_Activation.cmd" /HWID
+endlocal
 
+setlocal
 call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
+endlocal
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -541,20 +537,16 @@ cd \
 :kms38_ohook
 
 cls
-md "!desktop!\$OEM$\$$\Setup\Scripts\BIN"
+md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
 copy /y /b "%KMS38_Activation.cmd%" "!_dir!\KMS38_Activation.cmd" %nul%
-copy /y /b "%Ohook_Activation.cmd%" "!_dir!\Ohook_Activation.cmd" %nul%
-copy /y /b "%sppc32.dll%" "!_dir!\BIN\sppc32.dll" %nul%
-copy /y /b "%sppc64.dll%" "!_dir!\BIN\sppc64.dll" %nul%
+copy /y /b "%Ohook_Activation_AIO.cmd%" "!_dir!\Ohook_Activation_AIO.cmd" %nul%
 popd
 call :export kms38_ohook_setup
 
 set _error=
 if not exist "!_dir!\KMS38_Activation.cmd" set _error=1
-if not exist "!_dir!\Ohook_Activation.cmd" set _error=1
-if not exist "!_dir!\BIN\sppc32.dll" set _error=1
-if not exist "!_dir!\BIN\sppc64.dll" set _error=1
+if not exist "!_dir!\Ohook_Activation_AIO.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
 if defined _error goto errorfound
 
@@ -566,9 +558,13 @@ goto done
 
 fltmc >nul || exit /b
 
+setlocal
 call "%~dp0KMS38_Activation.cmd" /KMS38
+endlocal
 
-call "%~dp0Ohook_Activation.cmd" /Ohook
+setlocal
+call "%~dp0Ohook_Activation_AIO.cmd" /Ohook
+endlocal
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -600,9 +596,13 @@ goto done
 
 fltmc >nul || exit /b
 
+setlocal
 call "%~dp0KMS38_Activation.cmd" /KMS38
+endlocal
 
+setlocal
 call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
+endlocal
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -613,20 +613,16 @@ cd \
 :kms_ohook
 
 cls
-md "!desktop!\$OEM$\$$\Setup\Scripts\BIN"
+md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
 copy /y /b "%Online_KMS_Activation.cmd%" "!_dir!\Online_KMS_Activation.cmd" %nul%
-copy /y /b "%Ohook_Activation.cmd%" "!_dir!\Ohook_Activation.cmd" %nul%
-copy /y /b "%sppc32.dll%" "!_dir!\BIN\sppc32.dll" %nul%
-copy /y /b "%sppc64.dll%" "!_dir!\BIN\sppc64.dll" %nul%
+copy /y /b "%Ohook_Activation_AIO.cmd%" "!_dir!\Ohook_Activation_AIO.cmd" %nul%
 popd
 call :export kms_ohook_setup
 
 set _error=
 if not exist "!_dir!\Online_KMS_Activation.cmd" set _error=1
-if not exist "!_dir!\Ohook_Activation.cmd" set _error=1
-if not exist "!_dir!\BIN\sppc32.dll" set _error=1
-if not exist "!_dir!\BIN\sppc64.dll" set _error=1
+if not exist "!_dir!\Ohook_Activation_AIO.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
 if defined _error goto errorfound
 
@@ -638,9 +634,13 @@ goto done
 
 fltmc >nul || exit /b
 
+setlocal
 call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Windows
+endlocal
 
-call "%~dp0Ohook_Activation.cmd" /Ohook
+setlocal
+call "%~dp0Ohook_Activation_AIO.cmd" /Ohook
+endlocal
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")

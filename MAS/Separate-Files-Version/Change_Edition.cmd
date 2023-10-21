@@ -1,4 +1,4 @@
-@set masver=2.3
+@set masver=2.4
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -194,7 +194,7 @@ goto ced_done
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %eline%
-echo This script require admin privileges.
+echo This script requires admin privileges.
 echo To do so, right click on this script and select 'Run as administrator'.
 goto ced_done
 )
@@ -220,8 +220,8 @@ exit /b
 set -=
 set old=
 
-for /f "delims=[] tokens=2" %%# in ('ping -n 1 updatecheck.mass%-%grave.dev') do (
-if not [%%#]==[] echo "%%#" | find "127.69.%masver%" %nul1% || set old=1
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
+if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
 )
 
 if defined old (
@@ -678,7 +678,11 @@ exit /b
 
 if %_wmic% EQU 1 set "chkedi=for /f "tokens=2 delims==" %%a in ('"wmic path SoftwareLicensingProduct where (ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f') get LicenseFamily /VALUE" %nul6%')"
 if %_wmic% EQU 0 set "chkedi=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT LicenseFamily FROM SoftwareLicensingProduct WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f''').Get()).LicenseFamily ^| %% {echo ('LicenseFamily='+$_)}" %nul6%')"
-%chkedi% do (call set "_wtarget= !_wtarget! %%a ")
+%chkedi% do (
+call if exist %Systemdrive%\Windows\System32\spp\tokens\skus\%%a (
+call set "_wtarget= !_wtarget! %%a "
+)
+)
 exit /b
 
 ::  Check wmic.exe
@@ -729,7 +733,6 @@ function Test-PendingReboot
  if (Test-Path -Path "$env:windir\WinSxS\pending.xml") { return $true }
  if (Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -EA Ignore) { return $true }
  if (Get-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -EA Ignore) { return $true }
- if (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name PendingFileRenameOperations -EA Ignore) { return $true }
  try { 
    $util = [wmiclass]"\\.\root\ccm\clientsdk:CCM_ClientUtilities"
    $status = $util.DetermineIfRebootPending()

@@ -1,4 +1,4 @@
-@set masver=2.3
+@set masver=2.4
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -172,7 +172,7 @@ goto at_done
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %nceline%
-echo This script require admin privileges.
+echo This script requires admin privileges.
 echo To do so, right click on this script and select 'Run as administrator'.
 goto at_done
 )
@@ -198,8 +198,8 @@ exit /b
 set -=
 set old=
 
-for /f "delims=[] tokens=2" %%# in ('ping -n 1 updatecheck.mass%-%grave.dev') do (
-if not [%%#]==[] echo "%%#" | find "127.69.%masver%" %nul1% || set old=1
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
+if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
 )
 
 if defined old (

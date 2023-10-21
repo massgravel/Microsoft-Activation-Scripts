@@ -29,8 +29,8 @@
 To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches.html)
 
 ```
-Latest Version: 2.3
-Release date: 16-Oct-2023
+Latest Version: 2.4
+Release date: 21-Oct-2023
 ```
 
 ### [Troubleshooting / Help](https://massgrave.dev/troubleshoot.html)
