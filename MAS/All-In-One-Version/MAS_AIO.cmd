@@ -11,7 +11,7 @@
 ::
 ::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
 ::
-::   Homepage: mass grave[.]dev
+::   Homepage: https://massgrave[.]dev
 ::      Email: windowsaddict@protonmail.com
 ::
 ::============================================================================
