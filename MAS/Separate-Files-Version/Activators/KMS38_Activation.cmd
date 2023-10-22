@@ -218,7 +218,7 @@ goto dk_done
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
 %eline%
-echo This script require admin privileges.
+echo This script requires admin privileges.
 echo To do so, right click on this script and select 'Run as administrator'.
 goto dk_done
 )
