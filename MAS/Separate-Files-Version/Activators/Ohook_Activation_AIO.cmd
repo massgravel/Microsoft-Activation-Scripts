@@ -3,16 +3,7 @@
 @echo off
 
 
-
-::============================================================================
-::
-::   This script is a part of 'Microsoft_Activation_Scripts' project.
-::
-::   Homepage: https://massgrave[.]dev
-::      Email: windowsaddict@protonmail.com
-::
-::============================================================================
-
+::========================================================================================================================================
 
 
 ::  To activate Office with Ohook activation, run the script with "/Ohook" parameter or change 0 to 1 in below line
@@ -22,7 +13,6 @@ set _act=0
 set _rem=0
 
 ::  If value is changed in above lines or parameter is used then script will run in unattended mode
-
 
 
 ::========================================================================================================================================
@@ -559,7 +549,7 @@ echo Adding Reg Keys To Skip License Check   [Successful]
 
 ::========================================================================================================================================
 
-::  mass grave[.]dev/office-license-is-not-genuine.html
+::  mass[]grave[.]dev/office-license-is-not-genuine.html
 ::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
 ::  Script already is using MAK instead of GVLK so it won't appear anyway, but registry keys are added incase Office installs default GVLK grace key for volume products
 
@@ -1526,8 +1516,8 @@ exit /b
 
 :oh_extractdll
 
-set b=
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$bytes = [Con%b%vert]::FromBas%b%e64String($f[1]); $PePath='%1'; $offset='%2'; $m=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';iex ($m[1]);" %nul2% | find /i "Error found" %nul1% && set hasherror=1
+set _blank=
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$bytes = [Con%_blank%vert]::FromBas%_blank%e64String($f[1]); $PePath='%1'; $offset='%2'; $m=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';iex ($m[1]);" %nul2% | find /i "Error found" %nul1% && set hasherror=1
 exit /b
 
 :hexedit:
@@ -1610,13 +1600,13 @@ $MemoryStream.Close()
 ::
 ::  The files are encoded in base64 to make MAS AIO version.
 ::
-::  mass grave[.]dev/ohook
+::  mass[]grave[.]dev/ohook
 ::  Here you can find the files source code and info on how to rebuild the identical sppc.dll files
 ::
 ::  stackoverflow.com/a/35335273
 ::  Here you can check how to extract sppc.dll files from base64
 ::
-::  For any further question, feel free to contact us on mass grave[.]dev/contactus
+::  For any further question, feel free to contact us on mass[]grave[.]dev/contactus
 ::
 ::========================================================================================================================================
 
