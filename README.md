@@ -45,7 +45,7 @@ Release date: 21-Oct-2023
 
 [1.1]: https://lookimg.com/images/2023/03/21/QTvjcD.png (Chat with us without signup)
 [1.2]: https://lookimg.com/images/2023/03/21/QTvLyd.png (Chat with us)
-[1.3]: https://lookimg.com/images/2023/03/21/QTvXBJ.png (Follow on twitter)
+[1.3]: https://lookimg.com/images/2023/10/28/QiAvLg.png (Follow on 𝕏/Twitter)
 [1.4]: https://lookimg.com/images/2023/05/17/Q0iZ2U.png (Reddit)
 
 [1]: https://discord.gg/gjJEfq7ux8
