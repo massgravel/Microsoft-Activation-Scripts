@@ -3,7 +3,7 @@
 @echo off
 
 
-
+::
 ::=================================================================================================
 ::
 ::  Online KMS Script is a fork of @abbodi1406's KMS_VL_ALL  forums.mydigitallife.net/posts/838808
