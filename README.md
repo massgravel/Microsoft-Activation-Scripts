@@ -1,4 +1,4 @@
-<p align="center"><img src="https://raw.githubusercontent.com/massgravel/mas-docs/main/logo.png" alt="MAS Logo" height="128"></p>
+<p align="center"><img src="https://lookimg.com/images/2023/09/25/QY5RTR.png" alt="MAS Logo" height="128"></p>
 
 <h1 align="center">Microsoft  Activation  Scripts (MAS)</h1>
 
