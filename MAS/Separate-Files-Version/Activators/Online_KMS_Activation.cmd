@@ -1,9 +1,9 @@
-@set masver=2.4
+@set masver=2.5
 @setlocal DisableDelayedExpansion
 @echo off
 
 
-::
+
 ::=================================================================================================
 ::
 ::  Online KMS Script is a fork of @abbodi1406's KMS_VL_ALL  forums.mydigitallife.net/posts/838808
@@ -248,7 +248,7 @@ echo You are running outdated version MAS %masver%
 echo ________________________________________________
 echo:
 if not defined _unattended (
-echo [1] Download Latest MAS
+echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
 call :_color %_Green% "Enter a menu option in the Keyboard [1,0] :"

@@ -1,9 +1,9 @@
-@set masver=2.4
+@set masver=2.5
 @setlocal DisableDelayedExpansion
 @echo off
 
 
-::
+
 ::============================================================================
 ::
 ::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
@@ -230,7 +230,7 @@ echo ________________________________________________
 echo You are running outdated version MAS %masver%
 echo ________________________________________________
 echo:
-echo [1] Download Latest MAS
+echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
 call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
@@ -282,24 +282,7 @@ goto ced_done
 
 ::========================================================================================================================================
 
-::  Check SKU value
-
-set osSKU=
-set slcSKU=
-set wmiSKU=
-
-if %winbuild% GEQ 14393 (set info=Kernel-BrandingInfo) else (set info=Kernel-ProductInfo)
-set d1=%ref% [void]$TypeBuilder.DefinePInvokeMethod('SLGetWindowsInformationDWORD', 'slc.dll', 'Public, Static', 1, [int], @([String], [int].MakeByRefType()), 1, 3);
-set d1=%d1% $Sku = 0; [void]$TypeBuilder.CreateType()::SLGetWindowsInformationDWORD('%info%', [ref]$Sku); $Sku
-for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set slcSKU=%%s)
-if "%slcSKU%"=="0" set slcSKU=
-if 1%slcSKU% NEQ +1%slcSKU% set slcSKU=
-
-if %_wmic% EQU 1 for /f "tokens=2 delims==" %%a in ('"wmic Path Win32_OperatingSystem Get OperatingSystemSKU /format:LIST" %nul6%') do if not errorlevel 1 set "wmiSKU=%%a"
-if %_wmic% EQU 0 for /f "tokens=1" %%a in ('%psc% "([WMI]'Win32_OperatingSystem=@').OperatingSystemSKU" %nul6%') do if not errorlevel 1 set "wmiSKU=%%a"
-
-set osSKU=%slcSKU%
-if not defined osSKU set osSKU=%wmiSKU%
+call :dk_checksku
 
 if not defined osSKU (
 %eline%
@@ -324,7 +307,7 @@ if not defined osedition (
 for /f "skip=2 tokens=3" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul6%') do set "osedition=%%a"
 )
 
-::  Workaround for a Windows bug in builds between 1607 and 1709 where ProfessionalEducation is shown as Professional
+::  Workaround for an issue in builds between 1607 and 1709 where ProfessionalEducation is shown as Professional
 
 if %osSKU%==164 set osedition=ProfessionalEducation
 if %osSKU%==165 set osedition=ProfessionalEducationN
@@ -354,7 +337,10 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 
 %psc% $ExecutionContext.SessionState.LanguageMode %nul2% | find /i "Full" %nul1% || (
 %eline%
-echo PowerShell is not responding properly. Aborting...
+%psc% $ExecutionContext.SessionState.LanguageMode
+echo:
+echo PowerShell is not working. Aborting...
+echo If you have applied restrictions on Powershell then undo those changes.
 echo:
 echo Check this page for help. %mas%troubleshoot
 goto ced_done
@@ -653,6 +639,31 @@ pause %nul1%
 exit /b
 
 ::========================================================================================================================================
+
+::  Check SKU value
+
+:dk_checksku
+
+set osSKU=
+set slcSKU=
+set wmiSKU=
+set regSKU=
+
+if %winbuild% GEQ 14393 (set info=Kernel-BrandingInfo) else (set info=Kernel-ProductInfo)
+set d1=%ref% [void]$TypeBuilder.DefinePInvokeMethod('SLGetWindowsInformationDWORD', 'slc.dll', 'Public, Static', 1, [int], @([String], [int].MakeByRefType()), 1, 3);
+set d1=%d1% $Sku = 0; [void]$TypeBuilder.CreateType()::SLGetWindowsInformationDWORD('%info%', [ref]$Sku); $Sku
+for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set slcSKU=%%s)
+if "%slcSKU%"=="0" set slcSKU=
+if 1%slcSKU% NEQ +1%slcSKU% set slcSKU=
+
+for /f "tokens=3 delims=." %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions" /v OSProductPfn %nul6%') do set "regSKU=%%a"
+if %_wmic% EQU 1 for /f "tokens=2 delims==" %%a in ('"wmic Path Win32_OperatingSystem Get OperatingSystemSKU /format:LIST" %nul6%') do if not errorlevel 1 set "wmiSKU=%%a"
+if %_wmic% EQU 0 for /f "tokens=1" %%a in ('%psc% "([WMI]'Win32_OperatingSystem=@').OperatingSystemSKU" %nul6%') do if not errorlevel 1 set "wmiSKU=%%a"
+
+set osSKU=%slcSKU%
+if not defined osSKU set osSKU=%wmiSKU%
+if not defined osSKU set osSKU=%regSKU%
+exit /b
 
 ::  Refresh license status
 

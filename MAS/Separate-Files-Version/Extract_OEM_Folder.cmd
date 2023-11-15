@@ -1,9 +1,9 @@
-@set masver=2.4
+@set masver=2.5
 @setlocal DisableDelayedExpansion
 @echo off
 
 
-::
+
 ::============================================================================
 ::
 ::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
@@ -222,7 +222,7 @@ echo ________________________________________________
 echo You are running outdated version MAS %masver%
 echo ________________________________________________
 echo:
-echo [1] Download Latest MAS
+echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
 call :ex_color %_Green% "Enter a menu option in the Keyboard [1,0] :"

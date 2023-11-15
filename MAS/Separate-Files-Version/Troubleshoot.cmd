@@ -1,9 +1,9 @@
-@set masver=2.4
+@set masver=2.5
 @setlocal DisableDelayedExpansion
 @echo off
 
 
-::
+
 ::============================================================================
 ::
 ::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
@@ -208,7 +208,7 @@ echo ________________________________________________
 echo You are running outdated version MAS %masver%
 echo ________________________________________________
 echo:
-echo [1] Download Latest MAS
+echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
 call :_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
@@ -323,7 +323,7 @@ if %errorlevel%==1 goto at_menu
 
 cls
 mode 110, 30
-call :_stopservice TrustedInstaller
+%psc% Stop-Service TrustedInstaller -force %nul%
 
 set _time=
 for /f %%a in ('%psc% "Get-Date -format HH_mm_ss"') do set _time=%%a
@@ -332,7 +332,7 @@ echo Applying the command,
 echo dism /english /online /cleanup-image /restorehealth
 dism /english /online /cleanup-image /restorehealth
 
-call :_stopservice TrustedInstaller
+%psc% Stop-Service TrustedInstaller -force %nul%
 
 if not exist "!desktop!\AT_Logs\" md "!desktop!\AT_Logs\" %nul%
 
@@ -375,7 +375,7 @@ choice /C:09 /N /M ">    [9] Continue [0] Go back : "
 if %errorlevel%==1 goto at_menu
 
 cls
-call :_stopservice TrustedInstaller
+%psc% Stop-Service TrustedInstaller -force %nul%
 
 set _time=
 for /f %%a in ('%psc% "Get-Date -format HH_mm_ss"') do set _time=%%a
@@ -384,7 +384,7 @@ echo Applying the command,
 echo sfc /scannow
 sfc /scannow
 
-call :_stopservice TrustedInstaller
+%psc% Stop-Service TrustedInstaller -force %nul%
 
 if not exist "!desktop!\AT_Logs\" md "!desktop!\AT_Logs\" %nul%
 
@@ -455,7 +455,7 @@ goto :cleanvnext
 )
 
 echo Stopping ClipSVC service...
-call :_stopservice ClipSVC
+%psc% Stop-Service ClipSVC -force %nul%
 timeout /t 2 %nul%
 
 echo:
@@ -505,7 +505,7 @@ call :_color %Red% "[Failed]"
 echo [Successful]
 )
 
-call :_stopservice ClipSVC
+%psc% Stop-Service ClipSVC -force %nul%
 
 ::  Rebuild ClipSVC folder to fix permission issues
 
@@ -522,7 +522,7 @@ echo [Successful]
 
 echo:
 echo Rebuilding Folder %ProgramData%\Microsoft\Windows\ClipSVC\
-net start ClipSVC /y %nul%
+%psc% Start-Service ClipSVC %nul%
 timeout /t 3 %nul%
 if not exist "%ProgramData%\Microsoft\Windows\ClipSVC\" timeout /t 5 %nul%
 if not exist "%ProgramData%\Microsoft\Windows\ClipSVC\" (
@@ -534,7 +534,7 @@ echo [Successful]
 
 echo:
 echo Restarting [wlidsvc LicenseManager] services...
-for %%# in (wlidsvc LicenseManager) do (net stop %%# /y %nul% & net start %%# /y %nul%)
+for %%# in (wlidsvc LicenseManager) do (%psc% Restart-Service %%# %nul%)
 
 ::========================================================================================================================================
 
@@ -580,7 +580,7 @@ echo Not Found - !_Local!\Microsoft\Office\Licenses\
 
 
 echo:
-for /f "tokens=* delims=" %%a in ('%psc% "$userSIDs = Get-WmiObject -Class Win32_UserAccount | ForEach-Object {write-host $_.SID}" %nul6%') do (if defined _sid (set "_sid=!_sid! HKU\%%a") else (set "_sid=HKU\%%a"))
+for /f "tokens=* delims=" %%a in ('%psc% "Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' | ForEach-Object { Split-Path -Path $_.PSPath -Leaf }" %nul6%') do (if defined _sid (set "_sid=!_sid! HKU\%%a") else (set "_sid=HKU\%%a"))
 
 set regfound=
 for %%# in (HKCU !_sid!) do (
@@ -619,19 +619,13 @@ call :_color %Red% "tokens.dat file not found."
 echo tokens.dat file: [%token%]
 )
 
-if %winbuild% GEQ 14393 (
-set wpaerror=
-set /a count=0
-for /f %%a in ('reg query "HKLM\SYSTEM\WPA" %nul6%') do set /a count+=1
-for /L %%# in (1,1,!count!) do (
-reg query "HKLM\SYSTEM\WPA\8DEC0AF1-0341-4b93-85CD-72606C2DF94C-7P-%%#" /ve /t REG_BINARY %nul% || set wpaerror=1
-)
-
-if defined wpaerror (
 echo:
-echo Checking WPA Registry Keys...
-call :_color %Red% "[Error Found] [Registry Count - !count!]"
-)
+set wpainfo=
+for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wpatest\:.*';iex ($f[1]);" %nul6%') do (set wpainfo=%%a)
+echo "%wpainfo%" | find /i "Error Found" %nul% && (
+call :_color %Red% "WPA Registry Error: %wpainfo%"
+) || (
+echo WPA Registry Count: %wpainfo%
 )
 
 set tokenstore=
@@ -679,7 +673,7 @@ echo [No Error Found]
 
 echo:
 echo Stopping sppsvc service...
-call :_stopservice sppsvc
+%psc% Stop-Service sppsvc -force %nul%
 
 echo:
 call :scandat delete
@@ -736,7 +730,7 @@ echo tokens.dat file: [%token%]
 
 echo:
 echo Stopping osppsvc service...
-call :_stopservice osppsvc
+%psc% Stop-Service osppsvc -force %nul%
 
 echo:
 call :scandatospp delete
@@ -750,11 +744,11 @@ echo:
 
 echo:
 echo Starting osppsvc service to generate tokens.dat
-call :_startservice osppsvc
+%psc% Start-Service osppsvc %nul%
 call :scandatospp check
 if not defined token (
-call :_stopservice osppsvc
-call :_startservice osppsvc
+%psc% Stop-Service osppsvc -force %nul%
+%psc% Start-Service osppsvc %nul%
 timeout /t 3 %nul%
 )
 
@@ -801,18 +795,20 @@ for %%A in (msi14 msi15 msi16 c2r14 c2r15 c2r16) do (set %%A_%%#=&set %%Arepair%
 set _68=HKLM\SOFTWARE\Microsoft\Office
 set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
 
-%nul% reg query %_68%\14.0\Common\InstallRoot /v Path  && (set "msi14_68=Office 14.0 MSI x86/x64"  & set "msi14repair68=%systemdrive%\Program Files\Common Files\microsoft shared\OFFICE14\Office Setup Controller\Setup.exe")
-%nul% reg query %_86%\14.0\Common\InstallRoot /v Path  && (set "msi14_86=Office 14.0 MSI x86"      & set "msi14repair86=%systemdrive%\Program Files (x86)\Common Files\Microsoft Shared\OFFICE14\Office Setup Controller\Setup.exe")
-%nul% reg query %_68%\15.0\Common\InstallRoot /v Path  && (set "msi15_68=Office 15.0 MSI x86/x64"  & set "msi15repair68=%systemdrive%\Program Files\Common Files\microsoft shared\OFFICE15\Office Setup Controller\Setup.exe")
-%nul% reg query %_86%\15.0\Common\InstallRoot /v Path  && (set "msi15_86=Office 15.0 MSI x86"      & set "msi15repair86=%systemdrive%\Program Files (x86)\Common Files\Microsoft Shared\OFFICE15\Office Setup Controller\Setup.exe")
-%nul% reg query %_68%\16.0\Common\InstallRoot /v Path  && (set "msi16_68=Office 16.0 MSI x86/x64"  & set "msi16repair68=%systemdrive%\Program Files\Common Files\Microsoft Shared\OFFICE16\Office Setup Controller\Setup.exe")
-%nul% reg query %_86%\16.0\Common\InstallRoot /v Path  && (set "msi16_86=Office 16.0 MSI x86"      & set "msi16repair86=%systemdrive%\Program Files (x86)\Common Files\Microsoft Shared\OFFICE16\Office Setup Controller\Setup.exe")
-%nul% reg query %_68%\14.0\CVH /f Click2run /k         && (set "c2r14_68=Office 14.0 C2R x86/x64"  & set "c2r14repair68=")
-%nul% reg query %_86%\14.0\CVH /f Click2run /k         && (set "c2r14_86=Office 14.0 C2R x86"      & set "c2r14repair86=")
-%nul% reg query %_68%\15.0\ClickToRun /v InstallPath   && (set "c2r15_68=Office 15.0 C2R x86/x64"  & set "c2r15repair68=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\integratedoffice.exe")
-%nul% reg query %_86%\15.0\ClickToRun /v InstallPath   && (set "c2r15_86=Office 15.0 C2R x86"      & set "c2r15repair86=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\integratedoffice.exe")
-%nul% reg query %_68%\ClickToRun /v InstallPath        && (set "c2r16_68=Office 16.0 C2R x86/x64"  & set "c2r16repair68=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\OfficeClickToRun.exe")
-%nul% reg query %_86%\ClickToRun /v InstallPath        && (set "c2r16_86=Office 16.0 C2R x86"      & set "c2r16repair86=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\OfficeClickToRun.exe")
+reg query %_68%\14.0\CVH /f Click2run /k %nul% && (set "c2r14_68=Office 14.0 C2R x86/x64"  & set "c2r14repair68=")
+reg query %_86%\14.0\CVH /f Click2run /k %nul% && (set "c2r14_86=Office 14.0 C2R x86"      & set "c2r14repair86=")
+
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi14_86=Office 14.0 MSI x86"      & set "msi14repair86=%systemdrive%\Program Files (x86)\Common Files\Microsoft Shared\OFFICE14\Office Setup Controller\Setup.exe")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi14_68=Office 14.0 MSI x86/x64"  & set "msi14repair68=%systemdrive%\Program Files\Common Files\microsoft shared\OFFICE14\Office Setup Controller\Setup.exe")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi15_86=Office 15.0 MSI x86"      & set "msi15repair86=%systemdrive%\Program Files (x86)\Common Files\Microsoft Shared\OFFICE15\Office Setup Controller\Setup.exe")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi15_68=Office 15.0 MSI x86/x64"  & set "msi15repair68=%systemdrive%\Program Files\Common Files\microsoft shared\OFFICE15\Office Setup Controller\Setup.exe")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi16_86=Office 16.0 MSI x86"      & set "msi16repair86=%systemdrive%\Program Files (x86)\Common Files\Microsoft Shared\OFFICE16\Office Setup Controller\Setup.exe")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi16_68=Office 16.0 MSI x86/x64"  & set "msi16repair68=%systemdrive%\Program Files\Common Files\Microsoft Shared\OFFICE16\Office Setup Controller\Setup.exe")
+
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_86=Office 15.0 C2R x86"      & set "c2r15repair86=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\integratedoffice.exe")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_68=Office 15.0 C2R x86/x64"  & set "c2r15repair68=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\integratedoffice.exe")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_86=Office 16.0 C2R x86"      & set "c2r16repair86=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\OfficeClickToRun.exe")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_68=Office 16.0 C2R x86/x64"  & set "c2r16repair68=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\OfficeClickToRun.exe")
 
 set uwp16=
 if %winbuild% GEQ 10240 (
@@ -938,7 +934,7 @@ call :checkwmi
 ::  Apply basic fix first and check
 
 if defined error (
-call :_stopservice Winmgmt
+%psc% Stop-Service Winmgmt -force %nul%
 winmgmt /salvagerepository %nul%
 call :checkwmi
 )
@@ -976,9 +972,9 @@ goto :at_back
 
 echo:
 echo Stopping Winmgmt service
-call :_stopservice Winmgmt
-call :_stopservice Winmgmt
-call :_stopservice Winmgmt
+%psc% Stop-Service Winmgmt -force %nul%
+%psc% Stop-Service Winmgmt -force %nul%
+%psc% Stop-Service Winmgmt -force %nul%
 sc query Winmgmt | find /i "STOPPED" %nul% && (
 echo [Successful]
 ) || (
@@ -1042,7 +1038,7 @@ goto :at_back
 
 ::  https://eskonr.com/2012/01/how-to-fix-wmi-issues-automatically/
 
-call :_stopservice Winmgmt
+%psc% Stop-Service Winmgmt -force %nul%
 cd /d %systemroot%\system32\wbem\
 regsvr32 /s %systemroot%\system32\scecli.dll
 regsvr32 /s %systemroot%\system32\userenv.dll
@@ -1128,21 +1124,41 @@ exit /b
 
 ::========================================================================================================================================
 
-:_stopservice
+::  This code checks for invalid registry keys in HKLM\SYSTEM\WPA. This issue may appear even on healthy systems
 
-for %%# in (%1) do (
-sc query %%# | find /i "STOPPED" %nul% || net stop %%# /y %nul%
-sc query %%# | find /i "STOPPED" %nul% || sc stop %%# %nul%
-)
-exit /b
+:wpatest:
+$wpaKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey('LocalMachine', 'Registry64').OpenSubKey("SYSTEM\\WPA")
+$count = $wpaKey.SubKeyCount
 
-:_startservice
+$osVersion = [System.Environment]::OSVersion.Version
+$minBuildNumber = 14393
 
-for %%# in (%1) do (
-sc query %%# | find /i "RUNNING" %nul% || net start %%# /y %nul%
-sc query %%# | find /i "RUNNING" %nul% || sc start %%# %nul%
-)
-exit /b
+if ($osVersion.Build -ge $minBuildNumber) {
+    $subkeyHashTable = @{}
+    foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
+        $keyNumber = $subkeyName -replace '.*-', ''
+        $subkeyHashTable[$keyNumber] = $true
+    }
+    for ($i=1; $i -le $count; $i++) {
+        if (-not $subkeyHashTable.ContainsKey("$i")) {
+            Write-Host "Total Keys $count. Error Found- $i key does not exist"
+			$wpaKey.Close()
+            exit
+        }
+    }
+}
+$wpaKey.GetSubKeyNames() | ForEach-Object {
+    $subkey = $wpaKey.OpenSubKey($_)
+    $p = $subkey.GetValueNames()
+    if (($p | Where-Object { $subkey.GetValueKind($_) -eq [Microsoft.Win32.RegistryValueKind]::Binary }).Count -eq 0) {
+        Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+		$wpaKey.Close()
+        exit
+    }
+}
+$count
+$wpaKey.Close()
+:wpatest:
 
 ::========================================================================================================================================
 

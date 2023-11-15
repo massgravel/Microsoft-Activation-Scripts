@@ -4,7 +4,7 @@
 
 
 
-::  Check-Activation-Status
+::  Check-Activation-Status-vbs.cmd
 ::  Written by @abbodi1406
 ::  forums.mydigitallife.net/posts/838808
 

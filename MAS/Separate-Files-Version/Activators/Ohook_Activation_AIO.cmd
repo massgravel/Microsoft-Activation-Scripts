@@ -1,9 +1,18 @@
-@set masver=2.4
+@set masver=2.5
 @setlocal DisableDelayedExpansion
 @echo off
 
+
+
+::============================================================================
 ::
-::========================================================================================================================================
+::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
+::
+::   Homepage: mass grave[.]dev
+::      Email: windowsaddict@protonmail.com
+::
+::============================================================================
+
 
 
 ::  To activate Office with Ohook activation, run the script with "/Ohook" parameter or change 0 to 1 in below line
@@ -13,6 +22,7 @@ set _act=0
 set _rem=0
 
 ::  If value is changed in above lines or parameter is used then script will run in unattended mode
+
 
 
 ::========================================================================================================================================
@@ -178,7 +188,7 @@ set "_batp=%_batf:'=''%"
 set _PSarg="""%~f0""" -el %_args%
 
 set "_ttemp=%userprofile%\AppData\Local\Temp"
-
+set "_Local=%LocalAppData%"
 setlocal EnableDelayedExpansion
 
 ::========================================================================================================================================
@@ -239,7 +249,7 @@ echo You are running outdated version MAS %masver%
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
-echo [1] Download Latest MAS
+echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
 call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
@@ -292,13 +302,29 @@ goto :oh_menu
 :oh_menu2
 
 cls
-mode 128, 32
+mode 130, 32
 %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=32;$B.Height=300;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
 
 title  Ohook Activation %masver%
 
 echo:
 echo Initializing...
+
+::  Check PowerShell
+
+%psc% $ExecutionContext.SessionState.LanguageMode %nul2% | find /i "Full" %nul1% || (
+%eline%
+%psc% $ExecutionContext.SessionState.LanguageMode
+echo:
+echo PowerShell is not working. Aborting...
+echo If you have applied restrictions on Powershell then undo those changes.
+echo:
+echo Check this page for help. %mas%troubleshoot
+goto dk_done
+)
+
+::========================================================================================================================================
+
 call :dk_product
 call :dk_ckeckwmic
 
@@ -353,8 +379,8 @@ set o16uwp=
 
 set _68=HKLM\SOFTWARE\Microsoft\Office
 set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
-%nul% reg query %_68%\14.0\Common\InstallRoot /v Path  && set o14msi=Office 2010 MSI 
-%nul% reg query %_86%\14.0\Common\InstallRoot /v Path  && set o14msi=Office 2010 MSI 
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=Office 2010 MSI )
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=Office 2010 MSI )
 %nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 %nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 
@@ -433,10 +459,11 @@ if not defined _oArch for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg%
 
 echo "%o15c2r_reg%" | find /i "Wow6432Node" %nul1% && (set _tok=10) || (set _tok=9)
 for /f "tokens=%_tok% delims=\" %%a in ('reg query %o15c2r_reg%\ProductReleaseIDs\Active %nul6% ^| findstr /i "Retail Volume"') do (
-if not defined _oIds (set "_oIds=%%a") else (set "_oIds=!_oIds! %%a")
+echo "!_oIds!" | find /i " %%a " %nul1% || (set "_oIds= !_oIds! %%a ")
 )
 
 set "_oLPath=%_oRoot%\Licenses"
+set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
 if [%_oArch%]==[x64] (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
 if [%_oArch%]==[x86] (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
@@ -476,11 +503,12 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\Configuration /v Plat
 
 echo "%o16c2r_reg%" | find /i "Wow6432Node" %nul1% && (set _tok=9) || (set _tok=8)
 for /f "tokens=%_tok% delims=\" %%a in ('reg query "%o16c2r_reg%\ProductReleaseIDs" /s /f ".16" /k %nul6% ^| findstr /i "Retail Volume"') do (
-if not defined _oIds (set "_oIds=%%a") else (set "_oIds=!_oIds! %%a")
+echo "!_oIds!" | find /i " %%a " %nul1% || (set "_oIds= !_oIds! %%a ")
 )
 set _oIds=%_oIds:.16=%
 
 set "_oLPath=%_oRoot%\Licenses16"
+set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
 if [%_oArch%]==[x64] (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
 if [%_oArch%]==[x86] (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
@@ -510,11 +538,15 @@ call :oh_hookinstall
 
 set _sid=
 set sub_next=
-for /f "tokens=* delims=" %%a in ('%psc% "$userSIDs = Get-WmiObject -Class Win32_UserAccount | ForEach-Object {write-host $_.SID}" %nul6%') do (if defined _sid (set "_sid=!_sid! HKU\%%a") else (set "_sid=HKU\%%a"))
+
+for /f "tokens=* delims=" %%a in ('%psc% "Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' | ForEach-Object { Split-Path -Path $_.PSPath -Leaf }" %nul6%') do (if defined _sid (set "_sid=!_sid! HKU\%%a") else (set "_sid=HKU\%%a"))
 
 if not defined _sid (
 call :dk_color %Red% "Checking User Accounts SID              [Not Found]"
 )
+
+dir /b /s /a:-d "!_Local!\Microsoft\Office\Licenses\*" %nul% && set sub_next=1
+dir /b /s /a:-d "!ProgramData!\Microsoft\Office\Licenses\*" %nul% && set sub_next=1
 
 for %%# in (!_sid! HKCU) do if not defined sub_next (
 reg query %%#\Software\Microsoft\Office\16.0\Common\Licensing\LicensingNext /v MigrationToV5Done %nul2% | find /i "0x1" %nul% && (
@@ -524,10 +556,14 @@ set sub_next=1
 )
 )
 
-if defined sub_next for %%# in (!_sid! HKCU) do (
+if defined sub_next (
+rmdir /s /q "!_Local!\Microsoft\Office\Licenses\" %nul%
+rmdir /s /q "!ProgramData!\Microsoft\Office\Licenses\" %nul%
+for %%# in (!_sid! HKCU) do (
 reg delete %%#\Software\Microsoft\Office\16.0\Common\Licensing /f %nul%
 reg delete %%#\Software\Microsoft\Office\16.0\Common\Identity /f %nul%
 reg delete %%#\Software\Microsoft\Office\16.0\Registration /f %nul%
+)
 )
 
 if defined sub_next echo Removing Office vNext Block             [Successful]
@@ -540,7 +576,7 @@ if defined sub_next echo Removing Office vNext Block             [Successful]
 if defined o16c2r (
 for %%# in (!_sid! HKCU) do (reg delete %%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f %nul%)
 for %%# in (!_sid! HKCU) do (
-reg query %%# %nul% && (
+reg query "%%#\Volatile Environment" %nul% && (
 reg add %%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /v "TimeOfLastHeartbeatFailure" /t REG_SZ /d "2040-01-01T00:00:00Z" /f %nul%
 )
 )
@@ -549,7 +585,7 @@ echo Adding Reg Keys To Skip License Check   [Successful]
 
 ::========================================================================================================================================
 
-::  mass[]grave[.]dev/office-license-is-not-genuine.html
+::  mass grave[.]dev/office-license-is-not-genuine.html
 ::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
 ::  Script already is using MAK instead of GVLK so it won't appear anyway, but registry keys are added incase Office installs default GVLK grace key for volume products
 
@@ -671,7 +707,7 @@ echo:
 echo Deleting - Registry keys to skip license check
 reg delete HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f
 
-for /f "tokens=* delims=" %%a in ('%psc% "$userSIDs = Get-WmiObject -Class Win32_UserAccount | ForEach-Object {write-host $_.SID}" %nul6%') do (if defined _sid (set "_sid=!_sid! %%a") else (set "_sid=%%a"))
+for /f "tokens=* delims=" %%a in ('%psc% "Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' | ForEach-Object { Split-Path -Path $_.PSPath -Leaf }" %nul6%') do (if defined _sid (set "_sid=!_sid! %%a") else (set "_sid=%%a"))
 for %%# in (!_sid!) do (reg query HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency %nul% && (
 reg delete HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f
 )
@@ -740,10 +776,10 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_86%\15.0\ClickToRun)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_68%\15.0\ClickToRun)
 
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\OSPP.VBS" (set o16msi=1&set o16msi_reg=%_86%\16.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\OSPP.VBS" (set o16msi=1&set o16msi_reg=%_68%\16.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\OSPP.VBS" (set o15msi=1&set o15msi_reg=%_86%\15.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\OSPP.VBS" (set o15msi=1&set o15msi_reg=%_68%\15.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o16msi=1&set o16msi_reg=%_86%\16.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o16msi=1&set o16msi_reg=%_68%\16.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_86%\15.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_68%\15.0)
 
 exit /b
 
@@ -778,7 +814,21 @@ exit /b
 
 if not defined _oLPath exit /b
 
-set _License=%_prod:XVolume=XC2RVL_%
+if %oVer%==16 (
+"!_oIntegrator!" /I /License PRIDName=%_License%.16 PidKey=%_key% %nul%
+) else (
+"!_oIntegrator!" /I /License PRIDName=%_License% PidKey=%_key% %nul%
+)
+
+call :oh_actids
+echo "!oapplist!" | find /i "!_actid!" %nul1% && (
+call :dk_color %Gray% "Installing Missing License Files        [Office %oVer%.0 %_prod%] [Successful]"
+exit /b
+)
+
+::  Fallback to /ilc method to install licenses incase integrator.exe is not working
+
+set _License=%_License:XVolume=XC2RVL_%
 
 set _License=%_License:O365EduCloudRetail=O365EduCloudEDUR_%
 
@@ -786,6 +836,8 @@ set _License=%_License:ProjectProRetail=ProjectProO365R_%
 set _License=%_License:ProjectStdRetail=ProjectStdO365R_%
 set _License=%_License:VisioProRetail=VisioProO365R_%
 set _License=%_License:VisioStdRetail=VisioStdO365R_%
+
+if defined _preview set _License=%_License:Volume=PreviewVL_%
 
 set _License=%_License:Retail=R_%
 set _License=%_License:Volume=VL_%
@@ -800,9 +852,8 @@ cscript //nologo %windir%\system32\slmgr.vbs /ilc "!_oLPath!\%%~nx#" %nul%
 )
 
 call :oh_actids
-
 echo "!oapplist!" | find /i "!_actid!" %nul1% && (
-call :dk_color %Gray% "Installing Missing License Files        [Office %oVer%.0 %_prod%] [Successful]"
+call :dk_color %Gray% "Installing Missing License Files        [Office %oVer%.0 %_prod%] [Successful with /ilc Method]"
 ) || (
 set error=1
 call :dk_color %Red% "Installing Missing License Files        [Office %oVer%.0 %_prod%] [Failed]"
@@ -866,17 +917,23 @@ for %%# in (%_oIds%) do (
 set _key=
 set _actid=
 set _lic=
-set _prod=%%#
+set _preview=
+set _License=%%#
 
-call :ohookdata getinfo %%#
+echo %%# | find /i "2024" %nul% && (
+if exist "!_oLPath!\ProPlus2024PreviewVL_*.xrm-ms" if not exist "!_oLPath!\ProPlus2024VL_*.xrm-ms" set _preview=-Preview
+)
+set _prod=%%#!_preview!
+
+call :ohookdata getinfo !_prod!
 
 if not [!_key!]==[] (
 echo "!oapplist!" | find /i "!_actid!" %nul1% || call :oh_installlic
 call :oh_installkey
 ) else (
 set error=1
-call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 %%# not found in script]"
-echo Make sure you are using Latest MAS script.
+call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !_prod! not found in script]"
+call :dk_color %Blue% "Make sure you are using Latest MAS script."
 )
 )
 
@@ -1023,7 +1080,11 @@ set _corrupt=
 sc start %%# %nul%
 if !errorlevel! EQU 1060 set _corrupt=1
 sc query %%# %nul% || set _corrupt=1
-for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type) do if not defined _corrupt (reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v %%G %nul% || set _corrupt=1)
+for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type) do if not defined _corrupt (
+reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v %%G %nul% || set _corrupt=1
+if /i %%#==TrustedInstaller if /i %%G==DependOnService set _corrupt=
+)
+
 if defined _corrupt (if defined serv_cor (set "serv_cor=!serv_cor! %%#") else (set "serv_cor=%%#"))
 )
 
@@ -1049,13 +1110,18 @@ set serv_cste=
 
 if defined serv_ste (
 for %%# in (%serv_ste%) do (
-if /i %%#==ClipSVC        (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
-if /i %%#==wlidsvc        sc config %%# start= demand %nul%
-if /i %%#==sppsvc         (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
-if /i %%#==KeyIso         sc config %%# start= demand %nul%
-if /i %%#==LicenseManager sc config %%# start= demand %nul%
-if /i %%#==Winmgmt        sc config %%# start= auto %nul%
-if /i %%#==wuauserv       sc config %%# start= demand %nul%
+if /i %%#==ClipSVC          (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
+if /i %%#==wlidsvc          sc config %%# start= demand %nul%
+if /i %%#==sppsvc           (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
+if /i %%#==KeyIso           sc config %%# start= demand %nul%
+if /i %%#==LicenseManager   sc config %%# start= demand %nul%
+if /i %%#==Winmgmt          sc config %%# start= auto %nul%
+if /i %%#==DoSvc            sc config %%# start= delayed-auto %nul%
+if /i %%#==UsoSvc           sc config %%# start= delayed-auto %nul%
+if /i %%#==CryptSvc         sc config %%# start= auto %nul%
+if /i %%#==BITS             sc config %%# start= delayed-auto %nul%
+if /i %%#==wuauserv         sc config %%# start= demand %nul%
+if /i %%#==WaaSMedicSvc     sc config %%# start= demand %nul%
 if !errorlevel!==0 (
 if defined serv_csts (set "serv_csts=!serv_csts! %%#") else (set "serv_csts=%%#")
 ) else (
@@ -1080,9 +1146,12 @@ set serv_e=
 for %%# in (%_serv%) do (
 set errorcode=
 set checkerror=
-net start %%# /y %nul%
+
+sc query %%# | find /i "RUNNING" %nul% || (
+%psc% Start-Service %%# %nul%
 set errorcode=!errorlevel!
 sc query %%# | find /i "RUNNING" %nul% || set checkerror=1
+)
 
 sc start %%# %nul%
 if !errorlevel! NEQ 1056 if !errorlevel! NEQ 0 (set errorcode=!errorlevel!&set checkerror=1)
@@ -1093,7 +1162,7 @@ if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
-call :dk_color %Blue% "Restart the system to fix disabled service error 1058."
+call :dk_color %Blue% "Restart the system to fix this error."
 set showfix=1
 )
 )
@@ -1105,14 +1174,18 @@ set showfix=1
 if defined safeboot_option (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking Boot Mode                      " %Blue% "[Safe mode found. Run in normal mode.]"
+call :dk_color2 %Red% "Checking Boot Mode                      [%safeboot_option%] " %Blue% "[Safe mode found. Run in normal mode.]"
 )
 
 
-reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" %nul2% | find /i "IMAGE_STATE_COMPLETE" %nul1% || (
+for /f "skip=2 tokens=2*" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" /v ImageState') do (set imagestate=%%B)
+if /i not "%imagestate%"=="IMAGE_STATE_COMPLETE" (
 set error=1
+call :dk_color %Red% "Checking Windows Setup State            [%imagestate%]"
+echo "%imagestate%" | find /i "RESEAL" %nul% && (
 set showfix=1
-call :dk_color2 %Red% "Checking Audit Mode                     " %Blue% "[IMAGE_STATE_COMPLETE status not found. Run in normal mode.]"
+call :dk_color %Blue% "You need to run it in normal mode in case you are running it in Audit Mode."
+)
 )
 
 
@@ -1123,18 +1196,60 @@ call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE 
 )
 
 
-%psc% $ExecutionContext.SessionState.LanguageMode %nul2% | find /i "Full" %nul1% || (
+set wpainfo=
+set wpaerror=
+for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wpatest\:.*';iex ($f[1]);" %nul6%') do (set wpainfo=%%a)
+echo "%wpainfo%" | find /i "Error Found" %nul% && (
 set error=1
-call :dk_color %Red% "Checking Powershell                     [Not Responding]"
+set wpaerror=1
+call :dk_color %Red% "Checking WPA Registry Error             [%wpainfo%]"
+) || (
+echo Checking WPA Registry Count             [%wpainfo%]
 )
 
 
 DISM /English /Online /Get-CurrentEdition %nul%
 set dism_error=%errorlevel%
 cmd /c exit /b %dism_error%
-if %dism_error% NEQ 0 set "dism_error=[0x%=ExitCode%]"
+if %dism_error% NEQ 0 set "dism_error=0x%=ExitCode%"
 if %dism_error% NEQ 0 (
-call :dk_color %Red% "Checking DISM                           [Not Responding] %dism_error%"
+call :dk_color %Red% "Checking DISM                           [Not Responding] [%dism_error%]"
+)
+
+
+if not defined officeact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
+set error=1
+set showfix=1
+call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
+call :dk_color %Blue% "Evaluation Windows can not be activated and different License install may lead to errors."
+call :dk_color %Blue% "It is recommended to install full version of %winos%."
+call :dk_color %Blue% "You can download it from %mas%genuine-installation-media.html"
+)
+
+
+set osedition=
+for /f "skip=2 tokens=3" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul6%') do set "osedition=%%a"
+
+::  Workaround for an issue in builds between 1607 and 1709 where ProfessionalEducation is shown as Professional
+
+if "%osSKU%"=="164" set osedition=ProfessionalEducation
+if "%osSKU%"=="165" set osedition=ProfessionalEducationN
+
+if not defined officeact (
+if not defined osedition (
+call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
+) else (
+
+if not exist "%SystemRoot%\System32\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" (
+set error=1
+call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
+)
+
+if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*-%osedition%-*.mum" (
+set error=1
+call :dk_color %Red% "Checking Package File                   [Not Found] [%osedition%]"
+)
+)
 )
 
 
@@ -1167,6 +1282,13 @@ set showfix=1
 )
 
 
+%nul% set /a "sum=%slcSKU%+%regSKU%+%wmiSKU%"
+set /a "sum/=3"
+if not defined officeact if not "%sum%"=="%slcSKU%" (
+call :dk_color %Red% "Checking SLC/WMI/REG SKU                [Difference Found - SLC:%slcSKU% WMI:%wmiSKU% Reg:%regSKU%]"
+)
+
+
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
 set error=1
 set showfix=1
@@ -1184,8 +1306,7 @@ call :dk_color2 %Red% "Checking ClipSVC                        " %Blue% "[System
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
 call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
-net stop sppsvc /y %nul%
-net start sppsvc /y %nul%
+%psc% Restart-Service sppsvc %nul%
 set error=1
 )
 
@@ -1215,7 +1336,7 @@ call :dk_color %Gray% "Checking SPP Token Folder               [Not Found. Creat
 
 call :dk_actids
 if not defined applist (
-net stop sppsvc /y %nul%
+%psc% Stop-Service sppsvc %nul%
 cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
 if !errorlevel! NEQ 0 cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
 call :dk_refresh
@@ -1240,25 +1361,9 @@ call :dk_color %Red% "Checking sppsvc.exe File                [Not Found]"
 )
 
 
-::  Below checks are performed if required services are not disabled or corrupted + if there is any error + slmgr /dlv errorlevel is not Zero + no fix was shown before
+::  This code checks if NT SERVICE\sppsvc has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers. 
 
-set wpaerror=
 set permerror=
-if not defined serv_cor if not defined serv_cste if defined error if /i not %error_code%==0 if not defined showfix (
-
-REM  This code checks for invalid registry keys in HKLM\SYSTEM\WPA. This issue may appear even on healthy systems.
-
-if %winbuild% GEQ 14393 (
-set /a count=0
-for /f %%a in ('reg query "HKLM\SYSTEM\WPA" %nul6%') do set /a count+=1
-for /L %%# in (1,1,!count!) do (
-reg query "HKLM\SYSTEM\WPA\8DEC0AF1-0341-4b93-85CD-72606C2DF94C-7P-%%#" /ve /t REG_BINARY %nul% || set wpaerror=1
-)
-if defined wpaerror call :dk_color %Red% "Checking WPA Registry Keys              [Error Found] [Registry Count - !count!]"
-)
-
-REM  This code checks if NT SERVICE\sppsvc has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers. 
-
 if not exist "%tokenstore%\" set permerror=1
 
 for %%# in (
@@ -1269,14 +1374,64 @@ for %%# in (
 %psc% "$acl = Get-Acl '%%#'; if ($acl.Access.Where{ $_.IdentityReference -eq 'NT SERVICE\sppsvc' -and $_.AccessControlType -eq 'Deny' -or $acl.Access.IdentityReference -notcontains 'NT SERVICE\sppsvc'}) {Exit 2}" %nul%
 if !errorlevel!==2 set permerror=1
 )
-if defined permerror call :dk_color %Red% "Checking SPP Permissions                [Error Found]"
+if defined permerror (
+set error=1
+set showfix=1
+call :dk_color %Red% "Checking SPP Permissions                [Error Found]"
+call :dk_color %Blue% "%_fixmsg%"
+)
 
+
+::  If required services are not disabled or corrupted + if there is any error + slmgr /dlv errorlevel is not Zero + no fix was shown before
+
+if not defined serv_cor if not defined serv_cste if defined error if /i not %error_code%==0 if not defined showfix (
 set showfix=1
 call :dk_color %Blue% "%_fixmsg%"
 if not defined permerror call :dk_color %Blue% "If activation still fails then run Fix WPA Registry option."
 )
 
+if not defined showfix if defined wpaerror (
+set showfix=1
+call :dk_color %Blue% "If activation fails then go back to Main Menu, select Troubleshoot and run Fix WPA Registry option."
+)
+
 exit /b
+
+::  This code checks for invalid registry keys in HKLM\SYSTEM\WPA. This issue may appear even on healthy systems
+
+:wpatest:
+$wpaKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey('LocalMachine', 'Registry64').OpenSubKey("SYSTEM\\WPA")
+$count = $wpaKey.SubKeyCount
+
+$osVersion = [System.Environment]::OSVersion.Version
+$minBuildNumber = 14393
+
+if ($osVersion.Build -ge $minBuildNumber) {
+    $subkeyHashTable = @{}
+    foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
+        $keyNumber = $subkeyName -replace '.*-', ''
+        $subkeyHashTable[$keyNumber] = $true
+    }
+    for ($i=1; $i -le $count; $i++) {
+        if (-not $subkeyHashTable.ContainsKey("$i")) {
+            Write-Host "Total Keys $count. Error Found- $i key does not exist"
+			$wpaKey.Close()
+            exit
+        }
+    }
+}
+$wpaKey.GetSubKeyNames() | ForEach-Object {
+    $subkey = $wpaKey.OpenSubKey($_)
+    $p = $subkey.GetValueNames()
+    if (($p | Where-Object { $subkey.GetValueKind($_) -eq [Microsoft.Win32.RegistryValueKind]::Binary }).Count -eq 0) {
+        Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+		$wpaKey.Close()
+        exit
+    }
+}
+$count
+$wpaKey.Close()
+:wpatest:
 
 ::========================================================================================================================================
 
@@ -1481,6 +1636,9 @@ for %%# in (
 16_d55f90ee-4ba2-4d02-b216-1300ee50e2af_BW%f%43B-4P%f%NFP-V63%f%7F-23%f%TR2-J47%f%TX_MAK-AE________VisioStd2021Volume
 16_fb33d997-4aa3-494e-8b58-03e9ab0f181d_VN%f%CC4-CJ%f%QVK-BKX%f%34-77%f%Y8H-CYX%f%MR_Retail________Word2021Retail
 16_0c728382-95fb-4a55-8f12-62e605f91727_BJ%f%G97-NW%f%3GM-8QQ%f%Q7-FH%f%76G-686%f%XM_MAK-AE________Word2021Volume
+16_8fdb1f1e-663f-4f2e-8fdb-7c35aee7d5ea_GN%f%XWX-DF%f%797-B2J%f%T3-82%f%W27-KHP%f%XT_MAK-AE________ProPlus2024Volume-Preview
+16_33b11b14-91fd-4f7b-b704-e64a055cf601_X8%f%6XX-N3%f%QMW-B4W%f%GQ-QC%f%B69-V26%f%KW_MAK_AE________ProjectPro2024Volume-Preview
+16_eb074198-7384-4bdd-8e6c-c3342dac8435_DW%f%99Y-H7%f%NT6-6B2%f%9D-8J%f%Q8F-R3Q%f%T7_MAK_AE________VisioPro2024Volume-Preview
 16_6337137e-7c07-4197-8986-bece6a76fc33_2P%f%3C9-BQ%f%NJH-VCV%f%PH-YD%f%Y6M-43J%f%PQ_Subscription__O365BusinessRetail
 16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_W6%f%2NQ-26%f%7QR-RTF%f%74-PF%f%2MH-JQM%f%TH_Subscription__O365EduCloudRetail
 16_537ea5b5-7d50-4876-bd38-a53a77caca32_J2%f%W28-TN%f%9C8-26P%f%WV-F7%f%J4G-72X%f%CB_Subscription1_O365HomePremRetail
@@ -1516,8 +1674,8 @@ exit /b
 
 :oh_extractdll
 
-set _blank=
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$bytes = [Con%_blank%vert]::FromBas%_blank%e64String($f[1]); $PePath='%1'; $offset='%2'; $m=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';iex ($m[1]);" %nul2% | find /i "Error found" %nul1% && set hasherror=1
+set b=
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$bytes = [Con%b%vert]::FromBas%b%e64String($f[1]); $PePath='%1'; $offset='%2'; $m=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';iex ($m[1]);" %nul2% | find /i "Error found" %nul1% && set hasherror=1
 exit /b
 
 :hexedit:
@@ -1600,13 +1758,13 @@ $MemoryStream.Close()
 ::
 ::  The files are encoded in base64 to make MAS AIO version.
 ::
-::  mass[]grave[.]dev/ohook
+::  mass grave[.]dev/ohook
 ::  Here you can find the files source code and info on how to rebuild the identical sppc.dll files
 ::
 ::  stackoverflow.com/a/35335273
 ::  Here you can check how to extract sppc.dll files from base64
 ::
-::  For any further question, feel free to contact us on mass[]grave[.]dev/contactus
+::  For any further question, feel free to contact us on mass grave[.]dev/contactus
 ::
 ::========================================================================================================================================
 

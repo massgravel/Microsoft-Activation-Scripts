@@ -1,4 +1,3 @@
-<!-- : Begin batch script
 @setlocal DisableDelayedExpansion
 @echo off
 

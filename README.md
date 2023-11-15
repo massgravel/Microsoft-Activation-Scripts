@@ -5,8 +5,6 @@
 <p align="center">A Windows and Office activator using HWID / Ohook / KMS38 / Online KMS activation methods, with a focus on open-source code and fewer antivirus detections.</p>
 <hr>
 
-### Note: HWID Activation is working again with a new method.
-
 ## Download / How to use it?
 
 ### Method 1 - PowerShell (Recommended)
@@ -29,8 +27,8 @@
 To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches.html)
 
 ```
-Latest Version: 2.4
-Release date: 21-Oct-2023
+Latest Version: 2.5
+Release date: 16-Nov-2023
 ```
 
 ### [Troubleshooting / Help](https://massgrave.dev/troubleshoot.html)
