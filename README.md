@@ -17,7 +17,7 @@
 
 ### Method 2 - Traditional
 
--   Download the file from [here](https://github.com/massgravel/Microsoft-Activation-Scripts/archive/refs/heads/master.zip)
+-   Download the file from [GitHub](https://github.com/massgravel/Microsoft-Activation-Scripts/archive/refs/heads/master.zip) or [Bitbucket](https://bitbucket.org/WindowsAddict/microsoft-activation-scripts/get/master.zip)
 -   Right-click on the downloaded zip file and extract
 -   In the extracted folder, find the folder named `All-In-One-Version`
 -   Run the file named `MAS_AIO.cmd`
