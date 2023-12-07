@@ -323,16 +323,19 @@ echo:
 echo:             [3] Activation Status [vbs]
 echo:
 echo:             [4] Download Genuine Windows / Office
+echo:
+echo:             [5] Outlook adblocker
 echo:             __________________________________________________      
 echo:                                                                     
 echo:             [0] Go to Main Menu
 echo:       ______________________________________________________________
 echo:
-call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,0] :"
-choice /C:12340 /N
+call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,0] :"
+choice /C:123450 /N
 set _erl=%errorlevel%
 
-if %_erl%==5 goto :MainMenu
+if %_erl%==6 goto :MainMenu
+if %_erl%==5 goto :OutlookAdblock
 if %_erl%==4 start %mas%genuine-installation-media.html & goto :Extras
 if %_erl%==3 setlocal & call :_Check_Status_vbs & cls & endlocal & goto :Extras
 if %_erl%==2 goto:Extract$OEM$
@@ -340,6 +343,105 @@ if %_erl%==1 setlocal & call :change_edition    & cls & endlocal & goto :Extras
 goto :Extras
 
 ::========================================================================================================================================
+
+:OutlookAdblock
+
+cls
+title Manage Outlook adblocker
+mode 76, 30
+
+if not exist "%windir%\System32\drivers\etc\hosts" (
+%eline%
+echo Hosts file wasn't found, aborting...
+echo _____________________________________________________
+echo:
+call :_color %_Yellow% "Press any key to go back..."
+pause >nul
+goto Extras
+)
+
+:OutlookAdblockMenu
+
+set "hostsFile=%windir%\System32\drivers\etc\hosts"
+set "OutlookAdDomain=127.0.0.1 outlookads.live.com"
+
+echo:
+echo:
+echo:
+echo:
+echo:
+echo:       ______________________________________________________________
+echo:
+findstr /c:"%OutlookAdDomain%" "%hostsFile%" >nul
+if %errorLevel% == 0 (call :_color2 %_Green% "             Outlook Adblocker is already installed")
+if %errorLevel% == 1 (call :_color2 %_Red% "             Outlook Adblocker is not installed")
+echo:
+echo:             [1] Install Outlook adblocker
+echo:
+echo:             [2] Uninstall Outlook adblocker
+echo:             __________________________________________________      
+echo:                                                                     
+echo:             [0] Go Back
+echo:       ______________________________________________________________
+echo:
+call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard [1,2,0] :"
+choice /C:120 /N
+set _erl=%errorlevel%
+
+if %_erl%==3 goto :Extras
+if %_erl%==2 goto :OutlookAdblockUninstall
+if %_erl%==1 goto :OutlookAdblockInstall
+goto :OutlookAdblockMenu
+
+:OutlookAdblockInstall
+
+cls
+title Install Outlook adblocker
+
+echo:
+echo:
+echo:
+echo:
+echo:
+echo _____________________________________________________
+echo:
+echo Installing Outlook adblocker...
+echo %OutlookAdDomain%>>"%hostsFile%"
+echo:
+findstr /c:"%OutlookAdDomain%" "%hostsFile%" >nul
+if %errorLevel% == 0 (call :_color2 %_Green% "Successfully installed Outlook adblocker.")
+if %errorLevel% == 1 (call :_color2 %_Red% "Outlook adblocker installation failed.")
+echo _____________________________________________________
+echo:
+call :_color %_Yellow% "Press any key to go back..."
+pause >nul
+goto Extras
+
+
+:OutlookAdblockUninstall
+
+cls
+title Uninstalling Outlook adblocker
+
+echo:
+echo:
+echo:
+echo:
+echo:
+echo _____________________________________________________
+echo:
+echo Uninstalling Outlook adblocker...
+findstr /v "%OutlookAdDomain%" "%hostsFile%" > "%hostsFile%.new"
+move /y "%hostsFile%.new" "%hostsFile%" > nul
+echo:
+findstr /c:"%OutlookAdDomain%" "%hostsFile%" >nul
+if %errorLevel% == 0 (call :_color2 %_Red% "Uninstalling Outlook adblocker failed.")
+if %errorLevel% == 1 (call :_color2 %_Green% "Successfully uninstalled Outlook adblocker.")
+echo _____________________________________________________
+echo:
+call :_color %_Yellow% "Press any key to go back..."
+pause >nul
+goto Extras
 
 :Extract$OEM$
 
