@@ -1386,7 +1386,7 @@ set error=1
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
-call :dk_color %Blue% "Possibly Caused By Gaming Spoofers. Help: %mas%troubleshoot"
+call :dk_color2 %Blue% "Possibly Caused By Gaming Spoofers." %_Yellow% " Help - %mas%issues_due_to_gaming_spoofers"
 set error=1
 set showfix=1
 )
@@ -10110,8 +10110,7 @@ echo:
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':dismapi\:.*';& ([ScriptBlock]::Create($f[1])) %targetedition% %key%;"
 timeout /t 3 %nul1%
 echo:
-call :dk_color %Blue% "Incase of errors, you must restart your system before trying again."
-echo Check this page for help. %mas%troubleshoot
+call :dk_color2 %Blue% "Check this page for help" %_Yellow% " %mas%change_edition_issues"
 )
 %line%
 
@@ -10125,13 +10124,13 @@ cls
 mode con cols=105 lines=32
 %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
 
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':checkrebootflag\:.*';iex ($f[1]);" | find /i "True" %nul% && (
-%eline%
-echo Pending reboot flags found.
-echo:
-echo Restart the system and try again.
-goto ced_done
-)
+REM %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':checkrebootflag\:.*';iex ($f[1]);" | find /i "True" %nul% && (
+REM %eline%
+REM echo Pending reboot flags found.
+REM echo:
+REM echo Restart the system and try again.
+REM goto ced_done
+REM )
 
 echo:
 if defined dismnotworking call :dk_color %_Yellow% "Note - DISM.exe is not responding."

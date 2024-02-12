@@ -1089,7 +1089,7 @@ set error=1
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
-call :dk_color %Blue% "Possibly Caused By Gaming Spoofers. Help: %mas%troubleshoot"
+call :dk_color2 %Blue% "Possibly Caused By Gaming Spoofers." %_Yellow% " Help - %mas%issues_due_to_gaming_spoofers"
 set error=1
 set showfix=1
 )
