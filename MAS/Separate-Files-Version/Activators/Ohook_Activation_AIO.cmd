@@ -3,7 +3,7 @@
 @echo off
 
 
-
+::
 ::============================================================================
 ::
 ::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.

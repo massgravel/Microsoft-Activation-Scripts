@@ -6,16 +6,13 @@
 
 ::=================================================================================================
 ::
-::  Online KMS Script is a fork of @abbodi1406's KMS_VL_ALL  forums.mydigitallife.net/posts/838808
-::  
-::  This fork's purpose is to avoid having any KMS binary files and activate Windows/Office using 
-::  only transparent batch script with online public KMS servers.
+::  This is a fork of @abbodi1406's KVA  forums.mydigitallife.net/posts/838808
 ::_____________________________________
 ::
-::  Online KMS Activation Script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
-::  
-::  Homepage: mass grave[.]dev
-::     Email: windowsaddict@protonmail.com
+::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
+::
+::   Homepage: mass grave[.]dev
+::      Email: windowsaddict@protonmail.com
 ::  
 ::=================================================================================================
 
