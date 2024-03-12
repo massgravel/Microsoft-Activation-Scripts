@@ -40,7 +40,7 @@ Release date: 16-Nov-2023
 ### Homepage - [https://massgrave.dev/](https://massgrave.dev/)
 </br>
 
-<a href="https://discord.gg/gjJEfq7ux8">
+<a href="https://discord.gg/tVFN4N84PP">
   <img src="https://massgrave.dev/images/logo_discord.png" alt="Chat with us without signup" />
 </a>
 <a href="https://github.com/massgravel/Microsoft-Activation-Scripts">
