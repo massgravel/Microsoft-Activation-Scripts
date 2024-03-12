@@ -46,12 +46,13 @@ Release date: 16-Nov-2023
 <a href="https://github.com/massgravel/Microsoft-Activation-Scripts">
   <img src="https://massgrave.dev/images/logo_github.png" alt="GitHub" />
 </a>
-<a href="https://twitter.com/massgravel">
-  <img src="https://massgrave.dev/images/logo_x.png" alt="Follow on 𝕏/Twitter" />
-</a>
 <a href="https://www.reddit.com/r/MAS_Activator">
   <img src="https://massgrave.dev/images/logo_reddit.png" alt="Reddit" />
 </a>
+<a href="https://twitter.com/massgravel">
+  <img src="https://massgrave.dev/images/logo_x.png" alt="Follow on 𝕏/Twitter" />
+</a>
+
 
 ---
 
