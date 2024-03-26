@@ -9,7 +9,7 @@
 ::  This is a fork of @abbodi1406's KVA  forums.mydigitallife.net/posts/838808
 ::_____________________________________
 ::
-::   This script is a part of 'Microsoft_Activation_Scripts' (MAS) project.
+::   This script is a part of 'Microsoft-Activation-Scripts' (MAS) project.
 ::
 ::   Homepage: mass grave[.]dev
 ::      Email: windowsaddict@protonmail.com
