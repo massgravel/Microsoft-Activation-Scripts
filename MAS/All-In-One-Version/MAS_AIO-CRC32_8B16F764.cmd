@@ -1,4 +1,4 @@
-@set masver=2.5
+@set masver=2.6
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -1780,7 +1780,7 @@ echo         ____________________________________________________________
 echo:
 echo                 [1] Install Ohook Office Activation
 echo:
-echo                 [2] Uninstall
+echo                 [2] Uninstall Ohook
 echo                 ____________________________________________
 echo:
 echo                 [3] Download Office
@@ -2687,6 +2687,30 @@ for %%# in (
 16_8fdb1f1e-663f-4f2e-8fdb-7c35aee7d5ea_GN%f%XWX-DF%f%797-B2J%f%T3-82%f%W27-KHP%f%XT_MAK-AE________ProPlus2024Volume-Preview
 16_33b11b14-91fd-4f7b-b704-e64a055cf601_X8%f%6XX-N3%f%QMW-B4W%f%GQ-QC%f%B69-V26%f%KW_MAK-AE________ProjectPro2024Volume-Preview
 16_eb074198-7384-4bdd-8e6c-c3342dac8435_DW%f%99Y-H7%f%NT6-6B2%f%9D-8J%f%Q8F-R3Q%f%T7_MAK-AE________VisioPro2024Volume-Preview
+16_e563d108-7b0e-418a-8390-20e1d133d6bb_P6%f%NMW-JM%f%TRC-R6M%f%Q6-HH%f%3F2-BTH%f%KB_Retail________Access2024Retail
+16_f748e2f7-5951-4bc2-8a06-5a1fbe42f5f4_CX%f%NJT-98%f%HPP-92H%f%X7-MX%f%6GY-2PV%f%FR_MAK-AE________Access2024Volume
+16_f3a5e86a-e4f8-4d88-8220-1440c3bbcefa_82%f%CNJ-W8%f%2TW-BY2%f%3W-BV%f%J6W-W48%f%GP_Retail________Excel2024Retail
+16_523fbbab-c290-460d-a6c9-48e49709cb8e_7Y%f%287-9N%f%2KC-8MR%f%R3-BK%f%Y82-2DQ%f%RV_MAK-AE________Excel2024Volume
+16_885f83e0-5e18-4199-b8be-56697d0debfb_N6%f%9X7-73%f%KPT-899%f%FD-P8%f%HQ4-QGT%f%P4_Retail________Home2024Retail
+16_acd4eccb-ff89-4e6a-9350-d2d56276ec69_PR%f%KQM-YN%f%PQR-77Q%f%T6-32%f%8D7-BD2%f%23_Retail________HomeBusiness2024Retail
+16_6f5fd645-7119-44a4-91b4-eccfeeb738bf_2C%f%FK4-N4%f%4KG-7XG%f%89-CW%f%DG6-P7P%f%27_Retail________Outlook2024Retail
+16_9a1e1bac-2d8b-4890-832f-0a68b27c16e0_NQ%f%PXP-WV%f%B87-H3M%f%MB-FY%f%BW2-9QF%f%PB_MAK-AE________Outlook2024Volume
+16_da9a57ae-81a8-4cb3-b764-5840e6b5d0bf_CT%f%2KT-GT%f%NWH-9HF%f%GW-J2%f%PWJ-XW7%f%KJ_Retail________PowerPoint2024Retail
+16_eca0d8a6-e21b-4622-9a87-a7103ff14012_RR%f%XFN-JJ%f%26R-RVW%f%D2-V7%f%WMP-27P%f%WQ_MAK-AE________PowerPoint2024Volume
+16_295dcc21-151a-4b4d-8f50-2b627ea197f6_GN%f%J6P-Y4%f%RBM-C32%f%WW-2V%f%JKJ-MTH%f%KK_Retail________ProjectPro2024Retail
+16_2141d341-41aa-4e45-9ca1-201e117d6495_WN%f%FMR-HK%f%4R7-7FJ%f%VM-VQ%f%3JC-76H%f%F6_MAK-AE1_______ProjectPro2024Volume
+16_ead42f74-817d-45b4-af6b-3beeb36ba650_C2%f%PNM-2G%f%QFC-CY3%f%XR-WX%f%CP4-GX3%f%XM_Retail________ProjectStd2024Retail
+16_4b6d9b9b-c16e-429d-babe-8bb84c3c27d6_F2%f%VNW-MW%f%8TT-K62%f%2Q-4D%f%96H-PWJ%f%8X_MAK-AE________ProjectStd2024Volume
+16_db249714-bb54-4422-8c78-2cc8d4c4a19f_VW%f%CNX-7F%f%KBD-FHJ%f%YG-XB%f%R4B-88K%f%C6_Retail________ProPlus2024Retail
+16_d77244dc-2b82-4f0a-b8ae-1fca00b7f3e2_4Y%f%V2J-VN%f%G7W-YGT%f%P3-44%f%3TK-TF8%f%CP_MAK-AE1_______ProPlus2024Volume
+16_3046a03e-2277-4a51-8ccd-a6609eae8c19_XK%f%RBW-KN%f%2FF-G8C%f%KY-HX%f%VG6-FVY%f%2V_MAK-AE________SkypeforBusiness2024Volume
+16_44a07f51-8263-4b2f-b2a5-70340055c646_GV%f%G6N-6W%f%CHH-K2M%f%VP-RQ%f%78V-3J7%f%GJ_MAK-AE1_______Standard2024Volume
+16_282d8f34-1111-4a6f-80fe-c17f70dec567_HG%f%RBX-N6%f%8QF-6DY%f%8J-CG%f%X4W-XW7%f%KP_Retail________VisioPro2024Retail
+16_4c2f32bf-9d0b-4d8c-8ab1-b4c6a0b9992d_GB%f%NHB-B2%f%G3Q-G42%f%YB-3M%f%FC2-7CJ%f%CX_MAK-AE________VisioPro2024Volume
+16_8504167d-887a-41ae-bd1d-f849d834352d_VB%f%XPJ-38%f%NR3-C4D%f%KF-C8%f%RT7-RGH%f%KQ_Retail________VisioStd2024Retail
+16_0978336b-5611-497c-9414-96effaff4938_YN%f%FTY-63%f%K7P-FKH%f%XK-28%f%YYT-D32%f%XB_MAK-AE________VisioStd2024Volume
+16_f6b24e61-6aa7-4fd2-ab9b-4046cee4230a_XN%f%33R-RP%f%676-GMY%f%2F-T3%f%MH7-GCV%f%KR_Retail________Word2024Retail
+16_06142aa2-e935-49ca-af5d-08069a3d84f3_WD%f%8CQ-6K%f%NQM-8W2%f%CX-2R%f%T63-KK3%f%TP_MAK-AE________Word2024Volume
 16_6337137e-7c07-4197-8986-bece6a76fc33_2P%f%3C9-BQ%f%NJH-VCV%f%PH-YD%f%Y6M-43J%f%PQ_Subscription__O365BusinessRetail
 16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_W6%f%2NQ-26%f%7QR-RTF%f%74-PF%f%2MH-JQM%f%TH_Subscription__O365EduCloudRetail
 16_537ea5b5-7d50-4876-bd38-a53a77caca32_J2%f%W28-TN%f%9C8-26P%f%WV-F7%f%J4G-72X%f%CB_Subscription1_O365HomePremRetail

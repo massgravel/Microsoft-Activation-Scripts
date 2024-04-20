@@ -1,4 +1,4 @@
-@set masver=2.5
+@set masver=2.6
 @setlocal DisableDelayedExpansion
 @echo off
 
