@@ -3,7 +3,7 @@
 @cls
 
 
-
+::
 ::  Check-Activation-Status
 ::  Written by @abbodi1406
 ::  forums.mydigitallife.net/posts/838808
