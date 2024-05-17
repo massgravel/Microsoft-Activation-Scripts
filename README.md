@@ -17,20 +17,21 @@
 ### Method 1 - PowerShell (Recommended)
 
 -   Right-click on the Windows start menu and select PowerShell or Terminal (Not CMD).
--   Copy-paste the below code and press enter
-    ```
-    irm https://massgrave.dev/get | iex
-    ```
+-   Copy and paste the code below and press enter  
+`irm https://massgrave.dev/get | iex`  
 -   You will see the activation options. Follow the on-screen instructions.
 -   That's all.
 
+Note - On older Windows builds you may need to run the below command before,  
+`[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12`  
+
 ### Method 2 - Traditional
 
--   Download the file from [GitHub](https://github.com/massgravel/Microsoft-Activation-Scripts/archive/refs/heads/master.zip) or [Bitbucket](https://bitbucket.org/WindowsAddict/microsoft-activation-scripts/get/master.zip)
+-   Download the file under the code button from [GitHub](https://github.com/massgravel/Microsoft-Activation-Scripts) or [Bitbucket](https://bitbucket.org/WindowsAddict/microsoft-activation-scripts)
 -   Right-click on the downloaded zip file and extract
 -   In the extracted folder, find the folder named `All-In-One-Version`
--   Run the file named `MAS_AIO.cmd`
--   You will see the activation options. Follow the on-screen instructions.
+-   Run the file named `MAS_AIO-CRC32_XXXXXXXX.cmd`
+-   You will see the activation options, follow the on-screen instructions.
 -   That's all.
 
 To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches)
