@@ -16,10 +16,9 @@
 
 ### Method 1 - PowerShell (Recommended)
 
--   Right-click on the Windows start menu and select PowerShell or Terminal (Not CMD).
--   Copy and paste the code below and press enter  
+-   Open Command Prompt, paste the code below and press enter  
 ```
-irm https://get.activated.win | iex
+powershell -c "irm https://get.activated.win | iex"
 ```
 or (deprecated, will be retired on Aug 31 2024, use above instead)  
 ```
