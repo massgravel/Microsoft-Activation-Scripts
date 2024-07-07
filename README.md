@@ -17,12 +17,12 @@
 ### Method 1 - PowerShell (Recommended)
 
 -   Open Command Prompt, paste the code below and press enter  
-```
+```sh
 powershell -c "irm https://get.activated.win | iex"
 ```
 or (deprecated, will be retired on Aug 31 2024, use above instead)  
-```
-irm https://massgrave.dev/get | iex
+```sh
+powershell -c "irm https://massgrave.dev/get | iex"
 ```
 -   You will see the activation options. Follow the on-screen instructions.
 -   That's all.
