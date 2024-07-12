@@ -925,33 +925,19 @@ exit /b
 ::  Get Windows Subscription status
 
 :winsubstatus:
-$DM = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2)
-$SB = $DM.DefineType('sub_status', 9, [ValueType], 0)
-
-('enabled#int', 'sku#int', 'state#int').ForEach({
-    $i = $_ -split '#'
-    $n = $i[0]
-    $t = $i[1] -as [Type]
-    [void]$SB.DefineField($n, $t, 6)
-})
-
-$sub_status = $SB.CreateType()
-$MB = $DM.DefineType('PInvoke')
-
-[void]$MB.DefinePInvokeMethod('ClipGetSubscriptionStatus', 'Clipc.dll', 22, 1, [UInt32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
-
-$Clipc = $MB.CreateType()
-$s = [Activator]::CreateInstance($sub_status)
-$p = [Runtime.InteropServices.Marshal]::AllocHGlobal([Runtime.InteropServices.Marshal]::SizeOf($s))
-$r = $Clipc::ClipGetSubscriptionStatus([ref]$p)
-
+$DM = [AppDomain]::CurrentDomain.DefineDynamicAssembly(6, 1).DefineDynamicModule(4).DefineType(2)
+[void]$DM.DefinePInvokeMethod('ClipGetSubscriptionStatus', 'Clipc.dll', 22, 1, [Int32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+$m = [System.Runtime.InteropServices.Marshal]
+$p = $m::AllocHGlobal(12)
+$r = $DM.CreateType()::ClipGetSubscriptionStatus([ref]$p)
 if ($r -eq 0) {
-    $s = [Runtime.InteropServices.Marshal]::PtrToStructure($p, [type]$sub_status)
-    if ($s.enabled -ne 0) { 
-        if ($s.state -eq 1) {
-            "Subscription_is_activated."
-        }
+  $enabled = $m::ReadInt32($p)
+  if ($enabled -ge 1) {
+    $state = $m::ReadInt32($p, 8)
+    if ($state -eq 1) {
+        "Subscription_is_activated."
     }
+  }
 }
 :winsubstatus:
 
