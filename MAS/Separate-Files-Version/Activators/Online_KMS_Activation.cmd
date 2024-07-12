@@ -112,8 +112,8 @@ set "nul="
 @echo on
 @prompt $G
 @call :_debug "%_debug%" >"%~dp0_tmp.log" 2>&1
-cmd /u /c type "%~dp0_tmp.log">"%~dp0_Debug.log"
-del "%~dp0_tmp.log"
+@cmd /u /c type "%~dp0_tmp.log">"%~dp0_Debug.log"
+@del "%~dp0_tmp.log"
 @echo off
 @exit /b
 
@@ -328,14 +328,6 @@ if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
 )
 )
-
-::========================================================================================================================================
-
-::  Check not x86 Windows
-
-set notx86=
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
-if /i not "%arch%"=="x86" set notx86=1
 
 ::========================================================================================================================================
 
@@ -1537,15 +1529,7 @@ goto _intrepeat
 
 ::========================================================================================================================================
 
-::  Check not x86 Windows
-
-set notx86=
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
-if /i not "%arch%"=="x86" set notx86=1
-
 call :_taskclear-cache
-
-::========================================================================================================================================
 
 ::  Check WMI and sppsvc Errors
 
@@ -1867,17 +1851,15 @@ set "_oApp=0ff1ce15-a989-479d-af46-f275c6370663"
 set "_oA14=59a52881-a989-479d-af46-f275c6370663"
 
 %nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServiceName
+%nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServiceName /reg:32
 %nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServicePort
+%nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServicePort /reg:32
 %nul% reg delete "HKLM\%SPPk%" /f /v DisableDnsPublishing
 %nul% reg delete "HKLM\%SPPk%" /f /v DisableKeyManagementServiceHostCaching
 %nul% reg delete "HKLM\%SPPk%\%_wApp%" /f
 if %winbuild% GEQ 9200 (
-if defined notx86 (
-%nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServiceName /reg:32
-%nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServicePort /reg:32
-%nul% reg delete "HKLM\%SPPk%\%_oApp%" /f /reg:32
-)
 %nul% reg delete "HKLM\%SPPk%\%_oApp%" /f
+%nul% reg delete "HKLM\%SPPk%\%_oApp%" /f /reg:32
 )
 if %winbuild% GEQ 9600 (
 %nul% reg delete "HKU\S-1-5-20\%SPPk%\%_wApp%" /f
@@ -1900,20 +1882,18 @@ if defined _server (set KMS_IP=%_server%)
 if not defined _port set _port=1688
 
 %nul% reg add "HKLM\%SPPk%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%"
+%nul% reg add "HKLM\%SPPk%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%" /reg:32
 %nul% reg add "HKLM\%SPPk%" /f /v KeyManagementServicePort /t REG_SZ /d "%_port%"
+%nul% reg add "HKLM\%SPPk%" /f /v KeyManagementServicePort /t REG_SZ /d "%_port%" /reg:32
 
 %nul% reg add "HKLM\%OPPk%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%"
 %nul% reg add "HKLM\%OPPk%" /f /v KeyManagementServicePort /t REG_SZ /d "%_port%"
 
 if %winbuild% GEQ 9200 (
 %nul% reg add "HKLM\%SPPk%\%_oApp%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%"
-%nul% reg add "HKLM\%SPPk%\%_oApp%" /f /v KeyManagementServicePort /t REG_SZ /d "%_port%"
-if defined notx86 (
-%nul% reg add "HKLM\%SPPk%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%" /reg:32
-%nul% reg add "HKLM\%SPPk%" /f /v KeyManagementServicePort /t REG_SZ /d "%_port%" /reg:32
 %nul% reg add "HKLM\%SPPk%\%_oApp%" /f /v KeyManagementServiceName /t REG_SZ /d "%KMS_IP%" /reg:32
+%nul% reg add "HKLM\%SPPk%\%_oApp%" /f /v KeyManagementServicePort /t REG_SZ /d "%_port%"
 %nul% reg add "HKLM\%SPPk%\%_oApp%" /f /v KeyManagementServicePort /t REG_SZ /d "%_port%" /reg:32
-)
 )
 exit /b
 

@@ -90,8 +90,8 @@ set "nul="
 @echo on
 @prompt $G
 @call :_debug "%_debug%" >"%~dp0_tmp.log" 2>&1
-cmd /u /c type "%~dp0_tmp.log">"%~dp0_Debug.log"
-del "%~dp0_tmp.log"
+@cmd /u /c type "%~dp0_tmp.log">"%~dp0_Debug.log"
+@del "%~dp0_tmp.log"
 @echo off
 @exit /b
 
