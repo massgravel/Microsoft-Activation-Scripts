@@ -705,7 +705,7 @@ set error=1
 goto :ks_starto16c2r
 )
 
-call :oh_fixprids
+if "%_actprojvis%"=="0" call :oh_fixprids
 call :ks_process
 
 ::========================================================================================================================================
@@ -745,7 +745,7 @@ set error=1
 goto :ks_startmsi
 )
 
-call :oh_fixprids
+if "%_actprojvis%"=="0" call :oh_fixprids
 call :ks_process
 
 ::========================================================================================================================================
@@ -949,6 +949,15 @@ set "_osppready=%_config%"
 )
 
 reg add %_osppready% /f /v %_altoffid%.OSPPReady /t %_osppt% /d 1 %nul1%
+
+::  Office builds before 16.0.10730.20102 need the Installed license product ID in ProductReleaseIds, otherwise product info may not fully reflect 
+
+if exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" exit /b
+
+reg query %_prids% | findstr /I "%_altoffid%" %nul1%
+if %errorlevel% NEQ 0 (
+for /f "skip=2 tokens=2*" %%a in ('reg query %_prids%') do reg add %_prids% /t REG_SZ /d "%%b,%_altoffid%" /f %nul1%
+)
 exit /b
 
 ::========================================================================================================================================
