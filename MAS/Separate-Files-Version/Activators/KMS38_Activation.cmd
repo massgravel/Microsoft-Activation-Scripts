@@ -352,6 +352,7 @@ title  KMS38 Activation %masver%
 
 echo:
 echo Initializing...
+call :dk_chkmal
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*CorEdition~*.mum" if not exist "%SysPath%\clipup.exe" set a_cor=1
 if not exist %SysPath%\sppsvc.exe (set _fmiss=sppsvc.exe)
@@ -486,7 +487,7 @@ if defined altkey (set key=%altkey%&set changekey=1)
 set /a UBR=0
 if %osSKU%==191 if defined altkey if defined altedition (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
-if %winbuild% GEQ 19044 if !UBR! LSS 2788 (
+if %winbuild% LSS 22598 if !UBR! LSS 2788 (
 call :dk_color %Blue% "Windows must to be updated to build 19044.2788 or higher for IotEnterpriseS KMS38 activation."
 )
 )
@@ -1195,14 +1196,13 @@ exit /b
 
 ::========================================================================================================================================
 
-:dk_errorcheck
-
-set w=
-set showfix=
+:dk_chkmal
 
 ::  Many users unknowingly download mal-ware by using activators found through Google search.
 ::  This code aims to notify users that their system has been affected by mal-ware.
 
+set w=
+set results=
 if exist "%ProgramFiles%\KM%w%Spico" set pupfound1= KM%w%Spico 
 if exist "%SysPath%\Tasks\R@1n-KMS"  set pupfound2= R@inKMS 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "AutoPico" %nul% && set pupfound1= KM%w%Spico 
@@ -1233,8 +1233,14 @@ set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
 )
+exit /b
 
 ::========================================================================================================================================
+
+:dk_errorcheck
+
+set showfix=
+call :dk_chkmal
 
 ::  Check corrupt services
 

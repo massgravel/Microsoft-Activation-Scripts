@@ -408,6 +408,7 @@ title  Online %KS% Activation %masver%
 
 echo:
 echo Initializing...
+call :dk_chkmal
 
 if not exist %SysPath%\sppsvc.exe (
 %eline%
@@ -537,13 +538,13 @@ if defined altkey (set key=%altkey%&set changekey=1)
 set /a UBR=0
 if %osSKU%==191 if defined altkey if defined altedition (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
-if %winbuild% GEQ 19044 if !UBR! LSS 2788 (
+if %winbuild% LSS 22598 if !UBR! LSS 2788 (
 call :dk_color %Blue% "Windows must to be updated to build 19044.2788 or higher for IotEnterpriseS KMS38 activation."
 )
 )
 
 if not defined key if defined notfoundaltactID (
-call :dk_color %Red% "Checking Alternate Edition For KMS      [%altedition% Activation ID Not Found]"
+call :dk_color %Red% "Checking Alternate Edition For %KS%      [%altedition% Activation ID Not Found]"
 )
 
 if not defined key if not defined _gvlk (
@@ -666,7 +667,7 @@ if not "%o14c2r%%o16uwp%"=="" set multioffice=1
 
 if defined multioffice (
 echo:
-call :dk_color %Gray% "Checking Multiple Office Install        [Found. Its best to install only one version]"
+call :dk_color %Gray% "Checking Multiple Office Install        [Found. Recommended to install one version only]"
 )
 
 ::========================================================================================================================================
@@ -1765,7 +1766,7 @@ set _kms38=1
 call :_taskchkEnterpriseG _kms38
 )
 
-:: Set specific K-M-S host to Local Host so that global KMS IP can not replace KMS38 activation but can be used with Office and other Windows Editions.
+:: Set specific K-M-S host to Local Host so that global K-M-S IP can not replace KMS38 activation but can be used with Office and other Windows Editions.
 
 if %_kms38% EQU 1 (
 %nul% reg add "HKLM\%SPPk%\%_wApp%\%sppwid%" /f /v KeyManagementServiceName /t REG_SZ /d "127.0.0.2"
@@ -1925,7 +1926,7 @@ set KMS_IP=!server%rand%!
 set !server%rand%!=1
 
 ::  Get IPv4 address of K-M-S server to use for the activation, works even if ICMP echo is disabled.
-::  Microsoft and Antivirus's may flag the issue if public KMS server host name is directly used for the activation.
+::  Microsoft and Antivirus's may flag the issue if public K-M-S server host name is directly used for the activation.
 
 set /a server_num+=1
 (for /f "delims=[] tokens=2" %%a in ('ping -4 -n 1 %KMS_IP% 2^>nul') do set "KMS_IP=%%a"
@@ -2499,14 +2500,13 @@ exit /b
 
 ::========================================================================================================================================
 
-:dk_errorcheck
-
-set w=
-set showfix=
+:dk_chkmal
 
 ::  Many users unknowingly download mal-ware by using activators found through Google search.
 ::  This code aims to notify users that their system has been affected by mal-ware.
 
+set w=
+set results=
 if exist "%ProgramFiles%\KM%w%Spico" set pupfound1= KM%w%Spico 
 if exist "%SysPath%\Tasks\R@1n-KMS"  set pupfound2= R@inKMS 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "AutoPico" %nul% && set pupfound1= KM%w%Spico 
@@ -2537,8 +2537,14 @@ set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
 )
+exit /b
 
 ::========================================================================================================================================
+
+:dk_errorcheck
+
+set showfix=
+call :dk_chkmal
 
 ::  Check corrupt services
 

@@ -351,6 +351,7 @@ title  Ohook Activation %masver%
 
 echo:
 echo Initializing...
+call :dk_chkmal
 
 if not exist %SysPath%\sppsvc.exe (
 %eline%
@@ -465,7 +466,7 @@ if not "%o16c2r%%o15c2r%%o16msi%%o15msi%"=="1" set multioffice=1
 if not "%o14msi%%o14c2r%%o16uwp%"=="" set multioffice=1
 
 if defined multioffice (
-call :dk_color %Gray% "Checking Multiple Office Install        [Found. Its best to install only one version]"
+call :dk_color %Gray% "Checking Multiple Office Install        [Found. Recommended to install one version only]"
 )
 
 ::========================================================================================================================================
@@ -1500,14 +1501,13 @@ exit /b
 
 ::========================================================================================================================================
 
-:dk_errorcheck
-
-set w=
-set showfix=
+:dk_chkmal
 
 ::  Many users unknowingly download mal-ware by using activators found through Google search.
 ::  This code aims to notify users that their system has been affected by mal-ware.
 
+set w=
+set results=
 if exist "%ProgramFiles%\KM%w%Spico" set pupfound1= KM%w%Spico 
 if exist "%SysPath%\Tasks\R@1n-KMS"  set pupfound2= R@inKMS 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "AutoPico" %nul% && set pupfound1= KM%w%Spico 
@@ -1538,8 +1538,14 @@ set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
 )
+exit /b
 
 ::========================================================================================================================================
+
+:dk_errorcheck
+
+set showfix=
+call :dk_chkmal
 
 ::  Check corrupt services
 
