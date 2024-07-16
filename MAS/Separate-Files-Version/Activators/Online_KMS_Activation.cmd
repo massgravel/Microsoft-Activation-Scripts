@@ -524,7 +524,6 @@ call :k_channel
 set key=
 set pkey=
 set altkey=
-set skufound=
 set changekey=
 set altedition=
 
@@ -539,7 +538,7 @@ set /a UBR=0
 if %osSKU%==191 if defined altkey if defined altedition (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
 if %winbuild% LSS 22598 if !UBR! LSS 2788 (
-call :dk_color %Blue% "Windows must to be updated to build 19044.2788 or higher for IotEnterpriseS KMS38 activation."
+call :dk_color %Blue% "Windows must to be updated to build 19044.2788 or higher for IotEnterpriseS %KS% activation."
 )
 )
 
@@ -549,14 +548,16 @@ call :dk_color %Red% "Checking Alternate Edition For %KS%      [%altedition% Act
 
 if not defined key if not defined _gvlk (
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
-if not defined skufound (
-call :dk_color %Red% "Unable to find this product in the supported product list."
-echo:
+if not defined skunotfound (
+echo This product does not support %KS% Activation.
 set fixes=%fixes% %mas%unsupported_products_activation
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%unsupported_products_activation"
 ) else (
 echo Required License files not found in %SysPath%\spp\tokens\skus\
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
+echo:
 goto :ks_office
 )
 
@@ -653,9 +654,7 @@ if defined ohub (
 echo:
 echo You have only Office dashboard app installed, you need to install full Office version.
 )
-echo:
 call :dk_color %Blue% "Download and install Office from below URL and try again."
-echo:
 set fixes=%fixes% %mas%genuine-installation-media
 call :dk_color %_Yellow% "%mas%genuine-installation-media"
 goto :ks_activate
@@ -2694,23 +2693,24 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation-editions"
 )
 
 
-set osedition=
+set osedition=0
 for /f "skip=2 tokens=3" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul6%') do set "osedition=%%a"
 
 ::  Workaround for an issue in builds between 1607 and 1709 where ProfessionalEducation is shown as Professional
 
-if defined osedition (
+if not %osedition%==0 (
 if "%osSKU%"=="164" set osedition=ProfessionalEducation
 if "%osSKU%"=="165" set osedition=ProfessionalEducationN
 )
 
 if not defined officeact (
-if not defined osedition (
+if %osedition%==0 (
 call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
 ) else (
 
 if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set error=1
+set skunotfound=1
 call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
 )
 
@@ -3407,7 +3407,6 @@ d0eded01-0881-4b37-9738-190400095098_MQ84N-7VYDM-FXV7C-6K7CC-VF%f%W9J__16_Word20
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do (
 
 if %1==winkey if %osSKU%==%%C if not defined key (
-set skufound=1
 echo "!allapps!" | find /i "%%A" %nul1% && set key=%%B
 )
 

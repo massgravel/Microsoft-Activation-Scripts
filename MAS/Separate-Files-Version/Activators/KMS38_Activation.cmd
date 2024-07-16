@@ -473,7 +473,6 @@ call :k_channel
 set key=
 set pkey=
 set altkey=
-set skufound=
 set changekey=
 set altedition=
 
@@ -499,14 +498,16 @@ call :dk_color %Red% "Checking Alternate Edition For KMS38    [%altedition% Acti
 if not defined key if not defined _gvlk (
 %eline%
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
-if not defined skufound (
-echo Unable to find this product in the supported product list.
-) else (
-echo Required License files not found in %SysPath%\spp\tokens\skus\
-)
+if not defined skunotfound (
+echo This product does not support KMS38 Activation.
 echo Make sure you are using updated version of the script.
 set fixes=%fixes% %mas%
 echo %mas%
+) else (
+echo Required License files not found in %SysPath%\spp\tokens\skus\
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+)
 echo:
 goto dk_done
 )
@@ -1381,23 +1382,24 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation-editions"
 )
 
 
-set osedition=
+set osedition=0
 for /f "skip=2 tokens=3" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul6%') do set "osedition=%%a"
 
 ::  Workaround for an issue in builds between 1607 and 1709 where ProfessionalEducation is shown as Professional
 
-if defined osedition (
+if not %osedition%==0 (
 if "%osSKU%"=="164" set osedition=ProfessionalEducation
 if "%osSKU%"=="165" set osedition=ProfessionalEducationN
 )
 
 if not defined officeact (
-if not defined osedition (
+if %osedition%==0 (
 call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
 ) else (
 
 if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set error=1
+set skunotfound=1
 call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
 )
 
@@ -1780,7 +1782,6 @@ c2e946d1-cfa2-4523-8c87-30bc696ee584_XGN3F-F394H-FD2MY-PP6FD-8M%f%CRC_407_Server
 19b5e0fb-4431-46bc-bac1-2f1873e4ae73_NTBV8-9K7Q8-V27C6-M2BTV-KH%f%MXV_407_ServerTurbine_RS5
 ) do (
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do if %osSKU%==%%C (
-set skufound=1
 if %1==key if not defined key echo "!allapps!" | find /i "%%A" %nul1% && set key=%%B
 )
 )

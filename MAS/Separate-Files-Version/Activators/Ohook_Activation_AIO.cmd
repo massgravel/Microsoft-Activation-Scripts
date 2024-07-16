@@ -1686,23 +1686,24 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation-editions"
 )
 
 
-set osedition=
+set osedition=0
 for /f "skip=2 tokens=3" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul6%') do set "osedition=%%a"
 
 ::  Workaround for an issue in builds between 1607 and 1709 where ProfessionalEducation is shown as Professional
 
-if defined osedition (
+if not %osedition%==0 (
 if "%osSKU%"=="164" set osedition=ProfessionalEducation
 if "%osSKU%"=="165" set osedition=ProfessionalEducationN
 )
 
 if not defined officeact (
-if not defined osedition (
+if %osedition%==0 (
 call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
 ) else (
 
 if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set error=1
+set skunotfound=1
 call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
 )
 
