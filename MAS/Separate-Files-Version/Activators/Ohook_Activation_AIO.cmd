@@ -952,7 +952,7 @@ exit /b
 
 for %%# in (%_oIds%) do (
 
-echo: !actiProds%oVer%! | find /i "%%#" %nul1% && (
+echo: !actiProds%oVer%! | find /i "-%%#-" %nul1% && (
 call :dk_color %Gray% "Checking Activation Status              [%%# is already permanently activated]"
 
 ) || (
@@ -1066,6 +1066,7 @@ if not defined actiProds exit /b
 
 for %%# in (%actiProds%) do (
 set _sortIds=%%#
+set _sortIds=!_sortIds:OfficeSPDFreeR_=SPDRetail_!
 set _sortIds=!_sortIds:XC2RVL_=XVolume_!
 set _sortIds=!_sortIds:CO365R_=Retail_!
 set _sortIds=!_sortIds:O365R_=Retail_!
@@ -1075,14 +1076,21 @@ set _sortIds=!_sortIds:DemoR_=Retail_!
 set _sortIds=!_sortIds:EDUR_=Retail_!
 set _sortIds=!_sortIds:R_=Retail_!
 set _sortIds=!_sortIds:VL_=Volume_!
+set _sortIds=!_sortIds:Office16=!
+set _sortIds=!_sortIds:Office19=!
+set _sortIds=!_sortIds:Office21=!
+set _sortIds=!_sortIds:Office24=!
+set _sortIds=!_sortIds:Office=!
+for /f "tokens=1 delims=-_" %%a in ("!_sortIds!") do set "_sortIds=-%%a-"
 set _FsortIds=!_sortIds! !_FsortIds!
 )
 
 call :ohookdata findactivated %2
 exit /b
 
-::  Preview VL is not checked for permanent activation
+::  Below IDs are not checked for permanent activation
 set _sortIds=!_sortIds:PreviewVL_=Volume_!
+set _sortIds=!_sortIds:PreInstallR_=Retail_!
 
 ::========================================================================================================================================
 
@@ -2253,8 +2261,8 @@ if defined _oIds (set _oIds=!_oIds! %%E) else (set _oIds=%%E)
 )
 
 if %1==findactivated if %oVer%==%%A (
-echo "!_FsortIds!" | find /i "%%E" %nul% && (
-set actiProds%oVer%=!actiProds%oVer%! %%E
+echo "!_FsortIds!" | find /i "-%%E-" %nul% && (
+set actiProds%oVer%=!actiProds%oVer%! -%%E-
 )
 )
 
