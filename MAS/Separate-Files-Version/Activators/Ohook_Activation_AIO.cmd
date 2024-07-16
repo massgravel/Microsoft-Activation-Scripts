@@ -1460,21 +1460,12 @@ exit /b
 
 :dk_sppissue
 
-set w=
 sc start sppsvc %nul%
 set spperror=%errorlevel%
 
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
 echo sc start sppsvc [Error Code: %spperror%]
-)
-
-echo "%spperror%" | findstr "577 225" %nul% && (
-echo:
-echo Your system is most likely infected with Mal%w%ware.
-echo:
-set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
 )
 
 echo:
