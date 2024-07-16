@@ -984,7 +984,9 @@ for %%# in (%_oIds%) do (
 
 set skipprocess=
 if %_NoEditionChange%==1 if not defined _oBranding (
-echo %%# | findstr /i "Retail" %nul% && (
+set foundprod=
+call :ksdata chkprod %%#
+if not defined foundprod (
 set skipprocess=1
 echo Skipping Because NoEditionChange Mode   [%%#]
 )
@@ -3408,6 +3410,10 @@ for /f "tokens=1-5 delims=_" %%A in ("%%#") do (
 
 if %1==winkey if %osSKU%==%%C if not defined key (
 echo "!allapps!" | find /i "%%A" %nul1% && set key=%%B
+)
+
+if %1==chkprod if "%oVer%"=="%%C" if not defined foundprod (
+echo "%%D" | findstr /I "\<%2.*" %nul% && set foundprod=1
 )
 
 if %1==getinfo if not defined key if "%oVer%"=="%%C" (
