@@ -2778,14 +2778,7 @@ echo Checking Eval WLMS Service              [Found]
 )
 
 
-reg query "HKU\S-1-5-20" %nul% && (
-if %winbuild% GEQ 15063 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" %nul% || (
-set error=1
-call :dk_color %Red% "Checking S-1-5-20 SPP Reg               [Not Found]"
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
-)
-) || (
+reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% || (
 set error=1
 call :dk_color %Red% "Checking HKU\S-1-5-20 Reg               [Not Found]"
 set fixes=%fixes% %mas%troubleshoot
@@ -2882,24 +2875,34 @@ call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!]"
 )
 
 
-::  This code checks if NT SERVICE\sppsvc has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers. 
+::  This code checks if SPP has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers.
 
 set permerror=
-if not exist "%tokenstore%\" set permerror=1
-if %winbuild% GEQ 9200 for %%# in (
+if %winbuild% GEQ 9200 (
+for %%# in (
 "%tokenstore%+FullControl"
 "HKLM:\SYSTEM\WPA+QueryValues, EnumerateSubKeys, WriteKey"
 "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform+SetValue"
 ) do for /f "tokens=1,2 delims=+" %%A in (%%#) do if not defined permerror (
 %psc% "$acl = (Get-Acl '%%A' | fl | Out-String); if (-not ($acl -match 'NT SERVICE\\sppsvc Allow  %%B') -or ($acl -match 'NT SERVICE\\sppsvc Deny')) {Exit 2}" %nul%
-if !errorlevel!==2 set permerror=1
+if !errorlevel!==2 set permerror=Error_Found
 )
 
-if %winbuild% GEQ 9200 if defined permerror (
+if not defined permerror (
+reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% && (
+set "pol=HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Policies"
+reg query "!pol!" %nul% || reg add "!pol!" %nul%
+%psc% "$acl = (Get-Acl 'Registry::!pol!' | fl | Out-String); if (-not ($acl -match 'NT AUTHORITY\\NETWORK SERVICE Allow  FullControl') -or ($acl -match 'NT AUTHORITY\\NETWORK SERVICE Deny')) {Exit 3}" %nul%
+if !errorlevel!==3 set "permerror=Error Found In S-1-5-20 SPP"
+)
+)
+
+if defined permerror (
 set error=1
-call :dk_color %Red% "Checking SPP Permissions                [Error Found]"
+call :dk_color %Red% "Checking SPP Permissions                [!permerror!]"
 if not defined showfix call :dk_color %Blue% "%_fixmsg%"
 set showfix=1
+)
 )
 
 
