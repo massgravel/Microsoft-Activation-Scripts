@@ -24,6 +24,8 @@
 ```
 irm https://get.activated.win | iex
 ```
+> The URL get.activated.win may be blocked by some DNS services because it is a new domain.
+
 or (deprecated, will be retired on Aug 31 2024, use above instead)  
 ```
 irm https://massgrave.dev/get | iex
@@ -40,8 +42,6 @@ irm https://massgrave.dev/get | iex
     8. Help
     9. Exit
 5. Make a selection and continue from the on-screen steps
-
-- The URL get.activated.win may be blocked by some DNS services because it is a new domain.
 
 ### Method 2 - Traditional
 
