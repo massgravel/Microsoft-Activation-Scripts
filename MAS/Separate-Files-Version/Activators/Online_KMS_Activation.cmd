@@ -1226,11 +1226,7 @@ reg delete HKLM\SOFTWARE\Microsoft\Office\15.0\ClickToRun\Configuration /v Share
 ::  Clear device-based-licensing
 ::  https://learn.microsoft.com/deployoffice/device-based-licensing
 
-if defined _o16c2rIds (
-for /f "tokens=1 delims= " %%A in ('reg query "%o16c2r_reg%\Configuration" %nul6%') do (
-echo %%A | find /i ".DeviceBasedLicensing" %nul% && reg delete "%o16c2r_reg%\Configuration" /v "%%A" /f %nul%
-)
-)
+for /f %%# in ('reg query "%o16c2r_reg%\Configuration" /f *.DeviceBasedLicensing %nul6% ^| findstr REG_') do reg delete "%o16c2r_reg%\Configuration" /v %%# /f %nul%
 
 ::  Remove OEM registry key
 ::  https://support.microsoft.com/office/office-repeatedly-prompts-you-to-activate-on-a-new-pc-a9a6b05f-f6ce-4d1f-8d49-eb5007b64ba1
