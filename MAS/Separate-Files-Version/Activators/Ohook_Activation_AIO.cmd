@@ -1887,6 +1887,8 @@ for %%# in (
 if !errorlevel!==2 set permerror=Error_Found
 )
 
+REM  https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
+
 if not defined permerror (
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% && (
 set "pol=HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Policies"
