@@ -1544,6 +1544,18 @@ exit /b
 set showfix=
 call :dk_chkmal
 
+::  Check Sandboxing
+
+sc query Null %nul% || (
+set error=1
+set showfix=1
+call :dk_color %Red% "Checking Sandboxing                     [Found. Script may not work properly.]"
+call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
+echo:
+)
+
+::========================================================================================================================================
+
 ::  Check corrupt services
 
 set serv_cor=
@@ -1731,7 +1743,7 @@ echo "%error_code%" | findstr /i "0x800410 0x800440" %nul1% && set wmifailed=1& 
 if defined wmifailed (
 set error=1
 call :dk_color %Red% "Checking WMI                            [Not Working]"
-call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run Fix WMI option."
+if not defined showfix call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run Fix WMI option."
 set showfix=1
 )
 
