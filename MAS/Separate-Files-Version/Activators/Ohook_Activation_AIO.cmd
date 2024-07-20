@@ -1284,7 +1284,7 @@ exit /b
 
 set checkapps=
 set checknames=
-for /f "tokens=1" %%i in ('tasklist ^| findstr /I ".exe" %nul6%') do (set "checkapps=!checkapps! %%i")
+for /f "tokens=1" %%i in ('tasklist ^| findstr /I ".exe" %nul6%') do (set "checkapps=!checkapps! -%%i-")
 
 for %%# in (
 Access_msaccess.exe
@@ -1301,7 +1301,7 @@ Word_winword.exe
 Lime_lime.exe
 ) do (
 for /f "tokens=1-2 delims=_" %%A in ("%%#") do (
-echo !checkapps! | find /i "%%B" %nul1% && (if defined checknames (set "checknames=!checknames! %%A") else (set "checknames=%%A"))
+echo !checkapps! | find /i "-%%B-" %nul1% && (if defined checknames (set "checknames=!checknames! %%A") else (set "checknames=%%A"))
 )
 )
 exit /b
