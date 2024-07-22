@@ -46,7 +46,7 @@ set _port=
 ::  To run the script in debug mode, change 0 to any parameter above that you want to run, in below line
 set "_debug=0"
 
-::  If value is changed in above lines or any parameter is used then script will run in unattended mode
+::  Script will run in unattended mode if parameters are used OR value is changed in above lines FOR activation or uninstall.
 
 
 
