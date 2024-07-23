@@ -1970,7 +1970,8 @@ exit /b
 )
 
 if not exist "%_dest%\" md "%_dest%\" %nul%
-set "_temp=%SystemRoot%\Temp\_taskwork_%Random%"
+for /f %%G in ('%psc% "[Guid]::NewGuid().Guid"') do set "randguid=%%G"
+set "_temp=%SystemRoot%\Temp\%Random%%randguid%"
 
 set nil=
 if exist "%_temp%\.*" rmdir /s /q "%_temp%\" %nul%
@@ -1982,7 +1983,7 @@ if not defined _int (s%nil%cht%nil%asks /cre%nil%ate /tn "Activation-Run_Once" /
 if exist "%_temp%\.*" rmdir /s /q "%_temp%\" %nul%
 
 call :ks_createInfo.txt
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split \":_extracttask\:.*`r`n\"; [io.file]::WriteAllText('%_dest%\Activation_task.cmd', '@REM MASver %masver%' + ' - Dummy%random%' + [Environment]::NewLine + $f[1].Trim(), [System.Text.Encoding]::ASCII)"
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split \":_extracttask\:.*`r`n\"; [io.file]::WriteAllText('%_dest%\Activation_task.cmd', '@::%randguid%' + [Environment]::NewLine + $f[1].Trim(), [System.Text.Encoding]::ASCII)"
 
 ::========================================================================================================================================
 
