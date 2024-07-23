@@ -350,6 +350,11 @@ echo:
 echo:
 echo:
 echo:
+if exist "%ProgramFiles%\Activation-Renewal\Activation_task.cmd" (
+find /i "Ver:2.7" "%ProgramFiles%\Activation-Renewal\Activation_task.cmd" %nul% || (
+call :dk_color %_Yellow% "              Old renewal task found, run activation to update it."
+)
+)
 echo        ______________________________________________________________
 echo: 
 echo               [1] Activate - Windows
@@ -1945,6 +1950,7 @@ if [%KMS_IP%]==[!KMS_IP!] for /f "delims=[] tokens=2" %%# in ('pathping -4 -h 1 
 if not [%KMS_IP%]==[!KMS_IP!] exit /b
 goto :_taskgetserv
 )
+::Ver:2.7
 :_extracttask:
 
 ::========================================================================================================================================
