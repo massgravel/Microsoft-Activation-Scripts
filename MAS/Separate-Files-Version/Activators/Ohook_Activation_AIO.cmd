@@ -639,7 +639,7 @@ call :oh_licrefresh
 echo:
 if not defined error (
 call :dk_color %Green% "Office is permanently activated."
-REM if defined ohub call :dk_color %Gray% "Office apps such as Word, Excel are activated. Ignore 'Buy Microsoft 365' button in Office dashboard app."
+if defined ohub call :dk_color %Gray% "Office apps such as Word, Excel are activated, use them directly. Ignore 'Buy' button in Office dashboard app."
 echo Help: %mas%troubleshoot
 ) else (
 call :dk_color %Red% "Some errors were detected."
