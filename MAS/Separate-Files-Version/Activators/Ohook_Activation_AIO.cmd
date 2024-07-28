@@ -933,6 +933,7 @@ call :dk_color %Blue% "Close [!checknames!] and try again."
 call :dk_color %Blue% "If its still not resolved then restart system and try again."
 ) else (
 if /i not "%ierror%"=="Copy" call :dk_color %Blue% "Restart system and try again."
+if /i "%ierror%"=="Copy" call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
 )
 echo:
 )
