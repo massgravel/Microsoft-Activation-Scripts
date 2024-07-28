@@ -1908,7 +1908,7 @@ if not defined permerror (
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% && (
 set "pol=HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Policies"
 reg query "!pol!" %nul% || reg add "!pol!" %nul%
-%psc% "$acl = (Get-Acl 'Registry::!pol!' | fl | Out-String); if (-not ($acl -match 'NT AUTHORITY\\NETWORK SERVICE Allow  FullControl' -or $acl -match 'NT SERVICE\\sppsvc Allow  FullControl') -or ($acl -match 'Deny')) {Exit 3}" %nul%
+%psc% "$netServ = (New-Object Security.Principal.SecurityIdentifier('S-1-5-20')).Translate([Security.Principal.NTAccount]).Value; $aclString = Get-Acl 'Registry::!pol!' | Format-List | Out-String; if (-not ($aclString.Contains($netServ + ' Allow  FullControl') -or $aclString.Contains('NT SERVICE\sppsvc Allow  FullControl')) -or ($aclString.Contains('Deny'))) {Exit 3}" %nul%
 if !errorlevel!==3 set "permerror=Error Found In S-1-5-20 SPP"
 )
 )
