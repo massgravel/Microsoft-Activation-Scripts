@@ -875,7 +875,7 @@ exit /b
 
 set k=%1
 set m=[Runtime.InteropServices.Marshal]
-set p=$env:SysPath\spp\tokens\pkeyconfig\pkeyconfig.xrm-ms
+set p=%SysPath%\spp\tokens\pkeyconfig\pkeyconfig.xrm-ms
 
 set d1=%ref% [void]$TypeBuilder.DefinePInvokeMethod('PidGenX', 'pidgenx.dll', 'Public, Static', 1, [int], @([String], [String], [String], [int], [IntPtr], [IntPtr], [IntPtr]), 1, 3);
 set d1=%d1% $r = [byte[]]::new(0x04F8); $r[0] = 0xF8; $r[1] = 0x04; $f = %m%::AllocHGlobal(0x04F8); %m%::Copy($r, 0, $f, 0x04F8);
