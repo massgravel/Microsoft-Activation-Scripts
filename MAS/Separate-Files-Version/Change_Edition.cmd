@@ -683,13 +683,6 @@ set preperror=
 
 for /f %%a in ('%psc% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set _time=%%a
 
-if not defined _time (
-%eline%
-echo Failed to get time with Powershell command.
-set preperror=1
-exit /b
-)
-
 %psc% Stop-Service TrustedInstaller -force %nul%
 %psc% Stop-Service TrustedInstaller -force %nul%
 
@@ -706,14 +699,6 @@ copy /y /b "%SystemRoot%\logs\DISM\dism.log" "%SystemRoot%\logs\DISM\backup_dism
 
 del /f /q "%SystemRoot%\logs\cbs\cbs.log" %nul%
 del /f /q "%SystemRoot%\logs\DISM\dism.log" %nul%
-
-for %%# in (%SystemRoot%\logs\cbs\cbs.log %SystemRoot%\logs\DISM\dism.log) do if exist %%# (
-%eline%
-echo Failed to backup and delete %%#
-echo Try again or Restart your system and then try again.
-set preperror=1
-exit /b
-)
 
 :: Initiate this to appear in fresh logs
 
