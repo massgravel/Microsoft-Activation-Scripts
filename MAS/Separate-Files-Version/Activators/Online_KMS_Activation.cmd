@@ -996,7 +996,7 @@ set foundprod=
 call :ksdata chkprod %%#
 if not defined foundprod (
 set skipprocess=1
-echo Skipping Because NoEditionChange Mode   [%%#]
+call :dk_color %Gray% "Skipping Because NoEditionChange Mode   [%%#]"
 )
 )
 
@@ -1004,7 +1004,7 @@ echo Skipping Because NoEditionChange Mode   [%%#]
 if "%_actprojvis%"=="1" if not defined skipprocess (
 echo %%# | findstr /i "Project Visio" %nul% || (
 set skipprocess=1
-echo Skipping Because Project/Visio Mode     [%%#]
+call :dk_color %Gray% "Skipping Because Project/Visio Mode     [%%#]"
 )
 )
 
