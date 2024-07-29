@@ -2382,7 +2382,13 @@ $MemoryStream.Close()
 ::  For any further question, feel free to contact us on mass grave[.]dev/contactus
 ::
 ::========================================================================================================================================
-
+::
+::  If you want to use a different sppc.dll or without base64 format, then create a folder named "BIN" where this script is located and 
+::  place these two files in that "BIN" folder. sppc32.dll, sppc64.dll
+::  Script will auto pick that instead of using the below from base64 section. You can also delete the below code in that case.
+::
+::========================================================================================================================================
+::
 ::  Replace "-" with "A" and "_" with "a" before base64 conversion
 ::  It was changed to prevent antiviruses from detecting and flagging base64 encoding
 
