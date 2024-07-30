@@ -682,6 +682,9 @@ echo DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 
 call :ced_postprep
+%line%
+
+goto dk_done
 
 ::========================================================================================================================================
 
