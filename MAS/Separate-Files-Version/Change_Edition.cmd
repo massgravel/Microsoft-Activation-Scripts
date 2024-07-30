@@ -693,7 +693,7 @@ set preperror=
 for /f %%a in ('%psc% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set _time=%%a
 
 %psc% Stop-Service TrustedInstaller -force %nul%
-%psc% Stop-Service TrustedInstaller -force %nul%
+timeout /t 5 %nul1%
 
 sc query TrustedInstaller | find /i "RUNNING" %nul% && (
 %eline%
@@ -719,19 +719,50 @@ exit /b
 
 :ced_postprep
 
-timeout /t 5 %nul1%
+copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "%SystemRoot%\logs\cbs\cbs_%_time%.log" %nul%
+copy /y /b "%SystemRoot%\logs\DISM\dism.log" "%SystemRoot%\logs\DISM\dism_%_time%.log" %nul%
 
 if not exist "!desktop!\ChangeEdition_Logs\" md "!desktop!\ChangeEdition_Logs\" %nul%
-copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "!desktop!\ChangeEdition_Logs\CBS_%_time%.log" %nul%
-copy /y /b "%SystemRoot%\logs\DISM\dism.log" "!desktop!\ChangeEdition_Logs\DISM_%_time%.log" %nul%
+call :compresslog cbs\cbs_%_time%.log ChangeEdition_Logs\CBS %nul%
+call :compresslog DISM\dism_%_time%.log ChangeEdition_Logs\DISM %nul%
 
 echo:
-echo Log files are copied to the ChangeEdition_Logs folder on the dekstop.
+echo Log files are copied to the ChangeEdition_Logs folder on the desktop.
 echo:
 call :dk_color %Blue% "In case of errors, you must restart your system before trying again."
 echo:
 set fixes=%fixes% %mas%change_edition_issues
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%change_edition_issues"
+exit /b
+
+:compresslog
+
+::  https://stackoverflow.com/a/46268232
+
+set "ddf="%SystemRoot%\Temp\ddf""
+%nul% del /q /f %ddf%
+echo/.New Cabinet>%ddf%
+echo/.set Cabinet=ON>>%ddf%
+echo/.set CabinetFileCountThreshold=0;>>%ddf%
+echo/.set Compress=ON>>%ddf%
+echo/.set CompressionType=LZX>>%ddf%
+echo/.set CompressionLevel=7;>>%ddf%
+echo/.set CompressionMemory=21;>>%ddf%
+echo/.set FolderFileCountThreshold=0;>>%ddf%
+echo/.set FolderSizeThreshold=0;>>%ddf%
+echo/.set GenerateInf=OFF>>%ddf%
+echo/.set InfFileName=nul>>%ddf%
+echo/.set MaxCabinetSize=0;>>%ddf%
+echo/.set MaxDiskFileCount=0;>>%ddf%
+echo/.set MaxDiskSize=0;>>%ddf%
+echo/.set MaxErrors=1;>>%ddf%
+echo/.set RptFileName=nul>>%ddf%
+echo/.set UniqueFiles=ON>>%ddf%
+for /f "tokens=* delims=" %%D in ('dir /a:-D/b/s "%SystemRoot%\logs\%1"') do (
+ echo/"%%~fD"  /inf=no;>>%ddf%
+)
+makecab /F %ddf% /D DiskDirectory1="" /D CabinetNameTemplate="!desktop!\%2_%_time%.cab"
+del /q /f %ddf%
 exit /b
 
 ::========================================================================================================================================
