@@ -719,6 +719,7 @@ exit /b
 
 :ced_postprep
 
+timeout /t 5 %nul1%
 copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "%SystemRoot%\logs\cbs\cbs_%_time%.log" %nul%
 copy /y /b "%SystemRoot%\logs\DISM\dism.log" "%SystemRoot%\logs\DISM\dism_%_time%.log" %nul%
 
