@@ -363,6 +363,11 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
+for /f "skip=2 tokens=3" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul6%') do set "regedition=%%a"
+if /i not "%osedition%"=="%regedition%" (
+set "showeditionerror=call :dk_color %_Yellow% "Mismatch found [WMI-%osedition%] [Reg-%regedition%].""
+)
+
 for /f "tokens=3 delims=: " %%a in ('DISM /English /Online /Get-CurrentEdition %nul6% ^| find /i "Current Edition :"') do set "dismedition=%%a"
 if not defined dismedition set dismnotworking=1
 
@@ -439,6 +444,7 @@ set targetedition=
 %line%
 echo:
 call :dk_color %Gray% "You can change the Edition [%osedition%] [%fullbuild%] to one of the following."
+%showeditionerror%
 if defined dismnotworking (
 call :dk_color %_Yellow% "Note - DISM.exe is not working."
 if /i "%osedition:~0,4%"=="Core" call :dk_color %_Yellow% "     - You will see more edition options to choose once its changed to Pro."
@@ -536,6 +542,7 @@ if defined rebootreq goto dk_done
 cls
 %line%
 echo:
+%showeditionerror%
 if defined dismnotworking call :dk_color %_Yellow% "DISM.exe is not working."
 echo Changing the Current Edition [%osedition%] %fullbuild% to [%targetedition%]
 echo:
@@ -605,6 +612,7 @@ call :ced_rebootflag
 if defined rebootreq goto dk_done
 
 echo:
+%showeditionerror%
 if defined dismnotworking call :dk_color %_Yellow% "Note - DISM.exe is not working."
 echo Changing the Current Edition [%osedition%] %fullbuild% to [%targetedition%]
 echo:
@@ -661,6 +669,7 @@ if defined rebootreq goto dk_done
 
 cls
 echo:
+%showeditionerror%
 if defined dismnotworking call :dk_color %_Yellow% "Note - DISM.exe is not working."
 echo Changing the Current Edition [%osedition%] %fullbuild% to [%targetedition%]
 echo:
