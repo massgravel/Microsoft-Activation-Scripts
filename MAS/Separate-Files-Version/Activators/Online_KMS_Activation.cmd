@@ -3182,7 +3182,7 @@ exit /b
 ::  2nd column = GVLK / Free Office products keys
 ::  3rd column = In case of Windows, its SKU ID. In case of Office, its Office version
 ::  4th column = Edition ID
-::  5th column = In case of Windows, its Build Branch name incase same Edition ID is used in different OS versions with different key (For reference only)
+::  5th column = In case of Windows, its Build Branch name in case same Edition ID is used in different OS versions with different key (For reference only)
 ::               In case of Office, its either a key type if its a free Office product or Retail product names that needs to be converted to the Edition ID mentioned in 4th column
 ::               In Office 2010, one highest VL edition from each primary product ID is selected, that's why Visio Prem key is mentioned but not for Visio Pro, Std
 ::  Separator  = "_"
@@ -3312,6 +3312,62 @@ a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4__17_Server
 cda18cf3-c196-46ad-b289-60c072869994_TT8MH-CG224-D3D7Q-498W2-9Q%f%CTX__18_ServerHPC
 a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4__29_ServerWebCore
 f772515c-0e87-48d5-a676-e6962c3e1195_736RG-XDKJK-V34PF-BHK87-J6%f%X3K__56_ServerEmbeddedSolution
+:: 16278 build Preview editions - generated keys
+43f2ab05-7c87-4d56-b27c-44d0f9a3dabd_JDTNC-PP77T-T9H2W-G4J2J-VH%f%7MW___4_Enterprise
+6ae51eeb-c268-4a21-9aae-df74c38b586d_RN3QB-GT6D7-YB3VH-F3RPB-3G%f%P42__27_EnterpriseN
+ff808201-fec6-4fd4-ae16-abbddade5706_CC6JP-VN67C-8KCJ4-4V48V-HX%f%M9B__48_Professional
+34260150-69ac-49a3-8a0d-4a403ab55763_TNYKV-X79V3-CPD6X-Y2MRW-D9%f%M9H__49_ProfessionalN
+4dfd543d-caa6-4f69-a95f-5ddfe2b89567_KG3N2-VRJ6F-P36TD-6MMCF-PP%f%QX7__98_CoreN
+5fe40dd6-cf1f-4cf2-8729-92121ac2e997_XFNM6-P9FYP-MRF6P-MM6V2-27%f%KDP__99_CoreCountrySpecific
+2cc171ef-db48-4adc-af09-7c574b37f139_N47PH-2Y8Q8-DGMMV-3PGD8-WB%f%6Q2_100_CoreSingleLanguage
+903663f7-d2ab-49c9-8942-14aa9e0a9c72_VWCNX-7FKBD-FHJYG-XBR4B-88%f%GQH_101_Core
+5b2add49-b8f4-42e0-a77c-adad4efeeeb1_NT3V6-XMBK7-Q66MF-VMKR4-FC%f%26C_119_PPIPro
+af43f7f0-3b1e-4266-a123-1fdb53f4323b_BNJR8-P8QHP-VQ4QY-MVPQP-8X%f%C37_121_Education
+075aca1f-05d7-42e5-a3ce-e349e7be7078_RFNBP-FDD7Q-6FHYQ-9M9Y7-MB%f%JH3_122_EducationN
+2cf5af84-abab-4ff0-83f8-f040fb2576eb_NVYRQ-D2F32-6HGXW-DKGWM-R6%f%Y8H_125_EnterpriseS
+11a37f09-fb7f-4002-bd84-f3ae71d11e90_NMBY8-V3CV7-BX6K6-2922Y-43%f%MCH_126_EnterpriseSN
+:: 10240 build Preview editions - generated keys
+b554b49f-4d57-4f08-955e-87886f514d49_4QC36-NW3YH-D2Y9D-RJPC7-VV%f%BDF__97_CoreARM
+cc17e18a-fa93-43d6-9179-72950a1e931a_FDF9N-KGHKC-R9G6Y-W2TGC-9Q%f%CCB_103_ProfessionalWMC
+:: 10074 build Preview editions - generated keys
+cde952c7-2f96-4d9d-8f2b-2d349f64fc51_VHF9H-NXBBB-63VJD-4V8GJ-2R%f%YK8___4_Enterprise
+2a4403df-877f-4046-8271-db6fb6ec54c8_N896F-VG44B-HF8HC-XW23F-MW%f%8YB___4_Enterprise
+d3872724-5c08-4b1b-91f2-fc9eafed4990_3NMDC-G7C3W-68RGP-CQK9H-B7%f%QK9___7_ServerStandard
+ba947c44-d19d-4786-b6ae-22770bc94c54_T8N4T-C6P4F-W48KM-CYJT9-KP%f%69Y___8_ServerDatacenter
+e5676f13-9b66-4a1f-8b0c-43490e236202_RN84D-7HCWY-FTCBK-J3GHK-RM%f%YVT__17_ServerWeb
+c23947f3-3f2e-401f-a38c-f38fe0ecb0bd_NKX82-GPWWM-C2KPY-VG78C-FF%f%9R9__27_EnterpriseN
+a4383e6b-dada-423d-a43d-f25678429676_Q8MK8-DNHMX-2XWHV-X66TM-CD%f%G33__48_Professional
+64192251-81b0-4898-ac63-913cc3edf919_9CYB3-NFMRW-YFDG6-XRQFD-J4%f%YPJ__49_ProfessionalN
+9cc2564c-292e-4d8a-b9f9-1f5007d9409a_82CNJ-W82TW-BY23W-BVJ6W-W4%f%2Y2__86_EmbeddedIndustryA
+c35a9336-fb02-48db-8f4d-245c17f03667_NXTJV-CRQYQ-W77JR-GG84R-HQ%f%VHX__89_EmbeddedIndustry
+4daf1e3e-6be9-4848-8f5a-a18a0d2895e1_7MNJY-B88MV-WQKVP-BQ6DK-6C%f%M4G__91_EmbeddedIndustryE
+3a9a9414-24bf-4836-866d-ba13a298efb0_4K89N-FMV8W-B3F9T-HKF64-DJ%f%X27__97_CoreARM
+c6e3410d-e48d-41eb-8ca9-848397f46d02_3TGHP-NHXHM-2PMXX-8KR9M-G2%f%782__98_CoreN
+c7a8a09a-571c-4ea8-babc-0cbe4d48a89d_H76BG-QBNM2-QRWJY-67W73-BG%f%7CQ__99_CoreCountrySpecific
+b148c3f4-6248-4d2f-8c6d-31cce7ae95c3_N9722-BV9H6-WTJTT-FPB93-97%f%3PR_100_CoreSingleLanguage
+6496e59d-89dc-49eb-a353-09ceb9404845_HRNH7-WFBYW-BV7M2-XCT6H-X7%f%3PT_101_Core
+cf59a07b-1a2a-4be0-bfe0-423b5823e663_FDF9N-KGHKC-R9G6Y-W2TGC-9P%f%787_103_ProfessionalWMC
+c436def1-0dcc-4849-9a59-8b6142eb70f3_2FNVD-CPYC6-WXD8M-T64BF-84%f%3GJ_111_CoreConnected
+fd5ae385-f5cf-4b53-b1fa-1af6fff7c0d8_HJN63-7Q4G4-VDW7X-TRMW8-GV%f%H3Q_112_ProfessionalStudent
+86f72c8d-8363-4188-b574-1a53cb374711_JGRP6-TNJWX-KQWHJ-6D3FJ-RX%f%73B_113_CoreConnectedN
+687f6358-6a21-453a-a712-3b3b57123827_3K4DY-NVP2W-H8DGV-42K3B-2P%f%PK9_114_ProfessionalStudentN
+5b120df4-ea3f-4e82-b0c0-6568f719730e_2N382-D6PKK-QTX4D-2JJYK-M9%f%73H_115_CoreConnectedSingleLanguage
+a8651bfb-7fe0-40df-b156-87337ecd5acc_RPM6J-N62DM-DC6XH-2JXMG-23%f%66R_116_CoreConnectedCountrySpecific
+e8ced63e-420d-4ab6-8723-aaf165efb5eb_QBQ3Q-2NC74-MKH8F-DTQ34-QG%f%M3G_121_Education
+3885bca5-11c1-4d4e-9395-df38f7f09a0e_7MFGN-34DMC-J8FCR-P4DKH-KH%f%J8F_122_EducationN
+b995b62c-eae2-40aa-afb9-111889a84ef4_DW99Y-H7NT6-6B29D-8JQ8F-R3%f%K6T_124_ServerHI
+75d003b0-dc66-42c0-b3a1-308a3f35741a_FQ32Q-MN6JD-FPVJ9-HJD4W-PK%f%CWY_125_EnterpriseS
+4e4d5504-e7b1-419c-913d-3c80c15294fc_KGR4C-FWN4D-33RTK-XB6Q8-K2%f%FPT_126_EnterpriseSN
+aa234c15-ee34-4e5f-adb5-73afafb77143_DNJYG-CM8W6-4W3TX-VCK66-FV%f%WCC_127_ProfessionalS
+9f6a1bc9-5278-4991-88c9-7301c87a75ea_XB9DG-NPJ72-XRH69-7DF3Q-G8%f%3R4_128_ProfessionalSN
+:: 8102 build Preview editions - generated keys
+8a409d61-30fe-4903-bdbc-1fb28603ba3a_NBBBB-BBBBB-BBBBB-BPTW9-H4%f%83R__10_ServerEnterprise
+2412bea9-b6e0-441e-8dc2-a13720b42de9_2FNVD-CPYC6-WXD8M-VJKXF-GX%f%TCB__18_ServerHPC
+2b9c337f-7a1d-4271-90a3-c6855a2b8a1c_992NC-RYK89-M9XBG-4DCB3-GF%f%XVK__74_Prerelease
+bfa6b683-56be-47b8-a22e-461b27b9cf11_2WFGX-YXN3B-BT46K-4DPYX-T8%f%W2J__76_ServerMultiPointStandard
+bc20fb5b-4097-484f-84d2-55b18dac95eb_CQN7Q-KH97X-TH9G4-JRGWM-R6%f%T86__77_ServerMultiPointPremium
+631ead72-a8ab-4df8-bbdf-372029989bdd_N92MW-K723D-FCBCQ-CGPPQ-3M%f%9VR__81_PrereleaseARM
+::========================================================================================================================================
 :: Office 2010
 8ce7e872-188c-4b98-9d90-f8f90b7aad02_V7Y44-9T38C-R2VJK-666HK-T7%f%DDX__14_AccessVL
 cee5d470-6e3b-4fcc-8c2b-d17428568a9f_H62QG-HXVKF-PP4HP-66KMR-CW%f%9BM__14_ExcelVL
