@@ -1164,7 +1164,7 @@ exit /b
 ::  https://learn.microsoft.com/office/troubleshoot/activation/reset-office-365-proplus-activation-state
 
 set _sidlist=
-for /f "tokens=* delims=" %%a in ('%psc% "$p = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList'; Get-ChildItem $p | ForEach-Object { $pi = (Get-ItemProperty $('{0}\{1}' -f $p, $_.PSChildName)).ProfileImagePath; if ($pi -like $('{0}\Users\*' -f $Env:SystemDrive)) { Split-Path $_.PSPath -Leaf } }" %nul6%') do (if defined _sidlist (set _sidlist=!_sidlist! %%a) else (set _sidlist=%%a))
+for /f "tokens=* delims=" %%a in ('%psc% "$p = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList'; Get-ChildItem $p | ForEach-Object { $pi = (Get-ItemProperty """"$p\$($_.PSChildName)"""").ProfileImagePath; if ($pi -like """"$Env:SystemDrive\Users\*"""" -and (Test-Path """"$pi\NTUSER.DAT"""") -and -not ($_ -match '\.bak$')) { Split-Path $_.PSPath -Leaf } }" %nul6%') do (if defined _sidlist (set _sidlist=!_sidlist! %%a) else (set _sidlist=%%a))
 
 if not defined _sidlist (
 set error=1
