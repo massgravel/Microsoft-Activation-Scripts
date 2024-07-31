@@ -161,14 +161,15 @@ if %winbuild% LSS 10240 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
 echo HWID Activation is supported only for Windows 10/11.
-echo Use Online KMS Activation option.
+echo:
+call :dk_color %Blue% "Use Online KMS Activation option."
 goto dk_done
 )
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 %eline%
 echo HWID Activation is not supported for Windows Server.
-echo Use KMS38 or Online KMS Activation option.
+call :dk_color %Blue% "Use KMS38 or Online KMS Activation option."
 goto dk_done
 )
 

@@ -161,6 +161,8 @@ if %winbuild% LSS 9200 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
 echo Ohook Activation is supported on Windows 8 and later and their server equivalent.
+echo:
+call :dk_color %Blue% "Use Online KMS Activation option."
 goto dk_done
 )
 

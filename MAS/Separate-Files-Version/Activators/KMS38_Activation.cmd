@@ -167,6 +167,12 @@ if %winbuild% LSS 14393 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
 echo KMS38 Activation is supported for Windows 10/11/Server, build 14393 and later.
+echo:
+if %winbuild% LSS 10240 (
+call :dk_color %Blue% "Use Online KMS Activation option."
+) else (
+call :dk_color %Blue% "Use HWID Activation option."
+)
 goto dk_done
 )
 
