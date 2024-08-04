@@ -507,14 +507,14 @@ set _dismapi=1
 )
 )
 
-set "keyflow=Retail OEM:NONSLP OEM:DM Volume:MAK Volume:GVLK"
+set "keyflow=Retail Volume:GVLK Volume:MAK OEM:NONSLP OEM:DM PGS:TB Retail:TB:Eval"
 
 call :ced_targetSKU %targetedition%
 if defined targetSKU call :ced_windowskey
 if defined key if defined pkeychannel set _chan=%pkeychannel%
 if not defined key call :changeeditiondata
 if not defined key if %_dismapi%==1 if /i "%targetedition%"=="Professional" (
-set key=VK7JG-NPHTM-C97JM-9MPGT-3V6%h%6T
+set key=VK7JG-NPHTM-C97JM-9MPGT-3V66T
 set _chan=Retail
 )
 
@@ -647,7 +647,7 @@ mode con cols=105 lines=32
 
 set key=
 set _chan=
-set "keyflow=Volume:GVLK Retail Volume:MAK OEM:NONSLP OEM:DM"
+set "keyflow=Volume:GVLK Retail Volume:MAK OEM:NONSLP OEM:DM PGS:TB Retail:TB:Eval"
 
 call :ced_targetSKU %targetedition%
 if defined targetSKU call :ced_windowskey
@@ -696,7 +696,6 @@ set preperror=
 for /f %%a in ('%psc% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set _time=%%a
 
 %psc% Stop-Service TrustedInstaller -force %nul%
-timeout /t 5 %nul1%
 
 sc query TrustedInstaller | find /i "RUNNING" %nul% && (
 %eline%
@@ -731,9 +730,10 @@ call :compresslog cbs\cbs_%_time%.log ChangeEdition_Logs\CBS %nul%
 call :compresslog DISM\dism_%_time%.log ChangeEdition_Logs\DISM %nul%
 
 echo:
+if %winbuild% GEQ 9200 %psc% "if ((Get-WindowsOptionalFeature -Online -FeatureName NetFx3).State -eq 'Enabled') {Write-Host 'Checking .NET Framework 3.5 Status - Enabled'}"
 echo Log files are copied to the ChangeEdition_Logs folder on the desktop.
 echo:
-call :dk_color %Blue% "In case of errors, you must restart your system before trying again."
+call :dk_color %Blue% "In case of errors, restart system before trying again."
 echo:
 set fixes=%fixes% %mas%change_edition_issues
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%change_edition_issues"
