@@ -3348,11 +3348,17 @@ b148c3f4-6248-4d2f-8c6d-31cce7ae95c3_N9722-BV9H6-WTJTT-FPB93-97%f%3PR_100_CoreSi
 6496e59d-89dc-49eb-a353-09ceb9404845_HRNH7-WFBYW-BV7M2-XCT6H-X7%f%3PT_101_Core
 cc17e18a-fa93-43d6-9179-72950a1e931a_FDF9N-KGHKC-R9G6Y-W2TGC-9Q%f%CCB_103_ProfessionalWMC
 cf59a07b-1a2a-4be0-bfe0-423b5823e663_FDF9N-KGHKC-R9G6Y-W2TGC-9P%f%787_103_ProfessionalWMC
+827a0032-dced-4609-ab6e-16b9d8a40280_CC92N-X2Y7W-H4H32-QHV2X-3R%f%TT9_111_CoreConnected
 c436def1-0dcc-4849-9a59-8b6142eb70f3_2FNVD-CPYC6-WXD8M-T64BF-84%f%3GJ_111_CoreConnected
+49066601-00dc-4d2c-83a8-4343a7b990d1_CF9DD-6CNW2-BJWJQ-CVCFX-Y7%f%WMR_112_ProfessionalStudent
 fd5ae385-f5cf-4b53-b1fa-1af6fff7c0d8_HJN63-7Q4G4-VDW7X-TRMW8-GV%f%H3Q_112_ProfessionalStudent
+f18bbe32-16dc-48d4-a27b-5f3966f82513_KJ3DB-VNXVJ-GJG94-RX4RF-K4%f%TVG_113_CoreConnectedN
 86f72c8d-8363-4188-b574-1a53cb374711_JGRP6-TNJWX-KQWHJ-6D3FJ-RX%f%73B_113_CoreConnectedN
+bd64ebf7-d5ec-44c5-ba00-6813441c8c87_4K89N-FMV8W-B3F9T-HKF64-DJ%f%34M_114_ProfessionalStudentN
 687f6358-6a21-453a-a712-3b3b57123827_3K4DY-NVP2W-H8DGV-42K3B-2P%f%PK9_114_ProfessionalStudentN
+964a60f6-1505-4ddb-af03-6a9ce6997d3b_NKX82-GPWWM-C2KPY-T4PKC-7C%f%FYJ_115_CoreConnectedSingleLanguage
 5b120df4-ea3f-4e82-b0c0-6568f719730e_2N382-D6PKK-QTX4D-2JJYK-M9%f%73H_115_CoreConnectedSingleLanguage
+b5fe5eaa-14cc-4075-84ae-57c0206d1133_BJMNR-F3WG7-H8W83-27XXK-P3%f%8MC_116_CoreConnectedCountrySpecific
 a8651bfb-7fe0-40df-b156-87337ecd5acc_RPM6J-N62DM-DC6XH-2JXMG-23%f%66R_116_CoreConnectedCountrySpecific
 5b2add49-b8f4-42e0-a77c-adad4efeeeb1_NT3V6-XMBK7-Q66MF-VMKR4-FC%f%26C_119_PPIPro
 af43f7f0-3b1e-4266-a123-1fdb53f4323b_BNJR8-P8QHP-VQ4QY-MVPQP-8X%f%C37_121_Education
@@ -3364,8 +3370,22 @@ b995b62c-eae2-40aa-afb9-111889a84ef4_DW99Y-H7NT6-6B29D-8JQ8F-R3%f%K6T_124_Server
 75d003b0-dc66-42c0-b3a1-308a3f35741a_FQ32Q-MN6JD-FPVJ9-HJD4W-PK%f%CWY_125_EnterpriseS
 11a37f09-fb7f-4002-bd84-f3ae71d11e90_NMBY8-V3CV7-BX6K6-2922Y-43%f%MCH_126_EnterpriseSN
 4e4d5504-e7b1-419c-913d-3c80c15294fc_KGR4C-FWN4D-33RTK-XB6Q8-K2%f%FPT_126_EnterpriseSN
+b15187db-11c6-4f13-91ca-8121cebf5b88_JBDKF-6NCD6-49K3G-2TV79-BK%f%PB4_127_ProfessionalS
 aa234c15-ee34-4e5f-adb5-73afafb77143_DNJYG-CM8W6-4W3TX-VCK66-FV%f%WCC_127_ProfessionalS
+6cdbc9fb-63f5-431b-a5c0-c6f19ae26a9b_2NWVW-QGF4T-9CPMB-WYDQ9-7X%f%PB8_128_ProfessionalSN
 9f6a1bc9-5278-4991-88c9-7301c87a75ea_XB9DG-NPJ72-XRH69-7DF3Q-G8%f%3R4_128_ProfessionalSN
+:: Missing keys for old preview editions
+:: 38fbe2ac-465a-4ef7-b9d8-72044f2792b6   4	 Enterprise
+:: ea77973e-4930-4fa1-a899-02dfaeada1db   4	 Enterprise
+:: 92374131-ed4c-4d1b-846a-32f43c3eb90d   7	 ServerStandard
+:: cc64c548-1867-4777-a1cc-0022691bc2a0   8	 ServerDatacenter
+:: 9dce1f29-bb10-4be0-8027-35b953dd46d5  10	 ServerEnterprise
+:: bf9eda2f-74cc-4ba3-8967-cde30f18c230  15	 ServerEnterpriseIA64
+:: 4f4cfa6c-76d8-49f5-9c41-0a57f8af1bbc  17	 ServerWeb
+:: 8372b47d-5221-41d8-88d0-3f924e50623e  18	 ServerHPC
+:: e4ecef68-4372-4740-98e8-6c157cd301c2  27	 EnterpriseN
+:: 957ec1e8-97cd-42a8-a091-01a30cf779da  48	 Professional
+:: 0ff4e536-a746-4018-b107-e81dd0b6d33a  49	 ProfessionalN
 ::========================================================================================================================================
 :: Office 2010
 8ce7e872-188c-4b98-9d90-f8f90b7aad02_V7Y44-9T38C-R2VJK-666HK-T7%f%DDX__14_AccessVL
