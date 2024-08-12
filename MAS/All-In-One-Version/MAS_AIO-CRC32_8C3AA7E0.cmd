@@ -1,3 +1,4 @@
+@rem RANDAM-ad90b7f0-440e-475f-98e3-d90447095365
 @set masver=2.6
 @setlocal DisableDelayedExpansion
 @echo off
