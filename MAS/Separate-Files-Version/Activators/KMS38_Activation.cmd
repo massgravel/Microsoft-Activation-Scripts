@@ -427,8 +427,8 @@ call :dk_color %Blue% "Go Back to main menu and use [Change Edition] option."
 ) else (
 echo Evaluation Editions cannot be activated outside of evaluation period. 
 echo:
-set fixes=%fixes% %mas%evaluation-editions
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation-editions"
+set fixes=%fixes% %mas%evaluation_editions
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
 )
 goto dk_done
 )
@@ -1390,8 +1390,8 @@ if not defined officeact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Win
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% || (
 set error=1
 call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
-set fixes=%fixes% %mas%evaluation-editions
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation-editions"
+set fixes=%fixes% %mas%evaluation_editions
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
 )
 )
 
