@@ -805,6 +805,7 @@ call :_taskregserv
 )
 
 call :_taskact
+if defined sppoid if not defined _tserror if %_NoEditionChange%==0 if defined ohub call :dk_color %Gray% "Office apps such as Word, Excel are activated, use them directly. Ignore 'Buy' button in Office dashboard app."
 if not defined showfix if defined _tserror (call :dk_color %Blue% "%_fixmsg%" & set showfix=1)
 
 ::  Don't create renewal task if Windows/Office volume IDs are not found, even if script is set to create it by default
@@ -824,8 +825,8 @@ if defined oemerr if not defined sppoid if not defined osppid (set _deltask=1)
 if not defined _deltask (
 call :ks_renewal
 ) else (
-if %_norentsk%==0 if exist "%ProgramFiles%\Activation-Renewal\Activation_task.cmd" call :dk_color %Gray% "Deleting activation renewal task..."
-if %_norentsk%==0 call :dk_color %Gray% "Skipping to create activation renewal task..."
+if exist "%ProgramFiles%\Activation-Renewal\Activation_task.cmd" call :dk_color %Gray% "Deleting activation renewal task..."
+call :dk_color %Gray% "Skipping to create activation renewal task..."
 call :ks_clearstuff %nul%
 if not defined _server (
 if %winbuild% GEQ 9200 (
