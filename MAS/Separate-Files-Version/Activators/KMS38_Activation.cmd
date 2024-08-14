@@ -1274,6 +1274,7 @@ if defined _corrupt (if defined serv_cor (set "serv_cor=!serv_cor! %%#") else (s
 
 if defined serv_cor (
 set error=1
+set showfix=1
 call :dk_color %Red% "Checking Corrupt Services               [%serv_cor%]"
 )
 
@@ -1549,6 +1550,7 @@ call :dk_color %Gray% "Checking SPP Token Folder               [Not Found. Creat
 ) else (
 call :dk_color %Red% "Checking SPP Token Folder               [Not Found. Failed To Create] [%tokenstore%\]"
 set error=1
+set showfix=1
 )
 )
 
