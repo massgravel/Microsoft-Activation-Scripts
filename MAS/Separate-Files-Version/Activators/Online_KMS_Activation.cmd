@@ -807,9 +807,25 @@ call :_taskregserv
 call :_taskact
 if not defined showfix if defined _tserror (call :dk_color %Blue% "%_fixmsg%" & set showfix=1)
 
-if %_norentsk%==0 (
+::  Don't create renewal task if Windows/Office volume IDs are not found, even if script is set to create it by default
+::  Don't create renewal task if only Windows volume ID is found and OEM BIOS error is present on Windows 7, even if script is set to create it by default
+
+set _deltask=
+if not %_norentsk%==0 set _deltask=1
+if not defined _deltask (
+if %_actwin%==0 call :_taskgetids sppwid %slp% windows
+if %_actoff%==0 call :_taskgetids sppoid %slp% office
+if %_actoff%==0 call :_taskgetids osppid %ospp% office
+)
+
+if not defined sppwid if not defined sppoid if not defined osppid (set _deltask=1)
+if defined oemerr if not defined sppoid if not defined osppid (set _deltask=1)
+
+if not defined _deltask (
 call :ks_renewal
 ) else (
+if %_norentsk%==0 if exist "%ProgramFiles%\Activation-Renewal\Activation_task.cmd" call :dk_color %Gray% "Deleting activation renewal task..."
+if %_norentsk%==0 call :dk_color %Gray% "Skipping to create activation renewal task..."
 call :ks_clearstuff %nul%
 if not defined _server (
 if %winbuild% GEQ 9200 (
@@ -1704,6 +1720,7 @@ call :dk_color %Red% "%prodname% cannot be KMS-activated on this computer due to
 set fixes=%fixes% %mas%unsupported_products_activation
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%unsupported_products_activation"
 )
+set oemerr=1
 set showfix=1
 exit /b
 )
