@@ -826,7 +826,7 @@ if not defined _deltask (
 call :ks_renewal
 ) else (
 if exist "%ProgramFiles%\Activation-Renewal\Activation_task.cmd" call :dk_color %Gray% "Deleting activation renewal task..."
-call :dk_color %Gray% "Skipping to create activation renewal task..."
+call :dk_color %Gray% "Skipping creation of activation renewal task..."
 call :ks_clearstuff %nul%
 if not defined _server (
 if %winbuild% GEQ 9200 (
