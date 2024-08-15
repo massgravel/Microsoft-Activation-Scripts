@@ -602,6 +602,28 @@ if not %_actoff%==1 goto :ks_activate
 
 call :ks_setspp
 
+::  Check ohook install
+
+set ohook=
+for %%# in (15 16) do (
+for %%A in ("%ProgramFiles%" "%ProgramW6432%" "%ProgramFiles(x86)%") do (
+if exist "%%~A\Microsoft Office\Office%%#\sppc*dll" set ohook=1
+)
+)
+
+for %%# in (System SystemX86) do (
+for %%G in ("Office 15" "Office") do (
+for %%A in ("%ProgramFiles%" "%ProgramW6432%" "%ProgramFiles(x86)%") do (
+if exist "%%~A\Microsoft %%~G\root\vfs\%%#\sppc*dll" set ohook=1
+)
+)
+)
+
+if defined ohook (
+echo:
+call :dk_color %Gray% "Checking Ohook                          [Ohook activation is already installed for Office]"
+)
+
 ::  Check unsupported office versions
 
 set o14c2r=
