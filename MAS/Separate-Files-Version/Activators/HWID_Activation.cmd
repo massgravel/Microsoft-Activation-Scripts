@@ -1084,7 +1084,11 @@ reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v %%G %nul% || (set _corru
 if %wucount% GEQ 1 set "results=%results%[WU registry is corrupt]"
 
 sc start sppsvc %nul%
-echo "%errorlevel%" | findstr "577 225" %nul% && set "results=%results%[Likely File Infector]"
+echo "%errorlevel%" | findstr "577 225" %nul% && (
+set "results=%results%[Likely File Infector]"
+) || (
+if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
+)
 
 if not "%results%%pupfound%"=="" (
 if defined pupfound call :dk_color %Gray% "Checking PUP Activators                 [Found%pupfound%]"
