@@ -827,7 +827,6 @@ call :_taskregserv
 )
 
 call :_taskact
-if defined sppoid if not defined _tserror if %_NoEditionChange%==0 if defined ohub call :dk_color %Gray% "Office apps such as Word, Excel are activated, use them directly. Ignore 'Buy' button in Office dashboard app."
 if not defined showfix if defined _tserror (call :dk_color %Blue% "%_fixmsg%" & set showfix=1)
 
 ::  Don't create renewal task if Windows/Office volume IDs are not found, even if script is set to create it by default
@@ -872,6 +871,11 @@ echo Cleared %KS% Server from the registry.
 
 if %_actwin%==1 for %%# in (407) do if %osSKU%==%%# (
 call :dk_color %Red% "%winos% does not support activation on non-azure platforms."
+)
+
+if %_actoff%==1 if defined sppoid if not defined _tserror if %_NoEditionChange%==0 if defined ohub (
+echo:
+call :dk_color %Gray% "Office apps such as Word, Excel are activated, use them directly. Ignore 'Buy' button in Office dashboard app."
 )
 
 ::  Trigger reevaluation of SPP's Scheduled Tasks
