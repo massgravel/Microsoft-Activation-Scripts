@@ -368,21 +368,28 @@ if %errorlevel%==1 goto at_menu
 
 cls
 if not defined terminal mode 110, 30
+
+for /f %%a in ('%psc% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set _time=%%a
+
 %psc% Stop-Service TrustedInstaller -force %nul%
 
-set _time=
-for /f %%a in ('%psc% "Get-Date -format HH_mm_ss"') do set _time=%%a
+copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "%SystemRoot%\logs\cbs\backup_cbs_%_time%.log" %nul%
+copy /y /b "%SystemRoot%\logs\DISM\dism.log" "%SystemRoot%\logs\DISM\backup_dism_%_time%.log" %nul%
+del /f /q "%SystemRoot%\logs\cbs\cbs.log" %nul%
+del /f /q "%SystemRoot%\logs\DISM\dism.log" %nul%
+
 echo:
 echo Applying the command,
 echo dism /english /online /cleanup-image /restorehealth
 dism /english /online /cleanup-image /restorehealth
 
-%psc% Stop-Service TrustedInstaller -force %nul%
+timeout /t 5 %nul1%
+copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "%SystemRoot%\logs\cbs\cbs_%_time%.log" %nul%
+copy /y /b "%SystemRoot%\logs\DISM\dism.log" "%SystemRoot%\logs\DISM\dism_%_time%.log" %nul%
 
 if not exist "!desktop!\AT_Logs\" md "!desktop!\AT_Logs\" %nul%
-
-call :compresslog cbs\CBS.log RHealth_CBS %nul%
-call :compresslog DISM\dism.log RHealth_DISM %nul%
+call :compresslog cbs\cbs_%_time%.log AT_Logs\RHealth_CBS %nul%
+call :compresslog DISM\dism_%_time%.log AT_Logs\RHealth_DISM %nul%
 
 if not exist "!desktop!\AT_Logs\RHealth_CBS_%_time%.cab" (
 copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "!desktop!\AT_Logs\RHealth_CBS_%_time%.log" %nul%
@@ -393,7 +400,7 @@ copy /y /b "%SystemRoot%\logs\DISM\dism.log" "!desktop!\AT_Logs\RHealth_DISM_%_t
 )
 
 echo:
-call :dk_color %Gray% "CBS and DISM logs are copied to the AT_Logs folder on the dekstop."
+call :dk_color %Gray% "CBS and DISM logs are copied to the AT_Logs folder on the desktop."
 goto :at_back
 
 ::========================================================================================================================================
@@ -420,27 +427,30 @@ choice /C:09 /N /M ">    [9] Continue [0] Go back : "
 if %errorlevel%==1 goto at_menu
 
 cls
+for /f %%a in ('%psc% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set _time=%%a
+
 %psc% Stop-Service TrustedInstaller -force %nul%
 
-set _time=
-for /f %%a in ('%psc% "Get-Date -format HH_mm_ss"') do set _time=%%a
+copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "%SystemRoot%\logs\cbs\backup_cbs_%_time%.log" %nul%
+del /f /q "%SystemRoot%\logs\cbs\cbs.log" %nul%
+
 echo:
 echo Applying the command,
 echo sfc /scannow
 sfc /scannow
 
-%psc% Stop-Service TrustedInstaller -force %nul%
+timeout /t 5 %nul1%
+copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "%SystemRoot%\logs\cbs\cbs_%_time%.log" %nul%
 
 if not exist "!desktop!\AT_Logs\" md "!desktop!\AT_Logs\" %nul%
-
-call :compresslog cbs\CBS.log SFC_CBS %nul%
+call :compresslog cbs\cbs_%_time%.log AT_Logs\SFC_CBS %nul%
 
 if not exist "!desktop!\AT_Logs\SFC_CBS_%_time%.cab" (
 copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "!desktop!\AT_Logs\SFC_CBS_%_time%.log" %nul%
 )
 
 echo:
-call :dk_color %Gray% "CBS log is copied to the AT_Logs folder on the dekstop."
+call :dk_color %Gray% "CBS log is copied to the AT_Logs folder on the desktop."
 goto :at_back
 
 ::========================================================================================================================================
@@ -1154,7 +1164,7 @@ echo/.set UniqueFiles=ON>>%ddf%
 for /f "tokens=* delims=" %%D in ('dir /a:-D/b/s "%SystemRoot%\logs\%1"') do (
  echo/"%%~fD"  /inf=no;>>%ddf%
 )
-makecab /F %ddf% /D DiskDirectory1="" /D CabinetNameTemplate="!desktop!\AT_Logs\%2_%_time%.cab"
+makecab /F %ddf% /D DiskDirectory1="" /D CabinetNameTemplate="!desktop!\%2_%_time%.cab"
 del /q /f %ddf%
 exit /b
 
