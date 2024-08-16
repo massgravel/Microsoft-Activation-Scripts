@@ -1,15 +1,12 @@
 @set masver=2.6
-@setlocal DisableDelayedExpansion
 @echo off
 
 
 
 ::============================================================================
 ::
-::   This script is a part of 'Microsoft-Activation-Scripts' (MAS) project.
-::
 ::   Homepage: mass grave[.]dev
-::      Email: windowsaddict@protonmail.com
+::      Email: mas.help@outlook.com
 ::
 ::============================================================================
 
@@ -17,25 +14,31 @@
 
 ::========================================================================================================================================
 
-::  Set Path variable, it helps if it is misconfigured in the system
+::  Set Environment variables, it helps if they are misconfigured in the system
 
-set "PATH=%SystemRoot%\System32;%SystemRoot%\System32\wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
+setlocal EnableExtensions
+setlocal DisableDelayedExpansion
+
+set "PathExt=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
+
+set "SysPath=%SystemRoot%\System32"
+set "Path=%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
 if exist "%SystemRoot%\Sysnative\reg.exe" (
-set "PATH=%SystemRoot%\Sysnative;%SystemRoot%\Sysnative\wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%PATH%"
+set "SysPath=%SystemRoot%\Sysnative"
+set "Path=%SystemRoot%\Sysnative;%SystemRoot%;%SystemRoot%\Sysnative\Wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%Path%"
 )
 
-:: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
-:: or with ARM64 process if it was initiated by x86/ARM32 process on ARM64 Windows
+set "ComSpec=%SysPath%\cmd.exe"
+set "PSModulePath=%ProgramFiles%\WindowsPowerShell\Modules;%SysPath%\WindowsPowerShell\v1.0\Modules"
 
 set "_cmdf=%~f0"
 for %%# in (%*) do (
 if /i "%%#"=="r1" set r1=1
 if /i "%%#"=="r2" set r2=1
-if /i "%%#"=="-qedit" (
-reg add HKCU\Console /v QuickEdit /t REG_DWORD /d "1" /f %nul1%
-rem check the code below admin elevation to understand why it's here
 )
-)
+
+:: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
+:: or with ARM64 process if it was initiated by x86/ARM32 process on ARM64 Windows
 
 if exist %SystemRoot%\Sysnative\cmd.exe if not defined r1 (
 setlocal EnableDelayedExpansion
@@ -64,10 +67,10 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%troubleshoot.html
+echo Help - %mas%troubleshoot
 echo:
 echo:
-ping 127.0.0.1 -n 10
+ping 127.0.0.1 -n 20
 )
 cls
 
@@ -76,9 +79,13 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error: Script either has LF line ending issue or an empty line at the end of the script is missing.
+echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
-ping 127.0.0.1 -n 6 >nul
+echo:
+echo Help - %mas%troubleshoot
+echo:
+echo:
+ping 127.0.0.1 -n 20 >nul
 popd
 exit /b
 )
@@ -92,6 +99,7 @@ title  Troubleshoot %masver%
 
 set _args=
 set _elev=
+set _unattended=0
 
 set _args=%*
 if defined _args set _args=%_args:"=%
@@ -106,20 +114,8 @@ set "nul2=2>nul"
 set "nul6=2^>nul"
 set "nul=>nul 2>&1"
 
-set psc=powershell.exe
-set winbuild=1
-for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
-
-set _NCS=1
-if %winbuild% LSS 10586 set _NCS=0
-if %winbuild% GEQ 10586 reg query "HKCU\Console" /v ForceV2 %nul2% | find /i "0x0" %nul1% && (set _NCS=0)
-
-call :_colorprep
-
-set "nceline=echo: &echo ==== ERROR ==== &echo:"
-set "eline=echo: &call :_color %Red% "==== ERROR ====" &echo:"
+call :dk_setvar
 set "line=_________________________________________________________________________________________________"
-if %~z0 GEQ 200000 (set "_exitmsg=Go back") else (set "_exitmsg=Exit")
 
 ::========================================================================================================================================
 
@@ -127,13 +123,7 @@ if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
 echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalent.
-goto at_done
-)
-
-for %%# in (powershell.exe) do @if "%%~$PATH:#"=="" (
-%nceline%
-echo Unable to find powershell.exe in the system.
-goto at_done
+goto dk_done
 )
 
 ::========================================================================================================================================
@@ -147,6 +137,7 @@ set "_batf=%~f0"
 set "_batp=%_batf:'=''%"
 
 set _PSarg="""%~f0""" -el %_args%
+set _PSarg=%_PSarg:'=''%
 
 set "_ttemp=%userprofile%\AppData\Local\Temp"
 
@@ -156,13 +147,39 @@ setlocal EnableDelayedExpansion
 
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
-%nceline%
+%eline%
 echo Script is launched from the temp folder,
 echo Most likely you are running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
-goto at_done
+goto dk_done
 )
+)
+
+::========================================================================================================================================
+
+::  Check PowerShell
+
+REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
+
+cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PowerShellTest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
+%eline%
+cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
+echo:
+cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | find /i "FullLanguage" %nul1% && (
+echo Failed to run Powershell command but Powershell is working.
+call :dk_color %Blue% "Check if your antivirus is blocking the script."
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+) || (
+echo PowerShell is not working. Aborting...
+echo If you have applied restrictions on Powershell then undo those changes.
+echo:
+set fixes=%fixes% %mas%fix_powershell
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_powershell"
+)
+goto dk_done
 )
 
 ::========================================================================================================================================
@@ -170,26 +187,53 @@ goto at_done
 ::  Elevate script as admin and pass arguments and preventing loop
 
 %nul1% fltmc || (
-if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
-%nceline%
+if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
+%eline%
 echo This script needs admin rights.
 echo To do so, right click on this script and select 'Run as administrator'.
-goto at_done
+goto dk_done
 )
 
 ::========================================================================================================================================
 
-::  This code disables QuickEdit for this cmd.exe session only without making permanent changes to the registry
-::  It is added because clicking on the script window pauses the operation and leads to the confusion that script stopped due to an error
+::  Disable QuickEdit and launch from conhost.exe to avoid Terminal app
 
-for %%# in (%_args%) do (if /i "%%#"=="-qedit" set quedit=1)
-
-reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% || if not defined quedit (
-reg add HKCU\Console /v QuickEdit /t REG_DWORD /d "0" /f %nul1%
-start cmd.exe /c ""!_batf!" %_args% -qedit"
-rem quickedit reset code is added at the starting of the script instead of here because it takes time to reflect in some cases
-exit /b
+if %winbuild% GEQ 17763 (
+set terminal=1
+) else (
+set terminal=
 )
+
+::  Check if script is running in Terminal app
+
+set r1=$TB = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);
+set r2=%r1% [void]$TB.DefinePInvokeMethod('GetConsoleWindow', 'kernel32.dll', 22, 1, [IntPtr], @(), 1, 3).SetImplementationFlags(128);
+set r3=%r2% [void]$TB.DefinePInvokeMethod('SendMessageW', 'user32.dll', 22, 1, [IntPtr], @([IntPtr], [UInt32], [IntPtr], [IntPtr]), 1, 3).SetImplementationFlags(128);
+set d1=%r3% $hIcon = $TB.CreateType(); $hWnd = $hIcon::GetConsoleWindow();
+set d2=%d1% echo $($hIcon::SendMessageW($hWnd, 127, 0, 0) -ne [IntPtr]::Zero);
+
+if defined terminal (
+%psc% "%d2%" %nul2% | find /i "True" %nul1% && set terminal=
+)
+
+if %_unattended%==1 goto :skipQE
+for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
+
+if defined terminal (
+set "launchcmd=start conhost.exe %psc%"
+) else (
+set "launchcmd=%psc%"
+)
+
+::  Disable QuickEdit in current session
+
+set "d1=$t=[AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);"
+set "d2=$t.DefinePInvokeMethod('GetStdHandle', 'kernel32.dll', 22, 1, [IntPtr], @([Int32]), 1, 3).SetImplementationFlags(128);"
+set "d3=$t.DefinePInvokeMethod('SetConsoleMode', 'kernel32.dll', 22, 1, [Boolean], @([IntPtr], [Int32]), 1, 3).SetImplementationFlags(128);"
+set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080);"
+
+%launchcmd% "%d1% %d2% %d3% %d4% & cmd.exe '/c' '!_PSarg! -qedit'" && (exit /b) || (set terminal=1)
+:skipQE
 
 ::========================================================================================================================================
 
@@ -205,18 +249,19 @@ if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.6
 if defined old (
 echo ________________________________________________
 %eline%
-echo You are running outdated version MAS %masver%
+echo Version %masver% of MAS is outdated.
 echo ________________________________________________
 echo:
+if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
 )
-cls
+)
 
 ::========================================================================================================================================
 
@@ -231,7 +276,7 @@ if not defined desktop for /f "delims=" %%a in ('%psc% "& {write-host $([Environ
 if not defined desktop (
 %eline%
 echo Desktop location was not detected, aborting...
-goto at_done
+goto dk_done
 )
 
 setlocal EnableDelayedExpansion
@@ -243,7 +288,7 @@ setlocal EnableDelayedExpansion
 cls
 color 07
 title  Troubleshoot %masver%
-mode con cols=77 lines=30
+if not defined terminal mode 77, 30
 
 echo:
 echo:
@@ -251,7 +296,7 @@ echo:
 echo:
 echo:       _______________________________________________________________
 echo:                                                   
-call :_color2 %_White% "             [1] " %_Green% "Help"
+call :dk_color2 %_White% "             [1] " %_Green% "Help"
 echo:             ___________________________________________________
 echo:                                                                      
 echo:             [2] Dism RestoreHealth
@@ -265,12 +310,12 @@ echo:
 echo:             [0] %_exitmsg%
 echo:       _______________________________________________________________
 echo:          
-call :_color2 %_White% "            " %_Green% "Enter a menu option in the Keyboard :"
+call :dk_color2 %_White% "            " %_Green% "Enter a menu option in the Keyboard :"
 choice /C:1234560 /N
 set _erl=%errorlevel%
 
 if %_erl%==7 exit /b
-if %_erl%==6 start %mas%fix-wpa-registry.html &goto at_menu
+if %_erl%==6 start %mas%fix-wpa-registry &goto at_menu
 if %_erl%==5 goto:retokens
 if %_erl%==4 goto:fixwmi
 if %_erl%==3 goto:sfcscan
@@ -283,7 +328,7 @@ goto :at_menu
 :dism_rest
 
 cls
-mode 98, 30
+if not defined terminal mode 98, 30
 title  Dism /English /Online /Cleanup-Image /RestoreHealth
 
 if %winbuild% LSS 9200 (
@@ -302,7 +347,7 @@ echo:
 if defined _int (
 echo      Checking Internet Connection  [Connected]
 ) else (
-call :_color2 %_White% "     " %Red% "Checking Internet Connection  [Not connected]"
+call :dk_color2 %_White% "     " %Red% "Checking Internet Connection  [Not connected]"
 )
 
 echo %line%
@@ -313,8 +358,8 @@ echo %line%
 echo:
 echo      Notes:
 echo:
-call :_color2 %_White% "     - " %Gray% "Make sure the Internet is connected."
-call :_color2 %_White% "     - " %Gray% "Make sure the Windows update is properly working."
+call :dk_color2 %_White% "     - " %Gray% "Make sure the Internet is connected."
+call :dk_color2 %_White% "     - " %Gray% "Make sure the Windows update is properly working."
 echo:
 echo %line%
 echo:
@@ -322,7 +367,7 @@ choice /C:09 /N /M ">    [9] Continue [0] Go back : "
 if %errorlevel%==1 goto at_menu
 
 cls
-mode 110, 30
+if not defined terminal mode 110, 30
 %psc% Stop-Service TrustedInstaller -force %nul%
 
 set _time=
@@ -348,7 +393,7 @@ copy /y /b "%SystemRoot%\logs\DISM\dism.log" "!desktop!\AT_Logs\RHealth_DISM_%_t
 )
 
 echo:
-call :_color %Gray% "CBS and DISM logs are copied to the AT_Logs folder on the dekstop."
+call :dk_color %Gray% "CBS and DISM logs are copied to the AT_Logs folder on the dekstop."
 goto :at_back
 
 ::========================================================================================================================================
@@ -356,7 +401,7 @@ goto :at_back
 :sfcscan
 
 cls
-mode 98, 30
+if not defined terminal mode 98, 30
 title  sfc /scannow
 
 echo:
@@ -395,7 +440,7 @@ copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "!desktop!\AT_Logs\SFC_CBS_%_time%.lo
 )
 
 echo:
-call :_color %Gray% "CBS log is copied to the AT_Logs folder on the dekstop."
+call :dk_color %Gray% "CBS log is copied to the AT_Logs folder on the dekstop."
 goto :at_back
 
 ::========================================================================================================================================
@@ -403,7 +448,7 @@ goto :at_back
 :retokens
 
 cls
-mode con cols=125 lines=32
+if not defined terminal mode 125, 32
 %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
 title  Fix Licensing ^(ClipSVC ^+ Office vNext ^+ SPP ^+ OSPP^)
 
@@ -422,7 +467,7 @@ echo            - Clear ClipSVC, Office vNext, SPP and OSPP licenses
 echo            - Fix SPP permissions of tokens folder and registries
 echo            - Trigger the repair option for Office.
 echo:
-call :_color2 %_White% "      - " %Red% "Apply it only when it is necessary."
+call :dk_color2 %_White% "      - " %Red% "Apply it only when it is necessary."
 echo:
 echo %line%
 echo:
@@ -439,7 +484,7 @@ cls
 echo:
 echo %line%
 echo:
-call :_color %Blue% "Rebuilding ClipSVC Licences"
+call :dk_color %Blue% "Rebuilding ClipSVC Licences"
 echo:
 
 if %winbuild% LSS 10240 (
@@ -468,7 +513,7 @@ if %winbuild% LEQ 10240 (
 echo [Successful]
 ) else (
 if exist "%ProgramData%\Microsoft\Windows\ClipSVC\tokens.dat" (
-call :_color %Red% "[Failed]"
+call :dk_color %Red% "[Failed]"
 ) else (
 echo [Successful]
 )
@@ -487,7 +532,7 @@ echo:
 echo Deleting a Volatile ^& Protected Registry Key...
 echo [%RegKey%]
 reg query "%RegKey%" %nul% && (
-call :_color %Red% "[Failed]"
+call :dk_color %Red% "[Failed]"
 echo Restart the system, that will delete this registry key automatically.
 ) || (
 echo [Successful]
@@ -500,7 +545,7 @@ echo Deleting a IdentityCRL Registry Key...
 echo [%_ident%]
 reg delete "%_ident%" /f %nul%
 reg query "%_ident%" %nul% && (
-call :_color %Red% "[Failed]"
+call :dk_color %Red% "[Failed]"
 ) || (
 echo [Successful]
 )
@@ -515,7 +560,7 @@ echo Deleting Folder %ProgramData%\Microsoft\Windows\ClipSVC\
 rmdir /s /q "C:\ProgramData\Microsoft\Windows\ClipSvc" %nul%
 
 if exist "%ProgramData%\Microsoft\Windows\ClipSVC\" (
-call :_color %Red% "[Failed]"
+call :dk_color %Red% "[Failed]"
 ) else (
 echo [Successful]
 )
@@ -526,7 +571,7 @@ echo Rebuilding Folder %ProgramData%\Microsoft\Windows\ClipSVC\
 timeout /t 3 %nul%
 if not exist "%ProgramData%\Microsoft\Windows\ClipSVC\" timeout /t 5 %nul%
 if not exist "%ProgramData%\Microsoft\Windows\ClipSVC\" (
-call :_color %Red% "[Failed]"
+call :dk_color %Red% "[Failed]"
 ) else (
 echo [Successful]
 )
@@ -546,7 +591,7 @@ for %%# in (wlidsvc LicenseManager) do (%psc% Restart-Service %%# %nul%)
 echo:
 echo %line%
 echo:
-call :_color %Blue% "Clearing Office vNext License"
+call :dk_color %Blue% "Clearing Office vNext License"
 echo:
 
 setlocal DisableDelayedExpansion
@@ -608,13 +653,13 @@ if not defined regfound echo Not Found - Office vNext Registry Keys
 echo:
 echo %line%
 echo:
-call :_color %Blue% "Rebuilding SPP Licensing Tokens"
+call :dk_color %Blue% "Rebuilding SPP Licensing Tokens"
 echo:
 
 call :scandat check
 
 if not defined token (
-call :_color %Red% "tokens.dat file not found."
+call :dk_color %Red% "tokens.dat file not found."
 ) else (
 echo tokens.dat file: [%token%]
 )
@@ -623,7 +668,7 @@ echo:
 set wpainfo=
 for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wpatest\:.*';iex ($f[1]);" %nul6%') do (set wpainfo=%%a)
 echo "%wpainfo%" | find /i "Error Found" %nul% && (
-call :_color %Red% "WPA Registry Error: %wpainfo%"
+call :dk_color %Red% "WPA Registry Error: %wpainfo%"
 ) || (
 echo WPA Registry Count: %wpainfo%
 )
@@ -662,7 +707,7 @@ set "d=!d! Set-Acl -Path '%%A' -AclObject $acl"
 
 call :checkperms
 if defined permerror (
-call :_color %Red% "[Failed To Fix]"
+call :dk_color %Red% "[Failed To Fix]"
 ) else (
 echo [Successfully Fixed]
 )
@@ -681,7 +726,7 @@ call :scandat check
 
 if defined token (
 echo:
-call :_color %Red% "Failed to delete .dat files."
+call :dk_color %Red% "Failed to delete .dat files."
 echo:
 )
 
@@ -692,14 +737,14 @@ if %errorlevel% NEQ 0 cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
 ) else (
-call :_color %Red% "[Failed]"
+call :dk_color %Red% "[Failed]"
 )
 
 call :scandat check
 
 echo:
 if not defined token (
-call :_color %Red% "Failed to rebuilt tokens.dat file."
+call :dk_color %Red% "Failed to rebuilt tokens.dat file."
 ) else (
 echo tokens.dat file was rebuilt successfully.
 )
@@ -711,7 +756,7 @@ echo tokens.dat file was rebuilt successfully.
 echo:
 echo %line%
 echo:
-call :_color %Blue% "Rebuilding OSPP Licensing Tokens"
+call :dk_color %Blue% "Rebuilding OSPP Licensing Tokens"
 echo:
 
 sc qc osppsvc %nul% || (
@@ -723,7 +768,7 @@ goto :repairoffice
 call :scandatospp check
 
 if not defined token (
-call :_color %Red% "tokens.dat file not found."
+call :dk_color %Red% "tokens.dat file not found."
 ) else (
 echo tokens.dat file: [%token%]
 )
@@ -738,7 +783,7 @@ call :scandatospp check
 
 if defined token (
 echo:
-call :_color %Red% "Failed to delete .dat files."
+call :dk_color %Red% "Failed to delete .dat files."
 echo:
 )
 
@@ -756,7 +801,7 @@ call :scandatospp check
 
 echo:
 if not defined token (
-call :_color %Red% "Failed to rebuilt tokens.dat file."
+call :dk_color %Red% "Failed to rebuilt tokens.dat file."
 ) else (
 echo tokens.dat file was rebuilt successfully.
 )
@@ -768,7 +813,7 @@ echo tokens.dat file was rebuilt successfully.
 echo:
 echo %line%
 echo:
-call :_color %Blue% "Repairing Office Licenses"
+call :dk_color %Blue% "Repairing Office Licenses"
 echo:
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
@@ -857,8 +902,8 @@ goto :repairend
 echo:
 ) else (
 echo:
-call :_color %_Yellow% "A Window will popup, in that Window you need to select [Quick] Repair Option..."
-call :_color %_Yellow% "Press any key to continue..."
+call :dk_color %_Yellow% "A Window will popup, in that Window you need to select [Quick] Repair Option..."
+call :dk_color %_Yellow% "Press any key to continue..."
 echo:
 pause %nul1%
 )
@@ -902,7 +947,7 @@ echo:
 echo %line%
 echo:
 echo:
-call :_color %Green% "Finished"
+call :dk_color %Green% "Finished"
 goto :at_back
 
 ::========================================================================================================================================
@@ -910,7 +955,7 @@ goto :at_back
 :fixwmi
 
 cls
-mode 98, 34
+if not defined terminal mode 98, 34
 title  Fix WMI
 
 ::  https://techcommunity.microsoft.com/t5/ask-the-performance-team/wmi-repository-corruption-or-not/ba-p/375484
@@ -945,7 +990,7 @@ echo No need to apply this option. Aborting...
 goto :at_back
 )
 
-call :_color %Red% "[Not Responding]"
+call :dk_color %Red% "[Not Responding]"
 
 set _corrupt=
 sc start Winmgmt %nul%
@@ -965,7 +1010,7 @@ sc config Winmgmt start= disabled %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
 ) else (
-call :_color %Red% "[Failed] Aborting..."
+call :dk_color %Red% "[Failed] Aborting..."
 sc config Winmgmt start= auto %nul%
 goto :at_back
 )
@@ -978,9 +1023,9 @@ echo Stopping Winmgmt service
 sc query Winmgmt | find /i "STOPPED" %nul% && (
 echo [Successful]
 ) || (
-call :_color %Red% "[Failed]"
+call :dk_color %Red% "[Failed]"
 echo:
-call :_color %Blue% "Its recommended to select [Restart] option and then apply Fix WMI option again."
+call :dk_color %Blue% "Its recommended to select [Restart] option and then apply Fix WMI option again."
 echo %line%
 echo:
 choice /C:21 /N /M "> [1] Restart  [2] Revert Back Changes :"
@@ -995,7 +1040,7 @@ echo:
 echo Deleting WMI repository
 rmdir /s /q "%windir%\System32\wbem\repository\" %nul%
 if exist "%windir%\System32\wbem\repository\" (
-call :_color %Red% "[Failed]"
+call :dk_color %Red% "[Failed]"
 ) else (
 echo [Successful]
 )
@@ -1006,14 +1051,14 @@ sc config Winmgmt start= auto %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
 ) else (
-call :_color %Red% "[Failed]"
+call :dk_color %Red% "[Failed]"
 )
 
 call :checkwmi
 if not defined error (
 echo:
 echo Checking WMI
-call :_color %Green% "[Working]"
+call :dk_color %Green% "[Working]"
 goto :at_back
 )
 
@@ -1025,11 +1070,11 @@ echo:
 echo Checking WMI
 call :checkwmi
 if defined error (
-call :_color %Red% "[Not Responding]"
+call :dk_color %Red% "[Not Responding]"
 echo:
 echo Run [Dism RestoreHealth] and [SFC Scannow] options and make sure there are no errors.
 ) else (
-call :_color %Green% "[Working]"
+call :dk_color %Green% "[Working]"
 )
 
 goto :at_back
@@ -1077,18 +1122,9 @@ exit /b
 echo:
 echo %line%
 echo:
-call :_color %_Yellow% "Press any key to go back..."
+call :dk_color %_Yellow% "Press any key to go back..."
 pause %nul1%
 goto :at_menu
-
-::========================================================================================================================================
-
-:at_done
-
-echo:
-echo Press any key to %_exitmsg%...
-pause %nul1%
-exit /b
 
 ::========================================================================================================================================
 
@@ -1262,106 +1298,88 @@ $key.SetAccessControl($acl)
 
 ::========================================================================================================================================
 
-:_color
+:dk_done
+
+echo:
+if defined fixes (
+call :dk_color2 %Blue% "Press [1] To Open Troubleshoot Page " %Gray% " Press [0] To Ignore"
+choice /C:10 /N
+if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
+)
+
+if defined terminal (
+call :dk_color %_Yellow% "Press 0 key to %_exitmsg%..."
+choice /c 0 /n
+) else (
+call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
+pause %nul1%
+)
+exit /b
+
+::========================================================================================================================================
+
+:dk_color
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
 ) else (
-call :batcol %~1 "%~2"
+if not exist %psc% (echo %~3) else (%psc% write-host -back '%1' -fore '%2' '%3')
 )
 exit /b
 
-:_color2
+:dk_color2
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
 ) else (
-call :batcol %~1 "%~2" %~3 "%~4"
+if not exist %psc% (echo %~3%~6) else (%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6')
 )
 exit /b
 
-::=======================================
+::========================================================================================================================================
 
-:: Colored text with pure batch method
-:: Thanks to @dbenham and @jeb
-:: stackoverflow.com/a/10407642
+::  Set variables
 
-:batcol
+:dk_setvar
 
-pushd %_coltemp%
-if not exist "'" (<nul >"'" set /p "=.")
-setlocal
-set "s=%~2"
-set "t=%~4"
-call :_batcol %1 s %3 t
-del /f /q "'"
-del /f /q "`.txt"
-popd
-exit /b
+set psc=powershell.exe
+set winbuild=1
+for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 
-:_batcol
-
-setlocal EnableDelayedExpansion
-set "s=!%~2!"
-set "t=!%~4!"
-for /f delims^=^ eol^= %%i in ("!s!") do (
-  if "!" equ "" setlocal DisableDelayedExpansion
-    >`.txt (echo %%i\..\')
-    findstr /a:%~1 /f:`.txt "."
-    <nul set /p "=%_BS%%_BS%%_BS%%_BS%%_BS%%_BS%%_BS%"
-)
-if "%~4"=="" echo(&exit /b
-setlocal EnableDelayedExpansion
-for /f delims^=^ eol^= %%i in ("!t!") do (
-  if "!" equ "" setlocal DisableDelayedExpansion
-    >`.txt (echo %%i\..\')
-    findstr /a:%~3 /f:`.txt "."
-    <nul set /p "=%_BS%%_BS%%_BS%%_BS%%_BS%%_BS%%_BS%"
-)
-echo(
-exit /b
-
-::=======================================
-
-:_colorprep
+set _NCS=1
+if %winbuild% LSS 10586 set _NCS=0
+if %winbuild% GEQ 10586 reg query "HKCU\Console" /v ForceV2 %nul2% | find /i "0x0" %nul1% && (set _NCS=0)
 
 if %_NCS% EQU 1 (
 for /F %%a in ('echo prompt $E ^| cmd') do set "esc=%%a"
-
 set     "Red="41;97m""
 set    "Gray="100;97m""
-set   "Black="30m""
 set   "Green="42;97m""
 set    "Blue="44;97m""
-set  "Yellow="43;97m""
-set "Magenta="45;97m""
-
 set    "_Red="40;91m""
-set  "_Green="40;92m""
-set   "_Blue="40;94m""
 set  "_White="40;37m""
+set  "_Green="40;92m""
 set "_Yellow="40;93m""
-
-exit /b
+) else (
+set     "Red="Red" "white""
+set    "Gray="Darkgray" "white""
+set   "Green="DarkGreen" "white""
+set    "Blue="Blue" "white""
+set    "_Red="Black" "Red""
+set  "_White="Black" "Gray""
+set  "_Green="Black" "Green""
+set "_Yellow="Black" "Yellow""
 )
 
-for /f %%A in ('"prompt $H&for %%B in (1) do rem"') do set "_BS=%%A %%A"
-set "_coltemp=%SystemRoot%\Temp"
-
-set     "Red="CF""
-set    "Gray="8F""
-set   "Black="00""
-set   "Green="2F""
-set    "Blue="1F""
-set  "Yellow="6F""
-set "Magenta="5F""
-
-set    "_Red="0C""
-set  "_Green="0A""
-set   "_Blue="09""
-set  "_White="07""
-set "_Yellow="0E""
-
+set "nceline=echo: &echo ==== ERROR ==== &echo:"
+set "eline=echo: &call :dk_color %Red% "==== ERROR ====" &echo:"
+if %~z0 GEQ 200000 (
+set "_exitmsg=Go back"
+set "_fixmsg=Go back to Main Menu, select Troubleshoot and run Fix Licensing option."
+) else (
+set "_exitmsg=Exit"
+set "_fixmsg=In MAS folder, run Troubleshoot script and select Fix Licensing option."
+)
 exit /b
 
 ::========================================================================================================================================
