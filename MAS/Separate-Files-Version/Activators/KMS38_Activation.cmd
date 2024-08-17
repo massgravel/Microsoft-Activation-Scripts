@@ -1601,7 +1601,13 @@ for %%# in (
 "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform+SetValue"
 ) do for /f "tokens=1,2 delims=+" %%A in (%%#) do if not defined permerror (
 %psc% "$acl = (Get-Acl '%%A' | fl | Out-String); if (-not ($acl -match 'NT SERVICE\\sppsvc Allow  %%B') -or ($acl -match 'NT SERVICE\\sppsvc Deny')) {Exit 2}" %nul%
-if !errorlevel!==2 set permerror=Error_Found
+if !errorlevel!==2 (
+if "%%A"=="%tokenstore%" (
+set "permerror=Error Found In Token Folder"
+) else (
+set "permerror=Error Found In SPP Registries"
+)
+)
 )
 
 REM  https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
