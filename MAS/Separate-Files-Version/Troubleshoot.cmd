@@ -462,7 +462,7 @@ if not defined terminal (
 mode 125, 32
 %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
 )
-title  Fix Licensing ^(ClipSVC ^+ Office vNext ^+ SPP ^+ OSPP^)
+title  Fix Licensing ^(ClipSVC ^+ SPP ^+ OSPP^)
 
 echo:
 echo %line%
@@ -475,7 +475,7 @@ echo       - This option will,
 echo            - Deactivate Windows and Office, you may need to reactivate
 echo              If Windows is activated with motherboard / OEM / Digital license then don't worry
 echo:
-echo            - Clear ClipSVC, Office vNext, SPP and OSPP licenses
+echo            - Clear ClipSVC, SPP and OSPP licenses
 echo            - Fix SPP permissions of tokens folder and registries
 echo            - Trigger the repair option for Office.
 echo:
@@ -614,42 +614,28 @@ echo tokens.dat file: [%token%]
 )
 
 set tokenstore=
+set badregistry=
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore %nul6%') do call set "tokenstore=%%b"
+if %winbuild% GEQ 9200 if /i not "%tokenstore%"=="%SysPath%\spp\store" if /i not "%tokenstore%"=="%SysPath%\spp\store\2.0" if /i not "%tokenstore%"=="%SysPath%\spp\store_test\2.0" (
+set badregistry=1
+echo:
+call :dk_color %Red% "Correct path not found in TokenStore Registry [%tokenstore%]"
+)
 
 ::  Check sppsvc permissions and apply fixes
 
-if %winbuild% GEQ 10240 (
-
+if %winbuild% GEQ 9200 if not defined badregistry (
 echo:
 echo Checking SPP permission related issues...
 call :checkperms
-
 if defined permerror (
-
-mkdir "%tokenstore%" %nul%
-set "d=$sddl = 'O:BAG:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICIIO;GR;;;BU)(A;;FR;;;BU)(A;OICI;FA;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)';"
-set "d=!d! $AclObject = New-Object System.Security.AccessControl.DirectorySecurity;"
-set "d=!d! $AclObject.SetSecurityDescriptorSddlForm($sddl);"
-set "d=!d! Set-Acl -Path %tokenstore% -AclObject $AclObject;"
-%psc% "!d!" %nul%
-
-for %%# in (
-"HKLM:\SYSTEM\WPA_QueryValues, EnumerateSubKeys, WriteKey"
-"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform_SetValue"
-) do for /f "tokens=1,2 delims=_" %%A in (%%#) do (
-set "d=$acl = Get-Acl '%%A';"
-set "d=!d! $rule = New-Object System.Security.AccessControl.RegistryAccessRule ('NT Service\sppsvc', '%%B', 'ContainerInherit, ObjectInherit','None','Allow');"
-set "d=!d! $acl.ResetAccessRule($rule);"
-set "d=!d! $acl.SetAccessRule($rule);"
-set "d=!d! Set-Acl -Path '%%A' -AclObject $acl"
-%psc% "!d!" %nul%
-)
-
+call :dk_color %Red% "[!permerror!]"
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':fixsppperms\:.*';iex ($f[1])" %nul%
 call :checkperms
 if defined permerror (
-call :dk_color %Red% "[Failed To Fix]"
+call :dk_color %Red% "[!permerror!] [Failed To Fix]"
 ) else (
-echo [Successfully Fixed]
+call :dk_color %Green% "[Successfully Fixed]"
 )
 ) else (
 echo [No Error Found]
@@ -671,9 +657,9 @@ echo:
 )
 
 echo:
-echo Reinstalling System Licenses [slmgr /rilc]...
-cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
-if %errorlevel% NEQ 0 cscript //nologo %windir%\system32\slmgr.vbs /rilc %nul%
+echo Reinstalling System Licenses...
+%psc% "Stop-Service sppsvc -force; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+if %errorlevel% NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
 ) else (
@@ -1102,18 +1088,164 @@ exit /b
 
 :checkperms
 
+::  This code checks if SPP has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers.
+
 set permerror=
-if not exist "%tokenstore%\" set permerror=1
+if not exist "%tokenstore%\" set "permerror=Error Found In Token Folder"
 
 for %%# in (
-"%tokenstore%"
-"HKLM:\SYSTEM\WPA"
-"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
-) do if not defined permerror (
-%psc% "$acl = Get-Acl '%%#'; if ($acl.Access.Where{ $_.IdentityReference -eq 'NT SERVICE\sppsvc' -and $_.AccessControlType -eq 'Deny' -or $acl.Access.IdentityReference -notcontains 'NT SERVICE\sppsvc'}) {Exit 2}" %nul%
-if !errorlevel!==2 set permerror=1
+"%tokenstore%+FullControl"
+"HKLM:\SYSTEM\WPA+QueryValues, EnumerateSubKeys, WriteKey"
+"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform+SetValue"
+) do for /f "tokens=1,2 delims=+" %%A in (%%#) do if not defined permerror (
+%psc% "$acl = (Get-Acl '%%A' | fl | Out-String); if (-not ($acl -match 'NT SERVICE\\sppsvc Allow  %%B') -or ($acl -match 'NT SERVICE\\sppsvc Deny')) {Exit 2}" %nul%
+if !errorlevel!==2 (
+if "%%A"=="%tokenstore%" (
+set "permerror=Error Found In Token Folder"
+) else (
+set "permerror=Error Found In SPP Registries"
+)
+)
+)
+
+REM  https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
+
+if not defined permerror (
+reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% && (
+set "pol=HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Policies"
+reg query "!pol!" %nul% || reg add "!pol!" %nul%
+%psc% "$netServ = (New-Object Security.Principal.SecurityIdentifier('S-1-5-20')).Translate([Security.Principal.NTAccount]).Value; $aclString = Get-Acl 'Registry::!pol!' | Format-List | Out-String; if (-not ($aclString.Contains($netServ + ' Allow  FullControl') -or $aclString.Contains('NT SERVICE\sppsvc Allow  FullControl')) -or ($aclString.Contains('Deny'))) {Exit 3}" %nul%
+if !errorlevel!==3 set "permerror=Error Found In S-1-5-20 SPP"
+)
 )
 exit /b
+
+::========================================================================================================================================
+
+::  Fix SPP related registry and folder permissions
+
+:fixsppperms:
+# Fix perms for Token Folder
+
+if ($env:permerror -eq 'Error Found In Token Folder') {
+    New-Item -Path $env:tokenstore -ItemType Directory -Force
+    $sddl = 'O:BAG:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICIIO;GR;;;BU)(A;;FR;;;BU)(A;OICI;FA;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)'
+    $AclObject = New-Object System.Security.AccessControl.DirectorySecurity
+    $AclObject.SetSecurityDescriptorSddlForm($sddl)
+    Set-Acl -Path $env:tokenstore -AclObject $AclObject
+    exit
+}
+
+# Fix perms for SPP registries
+
+if ($env:permerror -eq 'Error Found In SPP Registries') {
+    $acl = Get-Acl 'HKLM:\SYSTEM\WPA'
+    $rule = New-Object System.Security.AccessControl.RegistryAccessRule ('NT Service\sppsvc', 'QueryValues, EnumerateSubKeys, WriteKey', 'ContainerInherit, ObjectInherit', 'None', 'Allow')
+    $acl.ResetAccessRule($rule)
+    $acl.SetAccessRule($rule)
+    Set-Acl -Path 'HKLM:\SYSTEM\WPA' -AclObject $acl
+	
+    $acl = Get-Acl 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform'
+    $rule = New-Object System.Security.AccessControl.RegistryAccessRule ('NT Service\sppsvc', 'SetValue', 'ContainerInherit, ObjectInherit', 'None', 'Allow')
+    $acl.ResetAccessRule($rule)
+    $acl.SetAccessRule($rule)
+    Set-Acl -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform' -AclObject $acl
+    exit
+}
+
+# Fix perms for SPP in HKU\S-1-5-20
+# https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
+
+if ($env:permerror -ne 'Error Found In S-1-5-20 SPP') {
+    exit
+}
+if (-not (Test-Path 'Registry::HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform')) {
+    exit
+}
+
+# https://stackoverflow.com/a/35843420
+
+function Take-Permissions {
+    param($rootKey, $key, [System.Security.Principal.SecurityIdentifier]$sid = 'S-1-5-32-545', $recurse = $true)
+    
+    switch -regex ($rootKey) {
+        'HKCU|HKEY_CURRENT_USER' { $rootKey = 'CurrentUser' }
+        'HKLM|HKEY_LOCAL_MACHINE' { $rootKey = 'LocalMachine' }
+        'HKCR|HKEY_CLASSES_ROOT' { $rootKey = 'ClassesRoot' }
+        'HKCC|HKEY_CURRENT_CONFIG' { $rootKey = 'CurrentConfig' }
+        'HKU|HKEY_USERS' { $rootKey = 'Users' }
+    }
+
+    ### Step 1 - escalate current process's privilege
+    # get SeTakeOwnership, SeBackup and SeRestore privileges before executes next lines, script needs Admin privilege
+    $AssemblyBuilder = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1)
+    $ModuleBuilder = $AssemblyBuilder.DefineDynamicModule(2, $False)
+    $TypeBuilder = $ModuleBuilder.DefineType(0)
+    $TypeBuilder.DefinePInvokeMethod('RtlAdjustPrivilege', 'ntdll.dll', 'Public, Static', 1, [int], @([int], [bool], [bool], [bool].MakeByRefType()), 1, 3) | Out-Null
+    9, 17, 18 | ForEach-Object { $TypeBuilder.CreateType()::RtlAdjustPrivilege($_, $true, $false, [ref]$false) | Out-Null }
+
+    function Take-KeyPermissions {
+        param($rootKey, $key, $sid, $recurse, $recurseLevel = 0)
+
+        ### Step 2 - get ownerships of key - it works only for current key
+        $regKey = [Microsoft.Win32.Registry]::$rootKey.OpenSubKey($key, 'ReadWriteSubTree', 'TakeOwnership')
+        $acl = New-Object System.Security.AccessControl.RegistrySecurity
+        $acl.SetOwner($sid)
+        $regKey.SetAccessControl($acl)
+
+        ### Step 3 - enable inheritance of permissions (not ownership) for current key from parent
+        $acl.SetAccessRuleProtection($false, $false)
+        $regKey.SetAccessControl($acl)
+
+        ### Step 4 - only for top-level key, change permissions for current key and propagate it for subkeys
+        # to enable propagations for subkeys, it needs to execute Steps 2-3 for each subkey (Step 5)
+        if ($recurseLevel -eq 0) {
+            $regKey = $regKey.OpenSubKey('', 'ReadWriteSubTree', 'ChangePermissions')
+            $rule = New-Object System.Security.AccessControl.RegistryAccessRule($sid, 'FullControl', 'ContainerInherit', 'None', 'Allow')
+            $acl.ResetAccessRule($rule)
+            $regKey.SetAccessControl($acl)
+        }
+
+        ### Step 5 - recursively repeat steps 2-5 for subkeys
+        if ($recurse) {
+            foreach ($subKey in $regKey.OpenSubKey('').GetSubKeyNames()) {
+                Take-KeyPermissions $rootKey ($key + '\' + $subKey) $sid $recurse ($recurseLevel + 1)
+            }
+        }
+    }
+
+    Take-KeyPermissions $rootKey $key $sid $recurse
+}
+
+Take-Permissions "Users" "S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" "S-1-5-20"
+:fixsppperms:
+
+::========================================================================================================================================
+
+::  Install License files using Powershell/WMI instead of slmgr.vbs
+
+:xrm:
+function InstallLicenseFile($Lsc) {
+    try {
+        $null = $sls.InstallLicense([IO.File]::ReadAllText($Lsc))
+    } catch {
+        $host.SetShouldExit($_.Exception.HResult)
+    }
+}
+function InstallLicenseArr($Str) {
+    $a = $Str -split ';'
+    ForEach ($x in $a) {InstallLicenseFile "$x"}
+}
+function InstallLicenseDir($Loc) {
+    dir $Loc *.xrm-ms -af -s | select -expand FullName | % {InstallLicenseFile "$_"}
+}
+function ReinstallLicenses() {
+    $Oem = "$env:SysPath\oem"
+    $Spp = "$env:SysPath\spp\tokens"
+    InstallLicenseDir "$Spp"
+    If (Test-Path $Oem) {InstallLicenseDir "$Oem"}
+}
+:xrm:
 
 ::========================================================================================================================================
 
