@@ -829,9 +829,13 @@ echo:
 ) else (
 echo:
 call :dk_color %_Yellow% "A Window will popup, in that Window you need to select [Quick] Repair Option..."
+if defined terminal (
+call :dk_color %_Yellow% "Press 0 key to continue..."
+choice /c 0 /n
+) else (
 call :dk_color %_Yellow% "Press any key to continue..."
-echo:
 pause %nul1%
+)
 )
 
 if defined uwp16 (
@@ -1042,8 +1046,13 @@ exit /b
 echo:
 echo %line%
 echo:
-call :dk_color %_Yellow% "Press any key to go back..."
+if defined terminal (
+call :dk_color %_Yellow% "Press 0 key to %_exitmsg%..."
+choice /c 0 /n
+) else (
+call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
 pause %nul1%
+)
 goto :at_menu
 
 ::========================================================================================================================================

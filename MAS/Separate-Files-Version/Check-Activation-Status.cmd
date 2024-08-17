@@ -6,10 +6,23 @@
 ::  https://gravesoft.dev/cas
 
 
+::  Set Environment variables, it helps if they are misconfigured in the system
+
+setlocal EnableExtensions
+setlocal DisableDelayedExpansion
+
+set "PathExt=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
+
+set "SysPath=%SystemRoot%\System32"
 set "Path=%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
 if exist "%SystemRoot%\Sysnative\reg.exe" (
+set "SysPath=%SystemRoot%\Sysnative"
 set "Path=%SystemRoot%\Sysnative;%SystemRoot%;%SystemRoot%\Sysnative\Wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%Path%"
 )
+
+set "ComSpec=%SysPath%\cmd.exe"
+set "PSModulePath=%ProgramFiles%\WindowsPowerShell\Modules;%SysPath%\WindowsPowerShell\v1.0\Modules"
+
 set "_psc=powershell -nop -c"
 set "_err===== ERROR ===="
 set _pwsh=1
@@ -29,8 +42,8 @@ setlocal EnableDelayedExpansion
 
 :E_Exit
 echo.
-echo Press any key to exit.
-pause >nul
+echo Press 0 key to exit.
+choice /c 0 /n
 exit /b
 
 :sppmgr:
