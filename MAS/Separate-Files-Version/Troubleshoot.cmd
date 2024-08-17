@@ -892,12 +892,6 @@ echo WMI rebuild is not recommended on Windows Server. Aborting...
 goto :at_back
 )
 
-for %%# in (wmic.exe) do @if "%%~$PATH:#"=="" (
-%eline%
-echo wmic.exe file is not found in the system. Aborting...
-goto :at_back
-)
-
 echo:
 echo Checking WMI
 call :checkwmi
@@ -1030,12 +1024,12 @@ exit /b
 ::  https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
 
 set error=
-wmic path Win32_ComputerSystem get CreationClassName /value %nul2% | find /i "computersystem" %nul1%
+%psc% "Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" %nul2% | find /i "computersystem" %nul1%
 if %errorlevel% NEQ 0 (set error=1& exit /b)
 winmgmt /verifyrepository %nul%
 if %errorlevel% NEQ 0 (set error=1& exit /b)
 
-cscript //nologo %windir%\system32\slmgr.vbs /dlv %nul%
+%psc% "try { $null=([WMISEARCHER]'SELECT * FROM SoftwareLicensingService').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
 cmd /c exit /b %errorlevel%
 echo "0x%=ExitCode%" | findstr /i "0x800410 0x800440" %nul1%
 if %errorlevel% EQU 0 set error=1
