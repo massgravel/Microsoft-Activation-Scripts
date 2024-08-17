@@ -613,15 +613,6 @@ call :dk_color %Red% "tokens.dat file not found."
 echo tokens.dat file: [%token%]
 )
 
-echo:
-set wpainfo=
-for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wpatest\:.*';iex ($f[1]);" %nul6%') do (set wpainfo=%%a)
-echo "%wpainfo%" | find /i "Error Found" %nul% && (
-call :dk_color %Red% "WPA Registry Error: %wpainfo%"
-) || (
-echo WPA Registry Count: %wpainfo%
-)
-
 set tokenstore=
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore %nul6%') do call set "tokenstore=%%b"
 
@@ -1106,44 +1097,6 @@ for /f "tokens=* delims=" %%D in ('dir /a:-D/b/s "%SystemRoot%\logs\%1"') do (
 makecab /F %ddf% /D DiskDirectory1="" /D CabinetNameTemplate="!desktop!\%2_%_time%.cab"
 del /q /f %ddf%
 exit /b
-
-::========================================================================================================================================
-
-::  This code checks for invalid registry keys in HKLM\SYSTEM\WPA. This issue may appear even on healthy systems
-
-:wpatest:
-$wpaKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey('LocalMachine', 'Registry64').OpenSubKey("SYSTEM\\WPA")
-$count = $wpaKey.SubKeyCount
-
-$osVersion = [System.Environment]::OSVersion.Version
-$minBuildNumber = 14393
-
-if ($osVersion.Build -ge $minBuildNumber) {
-    $subkeyHashTable = @{}
-    foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
-        $keyNumber = $subkeyName -replace '.*-', ''
-        $subkeyHashTable[$keyNumber] = $true
-    }
-    for ($i=1; $i -le $count; $i++) {
-        if (-not $subkeyHashTable.ContainsKey("$i")) {
-            Write-Host "Total Keys $count. Error Found- $i key does not exist"
-			$wpaKey.Close()
-            exit
-        }
-    }
-}
-$wpaKey.GetSubKeyNames() | ForEach-Object {
-    $subkey = $wpaKey.OpenSubKey($_)
-    $p = $subkey.GetValueNames()
-    if (($p | Where-Object { $subkey.GetValueKind($_) -eq [Microsoft.Win32.RegistryValueKind]::Binary }).Count -eq 0) {
-        Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
-		$wpaKey.Close()
-        exit
-    }
-}
-$count
-$wpaKey.Close()
-:wpatest:
 
 ::========================================================================================================================================
 
