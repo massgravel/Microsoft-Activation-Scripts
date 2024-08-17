@@ -458,8 +458,10 @@ goto :at_back
 :retokens
 
 cls
-if not defined terminal mode 125, 32
+if not defined terminal (
+mode 125, 32
 %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=31;$B.Height=200;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}"
+)
 title  Fix Licensing ^(ClipSVC ^+ Office vNext ^+ SPP ^+ OSPP^)
 
 echo:
@@ -500,13 +502,13 @@ echo:
 if %winbuild% LSS 10240 (
 echo ClipSVC Licence rebuilding is supported only on Win 10/11 and Server equivalent.
 echo Skipping...
-goto :cleanvnext
+goto :rebuildspptok
 )
 
-%psc% "(([WMISEARCHER]'SELECT Name FROM SoftwareLicensingProduct WHERE LicenseStatus=1 AND GracePeriodRemaining=0 AND PartialProductKey IS NOT NULL').Get()).Name" %nul2% | findstr /i "Windows" %nul1% && (
+%psc% "(([WMISEARCHER]'SELECT Name FROM SoftwareLicensingProduct WHERE LicenseStatus=1 AND GracePeriodRemaining=0 AND PartialProductKey IS NOT NULL AND LicenseDependsOn is NULL').Get()).Name" %nul2% | findstr /i "Windows" %nul1% && (
 echo Windows is permanently activated.
-echo Skipping rebuilding ClipSVC licences...
-goto :cleanvnext
+echo Skipping...
+goto :rebuildspptok
 )
 
 echo Stopping ClipSVC service...
@@ -589,76 +591,13 @@ echo [Successful]
 
 echo:
 echo Restarting [wlidsvc LicenseManager] services...
-for %%# in (wlidsvc LicenseManager) do (%psc% Restart-Service %%# %nul%)
-
-::========================================================================================================================================
-
-::  Find remnants of Office vNext license block and remove it because it stops non vNext licenses from appearing
-::  https://learn.microsoft.com/en-us/office/troubleshoot/activation/reset-office-365-proplus-activation-state
-
-:cleanvnext
-
-echo:
-echo %line%
-echo:
-call :dk_color %Blue% "Clearing Office vNext License"
-echo:
-
-setlocal DisableDelayedExpansion
-set "_Local=%LocalAppData%"
-setlocal EnableDelayedExpansion
-
-attrib -R "!ProgramData!\Microsoft\Office\Licenses" %nul%
-attrib -R "!_Local!\Microsoft\Office\Licenses" %nul%
-
-if exist "!ProgramData!\Microsoft\Office\Licenses\" (
-rd /s /q "!ProgramData!\Microsoft\Office\Licenses\" %nul%
-if exist "!ProgramData!\Microsoft\Office\Licenses\" (
-echo Failed To Delete - !ProgramData!\Microsoft\Office\Licenses\
-) else (
-echo Deleted Folder - !ProgramData!\Microsoft\Office\Licenses\
-)
-) else (
-echo Not Found - !ProgramData!\Microsoft\Office\Licenses\
-)
-
-if exist "!_Local!\Microsoft\Office\Licenses\" (
-rd /s /q "!_Local!\Microsoft\Office\Licenses\" %nul%
-if exist "!_Local!\Microsoft\Office\Licenses\" (
-echo Failed To Delete - !_Local!\Microsoft\Office\Licenses\
-) else (
-echo Deleted Folder - !_Local!\Microsoft\Office\Licenses\
-)
-) else (
-echo Not Found - !_Local!\Microsoft\Office\Licenses\
-)
-
-
-echo:
-for /f "tokens=* delims=" %%a in ('%psc% "Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' | ForEach-Object { Split-Path -Path $_.PSPath -Leaf }" %nul6%') do (if defined _sid (set "_sid=!_sid! HKU\%%a") else (set "_sid=HKU\%%a"))
-
-set regfound=
-for %%# in (HKCU !_sid!) do (
-for %%A in (
-%%#\Software\Microsoft\Office\16.0\Common\Licensing
-%%#\Software\Microsoft\Office\16.0\Common\Identity
-%%#\Software\Microsoft\Office\16.0\Registration
-) do (
-reg query %%A %nul% && (
-set regfound=1
-reg delete %%A /f %nul% && (
-echo Deleted Registry - %%A
-) || (
-echo Failed to Delete - %%A
-)
-)
-)
-)
-if not defined regfound echo Not Found - Office vNext Registry Keys
+for %%# in (wlidsvc LicenseManager) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 10 | Out-Null")
 
 ::========================================================================================================================================
 
 ::  Rebuild SPP Tokens
+
+:rebuildspptok
 
 echo:
 echo %line%
