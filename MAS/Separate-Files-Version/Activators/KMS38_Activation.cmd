@@ -293,7 +293,7 @@ set -=
 set old=
 
 for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
 )
 
 if defined old (
@@ -1190,7 +1190,7 @@ for %%# in (pkeyhelper.dll) do @if "%%~$PATH:#"=="" exit /b
 for %%# in (Volume:GVLK) do (
 call :k_pkey %osSKU% '%%#'
 if defined pkey call :k_pkeychannel !pkey!
-if /i [!pkeychannel!]==[%%#] (
+if /i "!pkeychannel!"=="%%#" (
 set key=!pkey!
 exit /b
 )

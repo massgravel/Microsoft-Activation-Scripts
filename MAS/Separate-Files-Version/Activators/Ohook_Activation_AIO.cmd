@@ -283,7 +283,7 @@ set -=
 set old=
 
 for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
 )
 
 if defined old (
@@ -520,11 +520,11 @@ echo "!_oIds!" | find /i " %%a " %nul1% || (set "_oIds= !_oIds! %%a ")
 set "_oLPath=%_oRoot%\Licenses"
 set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
-if [%_oArch%]==[x64] (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
-if [%_oArch%]==[x86] (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
-if not [%osarch%]==[x86] (
-if [%_oArch%]==[x64] set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if [%_oArch%]==[x86] set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
+if "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
+if "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
+if not "%osarch%"=="x86" (
+if "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+if "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
 ) else (
 set "_sppcPath=%SystemRoot%\System32\sppc.dll"
 )
@@ -570,11 +570,11 @@ set _o16c2rIds=%_oIds%
 set "_oLPath=%_oRoot%\Licenses16"
 set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
-if [%_oArch%]==[x64] (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
-if [%_oArch%]==[x86] (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
-if not [%osarch%]==[x86] (
-if [%_oArch%]==[x64] set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if [%_oArch%]==[x86] set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
+if "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
+if "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
+if not "%osarch%"=="x86" (
+if "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+if "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
 ) else (
 set "_sppcPath=%SystemRoot%\System32\sppc.dll"
 )
@@ -613,7 +613,7 @@ call :dk_color %Gray% "Checking Old Office With Sub License    [Found. Update Of
 set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
 echo "%_oIds%" | find /i "Volume" %nul1% && (
 if %winbuild% GEQ 9200 (
-if not [%osarch%]==[x86] (
+if not "%osarch%"=="x86" (
 reg delete "%kmskey%" /f /reg:32 %nul%
 reg add "%kmskey%" /f /v KeyManagementServiceName /t REG_SZ /d "10.0.0.10" /reg:32 %nul%
 )
@@ -976,7 +976,7 @@ set _prod=%%#!_preview!
 
 call :ohookdata getinfo !_prod!
 
-if not [!key!]==[] (
+if not "!key!"=="" (
 echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
 call :dk_inskey "[!key!] [!_prod!] [!_lic!]"
 ) else (
@@ -1017,14 +1017,14 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\ProductVersion /v LastPr
 if "%_oRoot:~-1%"=="\" set "_oRoot=%_oRoot:~0,-1%"
 
 echo "%2" | find /i "Wow6432Node" %nul1% && set _oArch=x86
-if not [%osarch%]==[x86] if not defined _oArch set _oArch=x64
-if [%osarch%]==[x86] set _oArch=x86
+if not "%osarch%"=="x86" if not defined _oArch set _oArch=x64
+if "%osarch%"=="x86" set _oArch=x86
 
-if [%_oArch%]==[x64] (set "_hookPath=%_oRoot%" & set "_hook=sppc64.dll")
-if [%_oArch%]==[x86] (set "_hookPath=%_oRoot%" & set "_hook=sppc32.dll")
-if not [%osarch%]==[x86] (
-if [%_oArch%]==[x64] set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if [%_oArch%]==[x86] set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
+if "%_oArch%"=="x64" (set "_hookPath=%_oRoot%" & set "_hook=sppc64.dll")
+if "%_oArch%"=="x86" (set "_hookPath=%_oRoot%" & set "_hook=sppc32.dll")
+if not "%osarch%"=="x86" (
+if "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+if "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
 ) else (
 set "_sppcPath=%SystemRoot%\System32\sppc.dll"
 )

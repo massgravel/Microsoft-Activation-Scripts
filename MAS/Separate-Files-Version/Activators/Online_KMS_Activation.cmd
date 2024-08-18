@@ -312,7 +312,7 @@ set -=
 set old=
 
 for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
 )
 
 if defined old (
@@ -452,7 +452,7 @@ call :dk_showosinfo
 
 set _int=
 for %%a in (l.root-servers.net resolver1.opendns.com download.windowsupdate.com google.com) do if not defined _int (
-for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not [%%#]==[] set _int=1)
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not "%%#"=="" set _int=1)
 )
 
 if not defined _int (
@@ -1079,7 +1079,7 @@ set _prod=!_altoffid!
 call :ks_osppready
 )
 
-if not [!key!]==[] (
+if not "!key!"=="" (
 echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
 call :dk_inskey "[!key!] [!_prod!]"
 ) else (
@@ -1119,8 +1119,8 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\ProductVersion /v LastPr
 if "%_oRoot:~-1%"=="\" set "_oRoot=%_oRoot:~0,-1%"
 
 echo "%2" | find /i "Wow6432Node" %nul1% && set _oArch=x86
-if not [%osarch%]==[x86] if not defined _oArch set _oArch=x64
-if [%osarch%]==[x86] set _oArch=x86
+if not "%osarch%"=="x86" if not defined _oArch set _oArch=x64
+if "%osarch%"=="x86" set _oArch=x86
 
 set "_common=%CommonProgramFiles%"
 if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
@@ -1565,12 +1565,12 @@ call :_tasksetserv
 
 for %%a in (%srvlist%) do (
 for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (
-if not [%%#]==[] goto _taskIntConnected
+if not "%%#"=="" goto _taskIntConnected
 )
 )
 
 nslookup dns.msftncsi.com 2>nul | find "131.107.255.255" 1>nul
-if [%errorlevel%]==[0] goto _taskIntConnected
+if "%errorlevel%"=="0" goto _taskIntConnected
 
 if %loop%==%max_loop% (
 set _tserror=1
@@ -1681,14 +1681,14 @@ set /a act_attempt=0
 
 if %act_attempt% GTR 4 exit /b
 
-if not [%act_ok%]==[1] (
+if not "%act_ok%"=="1" (
 if not defined _server call :_taskgetserv
 call :_taskregserv
 )
 
 if not !server_num! GTR %max_servers% (
 
-if [%1]==[act_win] if %_kms38% EQU 1 (
+if "%1"=="act_win" if %_kms38% EQU 1 (
 set act_ok=1
 exit /b
 )
@@ -1702,7 +1702,7 @@ if !errorcode! EQU 0 (
 set act_ok=1
 exit /b
 )
-if [%1]==[act_win] if !errorcode! EQU -1073418187 if %winbuild% LSS 9200 (
+if "%1"=="act_win" if !errorcode! EQU -1073418187 if %winbuild% LSS 9200 (
 set act_ok=1
 exit /b
 )
@@ -1717,9 +1717,9 @@ exit /b
 
 :_actinfo
 
-if [%1]==[act_win] if not defined t_name (set prodname=%winos%)
+if "%1"=="act_win" if not defined t_name (set prodname=%winos%)
 
-if [%1]==[act_win] if %_kms38% EQU 1 (
+if "%1"=="act_win" if %_kms38% EQU 1 (
 if defined t_name (
 echo %prodname% is already activated with KMS38.
 ) else (
@@ -1739,7 +1739,7 @@ set _tserror=1
 exit /b
 )
 
-if %errorcode% EQU -1073418187 if [%1]==[act_win] if %winbuild% LSS 9200 (
+if %errorcode% EQU -1073418187 if "%1"=="act_win" if %winbuild% LSS 9200 (
 if defined t_name (
 echo %prodname% cannot be KMS-activated on this computer due to unqualified OEM BIOS [0xC004F035].
 ) else (
@@ -1784,9 +1784,9 @@ exit /b
 )
 
 set _actpass=1
-if %gpr% EQU 43200  if [%1]==[act_win] if %winbuild% GEQ 9200 set _actpass=0
+if %gpr% EQU 43200  if "%1"=="act_win" if %winbuild% GEQ 9200 set _actpass=0
 if %gpr% EQU 64800  set _actpass=0
-if %gpr% GTR 259200 if [%1]==[act_win] call :_taskchkEnterpriseG _actpass
+if %gpr% GTR 259200 if "%1"=="act_win" call :_taskchkEnterpriseG _actpass
 if %gpr% EQU 259200 set _actpass=0
 
 if %errorcode% EQU 0 if %_actpass% EQU 0 (
@@ -1990,8 +1990,8 @@ set !server%rand%!=1
 
 set /a server_num+=1
 (for /f "delims=[] tokens=2" %%a in ('ping -4 -n 1 %KMS_IP% 2^>nul') do set "KMS_IP=%%a"
-if [%KMS_IP%]==[!KMS_IP!] for /f "delims=[] tokens=2" %%# in ('pathping -4 -h 1 -n -p 1 -q 1 -w 1 %KMS_IP% 2^>nul') do set "KMS_IP=%%#"
-if not [%KMS_IP%]==[!KMS_IP!] exit /b
+if "%KMS_IP%"=="!KMS_IP!" for /f "delims=[] tokens=2" %%# in ('pathping -4 -h 1 -n -p 1 -q 1 -w 1 %KMS_IP% 2^>nul') do set "KMS_IP=%%#"
+if not "%KMS_IP%"=="!KMS_IP!" exit /b
 goto :_taskgetserv
 )
 ::Ver:2.7
@@ -2546,7 +2546,7 @@ for %%# in (pkeyhelper.dll) do @if "%%~$PATH:#"=="" exit /b
 for %%# in (Volume:GVLK) do (
 call :k_pkey %osSKU% '%%#'
 if defined pkey call :k_pkeychannel !pkey!
-if /i [!pkeychannel!]==[%%#] (
+if /i "!pkeychannel!"=="%%#" (
 set key=!pkey!
 exit /b
 )
