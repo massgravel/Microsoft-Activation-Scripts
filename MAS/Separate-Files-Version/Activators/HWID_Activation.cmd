@@ -1362,13 +1362,13 @@ for %%# in (SppEx%w%tComObj.exe sppsvc.exe) do (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (if defined _sppint (set "_sppint=!_sppint!, %%#") else (set "_sppint=%%#"))
 )
 if defined _sppint (
-echo Checking SPP Interference In IFEO       [%_sppint%]
+echo Checking for SPP Interference In IFEO       [%_sppint%]
 )
 
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
-call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
+call :dk_color %Red% "Checking for SkipRearm                      [Default 0 Value Not Found. Changing to 0]"
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 10 | Out-Null"
 set error=1
 )
@@ -1377,7 +1377,7 @@ set error=1
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
-call :dk_color2 %Blue% "Possibly Caused By Gaming Spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
+call :dk_color2 %Blue% "Most Likely Caused By HWID Spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
 set error=1
 set showfix=1
 )
@@ -1407,9 +1407,9 @@ set "d=!d! $AclObject.SetSecurityDescriptorSddlForm($sddl);"
 set "d=!d! Set-Acl -Path %tokenstore% -AclObject $AclObject;"
 %psc% "!d!" %nul%
 if exist "%tokenstore%\" (
-call :dk_color %Gray% "Checking SPP Token Folder               [Not Found. Created Now] [%tokenstore%\]"
+call :dk_color %Gray% "Checking for SPP Token Folder               [Not Found, Creating Now] [%tokenstore%\]"
 ) else (
-call :dk_color %Red% "Checking SPP Token Folder               [Not Found. Failed To Create] [%tokenstore%\]"
+call :dk_color %Red% "Checking SPP Token Folder               [Not Found, Failed to Create] [%tokenstore%\]"
 set error=1
 set showfix=1
 )
@@ -1427,14 +1427,14 @@ if not defined allapps (
 set "_notfoundids=Not found"
 )
 set error=1
-call :dk_color %Red% "Checking Activation IDs                 [!_notfoundids!]"
+call :dk_color %Red% "Checking for Activation IDs                 [!_notfoundids!]"
 )
 )
 
 
 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
 set error=1
-call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
+call :dk_color %Red% "Checking for SPP tokens.dat                 [Not Found] [%tokenstore%\]"
 )
 
 
@@ -1448,7 +1448,7 @@ call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!]"
 )
 
 
-::  This code checks if SPP has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers.
+::  This code checks if SPP has permission access to tokens folder and required registry keys. It's often caused by HWID spoofers.
 
 set permerror=
 if %winbuild% GEQ 9200 (
@@ -1527,7 +1527,7 @@ if ($osVersion.Build -ge $minBuildNumber) {
     }
     for ($i=1; $i -le $count; $i++) {
         if (-not $subkeyHashTable.ContainsKey("$i")) {
-            Write-Output "Total Keys $count. Error Found- $i key does not exist"
+            Write-Output "Total Keys $count. Error Found - $i key does not exist."
 			$wpaKey.Close()
 			exit
         }
@@ -1538,7 +1538,7 @@ $wpaKey.GetSubKeyNames() | ForEach-Object {
         if ($PSVersionTable.PSVersion.Major -lt 3) {
             cmd /c "reg query "HKLM\SYSTEM\WPA\$_" /ve /t REG_BINARY >nul 2>&1"
 			if ($LASTEXITCODE -ne 0) {
-            Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+            Write-Host "Total Keys $count. Error Found - Binary Data is corrupt."
 			$wpaKey.Close()
 			exit
 			}
@@ -1546,7 +1546,7 @@ $wpaKey.GetSubKeyNames() | ForEach-Object {
             $subkey = $wpaKey.OpenSubKey($_)
             $p = $subkey.GetValueNames()
             if (($p | Where-Object { $subkey.GetValueKind($_) -eq [Microsoft.Win32.RegistryValueKind]::Binary }).Count -eq 0) {
-                Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+                Write-Host "Total Keys $count. Error Found - Binary Data is corrupt."
 				$wpaKey.Close()
 				exit
             }
@@ -1585,13 +1585,13 @@ echo:
 if %_unattended%==1 timeout /t 2 & exit /b
 
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] To Open Troubleshoot Page " %Gray% " Press [0] To Ignore"
+call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press 0 key to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
