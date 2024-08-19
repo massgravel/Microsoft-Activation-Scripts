@@ -221,7 +221,7 @@ if not defined _MASunattended (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+call :_color %_Green% "Enter a menu option on your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
@@ -285,7 +285,7 @@ echo:             [8] Help
 echo:             [0] Exit
 echo:       ______________________________________________________________
 echo:
-call :_color2 %_White% "          " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,6,7,8,0] :"
+call :_color2 %_White% "          " %_Green% "Enter a menu option on your keyboard [1,2,3,4,5,6,7,8,0] :"
 choice /C:123456780 /N
 set _erl=%errorlevel%
 
@@ -326,7 +326,7 @@ echo:
 echo:             [0] Go to Main Menu
 echo:       ______________________________________________________________
 echo:
-call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,0] :"
+call :_color2 %_White% "           " %_Green% "Enter a menu option on your keyboard [1,2,3,4,0] :"
 choice /C:12340 /N
 set _erl=%errorlevel%
 
@@ -392,7 +392,7 @@ call :_color2 %_White% "              [R] " %_Green% "ReadMe"
 echo:              [0] Go Back
 echo:           ________________________________________________________
 echo:  
-call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard:"
+call :_color2 %_White% "           " %_Green% "Enter a menu option on your keyboard:"
 choice /C:123456789R0 /N
 set _erl=%errorlevel%
 
@@ -1786,7 +1786,7 @@ echo:
 echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
 echo: 
-call :dk_color2 %_White% "              " %_Green% "Enter a menu option in the Keyboard [1,2,3,0]"
+call :dk_color2 %_White% "              " %_Green% "Enter a menu option on your keyboard [1,2,3,0]"
 choice /C:1230 /N
 set _el=!errorlevel!
 if !_el!==4  exit /b
@@ -3111,7 +3111,7 @@ echo:
 echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
 echo: 
-call :dk_color2 %_White% "              " %_Green% "Enter a menu option in the Keyboard [1,2,0]"
+call :dk_color2 %_White% "              " %_Green% "Enter a menu option on your keyboard [1,2,0]"
 choice /C:120 /N
 set _el=!errorlevel!
 if !_el!==3  exit /b
@@ -4047,7 +4047,7 @@ echo.
 echo.              [0] %_exitmsg%
 echo.       ______________________________________________________________
 echo.
-call :_color2 %_White% "           " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,6,7,0]"
+call :_color2 %_White% "           " %_Green% "Enter a menu option on your keyboard [1,2,3,4,5,6,7,0]"
 choice /C:12345670 /N
 set _el=%errorlevel%
 
@@ -8799,7 +8799,7 @@ echo:
 echo:             [0] %_exitmsg%
 echo:       _______________________________________________________________
 echo:          
-call :_color2 %_White% "            " %_Green% "Enter a menu option in the Keyboard :"
+call :_color2 %_White% "            " %_Green% "Enter a menu option on your keyboard :"
 choice /C:1234560 /N
 set _erl=%errorlevel%
 
