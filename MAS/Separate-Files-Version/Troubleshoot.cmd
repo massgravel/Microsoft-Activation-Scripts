@@ -1381,7 +1381,7 @@ exit /b
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
 ) else (
-if not exist %psc% (echo %~3) else (%psc% write-host -back '%1' -fore '%2' '%3')
+%psc% write-host -back '%1' -fore '%2' '%3'
 )
 exit /b
 
@@ -1390,10 +1390,9 @@ exit /b
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
 ) else (
-if not exist %psc% (echo %~3%~6) else (%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6')
+%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
 )
 exit /b
-
 
 ::========================================================================================================================================
 
