@@ -531,7 +531,7 @@ echo [%encoded%]
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 goto :dl_final
 ) else (
-echo Generating GenuineTicket                [Successful]
+echo Generating GenuineTicket.xml            [Successful]
 )
 
 set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
@@ -544,7 +544,7 @@ set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 %_xmlexist% (
 set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-call :dk_color %Red% "Installing GenuineTicket                [Failed with ClipSVC service restart, wait...]"
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed with ClipSVC service restart, wait...]"
 )
 )
 
@@ -562,7 +562,7 @@ call :dk_color %Red% "Checking ClipSVC tokens.dat             [Not Found]"
 %_xmlexist% (
 set error=1
 set rebuildinfo=1
-call :dk_color %Red% "Installing GenuineTicket                [Failed With clipup -v -o]"
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With clipup -v -o]"
 )
 
 if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*.xml" (
