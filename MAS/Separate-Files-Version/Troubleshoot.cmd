@@ -415,7 +415,7 @@ echo:
 echo %line%
 echo:    
 echo      SFC will repair missing or corrupted system files.
-echo
+echo      It is recommended you run the DISM option first before this one.
 echo      This will take 10-15 minutes or more..
 echo:
 echo      If SFC could not fix something, then run the command again to see if it may be able 
@@ -451,7 +451,7 @@ copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "!desktop!\AT_Logs\SFC_CBS_%_time%.lo
 )
 
 echo:
-call :dk_color %Gray% "CBS log is copied to the AT_Logs folder on the desktop."
+call :dk_color %Gray% "CBS log is copied to the AT_Logs folder on your desktop."
 goto :at_back
 
 ::========================================================================================================================================
@@ -470,17 +470,17 @@ echo %line%
 echo:   
 echo      Notes:
 echo:
-echo       - It helps in troubleshooting activation issues.
+echo       - This option helps in troubleshooting generic activation issues.
 echo:
-echo       - This option will,
-echo            - Deactivate Windows and Office, you may need to reactivate
-echo              If Windows is activated with motherboard / OEM / Digital license then don't worry
+echo       - This option will:
+echo            - Deactivate Windows and Office, you may need to reactivate.
+echo              If Windows is activated with motherboard / OEM / Digital license then Windows will activate itself again.
 echo:
-echo            - Clear ClipSVC, SPP and OSPP licenses
-echo            - Fix SPP permissions of tokens folder and registries
+echo            - Clear ClipSVC, SPP and OSPP licenses.
+echo            - Fix permissions of SPP tokens folder and registries.
 echo            - Trigger the repair option for Office.
 echo:
-call :dk_color2 %_White% "      - " %Red% "Apply it only when it is necessary."
+call :dk_color2 %_White% "      - " %Red% "Apply this option only when it is necessary."
 echo:
 echo %line%
 echo:
@@ -497,11 +497,11 @@ cls
 echo:
 echo %line%
 echo:
-call :dk_color %Blue% "Rebuilding ClipSVC Licences"
+call :dk_color %Blue% "Rebuilding ClipSVC Licenses..."
 echo:
 
 if %winbuild% LSS 10240 (
-echo ClipSVC Licence rebuilding is supported only on Win 10/11 and Server equivalent.
+echo ClipSVC license rebuilding is supported only on Windows 10/11 and their Server equivalents.
 echo Skipping...
 goto :rebuildspptok
 )
@@ -517,7 +517,7 @@ echo Stopping ClipSVC service...
 timeout /t 2 %nul%
 
 echo:
-echo Applying the command to Clean ClipSVC Licences...
+echo Executing the command to clean ClipSVC Licenses...
 echo rundll32 clipc.dll,ClipCleanUpState
 
 rundll32 clipc.dll,ClipCleanUpState
@@ -546,15 +546,15 @@ echo Deleting a Volatile ^& Protected Registry Key...
 echo [%RegKey%]
 reg query "%RegKey%" %nul% && (
 call :dk_color %Red% "[Failed]"
-echo Restart the system, that will delete this registry key automatically.
+echo Restart your system, that will delete this registry key automatically.
 ) || (
 echo [Successful]
 )
 
-::   Clear HWID token related registry to fix activation incase if there is any corruption
+::   Clear HWID token related registry to fix activation incase there is any corruption
 
 echo:
-echo Deleting a IdentityCRL Registry Key...
+echo Deleting an IdentityCRL Registry Key...
 echo [%_ident%]
 reg delete "%_ident%" /f %nul%
 reg query "%_ident%" %nul% && (
@@ -579,7 +579,7 @@ echo [Successful]
 )
 
 echo:
-echo Rebuilding Folder %ProgramData%\Microsoft\Windows\ClipSVC\
+echo Rebuilding the %ProgramData%\Microsoft\Windows\ClipSVC\ folder...
 %psc% Start-Service ClipSVC %nul%
 timeout /t 3 %nul%
 if not exist "%ProgramData%\Microsoft\Windows\ClipSVC\" timeout /t 5 %nul%
@@ -591,7 +591,7 @@ echo [Successful]
 )
 
 echo:
-echo Restarting [wlidsvc LicenseManager] services...
+echo Restarting wlidsvc ^& LicenseManager services...
 for %%# in (wlidsvc LicenseManager) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 10 | Out-Null")
 
 ::========================================================================================================================================
@@ -603,13 +603,13 @@ for %%# in (wlidsvc LicenseManager) do (%psc% "Start-Job { Restart-Service %%# }
 echo:
 echo %line%
 echo:
-call :dk_color %Blue% "Rebuilding SPP Licensing Tokens"
+call :dk_color %Blue% "Rebuilding SPP Licensing Tokens..."
 echo:
 
 call :scandat check
 
 if not defined token (
-call :dk_color %Red% "tokens.dat file not found."
+call :dk_color %Red% "tokens.dat file was not found."
 ) else (
 echo tokens.dat file: [%token%]
 )
@@ -627,7 +627,7 @@ call :dk_color %Red% "Correct path not found in TokenStore Registry [%tokenstore
 
 if %winbuild% GEQ 9200 if not defined badregistry (
 echo:
-echo Checking SPP permission related issues...
+echo Checking for SPP permission related issues...
 call :checkperms
 if defined permerror (
 call :dk_color %Red% "[!permerror!]"
@@ -651,7 +651,7 @@ if %winbuild% LSS 9200 (
 REM Fix issues caused by Update KB971033 in Windows 7
 REM https://support.microsoft.com/help/4487266
 echo:
-echo Checking Update KB971033...
+echo Checking for update KB971033...
 %psc% "if (Get-Hotfix -Id KB971033 -ErrorAction SilentlyContinue) {Exit 3}" %nul%
 if !errorlevel!==3 (
 echo Found, uninstalling it...
@@ -688,7 +688,7 @@ call :scandat check
 
 echo:
 if not defined token (
-call :dk_color %Red% "Failed to rebuilt tokens.dat file."
+call :dk_color %Red% "Failed to rebuild tokens.dat file."
 ) else (
 echo tokens.dat file was rebuilt successfully.
 )
@@ -704,11 +704,11 @@ sc config sppuinotify start= demand
 echo:
 echo %line%
 echo:
-call :dk_color %Blue% "Rebuilding OSPP Licensing Tokens"
+call :dk_color %Blue% "Rebuilding OSPP Licensing Tokens..."
 echo:
 
 sc qc osppsvc %nul% || (
-echo OSPP based Office is not installed
+echo OSPP based Office is not installed.
 echo Skipping rebuilding OSPP tokens...
 goto :repairoffice
 )
@@ -716,13 +716,13 @@ goto :repairoffice
 call :scandatospp check
 
 if not defined token (
-call :dk_color %Red% "tokens.dat file not found."
+call :dk_color %Red% "tokens.dat file was not found."
 ) else (
 echo tokens.dat file: [%token%]
 )
 
 echo:
-echo Stopping osppsvc service...
+echo Stopping the osppsvc service...
 %psc% Stop-Service osppsvc -force %nul%
 
 echo:
@@ -736,7 +736,7 @@ echo:
 )
 
 echo:
-echo Starting osppsvc service to generate tokens.dat
+echo Starting the osppsvc service to generate tokens.dat...
 %psc% Start-Service osppsvc %nul%
 call :scandatospp check
 if not defined token (
@@ -749,7 +749,7 @@ call :scandatospp check
 
 echo:
 if not defined token (
-call :dk_color %Red% "Failed to rebuilt tokens.dat file."
+call :dk_color %Red% "Failed to rebuild tokens.dat file."
 ) else (
 echo tokens.dat file was rebuilt successfully.
 )
@@ -761,15 +761,15 @@ echo tokens.dat file was rebuilt successfully.
 echo:
 echo %line%
 echo:
-call :dk_color %Blue% "Repairing Office Licenses"
+call :dk_color %Blue% "Repairing Office Licenses..."
 echo:
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
 
 if /i "%arch%"=="ARM64" (
 echo:
-echo ARM64 Windows Found.
-echo You need to use repair option in Windows settings for Office.
+echo ARM64 Windows detected.
+echo You need to use the Repair option in Windows Settings for Office.
 echo:
 start ms-settings:appsfeatures
 goto :repairend
@@ -850,9 +850,9 @@ goto :repairend
 echo:
 ) else (
 echo:
-call :dk_color %_Yellow% "A Window will popup, in that Window you need to select [Quick] Repair Option..."
+call :dk_color %_Yellow% "A new window will appear, in that window you need to select [Quick Repair] option."
 if defined terminal (
-call :dk_color %_Yellow% "Press 0 key to continue..."
+call :dk_color %_Yellow% "Press [0] to continue..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to continue..."
@@ -863,7 +863,7 @@ pause %nul1%
 if defined uwp16 (
 echo:
 echo Note: Skipping repair for Office 16.0 UWP. 
-echo       You need to use reset option in Windows settings for it.
+echo       You need to use the Reset option in Windows settings for it.
 echo ________________________________________________________________
 echo:
 start ms-settings:appsfeatures
@@ -875,7 +875,7 @@ if defined c2r14_86 set c2r14=1
 
 if defined c2r14 (
 echo:
-echo Note: Skipping repair for Office 14.0 C2R 
+echo Note: Skipping repair for Office 14.0 C2R...
 echo       You need to use Repair option in Windows settings for it.
 echo ________________________________________________________________
 echo:
@@ -914,12 +914,12 @@ title  Fix WMI
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 %eline%
-echo WMI rebuild is not recommended on Windows Server. Aborting...
+echo Rebuilding WMI is not recommended on Windows Server, aborting...
 goto :at_back
 )
 
 echo:
-echo Checking WMI
+echo Checking WMI...
 call :checkwmi
 
 ::  Apply basic fix first and check
@@ -932,7 +932,7 @@ call :checkwmi
 
 if not defined error (
 echo [Working]
-echo No need to apply this option. Aborting...
+echo No need to apply this option, aborting...
 goto :at_back
 )
 
@@ -947,11 +947,11 @@ for %%G in (DependOnService Description DisplayName ErrorControl ImagePath Objec
 echo:
 if defined _corrupt (
 %eline%
-echo Winmgmt service is corrupted. Aborting...
+echo Winmgmt service is corrupted, aborting...
 goto :at_back
 )
 
-echo Disabling Winmgmt service
+echo Disabling Winmgmt service...
 sc config Winmgmt start= disabled %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
@@ -962,7 +962,7 @@ goto :at_back
 )
 
 echo:
-echo Stopping Winmgmt service
+echo Stopping Winmgmt service...
 %psc% Stop-Service Winmgmt -force %nul%
 %psc% Stop-Service Winmgmt -force %nul%
 %psc% Stop-Service Winmgmt -force %nul%
@@ -971,7 +971,7 @@ echo [Successful]
 ) || (
 call :dk_color %Red% "[Failed]"
 echo:
-call :dk_color %Blue% "Its recommended to select [Restart] option and then apply Fix WMI option again."
+call :dk_color %Blue% "It is recommended to select [Restart] option and then apply Fix WMI option again."
 echo %line%
 echo:
 choice /C:21 /N /M "> [1] Restart  [2] Revert Back Changes :"
@@ -983,7 +983,7 @@ exit
 )
 
 echo:
-echo Deleting WMI repository
+echo Deleting WMI repository...
 rmdir /s /q "%SysPath%\wbem\repository\" %nul%
 if exist "%SysPath%\wbem\repository\" (
 call :dk_color %Red% "[Failed]"
@@ -992,7 +992,7 @@ echo [Successful]
 )
 
 echo:
-echo Enabling Winmgmt service
+echo Enabling Winmgmt service...
 sc config Winmgmt start= auto %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
@@ -1003,17 +1003,17 @@ call :dk_color %Red% "[Failed]"
 call :checkwmi
 if not defined error (
 echo:
-echo Checking WMI
+echo Checking WMI...
 call :dk_color %Green% "[Working]"
 goto :at_back
 )
 
 echo:
-echo Registering .dll's and Compiling .mof's, .mfl's
+echo Registering .dll's and Compiling .mof's, .mfl's...
 call :registerobj %nul%
 
 echo:
-echo Checking WMI
+echo Checking WMI...
 call :checkwmi
 if defined error (
 call :dk_color %Red% "[Not Responding]"
@@ -1069,7 +1069,7 @@ echo:
 echo %line%
 echo:
 if defined terminal (
-call :dk_color %_Yellow% "Press 0 key to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
@@ -1113,7 +1113,7 @@ exit /b
 
 :checkperms
 
-::  This code checks if SPP has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers.
+::  This code checks if SPP has permission access to tokens folder and required registry keys. Incorrect permissions are often set by HWID gaming spoofers.
 
 set permerror=
 if not exist "%tokenstore%\" set "permerror=Error Found In Token Folder"
@@ -1128,7 +1128,7 @@ if !errorlevel!==2 (
 if "%%A"=="%tokenstore%" (
 set "permerror=Error Found In Token Folder"
 ) else (
-set "permerror=Error Found In SPP Registries"
+set "permerror=Error Found In SPP registries"
 )
 )
 )
@@ -1181,7 +1181,7 @@ if ($env:permerror -eq 'Error Found In SPP Registries') {
 # Fix perms for SPP in HKU\S-1-5-20
 # https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
 
-if ($env:permerror -ne 'Error Found In S-1-5-20 SPP') {
+if ($env:permerror -ne 'Error found in S-1-5-20 SPP') {
     exit
 }
 if (-not (Test-Path 'Registry::HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform')) {
@@ -1367,7 +1367,7 @@ if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press 0 key to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
