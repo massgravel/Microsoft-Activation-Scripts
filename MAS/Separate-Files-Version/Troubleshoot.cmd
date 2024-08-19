@@ -844,7 +844,7 @@ echo:
 
 if %counter% EQU 0 (
 echo:
-echo Installed Office is not found.
+echo Office ^(2010 and later^) is not installed.
 goto :repairend
 echo:
 ) else (
@@ -983,8 +983,8 @@ exit
 
 echo:
 echo Deleting WMI repository
-rmdir /s /q "%windir%\System32\wbem\repository\" %nul%
-if exist "%windir%\System32\wbem\repository\" (
+rmdir /s /q "%SysPath%\wbem\repository\" %nul%
+if exist "%SysPath%\wbem\repository\" (
 call :dk_color %Red% "[Failed]"
 ) else (
 echo [Successful]
@@ -1029,9 +1029,9 @@ goto :at_back
 ::  https://eskonr.com/2012/01/how-to-fix-wmi-issues-automatically/
 
 %psc% Stop-Service Winmgmt -force %nul%
-cd /d %systemroot%\system32\wbem\
-regsvr32 /s %systemroot%\system32\scecli.dll
-regsvr32 /s %systemroot%\system32\userenv.dll
+cd /d %SysPath%\wbem\
+regsvr32 /s %SysPath%\scecli.dll
+regsvr32 /s %SysPath%\userenv.dll
 mofcomp cimwin32.mof
 mofcomp cimwin32.mfl
 mofcomp rsop.mof
@@ -1277,9 +1277,9 @@ function ReinstallLicenses() {
 
 set token=
 for %%# in (
-%Systemdrive%\Windows\System32\spp\store_test\2.0\
-%Systemdrive%\Windows\System32\spp\store\
-%Systemdrive%\Windows\System32\spp\store\2.0\
+%SysPath%\spp\store_test\2.0\
+%SysPath%\spp\store\
+%SysPath%\spp\store\2.0\
 %Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\
 ) do (
 
