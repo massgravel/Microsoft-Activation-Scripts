@@ -531,7 +531,7 @@ echo [%encoded%]
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 goto :dl_final
 ) else (
-echo Generating GenuineTicket.xml            [Successful]
+echo Generating GenuineTicket                [Successful]
 )
 
 set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
@@ -544,7 +544,7 @@ set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 %_xmlexist% (
 set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-call :dk_color %Red% "Installing GenuineTicket.xml            [Failed with ClipSVC service restart, wait...]"
+call :dk_color %Red% "Installing GenuineTicket                [Failed with ClipSVC service restart, wait...]"
 )
 )
 
@@ -562,7 +562,7 @@ call :dk_color %Red% "Checking ClipSVC tokens.dat             [Not Found]"
 %_xmlexist% (
 set error=1
 set rebuildinfo=1
-call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With clipup -v -o]"
+call :dk_color %Red% "Installing GenuineTicket                [Failed With clipup -v -o]"
 )
 
 if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*.xml" (
@@ -604,7 +604,7 @@ reg delete "%_ident%" /f %nul%
 reg query "%_ident%" %nul% && (
 echo:
 set error=1
-call :dk_color %Red% "Deleting an IdentityCRL Registry        [Failed] [%_ident%]"
+call :dk_color %Red% "Deleting IdentityCRL Registry           [Failed] [%_ident%]"
 )
 for %%# in (wlidsvc LicenseManager sppsvc) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 10 | Out-Null")
 call :dk_refresh
@@ -639,7 +639,7 @@ if not defined resfail (
 if defined resfail (
 set error=1
 echo:
-call :dk_color %Red% "Checking Licensing Servers              [Failed To Connect]"
+call :dk_color %Red% "Connecting to Licensing Servers              [Failed to Connect]"
 set fixes=%fixes% %mas%licensing-servers-issue
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%licensing-servers-issue"
 )
@@ -657,11 +657,11 @@ call :dk_color %Red% "Generating New IdentityCRL Registry     [Failed] [%_ident%
 
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DisableWindowsUpdateAccess %nul2% | find /i "0x1" %nul% && set wublock=1
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DoNotConnectToWindowsUpdateInternetLocations %nul2% | find /i "0x1" %nul% && set wublock=1
-if defined wublock call :dk_color %Red% "Checking Update Blocker In Registry     [Found]"
+if defined wublock call :dk_color %Red% "Checking for Windows Update Blocker in Registry     [Found]"
 
 reg query "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v DisableStoreApps %nul2% | find /i "0x1" %nul% && (
 set storeblock=1
-call :dk_color %Red% "Checking Store Blocker In Registry      [Found]"
+call :dk_color %Red% "Checking for Microsoft Store Blocker in Registry      [Found]"
 )
 
 for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type ServiceSidType RequiredPrivileges FailureActions) do if not defined wucorrupt (
@@ -931,7 +931,7 @@ exit /b
 
 :dk_reeval
 
-::  This key is left by the system in rearm process and sppsvc sometimes fails to delete it, it causes issues in working of the Scheduled Tasks of SPP
+::  This key is left by the system during the rearm process and sppsvc sometimes fails to delete it, it causes severe issues with SPP's scheduled tasks leading to random deactivations.
 
 set "ruleskey=HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedSystemState"
 reg delete "%ruleskey%" /v "State" /f %nul%
@@ -1072,7 +1072,7 @@ set pupfound=%pupfound1%%pupfound2%
 set hcount=0
 for %%# in (avira.com kaspersky.com virustotal.com mcafee.com) do (
 find /i "%%#" %SysPath%\drivers\etc\hosts %nul% && set /a hcount+=1)
-if %hcount%==4 set "results=[AV URLs are blocked in hosts]"
+if %hcount%==4 set "results=[Antivirus URL's are blocked in hosts]"
 
 set wucount=0
 for %%# in (wuauserv) do (
@@ -1081,7 +1081,7 @@ for %%G in (DependOnService Description DisplayName ErrorControl ImagePath Objec
 reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v %%G %nul% || (set _corrupt=1 & set /a wucount+=1)
 )
 )
-if %wucount% GEQ 1 set "results=%results%[WU registry is corrupt]"
+if %wucount% GEQ 1 set "results=%results%[Windows Update registry is corrupt]"
 
 sc start sppsvc %nul%
 echo "%errorlevel%" | findstr "577 225" %nul% && (
@@ -1091,8 +1091,8 @@ if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%
 )
 
 if not "%results%%pupfound%"=="" (
-if defined pupfound call :dk_color %Gray% "Checking PUP Activators                 [Found%pupfound%]"
-if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection     %results%"
+if defined pupfound call :dk_color %Gray% "Checking for PUP Activators                 [Found%pupfound%]"
+if defined results call :dk_color %Red% "Checking for Probable Mal%w%ware Infection     %results%"
 set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
@@ -1136,7 +1136,7 @@ if defined _corrupt (if defined serv_cor (set "serv_cor=!serv_cor! %%#") else (s
 if defined serv_cor (
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking Corrupt Services               [%serv_cor%]"
+call :dk_color %Red% "Checking for Corrupt Services               [%serv_cor%]"
 )
 
 ::========================================================================================================================================
@@ -1202,7 +1202,7 @@ if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
-call :dk_color %Blue% "Restart the system to fix this error."
+call :dk_color %Blue% "Restart your system to fix this error."
 set showfix=1
 )
 )
@@ -1214,7 +1214,7 @@ set showfix=1
 if defined safeboot_option (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking Boot Mode                      [%safeboot_option%] " %Blue% "[Safe mode found. Run in normal mode.]"
+call :dk_color2 %Red% "Checking Boot Mode                      [%safeboot_option%] " %Blue% "[Safe mode detected. Run the script in normal mode.]"
 )
 
 
@@ -1224,7 +1224,7 @@ set error=1
 call :dk_color %Red% "Checking Windows Setup State            [%imagestate%]"
 echo "%imagestate%" | find /i "RESEAL" %nul% && (
 set showfix=1
-call :dk_color %Blue% "You need to run it in normal mode in case you are running it in Audit Mode."
+call :dk_color %Blue% "You need to run the script in normal mode if you are running the script in Audit Mode."
 )
 )
 
@@ -1232,7 +1232,7 @@ call :dk_color %Blue% "You need to run it in normal mode in case you are running
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WinPE" /v InstRoot %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE mode found. Run in normal mode.]"
+call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE mode detected. Run the script in normal mode.]"
 )
 
 
@@ -1251,7 +1251,7 @@ echo Checking WPA Registry Count             [%wpainfo%]
 if not defined officeact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% || (
 set error=1
-call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
+call :dk_color %Red% "Checking for Evaluation Packages                  [Non-Evaluation Licenses are installed in Evaluation Windows]"
 set fixes=%fixes% %mas%evaluation_editions
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
 )
@@ -1270,18 +1270,18 @@ if "%osSKU%"=="165" set osedition=ProfessionalEducationN
 
 if not defined officeact (
 if %osedition%==0 (
-call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
+call :dk_color %Red% "Checking for Edition Name                   [Not Found In Registry]"
 ) else (
 
 if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set error=1
 set skunotfound=1
-call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
+call :dk_color %Red% "Checking for License Files                  [Not Found] [%osedition%]"
 )
 
 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*-%osedition%-*.mum" (
 set error=1
-call :dk_color %Red% "Checking Package File                   [Not Found] [%osedition%]"
+call :dk_color %Red% "Checking for Package Files                  [Not Found] [%osedition%]"
 )
 )
 )
@@ -1305,7 +1305,7 @@ if %errorlevel% NEQ 0 set wmifailed=1
 echo "%error_code%" | findstr /i "0x800410 0x800440" %nul1% && set wmifailed=1& ::  https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
 if defined wmifailed (
 set error=1
-call :dk_color %Red% "Checking WMI                            [Not Working]"
+call :dk_color %Red% "Checking WMI                             [Not Working]"
 if not defined showfix call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run Fix WMI option."
 set showfix=1
 )
@@ -1330,14 +1330,14 @@ call :dk_color %Gray% "Checking SLC/WMI SKU                    [Difference Found
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking Rearm                          " %Blue% "[System Restart Is Required]"
+call :dk_color2 %Red% "Checking Rearm                          " %Blue% "[System Restart is Required]"
 )
 
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState" %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking ClipSVC                        " %Blue% "[System Restart Is Required]"
+call :dk_color2 %Red% "Checking for ClipSVC Volatile Key       " %Blue% "[System Restart is Required]"
 )
 
 
@@ -1345,14 +1345,14 @@ call :dk_color2 %Red% "Checking ClipSVC                        " %Blue% "[System
 
 if exist "%SysPath%\wlms\wlms.exe" (
 sc query wlms | find /i "RUNNING" %nul% && (
-echo Checking Eval WLMS Service              [Found]
+echo Checking for Evaluation WLMS Service              [Found]
 )
 )
 
 
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% || (
 set error=1
-call :dk_color %Red% "Checking HKU\S-1-5-20 Reg               [Not Found]"
+call :dk_color %Red% "Checking HKU\S-1-5-20 Registry           [Not Found]"
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
