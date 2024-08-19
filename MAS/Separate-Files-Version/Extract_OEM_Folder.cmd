@@ -64,7 +64,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo Null service, which is required for the script to operate, is not running.
+echo The Null service, which is required for the script to operate, is not running.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -681,7 +681,7 @@ cd \
 :errorfound
 
 %eline%
-echo $OEM$ Folder was not created successfully...
+echo Failed to create $OEM$ folder successfully.
 goto :done2
 
 :done
@@ -692,8 +692,8 @@ call :dk_color %Blue% "%oem%"
 call :dk_color %Green% "The $OEM$ folder was successfully created on your Desktop."
 echo "%oem%" | find /i "38" %nul% && (
 echo:
-echo To activate Server Cor/Acor editions ^(No GUI Versions^) using KMS38,
-echo Check this page: %mas%oem-folder
+echo If you want to activate Server Cor/Acor editions ^(No GUI Versions^) using KMS38,
+echo refer to this page for instructions: %mas%oem-folder
 )
 echo ______________________________________________________________
 
@@ -701,7 +701,7 @@ echo ______________________________________________________________
 
 echo:
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
+call :dk_color2 %Blue% "Press [1] to open the Troubleshoot page " %Gray% " Press [0] to ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
