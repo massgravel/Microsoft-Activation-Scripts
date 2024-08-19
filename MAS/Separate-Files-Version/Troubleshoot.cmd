@@ -14,7 +14,7 @@
 
 ::========================================================================================================================================
 
-::  Set Environment variables, it helps if they are misconfigured in the system
+::  Set environment variables, it helps if they are misconfigured in the system
 
 setlocal EnableExtensions
 setlocal DisableDelayedExpansion
@@ -79,7 +79,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
+echo Error - Script either has an LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -122,13 +122,13 @@ set "line=______________________________________________________________________
 if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalent.
+echo MAS only supports Windows 7/8/8.1/10/11 and their Server equivalents.
 goto dk_done
 )
 
 ::========================================================================================================================================
 
-::  Fix special characters limitation in path name
+::  Fix special character limitations in path name
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
@@ -149,7 +149,7 @@ echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
 echo Script is launched from the temp folder,
-echo Most likely you are running the script directly from the archive file.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto dk_done
@@ -189,8 +189,8 @@ goto dk_done
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
-echo This script needs admin rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+echo This script needs admininistrator rights.
+echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
 
@@ -249,14 +249,14 @@ if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.6
 if defined old (
 echo ________________________________________________
 %eline%
-echo Version %masver% of MAS is outdated.
+echo Your version of of MAS [%masver%] is outdated.
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :dk_color %_Green% "Enter a menu option on your keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option on your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
@@ -275,7 +275,7 @@ if not defined desktop for /f "delims=" %%a in ('%psc% "& {write-host $([Environ
 
 if not defined desktop (
 %eline%
-echo Desktop location was not detected, aborting...
+echo Unable to detect Desktop location, aborting...
 goto dk_done
 )
 
@@ -310,7 +310,7 @@ echo:
 echo:             [0] %_exitmsg%
 echo:       _______________________________________________________________
 echo:          
-call :dk_color2 %_White% "            " %_Green% "Enter a menu option on your keyboard :"
+call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard :"
 choice /C:1234560 /N
 set _erl=%errorlevel%
 
@@ -333,8 +333,8 @@ title  Dism /English /Online /Cleanup-Image /RestoreHealth
 
 if %winbuild% LSS 9200 (
 %eline%
-echo Unsupported OS version Detected.
-echo This command is supported only for Windows 8/8.1/10/11 and their Server equivalent.
+echo Unsupported OS version detected.
+echo This command only works on Windows 8/8.1/10/11 and their Server equivalents.
 goto :at_back
 )
 
@@ -352,14 +352,14 @@ call :dk_color2 %_White% "     " %Red% "Checking Internet Connection  [Not conne
 
 echo %line%
 echo:
-echo      Dism uses Windows Update to provide the files required to fix corruption.
+echo      DISM uses Windows Update to provide replacement files required to fix corruption.
 echo      This will take 5-15 minutes or more..
 echo %line%
 echo:
 echo      Notes:
 echo:
-call :dk_color2 %_White% "     - " %Gray% "Make sure the Internet is connected."
-call :dk_color2 %_White% "     - " %Gray% "Make sure the Windows update is properly working."
+call :dk_color2 %_White% "     - " %Gray% "Make sure the internet is connected."
+call :dk_color2 %_White% "     - " %Gray% "Make sure that Windows update is properly working."
 echo:
 echo %line%
 echo:
@@ -379,7 +379,7 @@ del /f /q "%SystemRoot%\logs\cbs\cbs.log" %nul%
 del /f /q "%SystemRoot%\logs\DISM\dism.log" %nul%
 
 echo:
-echo Applying the command,
+echo Executing the command...
 echo dism /english /online /cleanup-image /restorehealth
 dism /english /online /cleanup-image /restorehealth
 
@@ -400,7 +400,7 @@ copy /y /b "%SystemRoot%\logs\DISM\dism.log" "!desktop!\AT_Logs\RHealth_DISM_%_t
 )
 
 echo:
-call :dk_color %Gray% "CBS and DISM logs are copied to the AT_Logs folder on the desktop."
+call :dk_color %Gray% "CBS and DISM logs are copied to the AT_Logs folder on your desktop."
 goto :at_back
 
 ::========================================================================================================================================
@@ -414,7 +414,8 @@ title  sfc /scannow
 echo:
 echo %line%
 echo:    
-echo      System File Checker will repair missing or corrupted system files.
+echo      SFC will repair missing or corrupted system files.
+echo
 echo      This will take 10-15 minutes or more..
 echo:
 echo      If SFC could not fix something, then run the command again to see if it may be able 
