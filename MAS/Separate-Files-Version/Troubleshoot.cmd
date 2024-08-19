@@ -646,6 +646,23 @@ echo:
 echo Stopping sppsvc service...
 %psc% Stop-Service sppsvc -force %nul%
 
+if %winbuild% LSS 9200 (
+REM Fix issues caused by Update KB971033 in Windows 7
+REM https://support.microsoft.com/help/4487266
+echo:
+echo Checking Update KB971033...
+%psc% "if (Get-Hotfix -Id KB971033 -ErrorAction SilentlyContinue) {Exit 3}" %nul%
+if !errorlevel!==3 (
+echo Found, uninstalling it...
+wusa /uninstall /quiet /norestart /kb:971033
+) else (
+echo [Not Found]
+)
+%psc% Stop-Service sppuinotify -force %nul%
+sc config sppuinotify start= disabled
+del /f /q %SysPath%\7B296FB0-376B-497e-B012-9C450E1B7327-*.C7483456-A289-439d-8115-601632D005A0 /ah
+)
+
 echo:
 call :scandat delete
 call :scandat check
@@ -673,6 +690,10 @@ if not defined token (
 call :dk_color %Red% "Failed to rebuilt tokens.dat file."
 ) else (
 echo tokens.dat file was rebuilt successfully.
+)
+
+if %winbuild% LSS 9200 (
+sc config sppuinotify start= demand
 )
 
 ::========================================================================================================================================
@@ -1372,6 +1393,7 @@ echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
 if not exist %psc% (echo %~3%~6) else (%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6')
 )
 exit /b
+
 
 ::========================================================================================================================================
 
