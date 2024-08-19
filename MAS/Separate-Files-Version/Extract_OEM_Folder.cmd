@@ -681,7 +681,7 @@ cd \
 :errorfound
 
 %eline%
-echo Failed to create $OEM$ folder successfully.
+echo The script failed to create the $OEM$ folder successfully.
 goto :done2
 
 :done
