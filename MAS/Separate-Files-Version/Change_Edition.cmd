@@ -153,7 +153,7 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder,
+echo Script is launched from the temp folder.
 echo Most likely you are running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
