@@ -122,7 +122,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
+echo Error - Script either has an LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -166,12 +166,12 @@ set "specific_kms=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectio
 if %winbuild% LSS 14393 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
-echo KMS38 Activation is supported for Windows 10/11/Server, build 14393 and later.
+echo KMS38 activation is only supported on Windows 10/11/Server, build 14393 and later.
 echo:
 if %winbuild% LSS 10240 (
-call :dk_color %Blue% "Use Online KMS Activation option."
+call :dk_color %Blue% "Use Online KMS activation option."
 ) else (
-call :dk_color %Blue% "Use HWID Activation option."
+call :dk_color %Blue% "Use HWID activation option."
 )
 goto dk_done
 )
@@ -199,7 +199,7 @@ echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
 echo Script is launched from the temp folder,
-echo Most likely you are running the script directly from the archive file.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto dk_done
@@ -239,8 +239,8 @@ goto dk_done
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
-echo This script needs admin rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+echo This script needs administrator rights.
+echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
 
@@ -299,14 +299,14 @@ if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.6
 if defined old (
 echo ________________________________________________
 %eline%
-echo Version %masver% of MAS is outdated.
+echo Your version of MAS [%masver%] is outdated.
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :dk_color %_Green% "Enter a menu option on your keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
@@ -339,7 +339,7 @@ echo:
 echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
 echo: 
-call :dk_color2 %_White% "              " %_Green% "Enter a menu option on your keyboard [1,2,0]"
+call :dk_color2 %_White% "              " %_Green% "Choose a menu option using your keyboard [1,2,0]"
 choice /C:120 /N
 set _el=!errorlevel!
 if !_el!==3  exit /b
@@ -369,7 +369,7 @@ if not exist %SysPath%\ClipUp.exe if not defined a_cor (set _fmiss=%_fmiss%ClipU
 
 if defined _fmiss (
 %eline%
-echo [%_fmiss%] file is missing. Aborting...
+echo [%_fmiss%] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -395,12 +395,12 @@ if defined _perm (
 cls
 echo ___________________________________________________________________________________________
 echo:
-call :dk_color2 %_White% "     " %Green% "Checking: %winos% is Permanently Activated."
+call :dk_color2 %_White% "     " %Green% "%winos% is already permanently activated."
 call :dk_color2 %_White% "     " %Gray% "Activation is not required."
 echo ___________________________________________________________________________________________
 if %_unattended%==1 goto dk_done
 echo:
-choice /C:10 /N /M ">    [1] Activate [0] %_exitmsg% : "
+choice /C:10 /N /M ">    [1] Activate Anyway [0] %_exitmsg% : "
 if errorlevel 2 exit /b
 )
 cls
@@ -425,7 +425,7 @@ echo Server Evaluation cannot be activated. Convert it to full Server OS.
 echo:
 call :dk_color %Blue% "Go Back to main menu and use [Change Edition] option."
 ) else (
-echo Evaluation Editions cannot be activated outside of evaluation period. 
+echo Evaluation editions cannot be activated outside of their evaluation period. 
 echo:
 set fixes=%fixes% %mas%evaluation_editions
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
@@ -441,9 +441,9 @@ goto dk_done
 if defined a_cor (
 if not exist "!_work!\clipup.exe" (
 %eline%
-echo clipup.exe doesn't exist in Server Cor/Acor [No GUI] version.
-echo It's required for KMS38 Activation.
-echo Check below page on how to activate it.
+echo clipup.exe doesn't exist in Server Cor/Acor [No GUI] versions.
+echo The file is required for KMS38 activation.
+echo Check the below page for instructions on how to activate it.
 set fixes=%fixes% %mas%kms38
 echo %mas%kms38
 goto dk_done
@@ -496,7 +496,7 @@ set /a UBR=0
 if %osSKU%==191 if defined altkey if defined altedition (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
 if %winbuild% LSS 22598 if !UBR! LSS 2788 (
-call :dk_color %Blue% "Windows must to be updated to build 19044.2788 or higher for IotEnterpriseS KMS38 activation."
+call :dk_color %Blue% "Windows must be updated to build 19044.2788 or higher for IotEnterpriseS KMS38 activation."
 )
 )
 
@@ -508,12 +508,12 @@ if not defined key if not defined _gvlk (
 %eline%
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 if not defined skunotfound (
-echo This product does not support KMS38 Activation.
-echo Make sure you are using updated version of the script.
+echo This product does not support KMS38 activation.
+echo Make sure you are using the latest version of the script.
 set fixes=%fixes% %mas%
 echo %mas%
 ) else (
-echo Required License files not found in %SysPath%\spp\tokens\skus\
+echo Required license files were not found in %SysPath%\spp\tokens\skus\
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -527,12 +527,12 @@ goto dk_done
 
 echo:
 if defined changekey (
-call :dk_color %Blue% "[%altedition%] Edition product key will be used to enable KMS38 activation."
+call :dk_color %Blue% "[%altedition%] edition product key will be used to enable KMS38 activation."
 echo:
 )
 
 if defined winsub (
-call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. Script will activate base edition [SKU ID-%regSKU%]."
+call :dk_color %Blue% "Windows Subscription edition [SKU ID-%slcSKU%] found. Script will activate the base edition [SKU ID-%regSKU%]."
 echo:
 )
 
@@ -556,7 +556,7 @@ if %_wmic% EQU 1 for /f "tokens=2 delims==" %%a in ('"wmic path %spp% where (App
 if %_wmic% EQU 0 for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT ID FROM %spp% WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND Description like ''%%KMSCLIENT%%'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn is NULL').Get()).ID | %% {echo ('ID='+$_)}" %nul6%') do call set "app=%%a"
 
 if not defined app (
-call :dk_color %Red% "Checking Installed GVLK Activation ID   [Not Found] Aborting..."
+call :dk_color %Red% "Checking for Installed GVLK Activation ID   [Not Found] Aborting..."
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 goto :dk_done
@@ -633,7 +633,7 @@ call :dk_color %Red% "Generating GenuineTicket.xml            [Failed, aborting 
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 goto :k_final
 ) else (
-echo Generating GenuineTicket.xml            [Successful]
+echo Generating GenuineTicket                [Successful]
 )
 
 set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
@@ -656,7 +656,7 @@ call :dk_color %Gray% "Stopping sppsvc Service                 [Failed]"
 %_xmlexist% (
 set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipSVC Service Restart, Wait...]"
+call :dk_color %Red% "Installing GenuineTicket                 [Failed With ClipSVC Service Restart, Wait...]"
 )
 )
 
@@ -674,13 +674,13 @@ call :dk_color %Red% "Checking ClipSVC tokens.dat             [Not Found]"
 %_xmlexist% (
 set error=1
 set rebuildinfo=1
-call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With clipup -v -o]"
+call :dk_color %Red% "Installing GenuineTicket                [Failed With clipup -v -o]"
 )
 
 if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*.xml" (
 set error=1
 set rebuildinfo=1
-call :dk_color %Red% "Checking Ticket Migration               [Failed]"
+call :dk_color %Red% "Checking for Ticket Migration               [Failed]"
 )
 
 if not defined showfix if defined rebuildinfo (
@@ -739,9 +739,9 @@ if not defined _k38 (
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg delete "HKU\S-1-5-20\%specific_kms%" /f
 %nul% reg query "HKLM\%specific_kms%" && (
-call :dk_color %Red% "Removing The Added Specific KMS Host    [Failed]"
+call :dk_color %Red% "Removing the Added Specific KMS Host    [Failed]"
 ) || (
-echo Removing The Added Specific KMS Host    [Successful]
+echo Removing the Added Specific KMS Host    [Successful]
 )
 )
 
