@@ -27,7 +27,7 @@ set "_debug=0"
 
 ::========================================================================================================================================
 
-::  Set Environment variables, it helps if they are misconfigured in the system
+::  Set environment variables, it helps if they are misconfigured in the system
 
 setlocal EnableExtensions
 setlocal DisableDelayedExpansion
@@ -119,7 +119,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
+echo Error - Script either has an LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -160,22 +160,22 @@ call :dk_setvar
 if %winbuild% LSS 10240 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
-echo HWID Activation is supported only for Windows 10/11.
+echo HWID Activation is only supported on Windows 10/11.
 echo:
-call :dk_color %Blue% "Use Online KMS Activation option."
+call :dk_color %Blue% "Use Online KMS activation option."
 goto dk_done
 )
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 %eline%
-echo HWID Activation is not supported for Windows Server.
-call :dk_color %Blue% "Use KMS38 or Online KMS Activation option."
+echo HWID Activation is not supported on Windows Server.
+call :dk_color %Blue% "Use KMS38 or Online KMS activation option."
 goto dk_done
 )
 
 ::========================================================================================================================================
 
-::  Fix special characters limitation in path name
+::  Fix special character limitations in path name
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
@@ -196,7 +196,7 @@ echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
 echo Script is launched from the temp folder,
-echo Most likely you are running the script directly from the archive file.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto dk_done
@@ -237,7 +237,7 @@ goto dk_done
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
 echo This script needs admin rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
 
@@ -296,14 +296,14 @@ if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.6
 if defined old (
 echo ________________________________________________
 %eline%
-echo Version %masver% of MAS is outdated.
+echo Your version of MAS [%masver%] is outdated.
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :dk_color %_Green% "Enter a menu option on your keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
@@ -329,7 +329,7 @@ ClipUp.exe
 ) do (
 if not exist %SysPath%\%%# (
 %eline%
-echo [%SysPath%\%%#] file is missing. Aborting...
+echo [%SysPath%\%%#] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -356,12 +356,12 @@ if defined _perm (
 cls
 echo ___________________________________________________________________________________________
 echo:
-call :dk_color2 %_White% "     " %Green% "Checking: %winos% is Permanently Activated."
+call :dk_color2 %_White% "     " %Green% "%winos% is already permanently activated."
 call :dk_color2 %_White% "     " %Gray% "Activation is not required."
 echo ___________________________________________________________________________________________
 if %_unattended%==1 goto dk_done
 echo:
-choice /C:10 /N /M ">    [1] Activate [0] %_exitmsg% : "
+choice /C:10 /N /M ">    [1] Activate Anyway [0] %_exitmsg% : "
 if errorlevel 2 exit /b
 )
 cls
@@ -375,7 +375,7 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2
 %eline%
 echo [%winos% ^| %winbuild%]
 echo:
-echo Evaluation Editions cannot be activated outside of evaluation period. 
+echo Evaluation editions cannot be activated outside of their evaluation period. 
 echo:
 set fixes=%fixes% %mas%evaluation_editions
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
@@ -408,7 +408,7 @@ echo Checking Internet Connection            [Connected%ping_f%]
 ) else (
 set error=1
 call :dk_color %Red% "Checking Internet Connection            [Not Connected]"
-call :dk_color %Blue% "Internet is required for HWID Activation."
+call :dk_color %Blue% "Internet is required for HWID activation."
 )
 
 ::========================================================================================================================================
@@ -450,20 +450,20 @@ if not defined key call :hwidfallback
 if defined altkey (set key=%altkey%&set changekey=1&set notworking=)
 
 if defined notworking if defined notfoundaltactID (
-call :dk_color %Red% "Checking Alternate Edition For HWID     [%altedition% Activation ID Not Found]"
+call :dk_color %Red% "Checking for Alternate Edition to Use for HWID     [%altedition% Activation ID Not Found]"
 )
 
 if not defined key (
 %eline%
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 if not defined skunotfound (
-echo This product does not support HWID Activation.
-echo Try KMS38 Activation option.
-echo Make sure you are using updated version of the script.
+echo This product does not support HWID activation.
+echo Try KMS38 activation option.
+echo Make sure you are using the latest version of the script.
 set fixes=%fixes% %mas%
 echo %mas%
 ) else (
-echo Required License files not found in %SysPath%\spp\tokens\skus\
+echo Required license files not found in %SysPath%\spp\tokens\skus\
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -479,12 +479,12 @@ if defined notworking set error=1
 
 echo:
 if defined changekey (
-call :dk_color %Blue% "[%altedition%] Edition product key will be used to enable HWID activation."
+call :dk_color %Blue% "[%altedition%] edition product key will be used to enable HWID activation."
 echo:
 )
 
 if defined winsub (
-call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. Script will activate base edition [SKU ID-%regSKU%]."
+call :dk_color %Blue% "Windows Subscription edition [SKU ID-%slcSKU%] found. Script will activate the base edition [SKU ID-%regSKU%]."
 echo:
 )
 
@@ -502,9 +502,9 @@ if not "%name%"=="US" (
 set regionchange=1
 %psc% "Set-WinHomeLocation -GeoId 244" %nul%
 if !errorlevel! EQU 0 (
-echo Changing Windows Region To USA          [Successful]
+echo Changing Windows Region to USA          [Successful]
 ) else (
-call :dk_color %Red% "Changing Windows Region To USA          [Failed]"
+call :dk_color %Red% "Changing Windows Region to USA          [Failed]"
 )
 )
 
@@ -526,7 +526,7 @@ call :hwiddata ticket
 copy /y /b "%tdir%\GenuineTicket" "%tdir%\GenuineTicket.xml" %nul%
 
 if not exist "%tdir%\GenuineTicket.xml" (
-call :dk_color %Red% "Generating GenuineTicket.xml            [Failed, aborting the process]"
+call :dk_color %Red% "Generating GenuineTicket.xml            [Failed, aborting...]"
 echo [%encoded%]
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 goto :dl_final
@@ -544,7 +544,7 @@ set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 %_xmlexist% (
 set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipSVC Service Restart, Wait...]"
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed with ClipSVC service restart, wait...]"
 )
 )
 
