@@ -64,7 +64,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo Null service is not running, script may crash...
+echo The Null service, which is required for the script to operate, is not running.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -249,14 +249,14 @@ if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.6
 if defined old (
 echo ________________________________________________
 %eline%
-echo Your version of of MAS [%masver%] is outdated.
+echo Your version of MAS [%masver%] is outdated.
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :dk_color %_Green% "Choose a menu option on your keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
@@ -379,7 +379,7 @@ del /f /q "%SystemRoot%\logs\cbs\cbs.log" %nul%
 del /f /q "%SystemRoot%\logs\DISM\dism.log" %nul%
 
 echo:
-echo Executing the command...
+echo Applying the command...
 echo dism /english /online /cleanup-image /restorehealth
 dism /english /online /cleanup-image /restorehealth
 
@@ -436,7 +436,7 @@ copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "%SystemRoot%\logs\cbs\backup_cbs_%_t
 del /f /q "%SystemRoot%\logs\cbs\cbs.log" %nul%
 
 echo:
-echo Applying the command,
+echo Applying the command,..
 echo sfc /scannow
 sfc /scannow
 
@@ -451,7 +451,7 @@ copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "!desktop!\AT_Logs\SFC_CBS_%_time%.lo
 )
 
 echo:
-call :dk_color %Gray% "CBS log is copied to the AT_Logs folder on your desktop."
+call :dk_color %Gray% "The CBS log was copied to the AT_Logs folder on your Desktop."
 goto :at_back
 
 ::========================================================================================================================================
@@ -517,7 +517,7 @@ echo Stopping ClipSVC service...
 timeout /t 2 %nul%
 
 echo:
-echo Executing the command to clean ClipSVC Licenses...
+echo Applying the command to clean ClipSVC Licenses...
 echo rundll32 clipc.dll,ClipCleanUpState
 
 rundll32 clipc.dll,ClipCleanUpState
@@ -554,7 +554,7 @@ echo [Successful]
 ::   Clear HWID token related registry to fix activation incase there is any corruption
 
 echo:
-echo Deleting an IdentityCRL Registry Key...
+echo Deleting IdentityCRL...
 echo [%_ident%]
 reg delete "%_ident%" /f %nul%
 reg query "%_ident%" %nul% && (
@@ -569,7 +569,7 @@ echo [Successful]
 
 echo:
 if %winbuild% GTR 10240 (
-echo Deleting Folder %ProgramData%\Microsoft\Windows\ClipSVC\
+echo Deleting folder %ProgramData%\Microsoft\Windows\ClipSVC\
 rmdir /s /q "C:\ProgramData\Microsoft\Windows\ClipSvc" %nul%
 
 if exist "%ProgramData%\Microsoft\Windows\ClipSVC\" (
@@ -603,7 +603,7 @@ for %%# in (wlidsvc LicenseManager) do (%psc% "Start-Job { Restart-Service %%# }
 echo:
 echo %line%
 echo:
-call :dk_color %Blue% "Rebuilding SPP Licensing Tokens..."
+call :dk_color %Blue% "Rebuilding SPP licensing tokens..."
 echo:
 
 call :scandat check
@@ -620,7 +620,7 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 if %winbuild% GEQ 9200 if /i not "%tokenstore%"=="%SysPath%\spp\store" if /i not "%tokenstore%"=="%SysPath%\spp\store\2.0" if /i not "%tokenstore%"=="%SysPath%\spp\store_test\2.0" (
 set badregistry=1
 echo:
-call :dk_color %Red% "Correct path not found in TokenStore Registry [%tokenstore%]"
+call :dk_color %Red% "Correct path was not found in the TokenStore registry. [%tokenstore%]"
 )
 
 ::  Check sppsvc permissions and apply fixes
@@ -675,7 +675,7 @@ echo:
 )
 
 echo:
-echo Reinstalling System Licenses...
+echo Reinstalling system licenses...
 %psc% "Stop-Service sppsvc -force; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if %errorlevel% NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if %errorlevel% EQU 0 (
@@ -704,11 +704,11 @@ sc config sppuinotify start= demand
 echo:
 echo %line%
 echo:
-call :dk_color %Blue% "Rebuilding OSPP Licensing Tokens..."
+call :dk_color %Blue% "Rebuilding OSPP licensing tokens..."
 echo:
 
 sc qc osppsvc %nul% || (
-echo OSPP based Office is not installed.
+echo OSPP-based Office is not installed.
 echo Skipping rebuilding OSPP tokens...
 goto :repairoffice
 )
@@ -761,7 +761,7 @@ echo tokens.dat file was rebuilt successfully.
 echo:
 echo %line%
 echo:
-call :dk_color %Blue% "Repairing Office Licenses..."
+call :dk_color %Blue% "Repairing Office licenses..."
 echo:
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
@@ -837,8 +837,8 @@ set /a counter+=1
 
 if %counter% GTR 1 (
 %eline%
-echo Multiple office versions found.
-echo It's recommended to install only one version of office.
+echo Multiple Office versions found.
+echo It is recommended to only install one version of Office.
 echo ________________________________________________________________
 echo:
 )
@@ -862,8 +862,8 @@ pause %nul1%
 
 if defined uwp16 (
 echo:
-echo Note: Skipping repair for Office 16.0 UWP. 
-echo       You need to use the Reset option in Windows settings for it.
+echo Note: Skipping repair for Office 16.0 UWP... 
+echo       You need to use the Reset option in Windows Settings instead.
 echo ________________________________________________________________
 echo:
 start ms-settings:appsfeatures
@@ -876,7 +876,7 @@ if defined c2r14_86 set c2r14=1
 if defined c2r14 (
 echo:
 echo Note: Skipping repair for Office 14.0 C2R...
-echo       You need to use Repair option in Windows settings for it.
+echo       You need to use the Repair option in Windows Settings for it.
 echo ________________________________________________________________
 echo:
 start appwiz.cpl
@@ -956,7 +956,7 @@ sc config Winmgmt start= disabled %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
 ) else (
-call :dk_color %Red% "[Failed] Aborting..."
+call :dk_color %Red% "[Failed, aborting...]"
 sc config Winmgmt start= auto %nul%
 goto :at_back
 )
@@ -1009,7 +1009,7 @@ goto :at_back
 )
 
 echo:
-echo Registering .dll's and Compiling .mof's, .mfl's...
+echo Registering .dll's, compiling .mof's and .mfl's...
 call :registerobj %nul%
 
 echo:
@@ -1361,7 +1361,7 @@ $key.SetAccessControl($acl)
 
 echo:
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] To Open Troubleshoot Page " %Gray% " Press [0] To Ignore"
+call :dk_color2 %Blue% "Press [1] to open Troubleshoot page " %Gray% " Press [0] to ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
