@@ -69,7 +69,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo Null service, which is required for the script to operate, is not running.
+echo The Null service, which is required for the script to operate, is not running.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -84,7 +84,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has an LF line ending issue or the empty line at the end of the script is missing.
+echo Error - The script either has an LF line ending issue or the empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -178,7 +178,7 @@ echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 ) || (
-echo PowerShell is not working. Aborting...
+echo PowerShell is not working, aborting...
 echo If you have applied restrictions on Powershell then undo those changes.
 echo:
 set fixes=%fixes% %mas%fix_powershell
@@ -335,7 +335,7 @@ if defined UBR (set "fullbuild=%%G.!UBR!") else (set "fullbuild=%%G.%%H")
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 %eline%
-echo Either key is not installed or MAS failed to get installed keys' activation ID. Aborting...
+echo Either a key is not installed or MAS failed to get installed keys' activation ID, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -356,7 +356,7 @@ if %_wmic% EQU 0 set "chkedi=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISE
 
 if %osedition%==0 (
 %eline%
-echo Failed to detect OS edition. Aborting...
+echo Failed to detect OS edition, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -403,9 +403,9 @@ call :dk_color %Red% "==== Note ===="
 echo:
 echo [EditionID:%osedition% ^| %fullbuild%]
 echo:
-echo Changing this edition may not remove "%osedition%" specific features.
+echo Changing this edition may not remove "%osedition%"-specific features.
 echo:
-call :dk_color %_Yellow% "Press 7 key to continue..."
+call :dk_color %_Yellow% "Press [7] to continue anyway..."
 choice /c 7 /n
 cls
 )
@@ -424,8 +424,8 @@ if not defined _ntarget (
 %line%
 echo:
 if defined dismnotworking call :dk_color %Red% "DISM is not working."
-call :dk_color %Gray% "Target edition not found."
-echo Current edition [%osedition% ^| %winbuild%] can not be changed.
+call :dk_color %Gray% "Target editions not found."
+echo Current edition [%osedition% ^| %winbuild%] cannot be changed.
 %line%
 goto dk_done
 )
@@ -443,7 +443,7 @@ set targetedition=
 
 %line%
 echo:
-call :dk_color %Gray% "You can change the edition [%osedition%] [%fullbuild%] to one of the following:"
+call :dk_color %Gray% "You can change the current edition [%osedition%] [%fullbuild%] to one of the following:"
 %showeditionerror%
 if defined dismnotworking (
 call :dk_color %_Yellow% "Note - DISM is not working."
@@ -462,7 +462,7 @@ set targetedition!counter!=%%A
 echo:
 echo [0]  %_exitmsg%
 echo:
-call :dk_color %_Green% "Enter an option number on your keyboard and press Enter to confirm:"
+call :dk_color %_Green% "Enter an option number using your keyboard and press Enter to confirm:"
 set /p inpt=
 if "%inpt%"=="" goto cedmenu2
 if "%inpt%"=="0" exit /b
@@ -485,7 +485,7 @@ echo:
 echo Once the edition is changed to "%targetedition%", 
 echo the system may not be able to properly change edition later.
 echo:
-echo [1] Continue
+echo [1] Continue Anyway
 echo [0] Go Back
 echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
@@ -521,7 +521,7 @@ set _chan=Retail
 if not defined key (
 %eline%
 echo [%targetedition% ^| %winbuild%]
-echo Unable to get product key from pkeyhelper.dll
+echo Failed to get product key from pkeyhelper.dll.
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -544,13 +544,13 @@ cls
 echo:
 %showeditionerror%
 if defined dismnotworking call :dk_color %_Yellow% "DISM is not working."
-echo Changing the Current Edition [%osedition%] %fullbuild% to [%targetedition%]
+echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]...
 echo:
 
 if %_dismapi%==1 (
 call :dk_color %Green% "Notes -"
 echo:
-echo  - Save your work before continuing, system will auto-restart.
+echo  - Save your work before continuing, the system will auto-restart.
 echo:
 echo  - You will need to activate with HWID option once the edition is changed.
 %line%
@@ -574,7 +574,7 @@ if !keyerror! EQU 0 (
 call :dk_refresh
 call :dk_color %Green% "[Successful]"
 echo:
-call :dk_color %Gray% "Reboot is required to properly change the edition."
+call :dk_color %Gray% "Reboot is required to fully change the edition."
 ) else (
 call :dk_color %Red% "[Unsuccessful] [Error Code: !keyerror!]"
 echo:
@@ -614,9 +614,9 @@ if defined rebootreq goto dk_done
 echo:
 %showeditionerror%
 if defined dismnotworking call :dk_color %_Yellow% "Note - DISM is not working."
-echo Changing the Current Edition [%osedition%] %fullbuild% to [%targetedition%]
+echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]...
 echo:
-call :dk_color %Blue% "Important - Save your work before continuing, system will auto reboot."
+call :dk_color %Blue% "Important - Save your work before continuing, the system will auto-restart."
 echo:
 choice /C:01 /N /M "[1] Continue [0] %_exitmsg% : "
 if %errorlevel%==1 exit /b
@@ -657,7 +657,7 @@ if not defined key call :changeeditiondata
 if not defined key (
 %eline%
 echo [%targetedition% ^| %winbuild%]
-echo Unable to get product key from pkeyhelper.dll
+echo Failed to get product key from pkeyhelper.dll.
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -671,13 +671,13 @@ cls
 echo:
 %showeditionerror%
 if defined dismnotworking call :dk_color %_Yellow% "Note - DISM is not working."
-echo Changing the Current Edition [%osedition%] %fullbuild% to [%targetedition%]
+echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]...
 echo:
 
 call :ced_prep
 if defined preperror goto dk_done
 
-echo Applying the command with %_chan% Key
+echo Applying the command with %_chan% key...
 echo DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 
@@ -699,8 +699,8 @@ for /f %%a in ('%psc% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set _time
 
 sc query TrustedInstaller | find /i "RUNNING" %nul% && (
 %eline%
-echo Failed to stop TrustedInstaller service.
-echo Try again or restart your system and try again.
+echo Failed to stop the TrustedInstaller service.
+echo Restart your system and try again.
 set preperror=1
 exit /b
 )
@@ -731,9 +731,9 @@ call :compresslog DISM\dism_%_time%.log ChangeEdition_Logs\DISM %nul%
 
 echo:
 if %winbuild% GEQ 9200 %psc% "if ((Get-WindowsOptionalFeature -Online -FeatureName NetFx3).State -eq 'Enabled') {Write-Host 'Checking .NET Framework 3.5 Status - Enabled'}"
-echo Log files are copied to the ChangeEdition_Logs folder on the desktop.
+echo Log files are copied to the ChangeEdition_Logs folder on your desktop.
 echo:
-call :dk_color %Blue% "In case there's errors, you should restart the system before trying again."
+call :dk_color %Blue% "In case there are errors, you should restart the system before trying again."
 echo:
 set fixes=%fixes% %mas%change_edition_issues
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%change_edition_issues"
@@ -987,7 +987,7 @@ echo:
 if %_unattended%==1 timeout /t 2 & exit /b
 
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
+call :dk_color2 %Blue% "Press [1] to open troubleshoot page " %Gray% " Press [0] to ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
