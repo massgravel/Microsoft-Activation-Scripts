@@ -104,7 +104,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo Null service, which is required for the script to operate, is not running.
+echo The Null service, which is required for the script to operate, is not running.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -119,7 +119,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has an LF line ending issue or an empty line at the end of the script is missing.
+echo Error - The script either has an LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -195,7 +195,7 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder.
+echo The script was launched from the temp folder.
 echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
@@ -458,8 +458,8 @@ if not defined key (
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 if not defined skunotfound (
 echo This product does not support HWID activation.
-echo Try KMS38 activation option.
 echo Make sure you are using the latest version of the script.
+echo If you are, then try KMS38 activation option.
 set fixes=%fixes% %mas%
 echo %mas%
 ) else (
@@ -484,7 +484,7 @@ echo:
 )
 
 if defined winsub (
-call :dk_color %Blue% "Windows Subscription edition [SKU ID-%slcSKU%] found. Script will activate the base edition [SKU ID-%regSKU%]."
+call :dk_color %Blue% "Windows Subscription edition [SKU ID-%slcSKU%] detected. The script will activate the base edition [SKU ID-%regSKU%]."
 echo:
 )
 
@@ -502,9 +502,9 @@ if not "%name%"=="US" (
 set regionchange=1
 %psc% "Set-WinHomeLocation -GeoId 244" %nul%
 if !errorlevel! EQU 0 (
-echo Changing Windows Region to USA          [Successful]
+echo Changing the Windows Region to USA          [Successful]
 ) else (
-call :dk_color %Red% "Changing Windows Region to USA          [Failed]"
+call :dk_color %Red% "Changing the Windows Region to USA          [Failed]"
 )
 )
 
