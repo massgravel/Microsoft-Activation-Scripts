@@ -154,7 +154,7 @@ echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
 echo Script is launched from the temp folder.
-echo Most likely you are running the script directly from the archive file.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto dk_done
@@ -194,7 +194,7 @@ goto dk_done
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
-echo This script needs admin rights.
+echo This script needs administrator rights.
 echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
