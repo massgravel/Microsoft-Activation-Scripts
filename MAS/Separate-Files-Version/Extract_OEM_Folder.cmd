@@ -14,7 +14,7 @@
 
 ::========================================================================================================================================
 
-::  Set Environment variables, it helps if they are misconfigured in the system
+::  Set environment variables, it helps if they are misconfigured in the system
 
 setlocal EnableExtensions
 setlocal DisableDelayedExpansion
@@ -121,13 +121,13 @@ call :dk_setvar
 if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalent.
+echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
 goto done2
 )
 
 ::========================================================================================================================================
 
-::  Fix special characters limitation in path name
+::  Fix special character limitations in path name
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
@@ -147,8 +147,8 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder,
-echo Most likely you are running the script directly from the archive file.
+echo The script was launched from the temp folder.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto done2
@@ -189,7 +189,7 @@ goto done2
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
 echo This script needs admin rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+echo Right click on this script and select 'Run as administrator'.
 goto done2
 )
 
@@ -248,14 +248,14 @@ if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.6
 if defined old (
 echo ________________________________________________
 %eline%
-echo Version %masver% of MAS is outdated.
+echo Your version of MAS [%masver%] is outdated.
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
@@ -277,7 +277,7 @@ set "_dir=%desktop%\$OEM$\$$\Setup\Scripts"
 
 if exist "!desktop!\" (
 %eline%
-echo Desktop location was not detected, aborting...
+echo Unable to detect Desktop location, aborting...
 goto done2
 )
 
@@ -290,7 +290,7 @@ if not defined terminal mode 78, 30
 if exist "!desktop!\$OEM$\" (
 echo _____________________________________________________
 %eline%
-echo $OEM$ folder already exists on the Desktop.
+echo The $OEM$ folder already exists on your Desktop.
 echo _____________________________________________________
 goto done2
 )
@@ -349,7 +349,7 @@ call :dk_color2 %_White% "              [R] " %_Green% "ReadMe"
 echo:              [0] Exit
 echo:           ________________________________________________________
 echo:  
-call :dk_color2 %_White% "             " %_Green% "Enter a menu option in the Keyboard :"
+call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard :"
 choice /C:123456789R0 /N
 set _erl=%errorlevel%
 
@@ -681,7 +681,7 @@ cd \
 :errorfound
 
 %eline%
-echo $OEM$ Folder was not created successfully...
+echo The script failed to create the $OEM$ folder.
 goto :done2
 
 :done
@@ -689,7 +689,7 @@ goto :done2
 echo ______________________________________________________________
 echo:
 call :dk_color %Blue% "%oem%"
-call :dk_color %Green% "$OEM$ folder is successfully created on the Desktop."
+call :dk_color %Green% "$OEM$ folder was successfully created on your Desktop."
 echo "%oem%" | find /i "38" %nul% && (
 echo:
 echo To KMS38 activate Server Cor/Acor editions ^(No GUI Versions^),
@@ -701,13 +701,13 @@ echo ______________________________________________________________
 
 echo:
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] To Open Troubleshoot Page " %Gray% " Press [0] To Ignore"
+call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press 0 key to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."

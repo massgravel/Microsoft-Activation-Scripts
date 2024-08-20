@@ -19,7 +19,7 @@ set _stg=0
 
 ::========================================================================================================================================
 
-::  Set Environment variables, it helps if they are misconfigured in the system
+::  Set environment variables, it helps if they are misconfigured in the system
 
 setlocal EnableExtensions
 setlocal DisableDelayedExpansion
@@ -127,13 +127,13 @@ set "line=echo _________________________________________________________________
 if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalent.
+echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
 goto dk_done
 )
 
 ::========================================================================================================================================
 
-::  Fix special characters limitation in path name
+::  Fix special character limitations in path name
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
@@ -153,8 +153,8 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder,
-echo Most likely you are running the script directly from the archive file.
+echo The script was launched from the temp folder.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto dk_done
@@ -195,7 +195,7 @@ goto dk_done
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
 echo This script needs admin rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
 
@@ -254,14 +254,14 @@ if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.6
 if defined old (
 echo ________________________________________________
 %eline%
-echo Version %masver% of MAS is outdated.
+echo Your version of MAS [%masver%] is outdated.
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
@@ -280,7 +280,7 @@ if not defined desktop for /f "delims=" %%a in ('%psc% "& {write-host $([Environ
 
 if not defined desktop (
 %eline%
-echo Desktop location was not detected, aborting...
+echo Unable to detect Desktop location, aborting...
 goto dk_done
 )
 
@@ -302,7 +302,7 @@ dism.exe
 ) do (
 if not exist %SysPath%\%%# (
 %eline%
-echo [%SysPath%\%%#] file is missing. Aborting...
+echo [%SysPath%\%%#] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -335,7 +335,7 @@ if defined UBR (set "fullbuild=%%G.!UBR!") else (set "fullbuild=%%G.%%H")
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 %eline%
-echo Either key is not insalled or failed to get installed key activation ID. Aborting...
+echo Either key is not insalled or script failed to get installed key's activation ID. Aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -356,7 +356,7 @@ if %_wmic% EQU 0 set "chkedi=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISE
 
 if %osedition%==0 (
 %eline%
-echo Failed to detect OS Edition. Aborting...
+echo Failed to detect OS edition, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -376,7 +376,7 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 
 ::========================================================================================================================================
 
-::  Get Target editions list
+::  Get target editions list
 
 set _target=
 set _dtarget=
@@ -403,9 +403,9 @@ call :dk_color %Red% "==== Note ===="
 echo:
 echo [EditionID:%osedition% ^| %fullbuild%]
 echo:
-echo Changing this edition to any other may not remove "%osedition%" specific features.
+echo Changing this edition may not remove "%osedition%"-specific features.
 echo:
-call :dk_color %_Yellow% "Press 7 key to continue..."
+call :dk_color %_Yellow% "Press [7] to continue anyway..."
 choice /c 7 /n
 cls
 )
@@ -424,7 +424,7 @@ if not defined _ntarget (
 %line%
 echo:
 if defined dismnotworking call :dk_color %Red% "DISM.exe is not working."
-call :dk_color %Gray% "Target Edition not found."
+call :dk_color %Gray% "Target editions not found."
 echo Current Edition [%osedition% ^| %winbuild%] can not be changed to any other Edition.
 %line%
 goto dk_done
@@ -443,7 +443,7 @@ set targetedition=
 
 %line%
 echo:
-call :dk_color %Gray% "You can change the Edition [%osedition%] [%fullbuild%] to one of the following."
+call :dk_color %Gray% "You can change the edition [%osedition%] [%fullbuild%] to one of the following."
 %showeditionerror%
 if defined dismnotworking (
 call :dk_color %_Yellow% "Note - DISM.exe is not working."
@@ -462,7 +462,7 @@ set targetedition!counter!=%%A
 echo:
 echo [0]  %_exitmsg%
 echo:
-call :dk_color %_Green% "Enter option number in keyboard, and press "Enter":"
+call :dk_color %_Green% "Enter an option number using your keyboard and press Enter to confirm:"
 set /p inpt=
 if "%inpt%"=="" goto cedmenu2
 if "%inpt%"=="0" exit /b
@@ -483,12 +483,12 @@ echo:
 call :dk_color %Red% "==== Note ===="
 echo:
 echo Once the edition is changed to "%targetedition%", 
-echo system may not be able to properly change edition to any other later.
+echo the system may not be able to properly change edition later.
 echo:
-echo [1] Continue
+echo [1] Continue Anyway
 echo [0] Go Back
 echo:
-call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 goto cedmenu2
 if !errorlevel!==1 rem
@@ -499,7 +499,7 @@ set key=
 set _chan=
 set _dismapi=0
 
-::  Check if DISM Api or slmgr.vbs is required for edition upgrade
+::  Check if DISM API or slmgr.vbs is required for edition upgrade
 
 if not exist "%SysPath%\spp\tokens\skus\%targetedition%\" (
 echo %_wtarget% | find /i " %targetedition% " || (
@@ -521,7 +521,7 @@ set _chan=Retail
 if not defined key (
 %eline%
 echo [%targetedition% ^| %winbuild%]
-echo Unable to get product key from pkeyhelper.dll
+echo Failed to get product key from pkeyhelper.dll.
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -544,13 +544,13 @@ cls
 echo:
 %showeditionerror%
 if defined dismnotworking call :dk_color %_Yellow% "DISM.exe is not working."
-echo Changing the Current Edition [%osedition%] %fullbuild% to [%targetedition%]
+echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]...
 echo:
 
 if %_dismapi%==1 (
-call :dk_color %Green% "Notes-"
+call :dk_color %Green% "Notes -"
 echo:
-echo  - Save your work before continue, system will auto restart.
+echo  - Save your work before continuing, the system will auto-restart.
 echo:
 echo  - You will need to activate with HWID option once the edition is changed.
 %line%
@@ -562,7 +562,7 @@ if !errorlevel!==1 exit /b
 ::========================================================================================================================================
 
 if %_dismapi%==0 (
-echo Installing %_chan% Key [%key%]
+echo Installing %_chan% key [%key%]
 echo:
 if %_wmic% EQU 1 wmic path %sps% where __CLASS='%sps%' call InstallProductKey ProductKey="%key%" %nul%
 if %_wmic% EQU 0 %psc% "try { $null=(([WMISEARCHER]'SELECT Version FROM %sps%').Get()).InstallProductKey('%key%'); exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
@@ -574,7 +574,7 @@ if !keyerror! EQU 0 (
 call :dk_refresh
 call :dk_color %Green% "[Successful]"
 echo:
-call :dk_color %Gray% "Reboot is required to properly change the Edition."
+call :dk_color %Gray% "Reboot is required to fully change the edition."
 ) else (
 call :dk_color %Red% "[Unsuccessful] [Error Code: !keyerror!]"
 echo:
@@ -585,7 +585,7 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 
 if %_dismapi%==1 (
 echo:
-echo Applying the DISM API method with %_chan% Key %key%. Please wait...
+echo Applying the DISM API method with %_chan% key %key%. Please wait...
 echo:
 
 call :ced_prep
@@ -614,9 +614,9 @@ if defined rebootreq goto dk_done
 echo:
 %showeditionerror%
 if defined dismnotworking call :dk_color %_Yellow% "Note - DISM.exe is not working."
-echo Changing the Current Edition [%osedition%] %fullbuild% to [%targetedition%]
+echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]...
 echo:
-call :dk_color %Blue% "Important - Save your work before continue, system will auto reboot."
+call :dk_color %Blue% "Important - Save your work before continuing, the system will auto-restart."
 echo:
 choice /C:01 /N /M "[1] Continue [0] %_exitmsg% : "
 if %errorlevel%==1 exit /b
@@ -657,7 +657,7 @@ if not defined key call :changeeditiondata
 if not defined key (
 %eline%
 echo [%targetedition% ^| %winbuild%]
-echo Unable to get product key from pkeyhelper.dll
+echo Failed to get product key from pkeyhelper.dll.
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -671,13 +671,13 @@ cls
 echo:
 %showeditionerror%
 if defined dismnotworking call :dk_color %_Yellow% "Note - DISM.exe is not working."
-echo Changing the Current Edition [%osedition%] %fullbuild% to [%targetedition%]
+echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]...
 echo:
 
 call :ced_prep
 if defined preperror goto dk_done
 
-echo Applying the command with %_chan% Key
+echo Applying the command with %_chan% key...
 echo DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 
@@ -699,8 +699,8 @@ for /f %%a in ('%psc% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set _time
 
 sc query TrustedInstaller | find /i "RUNNING" %nul% && (
 %eline%
-echo Failed to stop TrustedInstaller service.
-echo Try again or Restart your system and then try again.
+echo Failed to stop the TrustedInstaller service.
+echo Restart your system and try again.
 set preperror=1
 exit /b
 )
@@ -731,9 +731,9 @@ call :compresslog DISM\dism_%_time%.log ChangeEdition_Logs\DISM %nul%
 
 echo:
 if %winbuild% GEQ 9200 %psc% "if ((Get-WindowsOptionalFeature -Online -FeatureName NetFx3).State -eq 'Enabled') {Write-Host 'Checking .NET Framework 3.5 Status - Enabled'}"
-echo Log files are copied to the ChangeEdition_Logs folder on the desktop.
+echo Log files are copied to the ChangeEdition_Logs folder on your desktop.
 echo:
-call :dk_color %Blue% "In case of errors, restart system before trying again."
+call :dk_color %Blue% "In case there are errors, you should restart the system before trying again."
 echo:
 set fixes=%fixes% %mas%change_edition_issues
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%change_edition_issues"
@@ -891,7 +891,7 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Upd
 
 if defined rebootreq (
 %eline%
-echo Pending Reboot flags found.
+echo Pending reboot flags found.
 echo:
 echo Make sure Windows is fully updated, restart the system and try again.
 )
@@ -987,13 +987,13 @@ echo:
 if %_unattended%==1 timeout /t 2 & exit /b
 
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] To Open Troubleshoot Page " %Gray% " Press [0] To Ignore"
+call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press 0 key to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."

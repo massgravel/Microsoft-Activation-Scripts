@@ -27,7 +27,7 @@ set "_debug=0"
 
 ::========================================================================================================================================
 
-::  Set Environment variables, it helps if they are misconfigured in the system
+::  Set environment variables, it helps if they are misconfigured in the system
 
 setlocal EnableExtensions
 setlocal DisableDelayedExpansion
@@ -160,15 +160,15 @@ call :dk_setvar
 if %winbuild% LSS 9200 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
-echo Ohook Activation is supported on Windows 8 and later and their server equivalent.
+echo Ohook Activation is supported only on Windows 8/10/11 and their server equivalents.
 echo:
-call :dk_color %Blue% "Use Online KMS Activation option."
+call :dk_color %Blue% "Use Online KMS activation option instead."
 goto dk_done
 )
 
 ::========================================================================================================================================
 
-::  Fix special characters limitation in path name
+::  Fix special character limitations in path name
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
@@ -188,8 +188,8 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder,
-echo Most likely you are running the script directly from the archive file.
+echo The script was launched from the temp folder.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto dk_done
@@ -230,7 +230,7 @@ goto dk_done
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
 echo This script needs admin rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
 
@@ -289,14 +289,14 @@ if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.6
 if defined old (
 echo ________________________________________________
 %eline%
-echo Version %masver% of MAS is outdated.
+echo Your version of MAS [%masver%] is outdated.
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
@@ -332,7 +332,7 @@ echo:
 echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
 echo: 
-call :dk_color2 %_White% "              " %_Green% "Enter a menu option in the Keyboard [1,2,3,0]"
+call :dk_color2 %_White% "              " %_Green% "Choose a menu option using your keyboard [1,2,3,0]"
 choice /C:1230 /N
 set _el=!errorlevel!
 if !_el!==4  exit /b
@@ -360,7 +360,7 @@ call :dk_chkmal
 
 if not exist %SysPath%\sppsvc.exe (
 %eline%
-echo [%SysPath%\sppsvc.exe] file is missing. Aborting...
+echo [%SysPath%\sppsvc.exe] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -456,10 +456,10 @@ call :dk_color %Red% "Checking Installed Office               [Not Found]"
 
 if defined ohub (
 echo:
-echo You have only Office dashboard app installed, you need to install full Office version.
+echo You only have the Office dashboard app installed, you need to install the full version of Office.
 )
 echo:
-call :dk_color %Blue% "Download and install Office from below URL and try again."
+call :dk_color %Blue% "Download and install Office from the below URL and then try again."
 echo:
 set fixes=%fixes% %mas%genuine-installation-media
 call :dk_color %_Yellow% "%mas%genuine-installation-media"
@@ -471,7 +471,7 @@ if not "%o16c2r%%o15c2r%%o16msi%%o15msi%"=="1" set multioffice=1
 if not "%o14msi%%o14c2r%%o16uwp%"=="" set multioffice=1
 
 if defined multioffice (
-call :dk_color %Gray% "Checking Multiple Office Install        [Found. Recommended to install one version only]"
+call :dk_color %Gray% "Checking Multiple Office Install        [Found, its recommended to install only one version]"
 )
 
 ::========================================================================================================================================
@@ -619,7 +619,7 @@ reg add "%kmskey%" /f /v KeyManagementServiceName /t REG_SZ /d "10.0.0.10" /reg:
 )
 reg delete "%kmskey%" /f %nul%
 reg add "%kmskey%" /f /v KeyManagementServiceName /t REG_SZ /d "10.0.0.10" %nul%
-echo Adding a Reg To Prevent Banner          [Successful]
+echo Adding a Registry to Prevent Banner     [Successful]
 )
 )
 
@@ -667,7 +667,7 @@ call :oh_reset
 call :oh_getpath
 
 echo:
-echo Uninstalling Ohook Activation...
+echo Uninstalling Ohook activation...
 echo:
 
 if defined o16c2r_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg% /v InstallPath" %nul6%') do (set "_16CHook=%%b\root\vfs"))
@@ -698,7 +698,7 @@ if exist "%%~A\Microsoft %%~G\root\vfs\%%#\sppc*dll" (set _present=1& del /s /f 
 
 reg query HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency %nul% && (
 echo:
-echo Deleting - Registry keys to skip license check from all ^& future new useraccounts
+echo Deleting - Registry keys for skipping license check
 
 reg load HKU\DEF_TEMP %SystemDrive%\Users\Default\NTUSER.DAT %nul%
 reg query HKU\DEF_TEMP\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency %nul% && reg delete HKU\DEF_TEMP\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f
@@ -723,7 +723,7 @@ reg unload HKU\%%# %nul%
 set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
 reg query "%kmskey%" %nul% && (
 echo:
-echo Deleting - Registry keys to prevent non-genuine banner
+echo Deleting - Registry keys for preventing non-genuine banner
 reg delete "%kmskey%" /f
 )
 
@@ -735,16 +735,16 @@ echo ___________________________________________________________________________
 echo:
 
 if not defined _present (
-echo Ohook Activation is not installed.
+echo Ohook activation is not installed.
 ) else (
 if defined _unerror (
 call :dk_color %Red% "Failed to uninstall Ohook activation."
 call :oh_checkapps
 if defined checknames (
 call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If its still not resolved then restart system and try again."
+call :dk_color %Blue% "If it is still not fixed, then restart your system and try again."
 ) else (
-call :dk_color %Blue% "Restart system and try again."
+call :dk_color %Blue% "Restart your system and try again."
 )
 ) else (
 call :dk_color %Green% "Successfully uninstalled Ohook activation."
@@ -919,11 +919,11 @@ if not exist "%_hookPath%\sppc.dll" (if not defined ierror set ierror=Copy)
 
 echo:
 if not defined ierror (
-echo Symlinking System's sppc.dll To         ["%_hookPath%\sppcs.dll"] [Successful]
+echo Symlinking System's sppc.dll to         ["%_hookPath%\sppcs.dll"] [Successful]
 if defined exhook (
-echo Copying Custom %_hook% To            ["%_hookPath%\sppc.dll"] [Successful]
+echo Copying Custom %_hook% to            ["%_hookPath%\sppc.dll"] [Successful]
 ) else (
-echo Extracting Custom %_hook% To         ["%_hookPath%\sppc.dll"] [Successful]
+echo Extracting Custom %_hook% to         ["%_hookPath%\sppc.dll"] [Successful]
 )
 ) else (
 set error=1
@@ -932,9 +932,9 @@ echo:
 call :oh_checkapps
 if defined checknames (
 call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If its still not resolved then restart system and try again."
+call :dk_color %Blue% "If it is still not fixed, then restart your system and try again."
 ) else (
-if /i not "%ierror%"=="Copy" call :dk_color %Blue% "Restart system and try again."
+if /i not "%ierror%"=="Copy" call :dk_color %Blue% "Restart your system and try again."
 if /i "%ierror%"=="Copy" call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
 )
 echo:
@@ -982,7 +982,7 @@ call :dk_inskey "[!key!] [!_prod!] [!_lic!]"
 ) else (
 set error=1
 call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !_prod! not found in script]"
-call :dk_color %Blue% "Make sure you are using Latest MAS script."
+call :dk_color %Blue% "Make sure you are using the latest version of MAS."
 set fixes=%fixes% %mas%
 call :dk_color %_Yellow% "%mas%"
 )
@@ -996,7 +996,7 @@ if defined winserver if defined _config (
 echo %_oIds% | find /i "Retail" %nul1% && (
 set scaIsNeeded=1
 reg add %_config% /v SharedComputerLicensing /t REG_SZ /d "1" /f %nul1%
-echo Adding SharedComputerLicensing Reg      [Successful] [Needed On Server With Retail Office]"
+echo Adding SharedComputerLicensing Reg      [Successful] [Needed on Server With Retail Office]"
 )
 )
 
@@ -1043,13 +1043,13 @@ echo Activating Office...                    [MSI ^| %_version% ^| %_oArch%]
 
 if not defined _oBranding (
 set error=1
-call :dk_color %Red% "Checking BRANDING.XML                   [Not Found. Aborting activation...]"
+call :dk_color %Red% "Checking BRANDING.XML                   [Not Found, aborting activation...]"
 exit /b
 )
 
 if not defined _oIds (
 set error=1
-call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+call :dk_color %Red% "Checking Installed Products             [Product IDs not found, aborting activation...]"
 exit /b
 )
 
@@ -1190,7 +1190,7 @@ reg delete "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwarePr
 reg delete "HKU\S-1-5-20\Software\Microsoft\OfficeSoftwareProtectionPlatform\Policies\0ff1ce15-a989-479d-af46-f275c6370663" /f %nul%
 reg delete "HKU\S-1-5-20\Software\Microsoft\OfficeSoftwareProtectionPlatform\Policies\59a52881-a989-479d-af46-f275c6370663" /f %nul%
 
-echo Clearing Office License Blocks          [Successfully Cleared From All %counter% Useraccounts]
+echo Clearing Office License Blocks          [Successfully cleared from all %counter% user accounts]
 
 ::==========================
 
@@ -1208,7 +1208,7 @@ for %%# in (%_sidlist%) do (
 reg delete HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f %nul%
 reg add HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /v "TimeOfLastHeartbeatFailure" /t REG_SZ /d "2040-01-01T00:00:00Z" /f %nul%
 )
-echo Adding Reg Keys To Skip License Check   [Successfully Added To All %counter% ^& Future New Useraccounts]
+echo Adding Reg Keys to Skip License Check   [Successfully added to all %counter% ^& future new user accounts]
 )
 
 ::==========================
@@ -1222,14 +1222,14 @@ reg query HKU\%%# %nul% && set failedtounload=1
 
 if defined failedtoload (
 set error=1
-call :dk_color %Red% "Loading Unloaded accounts Registry      [Failed For Some Useraccounts]"
-call :dk_color %Blue% "Restart the system and try again."
+call :dk_color %Red% "Loading Unloaded Accounts Registry      [Failed for some user accounts]"
+call :dk_color %Blue% "Restart your system and try again."
 )
 
 if defined failedtounload (
 set error=1
-call :dk_color %Red% "Unloading loaded accounts Registry      [Failed For Some Useraccounts]"
-call :dk_color %Blue% "Restart the system and try again."
+call :dk_color %Red% "Unloading Loaded Account Registries     [Failed for some user accounts]"
+call :dk_color %Blue% "Restart your system and try again."
 )
 
 exit /b
@@ -1524,7 +1524,7 @@ set pupfound=%pupfound1%%pupfound2%
 set hcount=0
 for %%# in (avira.com kaspersky.com virustotal.com mcafee.com) do (
 find /i "%%#" %SysPath%\drivers\etc\hosts %nul% && set /a hcount+=1)
-if %hcount%==4 set "results=[AV URLs are blocked in hosts]"
+if %hcount%==4 set "results=[Antivirus URLs are blocked in hosts]"
 
 set wucount=0
 for %%# in (wuauserv) do (
@@ -1533,7 +1533,7 @@ for %%G in (DependOnService Description DisplayName ErrorControl ImagePath Objec
 reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v %%G %nul% || (set _corrupt=1 & set /a wucount+=1)
 )
 )
-if %wucount% GEQ 1 set "results=%results%[WU registry is corrupt]"
+if %wucount% GEQ 1 set "results=%results%[Windows Update registry is corrupt]"
 
 sc start sppsvc %nul%
 echo "%errorlevel%" | findstr "577 225" %nul% && (
@@ -1544,7 +1544,8 @@ if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%
 
 if not "%results%%pupfound%"=="" (
 if defined pupfound call :dk_color %Gray% "Checking PUP Activators                 [Found%pupfound%]"
-if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection     %results%"
+if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection..."
+if defined results call :dk_color %Red% "%results%"
 set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
@@ -1563,7 +1564,7 @@ call :dk_chkmal
 sc query Null %nul% || (
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking Sandboxing                     [Found. Script may not work properly.]"
+call :dk_color %Red% "Checking Sandboxing                     [Found, script may not work properly.]"
 call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
 echo:
 )
@@ -1654,7 +1655,7 @@ if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
-call :dk_color %Blue% "Restart the system to fix this error."
+call :dk_color %Blue% "Restart your system to fix this error."
 set showfix=1
 )
 )
@@ -1694,7 +1695,7 @@ for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':w
 echo "%wpainfo%" | find /i "Error Found" %nul% && (
 set error=1
 set wpaerror=1
-call :dk_color %Red% "Checking WPA Registry Error             [%wpainfo%]"
+call :dk_color %Red% "Checking WPA Registry Errors            [%wpainfo%]"
 ) || (
 echo Checking WPA Registry Count             [%wpainfo%]
 )
@@ -1733,7 +1734,7 @@ call :dk_color %Red% "Checking License Files                  [Not Found] [%osed
 
 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*-%osedition%-*.mum" (
 set error=1
-call :dk_color %Red% "Checking Package File                   [Not Found] [%osedition%]"
+call :dk_color %Red% "Checking Package Files                  [Not Found] [%osedition%]"
 )
 )
 )
@@ -1804,7 +1805,7 @@ echo Checking Eval WLMS Service              [Found]
 
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% || (
 set error=1
-call :dk_color %Red% "Checking HKU\S-1-5-20 Reg               [Not Found]"
+call :dk_color %Red% "Checking HKU\S-1-5-20 Registry          [Not Found]"
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -1829,7 +1830,7 @@ set error=1
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
-call :dk_color2 %Blue% "Possibly Caused By Gaming Spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
+call :dk_color2 %Blue% "Most likely caused by HWID spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
 set error=1
 set showfix=1
 )
@@ -1859,9 +1860,9 @@ set "d=!d! $AclObject.SetSecurityDescriptorSddlForm($sddl);"
 set "d=!d! Set-Acl -Path %tokenstore% -AclObject $AclObject;"
 %psc% "!d!" %nul%
 if exist "%tokenstore%\" (
-call :dk_color %Gray% "Checking SPP Token Folder               [Not Found. Created Now] [%tokenstore%\]"
+call :dk_color %Gray% "Checking SPP Token Folder               [Not Found, Created Now] [%tokenstore%\]"
 ) else (
-call :dk_color %Red% "Checking SPP Token Folder               [Not Found. Failed To Create] [%tokenstore%\]"
+call :dk_color %Red% "Checking SPP Token Folder               [Not Found, Failed to Create] [%tokenstore%\]"
 set error=1
 set showfix=1
 )
@@ -1979,7 +1980,7 @@ if ($osVersion.Build -ge $minBuildNumber) {
     }
     for ($i=1; $i -le $count; $i++) {
         if (-not $subkeyHashTable.ContainsKey("$i")) {
-            Write-Output "Total Keys $count. Error Found- $i key does not exist"
+            Write-Output "Total Keys $count. Error Found - $i key does not exist."
 			$wpaKey.Close()
 			exit
         }
@@ -1990,7 +1991,7 @@ $wpaKey.GetSubKeyNames() | ForEach-Object {
         if ($PSVersionTable.PSVersion.Major -lt 3) {
             cmd /c "reg query "HKLM\SYSTEM\WPA\$_" /ve /t REG_BINARY >nul 2>&1"
 			if ($LASTEXITCODE -ne 0) {
-            Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+            Write-Host "Total Keys $count. Error Found - Binary Data is corrupt."
 			$wpaKey.Close()
 			exit
 			}
@@ -1998,7 +1999,7 @@ $wpaKey.GetSubKeyNames() | ForEach-Object {
             $subkey = $wpaKey.OpenSubKey($_)
             $p = $subkey.GetValueNames()
             if (($p | Where-Object { $subkey.GetValueKind($_) -eq [Microsoft.Win32.RegistryValueKind]::Binary }).Count -eq 0) {
-                Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+                Write-Host "Total Keys $count. Error Found - Binary Data is corrupt."
 				$wpaKey.Close()
 				exit
             }
@@ -2037,13 +2038,13 @@ echo:
 if %_unattended%==1 timeout /t 2 & exit /b
 
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] To Open Troubleshoot Page " %Gray% " Press [0] To Ignore"
+call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press 0 key to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."

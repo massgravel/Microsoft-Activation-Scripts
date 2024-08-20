@@ -27,7 +27,7 @@ set "_debug=0"
 
 ::========================================================================================================================================
 
-::  Set Environment variables, it helps if they are misconfigured in the system
+::  Set environment variables, it helps if they are misconfigured in the system
 
 setlocal EnableExtensions
 setlocal DisableDelayedExpansion
@@ -160,22 +160,22 @@ call :dk_setvar
 if %winbuild% LSS 10240 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
-echo HWID Activation is supported only for Windows 10/11.
+echo HWID Activation is only supported on Windows 10/11.
 echo:
-call :dk_color %Blue% "Use Online KMS Activation option."
+call :dk_color %Blue% "Use Online KMS activation option."
 goto dk_done
 )
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 %eline%
-echo HWID Activation is not supported for Windows Server.
-call :dk_color %Blue% "Use KMS38 or Online KMS Activation option."
+echo HWID Activation is not supported on Windows Server.
+call :dk_color %Blue% "Use KMS38 or Online KMS activation option."
 goto dk_done
 )
 
 ::========================================================================================================================================
 
-::  Fix special characters limitation in path name
+::  Fix special character limitations in path name
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
@@ -195,8 +195,8 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder,
-echo Most likely you are running the script directly from the archive file.
+echo The script was launched from the temp folder.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto dk_done
@@ -237,7 +237,7 @@ goto dk_done
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
 echo This script needs admin rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
 
@@ -296,14 +296,14 @@ if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.6
 if defined old (
 echo ________________________________________________
 %eline%
-echo Version %masver% of MAS is outdated.
+echo Your version of MAS [%masver%] is outdated.
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :dk_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
@@ -329,7 +329,7 @@ ClipUp.exe
 ) do (
 if not exist %SysPath%\%%# (
 %eline%
-echo [%SysPath%\%%#] file is missing. Aborting...
+echo [%SysPath%\%%#] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -356,12 +356,12 @@ if defined _perm (
 cls
 echo ___________________________________________________________________________________________
 echo:
-call :dk_color2 %_White% "     " %Green% "Checking: %winos% is Permanently Activated."
+call :dk_color2 %_White% "     " %Green% "%winos% is already permanently activated."
 call :dk_color2 %_White% "     " %Gray% "Activation is not required."
 echo ___________________________________________________________________________________________
 if %_unattended%==1 goto dk_done
 echo:
-choice /C:10 /N /M ">    [1] Activate [0] %_exitmsg% : "
+choice /C:10 /N /M ">    [1] Activate Anyway [0] %_exitmsg% : "
 if errorlevel 2 exit /b
 )
 cls
@@ -375,7 +375,7 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2
 %eline%
 echo [%winos% ^| %winbuild%]
 echo:
-echo Evaluation Editions cannot be activated outside of evaluation period. 
+echo Evaluation editions cannot be activated outside of their evaluation period. 
 echo:
 set fixes=%fixes% %mas%evaluation_editions
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
@@ -408,7 +408,7 @@ echo Checking Internet Connection            [Connected%ping_f%]
 ) else (
 set error=1
 call :dk_color %Red% "Checking Internet Connection            [Not Connected]"
-call :dk_color %Blue% "Internet is required for HWID Activation."
+call :dk_color %Blue% "Internet is required for HWID activation."
 )
 
 ::========================================================================================================================================
@@ -457,13 +457,13 @@ if not defined key (
 %eline%
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 if not defined skunotfound (
-echo This product does not support HWID Activation.
-echo Try KMS38 Activation option.
-echo Make sure you are using updated version of the script.
+echo This product does not support HWID activation.
+echo Make sure you are using the latest version of the script.
+echo If you are, then try KMS38 activation option.
 set fixes=%fixes% %mas%
 echo %mas%
 ) else (
-echo Required License files not found in %SysPath%\spp\tokens\skus\
+echo Required license files not found in %SysPath%\spp\tokens\skus\
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -479,12 +479,12 @@ if defined notworking set error=1
 
 echo:
 if defined changekey (
-call :dk_color %Blue% "[%altedition%] Edition product key will be used to enable HWID activation."
+call :dk_color %Blue% "[%altedition%] edition product key will be used to enable HWID activation."
 echo:
 )
 
 if defined winsub (
-call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. Script will activate base edition [SKU ID-%regSKU%]."
+call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] detected. Script will activate base edition [SKU ID-%regSKU%]."
 echo:
 )
 
@@ -526,7 +526,7 @@ call :hwiddata ticket
 copy /y /b "%tdir%\GenuineTicket" "%tdir%\GenuineTicket.xml" %nul%
 
 if not exist "%tdir%\GenuineTicket.xml" (
-call :dk_color %Red% "Generating GenuineTicket.xml            [Failed, aborting the process]"
+call :dk_color %Red% "Generating GenuineTicket.xml            [Failed, aborting...]"
 echo [%encoded%]
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 goto :dl_final
@@ -544,7 +544,7 @@ set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 %_xmlexist% (
 set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipSVC Service Restart, Wait...]"
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed with ClipSVC service restart, wait...]"
 )
 )
 
@@ -604,7 +604,7 @@ reg delete "%_ident%" /f %nul%
 reg query "%_ident%" %nul% && (
 echo:
 set error=1
-call :dk_color %Red% "Deleting an IdentityCRL Registry        [Failed] [%_ident%]"
+call :dk_color %Red% "Deleting IdentityCRL Registry           [Failed] [%_ident%]"
 )
 for %%# in (wlidsvc LicenseManager sppsvc) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 10 | Out-Null")
 call :dk_refresh
@@ -639,7 +639,7 @@ if not defined resfail (
 if defined resfail (
 set error=1
 echo:
-call :dk_color %Red% "Checking Licensing Servers              [Failed To Connect]"
+call :dk_color %Red% "Checking Licensing Servers              [Failed to Connect]"
 set fixes=%fixes% %mas%licensing-servers-issue
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%licensing-servers-issue"
 )
@@ -702,8 +702,8 @@ call :dk_color %Green% "%winos% is permanently activated with a digital license.
 ) else (
 call :dk_color %Red% "Activation Failed %error_code%"
 if defined notworking (
-call :dk_color %Blue% "At the time of writing this, HWID Activation was not supported for this product."
-call :dk_color %Blue% "Use KMS38 Activation option."
+call :dk_color %Blue% "At the time of writing, HWID Activation is not supported for this product."
+call :dk_color %Blue% "Use KMS38 activation option instead."
 ) else (
 if not defined error call :dk_color %Blue% "%_fixmsg%"
 set fixes=%fixes% %mas%troubleshoot
@@ -1072,7 +1072,7 @@ set pupfound=%pupfound1%%pupfound2%
 set hcount=0
 for %%# in (avira.com kaspersky.com virustotal.com mcafee.com) do (
 find /i "%%#" %SysPath%\drivers\etc\hosts %nul% && set /a hcount+=1)
-if %hcount%==4 set "results=[AV URLs are blocked in hosts]"
+if %hcount%==4 set "results=[Antivirus URLs are blocked in hosts]"
 
 set wucount=0
 for %%# in (wuauserv) do (
@@ -1081,7 +1081,7 @@ for %%G in (DependOnService Description DisplayName ErrorControl ImagePath Objec
 reg query HKLM\SYSTEM\CurrentControlSet\Services\%%# /v %%G %nul% || (set _corrupt=1 & set /a wucount+=1)
 )
 )
-if %wucount% GEQ 1 set "results=%results%[WU registry is corrupt]"
+if %wucount% GEQ 1 set "results=%results%[Windows Update registry is corrupt]"
 
 sc start sppsvc %nul%
 echo "%errorlevel%" | findstr "577 225" %nul% && (
@@ -1092,7 +1092,8 @@ if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%
 
 if not "%results%%pupfound%"=="" (
 if defined pupfound call :dk_color %Gray% "Checking PUP Activators                 [Found%pupfound%]"
-if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection     %results%"
+if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection..."
+if defined results call :dk_color %Red% "%results%"
 set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
@@ -1111,7 +1112,7 @@ call :dk_chkmal
 sc query Null %nul% || (
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking Sandboxing                     [Found. Script may not work properly.]"
+call :dk_color %Red% "Checking Sandboxing                     [Found, script may not work properly.]"
 call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
 echo:
 )
@@ -1202,7 +1203,7 @@ if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
-call :dk_color %Blue% "Restart the system to fix this error."
+call :dk_color %Blue% "Restart your system to fix this error."
 set showfix=1
 )
 )
@@ -1242,7 +1243,7 @@ for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':w
 echo "%wpainfo%" | find /i "Error Found" %nul% && (
 set error=1
 set wpaerror=1
-call :dk_color %Red% "Checking WPA Registry Error             [%wpainfo%]"
+call :dk_color %Red% "Checking WPA Registry Errors            [%wpainfo%]"
 ) || (
 echo Checking WPA Registry Count             [%wpainfo%]
 )
@@ -1281,7 +1282,7 @@ call :dk_color %Red% "Checking License Files                  [Not Found] [%osed
 
 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*-%osedition%-*.mum" (
 set error=1
-call :dk_color %Red% "Checking Package File                   [Not Found] [%osedition%]"
+call :dk_color %Red% "Checking Package Files                  [Not Found] [%osedition%]"
 )
 )
 )
@@ -1352,7 +1353,7 @@ echo Checking Eval WLMS Service              [Found]
 
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% || (
 set error=1
-call :dk_color %Red% "Checking HKU\S-1-5-20 Reg               [Not Found]"
+call :dk_color %Red% "Checking HKU\S-1-5-20 Registry          [Not Found]"
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -1377,7 +1378,7 @@ set error=1
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
-call :dk_color2 %Blue% "Possibly Caused By Gaming Spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
+call :dk_color2 %Blue% "Most likely caused by HWID spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
 set error=1
 set showfix=1
 )
@@ -1407,9 +1408,9 @@ set "d=!d! $AclObject.SetSecurityDescriptorSddlForm($sddl);"
 set "d=!d! Set-Acl -Path %tokenstore% -AclObject $AclObject;"
 %psc% "!d!" %nul%
 if exist "%tokenstore%\" (
-call :dk_color %Gray% "Checking SPP Token Folder               [Not Found. Created Now] [%tokenstore%\]"
+call :dk_color %Gray% "Checking SPP Token Folder               [Not Found, Created Now] [%tokenstore%\]"
 ) else (
-call :dk_color %Red% "Checking SPP Token Folder               [Not Found. Failed To Create] [%tokenstore%\]"
+call :dk_color %Red% "Checking SPP Token Folder               [Not Found, Failed to Create] [%tokenstore%\]"
 set error=1
 set showfix=1
 )
@@ -1527,7 +1528,7 @@ if ($osVersion.Build -ge $minBuildNumber) {
     }
     for ($i=1; $i -le $count; $i++) {
         if (-not $subkeyHashTable.ContainsKey("$i")) {
-            Write-Output "Total Keys $count. Error Found- $i key does not exist"
+            Write-Output "Total Keys $count. Error Found - $i key does not exist."
 			$wpaKey.Close()
 			exit
         }
@@ -1538,7 +1539,7 @@ $wpaKey.GetSubKeyNames() | ForEach-Object {
         if ($PSVersionTable.PSVersion.Major -lt 3) {
             cmd /c "reg query "HKLM\SYSTEM\WPA\$_" /ve /t REG_BINARY >nul 2>&1"
 			if ($LASTEXITCODE -ne 0) {
-            Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+            Write-Host "Total Keys $count. Error Found - Binary Data is corrupt."
 			$wpaKey.Close()
 			exit
 			}
@@ -1546,7 +1547,7 @@ $wpaKey.GetSubKeyNames() | ForEach-Object {
             $subkey = $wpaKey.OpenSubKey($_)
             $p = $subkey.GetValueNames()
             if (($p | Where-Object { $subkey.GetValueKind($_) -eq [Microsoft.Win32.RegistryValueKind]::Binary }).Count -eq 0) {
-                Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+                Write-Host "Total Keys $count. Error Found - Binary Data is corrupt."
 				$wpaKey.Close()
 				exit
             }
@@ -1585,13 +1586,13 @@ echo:
 if %_unattended%==1 timeout /t 2 & exit /b
 
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] To Open Troubleshoot Page " %Gray% " Press [0] To Ignore"
+call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press 0 key to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
