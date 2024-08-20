@@ -104,7 +104,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo Null service, which is required for the script to operate, is not running.
+echo The Null service, which is required for the script to operate, is not running.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -119,7 +119,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has an LF line ending issue or an empty line at the end of the script is missing.
+echo Error - The script either has an LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -160,9 +160,9 @@ call :dk_setvar
 if %winbuild% LSS 9200 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
-echo Ohook Activation is supported on Windows 8 and later and their server equivalent.
+echo Ohook Activation is supported only on Windows 8/10/11 and their server equivalents.
 echo:
-call :dk_color %Blue% "Use Online KMS Activation option."
+call :dk_color %Blue% "Use Online KMS activation option instead."
 goto dk_done
 )
 
@@ -188,8 +188,8 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder.
-echo Most likely you are running the script directly from the archive file.
+echo The script was launched from the temp folder.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto dk_done
@@ -230,7 +230,7 @@ goto dk_done
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
 echo This script needs administrator rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
 
@@ -360,7 +360,7 @@ call :dk_chkmal
 
 if not exist %SysPath%\sppsvc.exe (
 %eline%
-echo [%SysPath%\sppsvc.exe] file is missing. Aborting...
+echo [%SysPath%\sppsvc.exe] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -414,7 +414,7 @@ if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.Office.Desktop""
 
 if not "%o14msi%%o14c2r%%o16uwp%"=="" (
 echo:
-call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%%o16uwp%]"
+call :dk_color %Red% "Checking for Unsupported Office Installs  [%o14msi%%o14c2r%%o16uwp%]"
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -431,7 +431,7 @@ sc query ClickToRunSvc %nul%
 set error1=%errorlevel%
 
 if defined o16c2r if %error1% EQU 1060 (
-call :dk_color %Red% "Checking ClickToRun Service             [Not found, Office 16.0 files found]"
+call :dk_color %Red% "Checking for ClickToRun Service         [Not found, Office 16.0 files found]"
 set o16c2r=
 set error=1
 )
@@ -440,7 +440,7 @@ sc query OfficeSvc %nul%
 set error2=%errorlevel%
 
 if defined o15c2r if %error1% EQU 1060 if %error2% EQU 1060 (
-call :dk_color %Red% "Checking ClickToRun Service             [Not found, Office 15.0 files found]"
+call :dk_color %Red% "Checking for ClickToRun Service         [Not found, Office 15.0 files found]"
 set o15c2r=
 set error=1
 )
@@ -449,17 +449,17 @@ if "%o16c2r%%o15c2r%%o16msi%%o15msi%"=="" (
 set error=1
 echo:
 if not "%o14msi%%o14c2r%%o16uwp%"=="" (
-call :dk_color %Red% "Checking Supported Office Install       [Not Found]"
+call :dk_color %Red% "Checking for Supported Office Installs  [Not Found]"
 ) else (
-call :dk_color %Red% "Checking Installed Office               [Not Found]"
+call :dk_color %Red% "Checking for Installed Office           [Not Found]"
 )
 
 if defined ohub (
 echo:
-echo You have only Office dashboard app installed, you need to install full Office version.
+echo You only have the Office dashboard app installed, you need to install the full version of Office.
 )
 echo:
-call :dk_color %Blue% "Download and install Office from below URL and try again."
+call :dk_color %Blue% "Download and install Office from the below URL and then try again."
 echo:
 set fixes=%fixes% %mas%genuine-installation-media
 call :dk_color %_Yellow% "%mas%genuine-installation-media"
@@ -471,7 +471,7 @@ if not "%o16c2r%%o15c2r%%o16msi%%o15msi%"=="1" set multioffice=1
 if not "%o14msi%%o14c2r%%o16uwp%"=="" set multioffice=1
 
 if defined multioffice (
-call :dk_color %Gray% "Checking Multiple Office Install        [Found. Recommended to install one version only]"
+call :dk_color %Gray% "Checking for Multiple Office Installs  [Found, it's recommended to install only one version]"
 )
 
 ::========================================================================================================================================
@@ -533,7 +533,7 @@ echo:
 echo Activating Office...                    [C2R ^| %_version% ^| %_oArch%]
 
 if not defined _oIds (
-call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+call :dk_color %Red% "Checking for Installed Products' ID's             [Product IDs not found, aborting...]"
 set error=1
 goto :starto16c2r
 )
@@ -583,7 +583,7 @@ echo:
 echo Activating Office...                    [C2R ^| %_version% %_AudienceData%^| %_oArch%]
 
 if not defined _oIds (
-call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+call :dk_color %Red% "Checking for Installed Products' ID's             [Product IDs not found, aborting...]"
 set error=1
 goto :startmsi
 )
