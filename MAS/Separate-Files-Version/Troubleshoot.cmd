@@ -64,7 +64,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo The Null service, which is required for the script to operate, is not running.
+echo Null service is not running, script may crash...
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -79,7 +79,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has an LF line ending issue or an empty line at the end of the script is missing.
+echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -122,7 +122,7 @@ set "line=______________________________________________________________________
 if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo MAS only supports Windows 7/8/8.1/10/11 and their Server equivalents.
+echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
 goto dk_done
 )
 
@@ -148,7 +148,7 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder,
+echo The script was launched from the temp folder.
 echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
@@ -189,7 +189,7 @@ goto dk_done
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
-echo This script needs admininistrator rights.
+echo This script needs admin rights.
 echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
@@ -436,7 +436,7 @@ copy /y /b "%SystemRoot%\logs\cbs\cbs.log" "%SystemRoot%\logs\cbs\backup_cbs_%_t
 del /f /q "%SystemRoot%\logs\cbs\cbs.log" %nul%
 
 echo:
-echo Applying the command,..
+echo Applying the command...
 echo sfc /scannow
 sfc /scannow
 
@@ -470,7 +470,7 @@ echo %line%
 echo:   
 echo      Notes:
 echo:
-echo       - This option helps in troubleshooting generic activation issues.
+echo       - This option helps in troubleshooting activation issues.
 echo:
 echo       - This option will:
 echo            - Deactivate Windows and Office, you may need to reactivate.
@@ -554,7 +554,7 @@ echo [Successful]
 ::   Clear HWID token related registry to fix activation incase there is any corruption
 
 echo:
-echo Deleting IdentityCRL...
+echo Deleting IdentityCRL Registry Key...
 echo [%_ident%]
 reg delete "%_ident%" /f %nul%
 reg query "%_ident%" %nul% && (
@@ -609,7 +609,7 @@ echo:
 call :scandat check
 
 if not defined token (
-call :dk_color %Red% "tokens.dat file was not found."
+call :dk_color %Red% "tokens.dat file not found."
 ) else (
 echo tokens.dat file: [%token%]
 )
@@ -620,14 +620,14 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 if %winbuild% GEQ 9200 if /i not "%tokenstore%"=="%SysPath%\spp\store" if /i not "%tokenstore%"=="%SysPath%\spp\store\2.0" if /i not "%tokenstore%"=="%SysPath%\spp\store_test\2.0" (
 set badregistry=1
 echo:
-call :dk_color %Red% "Correct path was not found in the TokenStore registry. [%tokenstore%]"
+call :dk_color %Red% "Correct path not found in TokenStore Registry [%tokenstore%]"
 )
 
 ::  Check sppsvc permissions and apply fixes
 
 if %winbuild% GEQ 9200 if not defined badregistry (
 echo:
-echo Checking for SPP permission related issues...
+echo Checking SPP permission related issues...
 call :checkperms
 if defined permerror (
 call :dk_color %Red% "[!permerror!]"
@@ -651,7 +651,7 @@ if %winbuild% LSS 9200 (
 REM Fix issues caused by Update KB971033 in Windows 7
 REM https://support.microsoft.com/help/4487266
 echo:
-echo Checking for update KB971033...
+echo Checking Update KB971033...
 %psc% "if (Get-Hotfix -Id KB971033 -ErrorAction SilentlyContinue) {Exit 3}" %nul%
 if !errorlevel!==3 (
 echo Found, uninstalling it...
@@ -726,13 +726,13 @@ goto :repairoffice
 call :scandatospp check
 
 if not defined token (
-call :dk_color %Red% "tokens.dat file was not found."
+call :dk_color %Red% "tokens.dat file not found."
 ) else (
 echo tokens.dat file: [%token%]
 )
 
 echo:
-echo Stopping the osppsvc service...
+echo Stopping osppsvc service...
 %psc% Stop-Service osppsvc -force %nul%
 
 echo:
@@ -746,7 +746,7 @@ echo:
 )
 
 echo:
-echo Starting the osppsvc service to generate tokens.dat...
+echo Starting osppsvc service to generate tokens.dat...
 %psc% Start-Service osppsvc %nul%
 call :scandatospp check
 if not defined token (
@@ -929,7 +929,7 @@ goto :at_back
 )
 
 echo:
-echo Checking WMI...
+echo Checking WMI
 call :checkwmi
 
 ::  Apply basic fix first and check
@@ -961,18 +961,18 @@ echo Winmgmt service is corrupted, aborting...
 goto :at_back
 )
 
-echo Disabling Winmgmt service...
+echo Disabling Winmgmt service
 sc config Winmgmt start= disabled %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
 ) else (
-call :dk_color %Red% "[Failed, aborting...]"
+call :dk_color %Red% "[Failed] Aborting..."
 sc config Winmgmt start= auto %nul%
 goto :at_back
 )
 
 echo:
-echo Stopping Winmgmt service...
+echo Stopping Winmgmt service
 %psc% Stop-Service Winmgmt -force %nul%
 %psc% Stop-Service Winmgmt -force %nul%
 %psc% Stop-Service Winmgmt -force %nul%
@@ -981,7 +981,7 @@ echo [Successful]
 ) || (
 call :dk_color %Red% "[Failed]"
 echo:
-call :dk_color %Blue% "It is recommended to select [Restart] option and then apply Fix WMI option again."
+call :dk_color %Blue% "Its recommended to select [Restart] option and then apply Fix WMI option again."
 echo %line%
 echo:
 choice /C:21 /N /M "> [1] Restart  [2] Revert Back Changes :"
@@ -993,7 +993,7 @@ exit
 )
 
 echo:
-echo Deleting WMI repository...
+echo Deleting WMI repository
 rmdir /s /q "%SysPath%\wbem\repository\" %nul%
 if exist "%SysPath%\wbem\repository\" (
 call :dk_color %Red% "[Failed]"
@@ -1002,7 +1002,7 @@ echo [Successful]
 )
 
 echo:
-echo Enabling Winmgmt service...
+echo Enabling Winmgmt service
 sc config Winmgmt start= auto %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
@@ -1013,17 +1013,17 @@ call :dk_color %Red% "[Failed]"
 call :checkwmi
 if not defined error (
 echo:
-echo Checking WMI...
+echo Checking WMI
 call :dk_color %Green% "[Working]"
 goto :at_back
 )
 
 echo:
-echo Registering .dll's, compiling .mof's and .mfl's...
+echo Registering .dll's and Compiling .mof's, .mfl's
 call :registerobj %nul%
 
 echo:
-echo Checking WMI...
+echo Checking WMI
 call :checkwmi
 if defined error (
 call :dk_color %Red% "[Not Responding]"
@@ -1079,7 +1079,7 @@ echo:
 echo %line%
 echo:
 if defined terminal (
-call :dk_color %_Yellow% "Press [0] to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
@@ -1123,7 +1123,7 @@ exit /b
 
 :checkperms
 
-::  This code checks if SPP has permission access to tokens folder and required registry keys. Incorrect permissions are often set by HWID gaming spoofers.
+::  This code checks if SPP has permission access to tokens folder and required registry keys. Incorrect permissions are often set by gaming spoofers.
 
 set permerror=
 if not exist "%tokenstore%\" set "permerror=Error Found In Token Folder"
@@ -1138,7 +1138,7 @@ if !errorlevel!==2 (
 if "%%A"=="%tokenstore%" (
 set "permerror=Error Found In Token Folder"
 ) else (
-set "permerror=Error Found In SPP registries"
+set "permerror=Error Found In SPP Registries"
 )
 )
 )
@@ -1191,7 +1191,7 @@ if ($env:permerror -eq 'Error Found In SPP Registries') {
 # Fix perms for SPP in HKU\S-1-5-20
 # https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
 
-if ($env:permerror -ne 'Error found in S-1-5-20 SPP') {
+if ($env:permerror -ne 'Error Found In S-1-5-20 SPP') {
     exit
 }
 if (-not (Test-Path 'Registry::HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform')) {
@@ -1377,7 +1377,7 @@ if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press [0] to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
