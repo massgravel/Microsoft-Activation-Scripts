@@ -64,7 +64,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo The Null service, which is required for the script to operate, is not running.
+echo Null service is not running, script may crash...
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -79,7 +79,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has an LF line ending issue or an empty line at the end of the script is missing.
+echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -121,7 +121,7 @@ call :dk_setvar
 if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo MAS only supports Windows 7/8/8.1/10/11 and their Server equivalents.
+echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
 goto done2
 )
 
@@ -147,7 +147,7 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder.
+echo The script was launched from the temp folder.
 echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
@@ -188,7 +188,7 @@ goto done2
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
-echo This script needs administrator rights.
+echo This script needs admin rights.
 echo Right click on this script and select 'Run as administrator'.
 goto done2
 )
@@ -681,7 +681,7 @@ cd \
 :errorfound
 
 %eline%
-echo The script failed to create the $OEM$ folder successfully.
+echo The script failed to create the $OEM$ folder.
 goto :done2
 
 :done
@@ -689,11 +689,11 @@ goto :done2
 echo ______________________________________________________________
 echo:
 call :dk_color %Blue% "%oem%"
-call :dk_color %Green% "The $OEM$ folder was successfully created on your Desktop."
+call :dk_color %Green% "$OEM$ folder was successfully created on your Desktop."
 echo "%oem%" | find /i "38" %nul% && (
 echo:
-echo If you want to activate Server Cor/Acor editions ^(No GUI Versions^) using KMS38,
-echo refer to this page for instructions: %mas%oem-folder
+echo To KMS38 activate Server Cor/Acor editions ^(No GUI Versions^),
+echo Check this page %mas%oem-folder
 )
 echo ______________________________________________________________
 
@@ -701,13 +701,13 @@ echo ______________________________________________________________
 
 echo:
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] to open the Troubleshoot page " %Gray% " Press [0] to ignore"
+call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press [0] to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
