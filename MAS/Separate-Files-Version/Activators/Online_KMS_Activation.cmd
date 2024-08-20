@@ -129,7 +129,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo Null service, which is required for the script to operate, is not running.
+echo the Null service, which is required for the script to operate, is not running.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -144,7 +144,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has an LF line ending issue or an empty line at the end of the script is missing.
+echo Error - The script either has an LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -191,7 +191,7 @@ call :dk_setvar
 if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported for Windows 7/8/8.1/10/11 and their Server equivalent.
+echo MAS only supports Windows 7/8/8.1/10/11 and their Server equivalents.
 goto dk_done
 )
 
@@ -217,8 +217,8 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder.
-echo Most likely you are running the script directly from the archive file.
+echo The script was launched from the temp folder.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto dk_done
@@ -259,7 +259,7 @@ goto dk_done
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
 echo This script needs administrator rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
 
@@ -420,7 +420,7 @@ call :dk_chkmal
 
 if not exist %SysPath%\sppsvc.exe (
 %eline%
-echo [%SysPath%\sppsvc.exe] file is missing. Aborting...
+echo [%SysPath%\sppsvc.exe] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -508,7 +508,7 @@ if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*EvalCorEditio
 
 if defined _eval (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% && (
-call :dk_color %Red% "Checking Eval Edition                   [Evaluation Editions cannot be activated outside of evaluation period.]"
+call :dk_color %Red% "Checking Evaluation Edition             [Evaluation editions cannot be activated outside of evaluation period.]"
 
 if defined _evalserv (
 call :dk_color %Blue% "Go back to main menu and use [Change Edition] option."
@@ -546,22 +546,22 @@ set /a UBR=0
 if %osSKU%==191 if defined altkey if defined altedition (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
 if %winbuild% LSS 22598 if !UBR! LSS 2788 (
-call :dk_color %Blue% "Windows must to be updated to build 19044.2788 or higher for IotEnterpriseS %KS% activation."
+call :dk_color %Blue% "Windows must be updated to build 19044.2788 or higher for IotEnterpriseS %KS% activation."
 )
 )
 
 if not defined key if defined notfoundaltactID (
-call :dk_color %Red% "Checking Alternate Edition For %KS%      [%altedition% Activation ID Not Found]"
+call :dk_color %Red% "Checking Alternate Edition for %KS%      [%altedition% Activation ID Not Found]"
 )
 
 if not defined key if not defined _gvlk (
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 if not defined skunotfound (
-echo This product does not support %KS% Activation.
+echo This product does not support %KS% activation.
 set fixes=%fixes% %mas%unsupported_products_activation
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%unsupported_products_activation"
 ) else (
-echo Required License files not found in %SysPath%\spp\tokens\skus\
+echo Required license files not found in %SysPath%\spp\tokens\skus\
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -574,12 +574,12 @@ goto :ks_office
 ::  Install key
 
 if defined changekey (
-call :dk_color %Blue% "[%altedition%] Edition product key will be used to enable %KS% activation."
+call :dk_color %Blue% "[%altedition%] edition product key will be used to enable %KS% activation."
 echo:
 )
 
 if defined winsub (
-call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. Script will activate base edition [SKU ID-%regSKU%]."
+call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. The script will activate the base edition [SKU ID-%regSKU%]."
 echo:
 )
 
