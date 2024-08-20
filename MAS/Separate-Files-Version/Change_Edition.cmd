@@ -69,7 +69,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo The Null service, which is required for the script to operate, is not running.
+echo Null service is not running, script may crash...
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -84,7 +84,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - The script either has an LF line ending issue or the empty line at the end of the script is missing.
+echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -127,7 +127,7 @@ set "line=echo _________________________________________________________________
 if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo MAS only supports Windows 7/8/8.1/10/11 and their Server equivalents.
+echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
 goto dk_done
 )
 
@@ -153,7 +153,7 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder.
+echo The script was launched from the temp folder.
 echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
@@ -178,7 +178,7 @@ echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 ) || (
-echo PowerShell is not working, aborting...
+echo PowerShell is not working. Aborting...
 echo If you have applied restrictions on Powershell then undo those changes.
 echo:
 set fixes=%fixes% %mas%fix_powershell
@@ -194,7 +194,7 @@ goto dk_done
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
-echo This script needs administrator rights.
+echo This script needs admin rights.
 echo Right click on this script and select 'Run as administrator'.
 goto dk_done
 )
@@ -302,7 +302,7 @@ dism.exe
 ) do (
 if not exist %SysPath%\%%# (
 %eline%
-echo [%SysPath%\%%#] file is missing. Aborting...
+echo [%SysPath%\%%#] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -335,7 +335,7 @@ if defined UBR (set "fullbuild=%%G.!UBR!") else (set "fullbuild=%%G.%%H")
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 %eline%
-echo Either a key is not installed or MAS failed to get installed keys' activation ID, aborting...
+echo Either key is not insalled or script failed to get installed key's activation ID. Aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
@@ -423,9 +423,9 @@ echo %%# | findstr /i "CountrySpecific CloudEdition" %nul% || (set "_ntarget=!_n
 if not defined _ntarget (
 %line%
 echo:
-if defined dismnotworking call :dk_color %Red% "DISM is not working."
+if defined dismnotworking call :dk_color %Red% "DISM.exe is not working."
 call :dk_color %Gray% "Target editions not found."
-echo Current edition [%osedition% ^| %winbuild%] cannot be changed.
+echo Current Edition [%osedition% ^| %winbuild%] can not be changed to any other Edition.
 %line%
 goto dk_done
 )
@@ -443,11 +443,11 @@ set targetedition=
 
 %line%
 echo:
-call :dk_color %Gray% "You can change the current edition [%osedition%] [%fullbuild%] to one of the following:"
+call :dk_color %Gray% "You can change the edition [%osedition%] [%fullbuild%] to one of the following."
 %showeditionerror%
 if defined dismnotworking (
-call :dk_color %_Yellow% "Note - DISM is not working."
-if /i "%osedition:~0,4%"=="Core" call :dk_color %_Yellow% "     - You will see more editions to choose from once you've changed to Professional."
+call :dk_color %_Yellow% "Note - DISM.exe is not working."
+if /i "%osedition:~0,4%"=="Core" call :dk_color %_Yellow% "     - You will see more edition options to choose once its changed to Pro."
 )
 %line%
 echo:
@@ -543,7 +543,7 @@ cls
 %line%
 echo:
 %showeditionerror%
-if defined dismnotworking call :dk_color %_Yellow% "DISM is not working."
+if defined dismnotworking call :dk_color %_Yellow% "DISM.exe is not working."
 echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]...
 echo:
 
@@ -613,7 +613,7 @@ if defined rebootreq goto dk_done
 
 echo:
 %showeditionerror%
-if defined dismnotworking call :dk_color %_Yellow% "Note - DISM is not working."
+if defined dismnotworking call :dk_color %_Yellow% "Note - DISM.exe is not working."
 echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]...
 echo:
 call :dk_color %Blue% "Important - Save your work before continuing, the system will auto-restart."
@@ -670,7 +670,7 @@ if defined rebootreq goto dk_done
 cls
 echo:
 %showeditionerror%
-if defined dismnotworking call :dk_color %_Yellow% "Note - DISM is not working."
+if defined dismnotworking call :dk_color %_Yellow% "Note - DISM.exe is not working."
 echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]...
 echo:
 
@@ -987,13 +987,13 @@ echo:
 if %_unattended%==1 timeout /t 2 & exit /b
 
 if defined fixes (
-call :dk_color2 %Blue% "Press [1] to open troubleshoot page " %Gray% " Press [0] to ignore"
+call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press [0] to %_exitmsg%..."
+call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
 choice /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
