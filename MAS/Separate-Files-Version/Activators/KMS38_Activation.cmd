@@ -107,7 +107,7 @@ set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo Null service, which is required for the script to operate, is not running.
+echo The Null service, which is required for the script to operate, is not running.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -122,7 +122,7 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has an LF line ending issue or an empty line at the end of the script is missing.
+echo Error - The script either has an LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
 echo Help - %mas%troubleshoot
@@ -198,7 +198,7 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder.
+echo The script was launched from the temp folder.
 echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
@@ -501,7 +501,7 @@ call :dk_color %Blue% "Windows must be updated to build 19044.2788 or higher for
 )
 
 if not defined key if defined notfoundaltactID (
-call :dk_color %Red% "Checking Alternate Edition For KMS38    [%altedition% Activation ID Not Found]"
+call :dk_color %Red% "Checking Alternate Edition for KMS38    [%altedition% Activation ID Not Found]"
 )
 
 if not defined key if not defined _gvlk (
@@ -633,7 +633,7 @@ call :dk_color %Red% "Generating GenuineTicket.xml            [Failed, aborting 
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
 goto :k_final
 ) else (
-echo Generating GenuineTicket                [Successful]
+echo Generating GenuineTicket.xml            [Successful]
 )
 
 set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
@@ -656,7 +656,7 @@ call :dk_color %Gray% "Stopping sppsvc Service                 [Failed]"
 %_xmlexist% (
 set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-call :dk_color %Red% "Installing GenuineTicket                [Failed With ClipSVC Service Restart, Wait...]"
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With ClipSVC Service Restart, Wait...]"
 )
 )
 
@@ -674,13 +674,13 @@ call :dk_color %Red% "Checking ClipSVC tokens.dat             [Not Found]"
 %_xmlexist% (
 set error=1
 set rebuildinfo=1
-call :dk_color %Red% "Installing GenuineTicket                [Failed With clipup -v -o]"
+call :dk_color %Red% "Installing GenuineTicket.xml            [Failed With clipup -v -o]"
 )
 
 if exist "%ProgramData%\Microsoft\Windows\ClipSVC\Install\Migration\*.xml" (
 set error=1
 set rebuildinfo=1
-call :dk_color %Red% "Checking for Ticket Migration               [Failed]"
+call :dk_color %Red% "Checking for Ticket Migration           [Failed]"
 )
 
 if not defined showfix if defined rebuildinfo (
