@@ -732,7 +732,7 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 
 :k_final
 
-::  Remove the added Specific KMS Host (Local Host) if activation is not completed
+::  Remove the specific KMS host (LocalHost) added by the script if activation is not completed
 
 echo:
 if not defined _k38 (
@@ -751,9 +751,9 @@ if defined _k38 (
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([ScriptBlock]::Create($f[1])) -protect"
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg query "HKLM\%specific_kms%" && (
-echo Protect KMS38 From KMS                  [Successful] [Locked A Registry Key]
+echo Protect KMS38 From KMS                  [Successful] [Locked a Registry Key]
 ) || (
-call :dk_color %Red% "Protect KMS38 From KMS                  [Failed To Lock A Registry Key]"
+call :dk_color %Red% "Protect KMS38 From KMS                  [Failed to Lock a Registry Key]"
 )
 )
 
@@ -763,9 +763,9 @@ if defined a_cor if exist "%_clipup%" del /f /q "%_clipup%" %nul%
 
 if defined a_cor (
 if exist "%_clipup%" (
-call :dk_color %Red% "Deleting copied clipup.exe file         [Failed]"
+call :dk_color %Red% "Deleting Copied clipup.exe File         [Failed]"
 ) else (
-echo Deleting copied clipup.exe file         [Successful]
+echo Deleting Copied clipup.exe File         [Successful]
 )
 )
 
@@ -798,9 +798,9 @@ title  Remove KMS38 Protection %masver%
 
 echo:
 %nul% reg query "HKLM\%specific_kms%" && (
-call :dk_color %Red% "Removing Specific KMS Host              [Failed]"
+call :dk_color %Red% "Removing the Specific KMS Host          [Failed]"
 ) || (
-echo Removing Specific KMS Host              [Successful]
+echo Removing the Specific KMS Host          [Successful]
 )
 
 goto :dk_done
@@ -1234,7 +1234,7 @@ if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%
 )
 
 if not "%results%%pupfound%"=="" (
-if defined pupfound call :dk_color %Gray% "Checking PUP Activators                 [Found%pupfound%]"
+if defined pupfound call :dk_color %Gray% "Checking for PUP Activators                [Found%pupfound%]"
 if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection     %results%"
 set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
@@ -1254,7 +1254,7 @@ call :dk_chkmal
 sc query Null %nul% || (
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking Sandboxing                     [Found. Script may not work properly.]"
+call :dk_color %Red% "Checking for Sandboxing                 [Found, the script may not work properly.]"
 call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
 echo:
 )
@@ -1279,7 +1279,7 @@ if defined _corrupt (if defined serv_cor (set "serv_cor=!serv_cor! %%#") else (s
 if defined serv_cor (
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking Corrupt Services               [%serv_cor%]"
+call :dk_color %Red% "Checking for Corrupt Services           [%serv_cor%]"
 )
 
 ::========================================================================================================================================
@@ -1367,7 +1367,7 @@ set error=1
 call :dk_color %Red% "Checking Windows Setup State            [%imagestate%]"
 echo "%imagestate%" | find /i "RESEAL" %nul% && (
 set showfix=1
-call :dk_color %Blue% "You need to run it in normal mode in case you are running it in Audit Mode."
+call :dk_color %Blue% "You need to run it in normal mode in case you are running the script in Audit Mode."
 )
 )
 
@@ -1375,7 +1375,7 @@ call :dk_color %Blue% "You need to run it in normal mode in case you are running
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WinPE" /v InstRoot %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE mode found. Run in normal mode.]"
+call :dk_color2 %Red% "Checking for WinPE mode               " %Blue% "[WinPE mode found. Run in normal mode.]"
 )
 
 
@@ -1385,7 +1385,7 @@ for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':w
 echo "%wpainfo%" | find /i "Error Found" %nul% && (
 set error=1
 set wpaerror=1
-call :dk_color %Red% "Checking WPA Registry Error             [%wpainfo%]"
+call :dk_color %Red% "Checking for WPA Registry Errors        [%wpainfo%]"
 ) || (
 echo Checking WPA Registry Count             [%wpainfo%]
 )
@@ -1394,7 +1394,7 @@ echo Checking WPA Registry Count             [%wpainfo%]
 if not defined officeact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% || (
 set error=1
-call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
+call :dk_color %Red% "Checking for Evaluation Packages        [Non-Evaluation Licenses are installed in Evaluation Windows]"
 set fixes=%fixes% %mas%evaluation_editions
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
 )
@@ -1413,18 +1413,18 @@ if "%osSKU%"=="165" set osedition=ProfessionalEducationN
 
 if not defined officeact (
 if %osedition%==0 (
-call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
+call :dk_color %Red% "Checking for Edition Name               [Not Found in Registry]"
 ) else (
 
 if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set error=1
 set skunotfound=1
-call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
+call :dk_color %Red% "Checking for License Files              [Not Found] [%osedition%]"
 )
 
 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*-%osedition%-*.mum" (
 set error=1
-call :dk_color %Red% "Checking Package File                   [Not Found] [%osedition%]"
+call :dk_color %Red% "Checking for Package Files              [Not Found] [%osedition%]"
 )
 )
 )
@@ -1473,7 +1473,7 @@ call :dk_color %Gray% "Checking SLC/WMI SKU                    [Difference Found
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking Rearm                          " %Blue% "[System Restart Is Required]"
+call :dk_color2 %Red% "Checking for Rearm                      " %Blue% "[System Restart Is Required]"
 )
 
 
@@ -1488,14 +1488,14 @@ call :dk_color2 %Red% "Checking ClipSVC                        " %Blue% "[System
 
 if exist "%SysPath%\wlms\wlms.exe" (
 sc query wlms | find /i "RUNNING" %nul% && (
-echo Checking Eval WLMS Service              [Found]
+echo Checking for Evaluation WLMS Service    [Found]
 )
 )
 
 
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% || (
 set error=1
-call :dk_color %Red% "Checking HKU\S-1-5-20 Reg               [Not Found]"
+call :dk_color %Red% "Checking HKU\S-1-5-20 Registry         [Not Found]"
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -1505,13 +1505,13 @@ for %%# in (SppEx%w%tComObj.exe sppsvc.exe) do (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (if defined _sppint (set "_sppint=!_sppint!, %%#") else (set "_sppint=%%#"))
 )
 if defined _sppint (
-echo Checking SPP Interference In IFEO       [%_sppint%]
+echo Checking for SPP Interference in IFEO   [%_sppint%]
 )
 
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
-call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
+call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing to 0]"
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 10 | Out-Null"
 set error=1
 )
@@ -1552,7 +1552,7 @@ set "d=!d! Set-Acl -Path %tokenstore% -AclObject $AclObject;"
 if exist "%tokenstore%\" (
 call :dk_color %Gray% "Checking SPP Token Folder               [Not Found. Created Now] [%tokenstore%\]"
 ) else (
-call :dk_color %Red% "Checking SPP Token Folder               [Not Found. Failed To Create] [%tokenstore%\]"
+call :dk_color %Red% "Checking SPP Token Folder               [Not Found. Failed to Create] [%tokenstore%\]"
 set error=1
 set showfix=1
 )
@@ -1577,7 +1577,7 @@ call :dk_color %Red% "Checking Activation IDs                 [!_notfoundids!]"
 
 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
 set error=1
-call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
+call :dk_color %Red% "Checking for SPP tokens.dat             [Not Found] [%tokenstore%\]"
 )
 
 
@@ -1670,7 +1670,7 @@ if ($osVersion.Build -ge $minBuildNumber) {
     }
     for ($i=1; $i -le $count; $i++) {
         if (-not $subkeyHashTable.ContainsKey("$i")) {
-            Write-Output "Total Keys $count. Error Found- $i key does not exist"
+            Write-Output "Total Keys $count. Error Found - $i key does not exist"
 			$wpaKey.Close()
 			exit
         }
@@ -1681,7 +1681,7 @@ $wpaKey.GetSubKeyNames() | ForEach-Object {
         if ($PSVersionTable.PSVersion.Major -lt 3) {
             cmd /c "reg query "HKLM\SYSTEM\WPA\$_" /ve /t REG_BINARY >nul 2>&1"
 			if ($LASTEXITCODE -ne 0) {
-            Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+            Write-Host "Total Keys $count. Error Found - Binary Data is corrupt"
 			$wpaKey.Close()
 			exit
 			}
@@ -1689,7 +1689,7 @@ $wpaKey.GetSubKeyNames() | ForEach-Object {
             $subkey = $wpaKey.OpenSubKey($_)
             $p = $subkey.GetValueNames()
             if (($p | Where-Object { $subkey.GetValueKind($_) -eq [Microsoft.Win32.RegistryValueKind]::Binary }).Count -eq 0) {
-                Write-Host "Total Keys $count. Error Found- Binary Data is corrupt"
+                Write-Host "Total Keys $count. Error Found - Binary Data is corrupt"
 				$wpaKey.Close()
 				exit
             }
