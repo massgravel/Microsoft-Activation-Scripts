@@ -687,7 +687,7 @@ REM Check Internet related error codes
 
 if not defined wucorrupt if not defined wublock if not defined wuerror if not defined storeblock (
 echo "%error_code%" | findstr /i "0x80072e 0x80072f 0x800704cf 0x87e10bcf 0x800705b4" %nul% && (
-call :dk_color %Red% "Checking Internet Issues                [Found] %error_code%"
+call :dk_color %Red% "Checking for Internet Issues                [Found] %error_code%"
 set fixes=%fixes% %mas%licensing-servers-issue
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%licensing-servers-issue"
 )
@@ -702,8 +702,8 @@ call :dk_color %Green% "%winos% is permanently activated with a digital license.
 ) else (
 call :dk_color %Red% "Activation Failed %error_code%"
 if defined notworking (
-call :dk_color %Blue% "At the time of writing this, HWID Activation was not supported for this product."
-call :dk_color %Blue% "Use KMS38 Activation option."
+call :dk_color %Blue% "At the time of writing, HWID Activation is not supported for this product."
+call :dk_color %Blue% "Use KMS38 activation option instead."
 ) else (
 if not defined error call :dk_color %Blue% "%_fixmsg%"
 set fixes=%fixes% %mas%troubleshoot
@@ -720,9 +720,9 @@ echo:
 if defined regionchange (
 %psc% "Set-WinHomeLocation -GeoId %nation%" %nul%
 if !errorlevel! EQU 0 (
-echo Restoring Windows Region                [Successful]
+echo Restoring the Windows Region                [Successful]
 ) else (
-call :dk_color %Red% "Restoring Windows Region                [Failed] [%name% - %nation%]"
+call :dk_color %Red% "Restoring the Windows Region                [Failed] [%name% - %nation%]"
 )
 )
 
