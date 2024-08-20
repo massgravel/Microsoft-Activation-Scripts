@@ -1111,7 +1111,7 @@ call :dk_chkmal
 sc query Null %nul% || (
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking Sandboxing                     [Found. Script may not work properly.]"
+call :dk_color %Red% "Checking for Sandboxing                     [Found, script may not work properly.]"
 call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
 echo:
 )
@@ -1200,7 +1200,7 @@ if defined checkerror if defined serv_e (set "serv_e=!serv_e!, %%#-!errorcode!")
 
 if defined serv_e (
 set error=1
-call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
+call :dk_color %Red% "Starting Services                        [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
 call :dk_color %Blue% "Restart your system to fix this error."
 set showfix=1
@@ -1214,14 +1214,14 @@ set showfix=1
 if defined safeboot_option (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking Boot Mode                      [%safeboot_option%] " %Blue% "[Safe mode detected. Run the script in normal mode.]"
+call :dk_color2 %Red% "Checking Boot Mode                       [%safeboot_option%] " %Blue% "[Safe mode detected. Run the script in normal mode.]"
 )
 
 
 for /f "skip=2 tokens=2*" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" /v ImageState') do (set imagestate=%%B)
 if /i not "%imagestate%"=="IMAGE_STATE_COMPLETE" (
 set error=1
-call :dk_color %Red% "Checking Windows Setup State            [%imagestate%]"
+call :dk_color %Red% "Checking Windows Setup State             [%imagestate%]"
 echo "%imagestate%" | find /i "RESEAL" %nul% && (
 set showfix=1
 call :dk_color %Blue% "You need to run the script in normal mode if you are running the script in Audit Mode."
@@ -1232,7 +1232,7 @@ call :dk_color %Blue% "You need to run the script in normal mode if you are runn
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WinPE" /v InstRoot %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE mode detected. Run the script in normal mode.]"
+call :dk_color2 %Red% "Checking for WinPE mode                  " %Blue% "[WinPE mode detected. Run the script in normal mode.]"
 )
 
 
@@ -1242,16 +1242,16 @@ for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':w
 echo "%wpainfo%" | find /i "Error Found" %nul% && (
 set error=1
 set wpaerror=1
-call :dk_color %Red% "Checking WPA Registry Error             [%wpainfo%]"
+call :dk_color %Red% "Checking for WPA Registry Errors         [%wpainfo%]"
 ) || (
-echo Checking WPA Registry Count             [%wpainfo%]
+echo Checking WPA Registry Count         [%wpainfo%]
 )
 
 
 if not defined officeact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% || (
 set error=1
-call :dk_color %Red% "Checking for Evaluation Packages                  [Non-Evaluation Licenses are installed in Evaluation Windows]"
+call :dk_color %Red% "Checking for Evaluation Packages         [Non-Evaluation Licenses are installed in Evaluation Windows]"
 set fixes=%fixes% %mas%evaluation_editions
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
 )
@@ -1270,18 +1270,18 @@ if "%osSKU%"=="165" set osedition=ProfessionalEducationN
 
 if not defined officeact (
 if %osedition%==0 (
-call :dk_color %Red% "Checking for Edition Name                   [Not Found In Registry]"
+call :dk_color %Red% "Checking for Edition Name                [Not Found In Registry]"
 ) else (
 
 if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set error=1
 set skunotfound=1
-call :dk_color %Red% "Checking for License Files                  [Not Found] [%osedition%]"
+call :dk_color %Red% "Checking for License Files               [Not Found] [%osedition%]"
 )
 
 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*-%osedition%-*.mum" (
 set error=1
-call :dk_color %Red% "Checking for Package Files                  [Not Found] [%osedition%]"
+call :dk_color %Red% "Checking for Package Files               [Not Found] [%osedition%]"
 )
 )
 )
@@ -1293,7 +1293,7 @@ cmd /c exit /b %error_code%
 if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
 if %error_code% NEQ 0 (
 set error=1
-call :dk_color %Red% "Checking SoftwareLicensingService       [Not Working] %error_code%"
+call :dk_color %Red% "Checking SoftwareLicensingService        [Not Working] %error_code%"
 )
 
 
@@ -1330,7 +1330,7 @@ call :dk_color %Gray% "Checking SLC/WMI SKU                    [Difference Found
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
 set error=1
 set showfix=1
-call :dk_color2 %Red% "Checking Rearm                          " %Blue% "[System Restart is Required]"
+call :dk_color2 %Red% "Checking for Rearm                      " %Blue% "[System Restart is Required]"
 )
 
 
@@ -1345,7 +1345,7 @@ call :dk_color2 %Red% "Checking for ClipSVC Volatile Key       " %Blue% "[System
 
 if exist "%SysPath%\wlms\wlms.exe" (
 sc query wlms | find /i "RUNNING" %nul% && (
-echo Checking for Evaluation WLMS Service              [Found]
+echo Checking for Evaluation WLMS Service                      [Found]
 )
 )
 
@@ -1362,22 +1362,22 @@ for %%# in (SppEx%w%tComObj.exe sppsvc.exe) do (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (if defined _sppint (set "_sppint=!_sppint!, %%#") else (set "_sppint=%%#"))
 )
 if defined _sppint (
-echo Checking for SPP Interference In IFEO       [%_sppint%]
+echo Checking for SPP Interference In IFEO                     [%_sppint%]
 )
 
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
-call :dk_color %Red% "Checking for SkipRearm                      [Default 0 Value Not Found. Changing to 0]"
+call :dk_color %Red% "Checking for SkipRearm Registry Key       [Default 0 Value Not Found. Changing to 0]"
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 10 | Out-Null"
 set error=1
 )
 
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
-call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
+call :dk_color %Red% "Checking for SPP Registry Key             [Incorrect ModuleId Found]"
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
-call :dk_color2 %Blue% "Most Likely Caused By HWID Spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
+call :dk_color2 %Blue% "Most likely caused by HWID spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
 set error=1
 set showfix=1
 )
@@ -1390,7 +1390,7 @@ if %winbuild% GEQ 9200 if /i not "%tokenstore%"=="%SysPath%\spp\store" if /i not
 set toerr=1
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [%tokenstore%]"
+call :dk_color %Red% "Checking TokenStore Registry Key          [Correct Path Not Found] [%tokenstore%]"
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -1407,9 +1407,9 @@ set "d=!d! $AclObject.SetSecurityDescriptorSddlForm($sddl);"
 set "d=!d! Set-Acl -Path %tokenstore% -AclObject $AclObject;"
 %psc% "!d!" %nul%
 if exist "%tokenstore%\" (
-call :dk_color %Gray% "Checking for SPP Token Folder               [Not Found, Creating Now] [%tokenstore%\]"
+call :dk_color %Gray% "Checking for SPP Token Folder            [Not Found, Creating Now] [%tokenstore%\]"
 ) else (
-call :dk_color %Red% "Checking SPP Token Folder               [Not Found, Failed to Create] [%tokenstore%\]"
+call :dk_color %Red% "Checking for SPP Token Folder            [Not Found, Failed to Create] [%tokenstore%\]"
 set error=1
 set showfix=1
 )
