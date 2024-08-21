@@ -294,7 +294,7 @@ set _erl=%errorlevel%
 if %_erl%==10 exit /b
 if %_erl%==9 start %mas%troubleshoot.html & goto :MainMenu
 if %_erl%==8 goto:Extras
-if %_erl%==7 setlocal & call :change_edition    & cls & endlocal & goto :Extras 
+if %_erl%==7 setlocal & call :change_edition    & cls & endlocal & goto :MainMenu 
 if %_erl%==6 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
 if %_erl%==5 setlocal & call :_Check_Status_wmi & cls & endlocal & goto :MainMenu
 if %_erl%==4 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
