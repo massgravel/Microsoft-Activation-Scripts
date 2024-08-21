@@ -281,18 +281,20 @@ echo:             __________________________________________________
 echo:
 echo:             [5] Activation Status
 echo:             [6] Troubleshoot
-echo:             [7] Extras
-echo:             [8] Help
+echo:             [7] Change Windows Edition
+echo:             [8] Extras
+echo:             [9] Help
 echo:             [0] Exit
 echo:       ______________________________________________________________
 echo:
-call :_color2 %_White% "          " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,6,7,8,0] :"
-choice /C:123456780 /N
+call :_color2 %_White% "          " %_Green% "Enter a menu option in the Keyboard [1,2,3,4,5,6,7,8,9,0] :"
+choice /C:1234567890 /N
 set _erl=%errorlevel%
 
-if %_erl%==9 exit /b
-if %_erl%==8 start %mas%troubleshoot.html & goto :MainMenu
-if %_erl%==7 goto:Extras
+if %_erl%==10 exit /b
+if %_erl%==9 start %mas%troubleshoot.html & goto :MainMenu
+if %_erl%==8 goto:Extras
+if %_erl%==7 setlocal & call :change_edition    & cls & endlocal & goto :Extras 
 if %_erl%==6 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
 if %_erl%==5 setlocal & call :_Check_Status_wmi & cls & endlocal & goto :MainMenu
 if %_erl%==4 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
@@ -315,13 +317,11 @@ echo:
 echo:
 echo:       ______________________________________________________________
 echo:
-echo:             [1] Change Windows Edition
+echo:             [1] Extract $OEM$ Folder
 echo:
-echo:             [2] Extract $OEM$ Folder
+echo:             [2] Activation Status [vbs]
 echo:
-echo:             [3] Activation Status [vbs]
-echo:
-echo:             [4] Download Genuine Windows / Office
+echo:             [3] Download Genuine Windows / Office
 echo:             __________________________________________________      
 echo:                                                                     
 echo:             [0] Go to Main Menu
@@ -332,10 +332,9 @@ choice /C:12340 /N
 set _erl=%errorlevel%
 
 if %_erl%==5 goto :MainMenu
-if %_erl%==4 start %mas%genuine-installation-media.html & goto :Extras
-if %_erl%==3 setlocal & call :_Check_Status_vbs & cls & endlocal & goto :Extras
-if %_erl%==2 goto:Extract$OEM$
-if %_erl%==1 setlocal & call :change_edition    & cls & endlocal & goto :Extras
+if %_erl%==3 start %mas%genuine-installation-media.html & goto :Extras
+if %_erl%==2 setlocal & call :_Check_Status_vbs & cls & endlocal & goto :Extras
+if %_erl%==1 goto:Extract$OEM$
 goto :Extras
 
 ::========================================================================================================================================
