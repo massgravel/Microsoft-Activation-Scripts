@@ -332,8 +332,7 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" (set o16c2r=1&set o16c2r_reg=%_68%\ClickToRun)
 
 if not defined o16c2r_reg (
-echo:
-echo:
+%eline%
 echo Office C2R 2016 or later is not installed, which is required for this script.
 echo Download and install Office from below URL and try again.
 echo:
@@ -662,9 +661,61 @@ exit /b
 cls
 if not defined terminal mode 105, 32
 
-::  Thanks to May, aka Alex for suggesting this method
+::  Check for Project and Visio with unsupported language
+
+set projvis=
+set langmatched=
+echo: %Project_st% %Visio_st% | find /i "ON" %nul% && set projvis=1
+echo: %targetedition% | findstr /i "Project Visio" %nul% && set projvis=1
+
+if defined projvis (
+for %%# in (
+ar-sa
+cs-cz
+da-dk
+de-de
+el-gr
+en-us
+es-es
+fi-fi
+fr-fr
+he-il
+hu-hu
+it-it
+ja-jp
+ko-kr
+nb-no
+nl-nl
+pl-pl
+pt-br
+pt-pt
+ro-ro
+ru-ru
+sk-sk
+sl-si
+sv-se
+tr-tr
+uk-ua
+zh-cn
+zh-tw
+) do (
+if /i "%_lang%"=="%%#" set langmatched=1
+)
+if not defined langmatched (
+%eline%
+echo %_lang% language is not available for Project/Visio apps.
+echo:
+call :dk_color %Blue% "Install Office in the supported language for Project/Visio from the below URL."
+set fixes=%fixes% %mas%genuine-installation-media
+call :dk_color %_Yellow% "%mas%genuine-installation-media"
+goto :oe_goback
+)
+)
+
+::  Thanks to @abbodi1406 for first discovering OfficeClickToRun.exe uses
+::  Thanks to @may for the suggestion to use it to change edition with CDN as a source
 ::  OfficeClickToRun.exe with productstoadd method is used here to add editions
-::  It uses delta updates, meaning that since its using same installed build, it will consume very less Internet
+::  It uses delta updates, meaning that since it's using same installed build, it will consume very less Internet
 
 set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%targetedition%.16_%_lang%_x-none cdnbaseurl.16=http://officecdn.microsoft.com/pr/%_updch% baseurl.16=http://officecdn.microsoft.com/pr/%_updch% version.16=%_version% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%_updch% %targetedition%.excludedapps.16=Groove%excludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
 
@@ -681,10 +732,9 @@ set errorcode=%errorlevel%
 timeout /t 10 %nul%
 
 echo:
+if %errorcode% EQU 0 (
 call :dk_color %Gray% "Now run the Office activation option from the main menu."
-
-if %errorcode% NEQ 0 (
-echo:
+) else (
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -708,13 +758,11 @@ mode 98, 35
 set counter=0
 for %%A in (%_oIds%) do (set /a counter+=1)
 
-for %%A in (%_oIds%) do (
 if !counter! LEQ 1 (
 echo:
-echo Only "%%A" product is installed.
+echo Only "%_oIds%" product is installed.
 echo This option is available only when multiple products are installed.
 goto :oe_goback
-)
 )
 
 ::===============
@@ -812,7 +860,7 @@ set targetchannel=
 
 %line%
 echo:
-call :dk_color %Gray% "Installed update channel: %_AudienceData% - %_version% Client: %_clversion%"
+call :dk_color %Gray% "Installed update channel: %_AudienceData%, %_version%, Client: %_clversion%"
 call :dk_color %Gray% "Unsupported update channels are excluded from this list."
 %line%
 echo:
@@ -971,6 +1019,10 @@ set _c2rXml=
 set _c2rExe=
 set _c2rCexe=
 set _masterxml=
+set ltsc19=
+set ltsc21=
+set ltsc24=
+set ltscfound=
 
 for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg% /v InstallPath" %nul6%') do (set "_oRoot=%%b\root")
 for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\Configuration /v Platform" %nul6%') do (set "_oArch=%%b")
@@ -1005,19 +1057,15 @@ if exist "%_cfolder%\OfficeC2RClient.exe" (
 set "_c2rCexe=%_cfolder%\OfficeC2RClient.exe"
 )
 
-set ltsc19=
 echo %_AudienceData% | findstr /i "LTSC\>" %nul% && set ltsc19=LTSC
 echo %_clversion% %_version% | findstr "16.0.103 16.0.104 16.0.105" %nul% && set ltsc19=LTSC
 
-set ltsc21=
 echo %_AudienceData% | findstr /i "LTSC2021\>" %nul% && set ltsc21=LTSC2021
 echo %_clversion% %_version% | findstr "16.0.14332" %nul% && set ltsc21=LTSC2021
 
-set ltsc24=
 echo %_AudienceData% | findstr /i "LTSC2024\>" %nul% && set ltsc24=LTSC2024
 ::  LTSC 2024 build is not fixed yet
 
-set ltscfound=
 if not "%ltsc19%%ltsc21%%ltsc24%"=="" set ltscfound=1
 
 exit /b
