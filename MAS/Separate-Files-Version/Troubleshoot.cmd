@@ -474,7 +474,8 @@ echo       - This option helps in troubleshooting activation issues.
 echo:
 echo       - This option will:
 echo            - Deactivate Windows and Office, you may need to reactivate.
-echo              If Windows is activated with motherboard / OEM / Digital license then Windows will activate itself again.
+echo              If Windows is activated with motherboard / OEM / Digital license
+echo              then Windows will activate itself again.
 echo:
 echo            - Clear ClipSVC, SPP and OSPP licenses.
 echo            - Fix permissions of SPP tokens folder and registries.
