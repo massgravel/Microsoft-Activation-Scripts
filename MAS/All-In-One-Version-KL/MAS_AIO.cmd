@@ -3576,7 +3576,7 @@ echo:
 echo:
 echo:
 echo:
-echo         ____________________________________________________________
+echo:           ______________________________________________________
 echo:
 echo                 [1] KMS38 Activation
 echo                 ____________________________________________
@@ -3584,7 +3584,7 @@ echo:
 echo                 [2] Remove KM38 Protection
 echo:
 echo                 [0] %_exitmsg%
-echo         ____________________________________________________________
+echo:           ______________________________________________________
 echo: 
 call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard [1,2,0]"
 choice /C:120 /N
