@@ -1594,11 +1594,17 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 )
 
 
-for %%# in (SppEx%w%tComObj.exe sppsvc.exe) do (
+for %%# in (SppEx%w%tComObj.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (if defined _sppint (set "_sppint=!_sppint!, %%#") else (set "_sppint=%%#"))
 )
 if defined _sppint (
-echo Checking SPP Interference In IFEO       [%_sppint%]
+echo %_sppint% | find /i "PerfOptions" %nul% && (
+call :dk_color %Red% "Checking SPP Interference In IFEO       [%_sppint% - System May Deactivate Later]"
+if not defined showfix call :dk_color %Blue% "%_fixmsg%"
+set showfix=1
+) || (
+echo Checking SPP In IFEO                    [%_sppint%]
+)
 )
 
 
@@ -1679,7 +1685,7 @@ for /f "delims=" %%a in ('%psc% "(Get-ScheduledTask -TaskName 'SvcRestartTask' -
 echo !taskinfo! | find /i "Ready" %nul% || (
 reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "actionlist" /f %nul%
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTask" %nul% || set taskinfo=Removed
-call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!]"
+call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!, System May Deactivate Later]"
 )
 )
 
@@ -7847,6 +7853,15 @@ echo [No Error Found]
 echo:
 echo Stopping sppsvc service...
 %psc% Stop-Service sppsvc -force %nul%
+
+set w=
+set _sppint=
+for %%# in (SppEx%w%tComObj.exe sppsvc.exe) do (reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (set _sppint=1))
+if defined _sppint (
+echo:
+echo Removing SPP IFEO registry keys...
+for %%# in (SppE%w%xtComObj.exe sppsvc.exe) do (reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%)
+)
 
 if %winbuild% LSS 9200 (
 REM Fix issues caused by Update KB971033 in Windows 7

@@ -648,6 +648,15 @@ echo:
 echo Stopping sppsvc service...
 %psc% Stop-Service sppsvc -force %nul%
 
+set w=
+set _sppint=
+for %%# in (SppEx%w%tComObj.exe sppsvc.exe) do (reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (set _sppint=1))
+if defined _sppint (
+echo:
+echo Removing SPP IFEO registry keys...
+for %%# in (SppE%w%xtComObj.exe sppsvc.exe) do (reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%)
+)
+
 if %winbuild% LSS 9200 (
 REM Fix issues caused by Update KB971033 in Windows 7
 REM https://support.microsoft.com/help/4487266
