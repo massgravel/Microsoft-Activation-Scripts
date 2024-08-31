@@ -8962,7 +8962,7 @@ exit /b
 
 ::========================================================================================================================================
 
-::  https://github.com/Gamers-Against-Weed/Set-WindowsCbsEdition
+::  https://github.com/asdcorp/Set-WindowsCbsEdition
 
 :cbsxml:[
 param (
