@@ -742,9 +742,9 @@ call :dk_color %Red% "Failed to uninstall Ohook activation."
 call :oh_checkapps
 if defined checknames (
 call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If it is still not fixed, then restart your system and try again."
+call :dk_color %Blue% "If it is still not fixed, then Restart your system using restart button and try again."
 ) else (
-call :dk_color %Blue% "Restart your system and try again."
+call :dk_color %Blue% "Restart your system using restart button and try again."
 )
 ) else (
 call :dk_color %Green% "Successfully uninstalled Ohook activation."
@@ -932,9 +932,9 @@ echo:
 call :oh_checkapps
 if defined checknames (
 call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If it is still not fixed, then restart your system and try again."
+call :dk_color %Blue% "If it is still not fixed, then Restart your system using restart button and try again."
 ) else (
-if /i not "%ierror%"=="Copy" call :dk_color %Blue% "Restart your system and try again."
+if /i not "%ierror%"=="Copy" call :dk_color %Blue% "Restart your system using restart button and try again."
 if /i "%ierror%"=="Copy" call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
 )
 echo:
@@ -1223,13 +1223,13 @@ reg query HKU\%%# %nul% && set failedtounload=1
 if defined failedtoload (
 set error=1
 call :dk_color %Red% "Loading Unloaded Accounts Registry      [Failed for some user accounts]"
-call :dk_color %Blue% "Restart your system and try again."
+call :dk_color %Blue% "Restart your system using restart button and try again."
 )
 
 if defined failedtounload (
 set error=1
 call :dk_color %Red% "Unloading Loaded Account Registries     [Failed for some user accounts]"
-call :dk_color %Blue% "Restart your system and try again."
+call :dk_color %Blue% "Restart your system using restart button and try again."
 )
 
 exit /b
@@ -1655,7 +1655,7 @@ if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
-call :dk_color %Blue% "Restart your system to fix this error."
+call :dk_color %Blue% "Restart your system using restart button to fix this error."
 set showfix=1
 )
 )
@@ -1816,7 +1816,7 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu
 )
 if defined _sppint (
 echo %_sppint% | find /i "PerfOptions" %nul% && (
-call :dk_color %Red% "Checking SPP Interference In IFEO       [%_sppint% - System May Deactivate Later]"
+call :dk_color %Red% "Checking SPP Interference In IFEO       [%_sppint% - System might deactivate later]"
 if not defined showfix call :dk_color %Blue% "%_fixmsg%"
 set showfix=1
 ) || (
@@ -1902,7 +1902,7 @@ for /f "delims=" %%a in ('%psc% "(Get-ScheduledTask -TaskName 'SvcRestartTask' -
 echo !taskinfo! | find /i "Ready" %nul% || (
 reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "actionlist" /f %nul%
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTask" %nul% || set taskinfo=Removed
-call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!, System May Deactivate Later]"
+call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!, System might deactivate later]"
 )
 )
 

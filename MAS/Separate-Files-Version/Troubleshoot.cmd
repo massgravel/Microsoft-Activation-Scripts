@@ -547,7 +547,7 @@ echo Deleting a Volatile ^& Protected Registry Key...
 echo [%RegKey%]
 reg query "%RegKey%" %nul% && (
 call :dk_color %Red% "[Failed]"
-echo Restart your system, that will delete this registry key automatically.
+echo Restart your system using restart button, that will delete this registry key automatically.
 ) || (
 echo [Successful]
 )

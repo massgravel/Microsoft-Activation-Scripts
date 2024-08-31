@@ -1203,7 +1203,7 @@ if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
-call :dk_color %Blue% "Restart your system to fix this error."
+call :dk_color %Blue% "Restart your system using restart button to fix this error."
 set showfix=1
 )
 )
@@ -1364,7 +1364,7 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu
 )
 if defined _sppint (
 echo %_sppint% | find /i "PerfOptions" %nul% && (
-call :dk_color %Red% "Checking SPP Interference In IFEO       [%_sppint% - System May Deactivate Later]"
+call :dk_color %Red% "Checking SPP Interference In IFEO       [%_sppint% - System might deactivate later]"
 if not defined showfix call :dk_color %Blue% "%_fixmsg%"
 set showfix=1
 ) || (
@@ -1450,7 +1450,7 @@ for /f "delims=" %%a in ('%psc% "(Get-ScheduledTask -TaskName 'SvcRestartTask' -
 echo !taskinfo! | find /i "Ready" %nul% || (
 reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "actionlist" /f %nul%
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTask" %nul% || set taskinfo=Removed
-call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!, System May Deactivate Later]"
+call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!, System might deactivate later]"
 )
 )
 
