@@ -742,7 +742,7 @@ call :dk_color %Red% "Failed to uninstall Ohook activation."
 call :oh_checkapps
 if defined checknames (
 call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If it is still not fixed, then Reboot your machine using the restart option and try again."
+call :dk_color %Blue% "If it is still not fixed, reboot your machine using the restart option and try again."
 ) else (
 call :dk_color %Blue% "Reboot your machine using the restart option and try again."
 )
@@ -932,7 +932,7 @@ echo:
 call :oh_checkapps
 if defined checknames (
 call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If it is still not fixed, then Reboot your machine using the restart option and try again."
+call :dk_color %Blue% "If it is still not fixed, reboot your machine using the restart option and try again."
 ) else (
 if /i not "%ierror%"=="Copy" call :dk_color %Blue% "Reboot your machine using the restart option and try again."
 if /i "%ierror%"=="Copy" call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
