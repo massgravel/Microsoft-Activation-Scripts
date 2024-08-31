@@ -700,7 +700,7 @@ for /f %%a in ('%psc% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set _time
 sc query TrustedInstaller | find /i "RUNNING" %nul% && (
 %eline%
 echo Failed to stop the TrustedInstaller service.
-echo Restart your system using restart button and try again.
+echo Reboot your machine using the restart option and try again.
 set preperror=1
 exit /b
 )

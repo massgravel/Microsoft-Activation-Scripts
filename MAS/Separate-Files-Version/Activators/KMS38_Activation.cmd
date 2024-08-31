@@ -1346,7 +1346,7 @@ if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
-call :dk_color %Blue% "Restart your system using restart button to fix this error."
+call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
 set showfix=1
 )
 )

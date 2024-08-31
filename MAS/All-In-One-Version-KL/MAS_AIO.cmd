@@ -1438,7 +1438,7 @@ if defined serv_e (
 set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
-call :dk_color %Blue% "Restart your system using restart button to fix this error."
+call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
 set showfix=1
 )
 )
@@ -2441,9 +2441,9 @@ call :dk_color %Red% "Failed to uninstall Ohook activation."
 call :oh_checkapps
 if defined checknames (
 call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If it is still not fixed, then Restart your system using restart button and try again."
+call :dk_color %Blue% "If it is still not fixed, then Reboot your machine using the restart option and try again."
 ) else (
-call :dk_color %Blue% "Restart your system using restart button and try again."
+call :dk_color %Blue% "Reboot your machine using the restart option and try again."
 )
 ) else (
 call :dk_color %Green% "Successfully uninstalled Ohook activation."
@@ -2631,9 +2631,9 @@ echo:
 call :oh_checkapps
 if defined checknames (
 call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If it is still not fixed, then Restart your system using restart button and try again."
+call :dk_color %Blue% "If it is still not fixed, then Reboot your machine using the restart option and try again."
 ) else (
-if /i not "%ierror%"=="Copy" call :dk_color %Blue% "Restart your system using restart button and try again."
+if /i not "%ierror%"=="Copy" call :dk_color %Blue% "Reboot your machine using the restart option and try again."
 if /i "%ierror%"=="Copy" call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
 )
 echo:
@@ -2922,13 +2922,13 @@ reg query HKU\%%# %nul% && set failedtounload=1
 if defined failedtoload (
 set error=1
 call :dk_color %Red% "Loading Unloaded Accounts Registry      [Failed for some user accounts]"
-call :dk_color %Blue% "Restart your system using restart button and try again."
+call :dk_color %Blue% "Reboot your machine using the restart option and try again."
 )
 
 if defined failedtounload (
 set error=1
 call :dk_color %Red% "Unloading Loaded Account Registries     [Failed for some user accounts]"
-call :dk_color %Blue% "Restart your system using restart button and try again."
+call :dk_color %Blue% "Reboot your machine using the restart option and try again."
 )
 
 exit /b
@@ -7649,7 +7649,7 @@ echo Deleting a Volatile ^& Protected Registry Key...
 echo [%RegKey%]
 reg query "%RegKey%" %nul% && (
 call :dk_color %Red% "[Failed]"
-echo Restart your system using restart button, that will delete this registry key automatically.
+echo Reboot your machine using the restart option, that will delete this registry key automatically.
 ) || (
 echo [Successful]
 )
@@ -8871,7 +8871,7 @@ for /f %%a in ('%psc% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set _time
 sc query TrustedInstaller | find /i "RUNNING" %nul% && (
 %eline%
 echo Failed to stop the TrustedInstaller service.
-echo Restart your system using restart button and try again.
+echo Reboot your machine using the restart option and try again.
 set preperror=1
 exit /b
 )
