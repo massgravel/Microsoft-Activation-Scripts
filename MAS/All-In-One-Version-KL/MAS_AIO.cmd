@@ -313,7 +313,7 @@ goto dk_done
 cls
 color 07
 title  Microsoft %blank%Activation %blank%Scripts %masver%
-if not defined terminal mode 76, 32
+if not defined terminal mode 76, 33
 
 echo:
 echo:
@@ -332,6 +332,8 @@ echo:
 echo:             [5] Check Activation Status
 echo:             [6] Change Windows Edition
 echo:             [7] Change Office Edition
+echo:             __________________________________________________      
+echo:
 echo:             [8] Troubleshoot
 echo:             [9] Extras
 echo:             [H] Help
