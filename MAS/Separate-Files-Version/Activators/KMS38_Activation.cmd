@@ -452,7 +452,7 @@ goto dk_done
 :: Check file signature
 
 if defined a_cor (
-%psc% "if ((Get-AuthenticodeSignature -FilePath '!_work!\clipup.exe').Status -ne 'Valid') {Exit 3}" %nul%
+%psc% "if (-not (Get-AuthenticodeSignature -FilePath '!_work!\clipup.exe').IsOSBinary) {Exit 3}" %nul%
 if !errorlevel!==3 (
 %eline%
 echo Valid digital signature not found in clipup.exe file.
