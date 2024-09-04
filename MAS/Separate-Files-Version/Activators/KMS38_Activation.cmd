@@ -444,8 +444,19 @@ if not exist "!_work!\clipup.exe" (
 echo clipup.exe doesn't exist in Server Cor/Acor [No GUI] versions.
 echo The file is required for KMS38 activation.
 echo Check the below page for instructions on how to activate it.
-set fixes=%fixes% %mas%kms38
-echo %mas%kms38
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%kms38"
+goto dk_done
+)
+)
+
+:: Check file signature
+
+if defined a_cor (
+%psc% "if ((Get-AuthenticodeSignature -FilePath '!_work!\clipup.exe').Status -ne 'Valid') {Exit 3}" %nul%
+if !errorlevel!==3 (
+%eline%
+echo Valid digital signature not found in clipup.exe file.
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 )
