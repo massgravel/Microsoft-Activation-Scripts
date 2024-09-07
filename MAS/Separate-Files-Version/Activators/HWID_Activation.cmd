@@ -1,4 +1,4 @@
-@set masver=2.6
+@set masver=2.7
 @echo off
 
 
