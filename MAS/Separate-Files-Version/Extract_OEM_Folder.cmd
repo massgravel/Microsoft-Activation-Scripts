@@ -1,15 +1,12 @@
-@set masver=2.6
-@setlocal DisableDelayedExpansion
+@set masver=2.7
 @echo off
 
 
 
 ::============================================================================
 ::
-::   This script is a part of 'Microsoft-Activation-Scripts' (MAS) project.
-::
 ::   Homepage: mass grave[.]dev
-::      Email: windowsaddict@protonmail.com
+::      Email: mas.help@outlook.com
 ::
 ::============================================================================
 
@@ -17,25 +14,31 @@
 
 ::========================================================================================================================================
 
-::  Set Path variable, it helps if it is misconfigured in the system
+::  Set environment variables, it helps if they are misconfigured in the system
 
-set "PATH=%SystemRoot%\System32;%SystemRoot%\System32\wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
+setlocal EnableExtensions
+setlocal DisableDelayedExpansion
+
+set "PathExt=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
+
+set "SysPath=%SystemRoot%\System32"
+set "Path=%SystemRoot%\System32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
 if exist "%SystemRoot%\Sysnative\reg.exe" (
-set "PATH=%SystemRoot%\Sysnative;%SystemRoot%\Sysnative\wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%PATH%"
+set "SysPath=%SystemRoot%\Sysnative"
+set "Path=%SystemRoot%\Sysnative;%SystemRoot%;%SystemRoot%\Sysnative\Wbem;%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\;%Path%"
 )
 
-:: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
-:: or with ARM64 process if it was initiated by x86/ARM32 process on ARM64 Windows
+set "ComSpec=%SysPath%\cmd.exe"
+set "PSModulePath=%ProgramFiles%\WindowsPowerShell\Modules;%SysPath%\WindowsPowerShell\v1.0\Modules"
 
 set "_cmdf=%~f0"
 for %%# in (%*) do (
 if /i "%%#"=="r1" set r1=1
 if /i "%%#"=="r2" set r2=1
-if /i "%%#"=="-qedit" (
-reg add HKCU\Console /v QuickEdit /t REG_DWORD /d "1" /f %nul1%
-rem check the code below admin elevation to understand why it's here
 )
-)
+
+:: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
+:: or with ARM64 process if it was initiated by x86/ARM32 process on ARM64 Windows
 
 if exist %SystemRoot%\Sysnative\cmd.exe if not defined r1 (
 setlocal EnableDelayedExpansion
@@ -64,10 +67,10 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%troubleshoot.html
+echo Help - %mas%troubleshoot
 echo:
 echo:
-ping 127.0.0.1 -n 10
+ping 127.0.0.1 -n 20
 )
 cls
 
@@ -76,9 +79,13 @@ cls
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error: Script either has LF line ending issue or an empty line at the end of the script is missing.
+echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
-ping 127.0.0.1 -n 6 >nul
+echo:
+echo Help - %mas%troubleshoot
+echo:
+echo:
+ping 127.0.0.1 -n 20 >nul
 popd
 exit /b
 )
@@ -88,10 +95,11 @@ popd
 
 cls
 color 07
-title Extract $OEM$ Folder %masver%
+title  Extract $OEM$ Folder %masver%
 
 set _args=
 set _elev=
+set _unattended=0
 
 set _args=%*
 if defined _args set _args=%_args:"=%
@@ -106,54 +114,20 @@ set "nul2=2>nul"
 set "nul6=2^>nul"
 set "nul=>nul 2>&1"
 
-set psc=powershell.exe
-set winbuild=1
-for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
-
-set _NCS=1
-if %winbuild% LSS 10586 set _NCS=0
-if %winbuild% GEQ 10586 reg query "HKCU\Console" /v ForceV2 %nul2% | find /i "0x0" %nul1% && (set _NCS=0)
-
-if %_NCS% EQU 1 (
-for /F %%a in ('echo prompt $E ^| cmd') do set "esc=%%a"
-set     "Red="41;97m""
-set    "Gray="100;97m""
-set   "Green="42;97m""
-set    "Blue="44;97m""
-set  "_White="40;37m""
-set  "_Green="40;92m""
-set "_Yellow="40;93m""
-) else (
-set     "Red="Red" "white""
-set    "Gray="Darkgray" "white""
-set   "Green="DarkGreen" "white""
-set    "Blue="Blue" "white""
-set  "_White="Black" "Gray""
-set  "_Green="Black" "Green""
-set "_Yellow="Black" "Yellow""
-)
-
-set "nceline=echo: &echo ==== ERROR ==== &echo:"
-set "eline=echo: &call :ex_color %Red% "==== ERROR ====" &echo:"
+call :dk_setvar
 
 ::========================================================================================================================================
 
 if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalent.
-goto done2
-)
-
-for %%# in (powershell.exe) do @if "%%~$PATH:#"=="" (
-%nceline%
-echo Unable to find powershell.exe in the system.
+echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
 goto done2
 )
 
 ::========================================================================================================================================
 
-::  Fix special characters limitation in path name
+::  Fix special character limitations in path name
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
@@ -162,6 +136,8 @@ set "_batf=%~f0"
 set "_batp=%_batf:'=''%"
 
 set _PSarg="""%~f0""" -el %_args%
+set _PSarg=%_PSarg:'=''%
+
 set "_ttemp=%userprofile%\AppData\Local\Temp"
 
 setlocal EnableDelayedExpansion
@@ -171,8 +147,8 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo Script is launched from the temp folder,
-echo Most likely you are running the script directly from the archive file.
+echo The script was launched from the temp folder.
+echo You are most likely running the script directly from the archive file.
 echo:
 echo Extract the archive file and launch the script from the extracted folder.
 goto done2
@@ -181,29 +157,82 @@ goto done2
 
 ::========================================================================================================================================
 
-::  Elevate script as admin and pass arguments and preventing loop
+::  Check PowerShell
 
-%nul1% fltmc || (
-if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg:'=''!\"' -verb runas" && exit /b
+REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
+
+cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PowerShellTest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
 %eline%
-echo This script needs admin rights.
-echo To do so, right click on this script and select 'Run as administrator'.
+cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
+echo:
+cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | find /i "FullLanguage" %nul1% && (
+echo Failed to run Powershell command but Powershell is working.
+call :dk_color %Blue% "Check if your antivirus is blocking the script."
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+) || (
+echo PowerShell is not working. Aborting...
+echo If you have applied restrictions on Powershell then undo those changes.
+echo:
+set fixes=%fixes% %mas%fix_powershell
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_powershell"
+)
 goto done2
 )
 
 ::========================================================================================================================================
 
-::  This code disables QuickEdit for this cmd.exe session only without making permanent changes to the registry
-::  It is added because clicking on the script window pauses the operation and leads to the confusion that script stopped due to an error
+::  Elevate script as admin and pass arguments and preventing loop
 
-for %%# in (%_args%) do (if /i "%%#"=="-qedit" set quedit=1)
-
-reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% || if not defined quedit (
-reg add HKCU\Console /v QuickEdit /t REG_DWORD /d "0" /f %nul1%
-start cmd.exe /c ""!_batf!" %_args% -qedit"
-rem quickedit reset code is added at the starting of the script instead of here because it takes time to reflect in some cases
-exit /b
+%nul1% fltmc || (
+if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
+%eline%
+echo This script needs admin rights.
+echo Right click on this script and select 'Run as administrator'.
+goto done2
 )
+
+::========================================================================================================================================
+
+::  Disable QuickEdit and launch from conhost.exe to avoid Terminal app
+
+if %winbuild% GEQ 17763 (
+set terminal=1
+) else (
+set terminal=
+)
+
+::  Check if script is running in Terminal app
+
+set r1=$TB = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);
+set r2=%r1% [void]$TB.DefinePInvokeMethod('GetConsoleWindow', 'kernel32.dll', 22, 1, [IntPtr], @(), 1, 3).SetImplementationFlags(128);
+set r3=%r2% [void]$TB.DefinePInvokeMethod('SendMessageW', 'user32.dll', 22, 1, [IntPtr], @([IntPtr], [UInt32], [IntPtr], [IntPtr]), 1, 3).SetImplementationFlags(128);
+set d1=%r3% $hIcon = $TB.CreateType(); $hWnd = $hIcon::GetConsoleWindow();
+set d2=%d1% echo $($hIcon::SendMessageW($hWnd, 127, 0, 0) -ne [IntPtr]::Zero);
+
+if defined terminal (
+%psc% "%d2%" %nul2% | find /i "True" %nul1% && set terminal=
+)
+
+if %_unattended%==1 goto :skipQE
+for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
+
+if defined terminal (
+set "launchcmd=start conhost.exe %psc%"
+) else (
+set "launchcmd=%psc%"
+)
+
+::  Disable QuickEdit in current session
+
+set "d1=$t=[AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);"
+set "d2=$t.DefinePInvokeMethod('GetStdHandle', 'kernel32.dll', 22, 1, [IntPtr], @([Int32]), 1, 3).SetImplementationFlags(128);"
+set "d3=$t.DefinePInvokeMethod('SetConsoleMode', 'kernel32.dll', 22, 1, [Boolean], @([IntPtr], [Int32]), 1, 3).SetImplementationFlags(128);"
+set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080);"
+
+%launchcmd% "%d1% %d2% %d3% %d4% & cmd.exe '/c' '!_PSarg! -qedit'" && (exit /b) || (set terminal=1)
+:skipQE
 
 ::========================================================================================================================================
 
@@ -213,24 +242,25 @@ set -=
 set old=
 
 for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not [%%#]==[] (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
 )
 
 if defined old (
 echo ________________________________________________
 %eline%
-echo You are running outdated version MAS %masver%
+echo Your version of MAS [%masver%] is outdated.
 echo ________________________________________________
 echo:
+if not %_unattended%==1 (
 echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
-call :ex_color %_Green% "Enter a menu option in the Keyboard [1,0] :"
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
 )
-cls
+)
 
 ::========================================================================================================================================
 
@@ -247,7 +277,7 @@ set "_dir=%desktop%\$OEM$\$$\Setup\Scripts"
 
 if exist "!desktop!\" (
 %eline%
-echo Desktop location was not detected, aborting...
+echo Unable to detect Desktop location, aborting...
 goto done2
 )
 
@@ -255,12 +285,12 @@ setlocal EnableDelayedExpansion
 
 ::========================================================================================================================================
 
-mode con cols=78 lines=30
+if not defined terminal mode 78, 30
 
 if exist "!desktop!\$OEM$\" (
 echo _____________________________________________________
 %eline%
-echo $OEM$ folder already exists on the Desktop.
+echo The $OEM$ folder already exists on your Desktop.
 echo _____________________________________________________
 goto done2
 )
@@ -296,7 +326,7 @@ goto done2
 :Menu
 
 cls
-mode con cols=78 lines=30
+if not defined terminal mode 78, 30
 echo:
 echo:
 echo:
@@ -315,16 +345,16 @@ echo:              [7] KMS38      ^(Windows^) ^+ Ohook      ^(Office^)
 echo:              [8] KMS38      ^(Windows^) ^+ Online KMS ^(Office^)
 echo:              [9] Online KMS ^(Windows^) ^+ Ohook      ^(Office^)
 echo:
-call :ex_color2 %_White% "              [R] " %_Green% "ReadMe"
+call :dk_color2 %_White% "              [R] " %_Green% "ReadMe"
 echo:              [0] Exit
 echo:           ________________________________________________________
 echo:  
-call :ex_color2 %_White% "             " %_Green% "Enter a menu option in the Keyboard :"
+call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard :"
 choice /C:123456789R0 /N
 set _erl=%errorlevel%
 
 if %_erl%==11 exit /b
-if %_erl%==10 start %mas%oem-folder.html &goto :Menu
+if %_erl%==10 start %mas%oem-folder &goto :Menu
 if %_erl%==9 goto:kms_ohook
 if %_erl%==8 goto:kms38_kms
 if %_erl%==7 goto:kms38_ohook
@@ -450,7 +480,7 @@ goto done
 
 fltmc >nul || exit /b
 
-call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-WindowsOffice
+call "%~dp0Online_KMS_Activation.cmd" /K-WindowsOffice
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
@@ -525,7 +555,7 @@ call "%~dp0HWID_Activation.cmd" /HWID
 endlocal
 
 setlocal
-call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
+call "%~dp0Online_KMS_Activation.cmd" /K-Office
 endlocal
 
 cd \
@@ -601,7 +631,7 @@ call "%~dp0KMS38_Activation.cmd" /KMS38
 endlocal
 
 setlocal
-call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Office
+call "%~dp0Online_KMS_Activation.cmd" /K-Office
 endlocal
 
 cd \
@@ -635,7 +665,7 @@ goto done
 fltmc >nul || exit /b
 
 setlocal
-call "%~dp0Online_KMS_Activation.cmd" /KMS-ActAndRenewalTask /KMS-Windows
+call "%~dp0Online_KMS_Activation.cmd" /K-Windows
 endlocal
 
 setlocal
@@ -651,15 +681,15 @@ cd \
 :errorfound
 
 %eline%
-echo $OEM$ Folder was not created successfully...
+echo The script failed to create the $OEM$ folder.
 goto :done2
 
 :done
 
 echo ______________________________________________________________
 echo:
-call :ex_color %Blue% "%oem%"
-call :ex_color %Green% "$OEM$ folder is successfully created on the Desktop."
+call :dk_color %Blue% "%oem%"
+call :dk_color %Green% "$OEM$ folder was successfully created on your Desktop."
 echo "%oem%" | find /i "38" %nul% && (
 echo:
 echo To KMS38 activate Server Cor/Acor editions ^(No GUI Versions^),
@@ -670,8 +700,65 @@ echo ______________________________________________________________
 :done2
 
 echo:
-call :ex_color %_Yellow% "Press any key to exit..."
+if defined fixes (
+call :dk_color2 %Blue% "Press [1] to Open Troubleshoot Page " %Gray% " Press [0] to Ignore"
+choice /C:10 /N
+if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
+)
+
+if defined terminal (
+call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
+choice /c 0 /n
+) else (
+call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
 pause %nul1%
+)
+exit /b
+
+::========================================================================================================================================
+
+::  Set variables
+
+:dk_setvar
+
+set psc=powershell.exe
+set winbuild=1
+for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _NCS=1
+if %winbuild% LSS 10586 set _NCS=0
+if %winbuild% GEQ 10586 reg query "HKCU\Console" /v ForceV2 %nul2% | find /i "0x0" %nul1% && (set _NCS=0)
+
+if %_NCS% EQU 1 (
+for /F %%a in ('echo prompt $E ^| cmd') do set "esc=%%a"
+set     "Red="41;97m""
+set    "Gray="100;97m""
+set   "Green="42;97m""
+set    "Blue="44;97m""
+set    "_Red="40;91m""
+set  "_White="40;37m""
+set  "_Green="40;92m""
+set "_Yellow="40;93m""
+) else (
+set     "Red="Red" "white""
+set    "Gray="Darkgray" "white""
+set   "Green="DarkGreen" "white""
+set    "Blue="Blue" "white""
+set    "_Red="Black" "Red""
+set  "_White="Black" "Gray""
+set  "_Green="Black" "Green""
+set "_Yellow="Black" "Yellow""
+)
+
+set "nceline=echo: &echo ==== ERROR ==== &echo:"
+set "eline=echo: &call :dk_color %Red% "==== ERROR ====" &echo:"
+if %~z0 GEQ 200000 (
+set "_exitmsg=Go back"
+set "_fixmsg=Go back to Main Menu, select Troubleshoot and run Fix Licensing option."
+) else (
+set "_exitmsg=Exit"
+set "_fixmsg=In MAS folder, run Troubleshoot script and select Fix Licensing option."
+)
 exit /b
 
 ::========================================================================================================================================
@@ -685,21 +772,21 @@ exit /b
 
 ::========================================================================================================================================
 
-:ex_color
+:dk_color
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
 ) else (
-if not exist %psc% (echo %~3) else (%psc% write-host -back '%1' -fore '%2' '%3')
+%psc% write-host -back '%1' -fore '%2' '%3'
 )
 exit /b
 
-:ex_color2
+:dk_color2
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
 ) else (
-if not exist %psc% (echo %~3%~6) else (%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6')
+%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
 )
 exit /b
 
