@@ -884,10 +884,12 @@ for %%# in (
 for /f "tokens=1-2 delims=_" %%A in ("%%~#") do (
 set supported=
 if %winbuild% LSS 10240 (echo %%B | findstr /i "LTSC DevMain" %nul% || set supported=1) else (set supported=1)
-if %winbuild% GEQ 10240 (if defined ltsc19 echo %%B | findstr /i "LTSC\>" %nul% || set supported=)
-if %winbuild% GEQ 10240 (if defined ltsc21 echo %%B | findstr /i "LTSC2021\>" %nul% || set supported=)
-if %winbuild% GEQ 10240 (if defined ltsc24 echo %%B | findstr /i "LTSC2024\>" %nul% || set supported=)
-if %winbuild% GEQ 10240 (if not defined ltscfound echo %%B | findstr /i "LTSC" %nul% && set supported=)
+if %winbuild% GEQ 10240 (
+if defined ltsc19 echo %%A | findstr /i "2019 VL" %nul% || set supported=
+if defined ltsc21 echo %%A | findstr /i "2021 VL" %nul% || set supported=
+if defined ltsc24 echo %%A | findstr /i "2024 VL" %nul% || set supported=
+if not defined ltscfound echo %%B | findstr /i "LTSC" %nul% && set supported=
+)
 if defined supported (
 set /a counter+=1
 if !counter! LSS 10 (
@@ -1057,13 +1059,15 @@ if exist "%_cfolder%\OfficeC2RClient.exe" (
 set "_c2rCexe=%_cfolder%\OfficeC2RClient.exe"
 )
 
-echo %_AudienceData% | findstr /i "LTSC\>" %nul% && set ltsc19=LTSC
+set "audidata4=%_AudienceData:~-4%"
+
+if /i "%audidata4%"=="LTSC" set ltsc19=LTSC
 echo %_clversion% %_version% | findstr "16.0.103 16.0.104 16.0.105" %nul% && set ltsc19=LTSC
 
-echo %_AudienceData% | findstr /i "LTSC2021\>" %nul% && set ltsc21=LTSC2021
+if /i "%audidata4%"=="2021" set ltsc21=LTSC2021
 echo %_clversion% %_version% | findstr "16.0.14332" %nul% && set ltsc21=LTSC2021
 
-echo %_AudienceData% | findstr /i "LTSC2024\>" %nul% && set ltsc24=LTSC2024
+if /i "%audidata4%"=="2024" set ltsc24=LTSC2024
 ::  LTSC 2024 build is not fixed yet
 
 if not "%ltsc19%%ltsc21%%ltsc24%"=="" set ltscfound=1
