@@ -781,7 +781,7 @@ set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 %_xmlexist% (
 set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-call :dk_color %Red% "Installing GenuineTicket.xml            [Failed with ClipSVC service restart, wait...]"
+call :dk_color %Gray% "Installing GenuineTicket.xml            [Failed with ClipSVC service restart, wait...]"
 )
 )
 
@@ -3925,7 +3925,7 @@ call :dk_color %Gray% "Stopping sppsvc Service                 [Failed]"
 %_xmlexist% (
 set error=1
 if exist "%tdir%\*.xml" del /f /q "%tdir%\*.xml" %nul%
-call :dk_color %Red% "Installing GenuineTicket.xml            [Failed with ClipSVC service restart, wait...]"
+call :dk_color %Gray% "Installing GenuineTicket.xml            [Failed with ClipSVC service restart, wait...]"
 )
 )
 
