@@ -1106,27 +1106,10 @@ set _sortIds=!_sortIds:PreInstallR_=Retail_!
 ::  https://learn.microsoft.com/office/troubleshoot/activation/reset-office-365-proplus-activation-state
 
 set _sidlist=
-set failedload=
+for /f "tokens=* delims=" %%a in ('%psc% "$p = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList'; Get-ChildItem $p | ForEach-Object { $pi = (Get-ItemProperty """"$p\$($_.PSChildName)"""").ProfileImagePath; if ($pi -like '*\Users\*' -and (Test-Path """"$pi\NTUSER.DAT"""") -and -not ($_.PSChildName -match '\.bak$')) { Split-Path $_.PSPath -Leaf } }" %nul6%') do (if defined _sidlist (set _sidlist=!_sidlist! %%a) else (set _sidlist=%%a))
 
-for /f "tokens=* delims=" %%a in ('%psc% "$p = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList'; Get-ChildItem $p | ForEach-Object { $pi = (Get-ItemProperty """"$p\$($_.PSChildName)"""").ProfileImagePath; if ($_.PSChildName -match '^S-([^-\n]*-){5,}[^-\n]*$' -and (Test-Path """"$pi\NTUSER.DAT"""") -and -not ($_ -match '\.bak$')) { Split-Path $_.PSPath -Leaf } }" %nul6%') do (if defined _sidlist (set _sidlist=!_sidlist! %%a) else (set _sidlist=%%a))
-
-::  Fallback method
 if not defined _sidlist (
-set failedload=1
 for /f "delims=" %%a in ('%psc% "$explorerProc = Get-Process -Name explorer | Where-Object {$_.SessionId -eq (Get-Process -Id $pid).SessionId} | Select-Object -First 1; $sid = (gwmi -Query ('Select * From Win32_Process Where ProcessID=' + $explorerProc.Id)).GetOwnerSid().Sid; $sid" %nul6%') do (set _sidlist=%%a)
-)
-
-if not defined _sidlist (
-set error=1
-call :dk_color %Red% "Checking User Accounts SID              [Not Found]"
-exit /b
-)
-
-set /a counter=0
-for %%# in (%_sidlist%) do set /a counter+=1
-
-if %counter% GTR 10 (
-call :dk_color %Gray% "Checking Total User Accounts            [%counter%]"
 )
 
 ::==========================
@@ -1134,17 +1117,38 @@ call :dk_color %Gray% "Checking Total User Accounts            [%counter%]"
 ::  Load the unloaded useraccounts registry
 
 set loadedsids=
+set alrloadedsids=
+
 for %%# in (%_sidlist%) do (
-reg query HKU\%%#\Software %nul% || (
+reg query HKU\%%#\Software %nul% && (
+call set "alrloadedsids=%%alrloadedsids%% %%#"
+) || (
 for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\%%#" /v ProfileImagePath" %nul6%') do (
 reg load HKU\%%# "%%b\NTUSER.DAT" %nul%
 reg query HKU\%%#\Software %nul% && (
 call set "loadedsids=%%loadedsids%% %%#"
 ) || (
-set failedload=1
+reg unload HKU\%%# %nul%
 )
 )
 )
+)
+
+::==========================
+
+set "_sidlist=%loadedsids% %alrloadedsids%"
+
+set /a counter=0
+for %%# in (%_sidlist%) do set /a counter+=1
+
+if %counter% EQU 0 (
+set error=1
+call :dk_color %Red% "Checking User Accounts SID              [Not Found]"
+exit /b
+)
+
+if %counter% GTR 10 (
+call :dk_color %Gray% "Checking Total User Accounts            [%counter%]"
 )
 
 ::==========================
@@ -1203,24 +1207,23 @@ echo Clearing Office License Blocks          [Successfully cleared from all %cou
 ::  Some retail products attempt to validate the license and may show a banner "There was a problem checking this device's license status."
 ::  Resiliency registry entry can skip this check
 
-set faileddef=
+set defname=DEFTEMP-%random%
 for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList" /v Default" %nul6%') do call set "defdat=%%b"
 
 if defined o16c2r if defined officeact (
 if exist "%defdat%\NTUSER.DAT" (
-reg load HKU\DEF_TEMP "%defdat%\NTUSER.DAT" %nul%
-reg query HKU\DEF_TEMP %nul% || set faileddef=1
-reg add HKU\DEF_TEMP\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /v "TimeOfLastHeartbeatFailure" /t REG_SZ /d "2040-01-01T00:00:00Z" /f %nul%
-reg unload HKU\DEF_TEMP %nul%
-reg query HKU\DEF_TEMP %nul% && set faileddef=1
-) else (
-set faileddef=1
+reg load HKU\%defname% "%defdat%\NTUSER.DAT" %nul%
+reg query HKU\%defname%\Software %nul% && (
+reg add HKU\%defname%\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /v "TimeOfLastHeartbeatFailure" /t REG_SZ /d "2040-01-01T00:00:00Z" /f %nul%
 )
+reg unload HKU\%defname% %nul%
+)
+
 for %%# in (%_sidlist%) do (
 reg delete HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f %nul%
 reg add HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /v "TimeOfLastHeartbeatFailure" /t REG_SZ /d "2040-01-01T00:00:00Z" /f %nul%
 )
-echo Adding Reg Keys to Skip License Check   [Successfully added to all %counter% ^& future new user accounts]
+echo Adding Registry to Skip License Check   [Successfully added to all %counter% ^& future new user accounts]
 )
 
 ::==========================
@@ -1229,15 +1232,6 @@ echo Adding Reg Keys to Skip License Check   [Successfully added to all %counter
 
 for %%# in (%loadedsids%) do (
 reg unload HKU\%%# %nul%
-reg query HKU\%%# %nul% && set failedload=1
-)
-
-if defined failedload (
-call :dk_color %Gray% "Loading Unloading Registries            [Failed for some user accounts]"
-)
-
-if defined faileddef (
-call :dk_color %Gray% "Loading Unloading Registries            [Failed for Default\NTUSER.DAT]"
 )
 
 exit /b
