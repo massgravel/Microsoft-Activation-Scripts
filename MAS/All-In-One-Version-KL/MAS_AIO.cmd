@@ -9466,20 +9466,23 @@ echo:
 echo:
 echo         ____________________________________________________________
 echo:
-echo                 [1] Change - Office Edition
-echo                 [2] Add    - Office Edition
-echo                 [3] Remove - Office Edition
+echo                 [1] Change all editions
+echo                 [2] Add edition
+echo                 [3] Remove edition
+echo:
+echo                 [4] Add/Remove apps
 echo                 ____________________________________________
 echo:
-echo                 [4] Change Office Update Channel
+echo                 [5] Change Office Update Channel
 echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
 echo: 
-call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard [1,2,3,4,0]"
-choice /C:12340 /N
+call :dk_color2 %_White% "           " %_Green% "Choose a menu option using your keyboard [1,2,3,4,5,0]"
+choice /C:123450 /N
 set _el=!errorlevel!
-if !_el!==5  exit /b
-if !_el!==4  goto :oe_changeupdchnl
+if !_el!==6  exit /b
+if !_el!==5  goto :oe_changeupdchnl
+if !_el!==4  goto :oe_editedition
 if !_el!==3  goto :oe_removeedition
 if !_el!==2  set change=0& goto :oe_edition
 if !_el!==1  set change=1& goto :oe_edition
@@ -9497,7 +9500,12 @@ goto :oe_goback
 
 cls
 if not defined terminal mode 76, 25
-title  Change Office Edition %masver%
+if %change%==1 (
+title  Change all editions %masver%
+) else (
+title  Add edition %masver%
+)
+
 echo:
 echo:
 echo:
@@ -9589,6 +9597,8 @@ if %verified%==0 goto :oe_editionchange
 
 ::  Set app exclusions
 
+:oe_excludeappspre
+
 cls
 set suites=
 echo %list% | find /i "Suites" %nul1% && (
@@ -9660,7 +9670,7 @@ echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard:"
 choice /C:AENOPJRVWLDT10 /N
 set _el=!errorlevel!
-if !_el!==14 goto :oe_editionchangepre
+if !_el!==14 goto :oemenu
 if !_el!==13 call :excludelist & goto :oe_editionchangefinal
 if !_el!==12 if defined Teams_st      (if "%Teams_st%"=="Off"      (set Teams_st=ON)      else (set Teams_st=Off))
 if !_el!==11 if defined OneDrive_st   (if "%OneDrive_st%"=="Off"   (set OneDrive_st=ON)   else (set OneDrive_st=Off))
@@ -9789,9 +9799,70 @@ goto :oe_goback
 
 ::========================================================================================================================================
 
+::  Edit Office edition
+
+:oe_editedition
+
+cls
+title  Add/Remove Apps %masver%
+
+call :oe_chkinternet
+if not defined _int (
+goto :oe_goback
+)
+
+set change=0
+call :ch_getinfo
+cls
+
+if not defined terminal (
+mode 98, 35
+)
+
+set inpt=
+set counter=0
+set verified=0
+set targetedition=
+
+%line%
+echo:
+call :dk_color %Gray% "You can edit [add/remove apps] one of the following Office editions."
+%line%
+echo:
+
+for %%A in (%_oIds%) do (
+set /a counter+=1
+echo [!counter!] %%A
+set targetedition!counter!=%%A
+)
+
+%line%
+echo:
+echo [0]  Go Back
+echo:
+call :dk_color %_Green% "Enter an option number using your keyboard and press Enter to confirm:"
+set /p inpt=
+if "%inpt%"=="" goto :oe_editedition
+if "%inpt%"=="0" goto :oemenu
+for /l %%i in (1,1,%counter%) do (if "%inpt%"=="%%i" set verified=1)
+set targetedition=!targetedition%inpt%!
+if %verified%==0 goto :oe_editedition
+
+::===============
+
+cls
+if not defined terminal mode 98, 32
+
+echo %targetedition% | findstr /i "Access Excel OneNote Outlook PowerPoint Project Publisher Skype Visio Word" %nul% && (set list=SingleApps) || (set list=Suites)
+goto :oe_excludeappspre
+
+::========================================================================================================================================
+
 ::  Remove Office editions
 
 :oe_removeedition
+
+title  Remove Office editions %masver%
 
 call :ch_getinfo
 
@@ -9874,6 +9945,7 @@ goto :oe_goback
 
 :oe_changeupdchnl
 
+title  Change Office update channel %masver%
 call :ch_getinfo
 
 cls
@@ -9930,10 +10002,10 @@ for /f "tokens=1-2 delims=_" %%A in ("%%~#") do (
 set supported=
 if %winbuild% LSS 10240 (echo %%B | findstr /i "LTSC DevMain" %nul% || set supported=1) else (set supported=1)
 if %winbuild% GEQ 10240 (
-if defined ltsc19 echo %%A | findstr /i "2019 VL" %nul% || set supported=
-if defined ltsc21 echo %%A | findstr /i "2021 VL" %nul% || set supported=
-if defined ltsc24 echo %%A | findstr /i "2024 VL" %nul% || set supported=
-if not defined ltscfound echo %%B | findstr /i "LTSC" %nul% && set supported=
+if defined ltsc19 echo %%B | find /i "2019 VL" %nul% || set supported=
+if defined ltsc21 echo %%B | find /i "2021 VL" %nul% || set supported=
+if defined ltsc24 echo %%B | find /i "2024 VL" %nul% || set supported=
+if not defined ltscfound echo %%B | find /i "LTSC" %nul% && set supported=
 )
 if defined supported (
 set /a counter+=1
