@@ -9690,18 +9690,18 @@ goto :oe_excludeapps
 
 set excludelist=
 for %%# in (
-Access
-Excel
-OneNote
-Outlook
-PowerPoint
-Project
-Publisher
-Visio
-Word
-Lync
-OneDrive
-Teams
+access
+excel
+onenote
+outlook
+powerpoint
+project
+publisher
+visio
+word
+lync
+onedrive
+teams
 ) do (
 if /i "!%%#_st!"=="Off" if defined excludelist (set excludelist=!excludelist!,%%#) else (set excludelist=,%%#)
 )
@@ -9772,7 +9772,7 @@ goto :oe_goback
 ::  OfficeClickToRun.exe with productstoadd method is used here to add editions
 ::  It uses delta updates, meaning that since it's using same installed build, it will consume very less Internet
 
-set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%targetedition%.16_%_lang%_x-none cdnbaseurl.16=http://officecdn.microsoft.com/pr/%_updch% baseurl.16=http://officecdn.microsoft.com/pr/%_updch% version.16=%_version% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%_updch% %targetedition%.excludedapps.16=Groove%excludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
+set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%targetedition%.16_%_lang%_x-none cdnbaseurl.16=http://officecdn.microsoft.com/pr/%_updch% baseurl.16=http://officecdn.microsoft.com/pr/%_updch% version.16=%_version% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%_updch% %targetedition%.excludedapps.16=groove%excludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
 
 if %change%==1 (
 set "c2rcommand=!c2rcommand! productstoremove=AllProducts"
