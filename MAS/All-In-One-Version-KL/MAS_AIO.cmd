@@ -1583,7 +1583,11 @@ call :dk_color2 %Red% "Checking ClipSVC                        " %Blue% "[System
 
 if exist "%SysPath%\wlms\wlms.exe" (
 sc query wlms | find /i "RUNNING" %nul% && (
+if %winbuild% LSS 9200 (
 echo Checking Eval WLMS Service              [Found]
+) else (
+call :dk_color %Red% "Checking Eval WLMS Service              [Found]"
+)
 )
 )
 
