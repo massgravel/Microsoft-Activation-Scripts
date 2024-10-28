@@ -2116,11 +2116,14 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v P
 %nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 %nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 
-if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.Office.Desktop"" | find /i "Office" %nul1% && set o16uwp=Office UWP 
+if %winbuild% GEQ 10240 (
+for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Desktop' | Select-Object -ExpandProperty InstallLocation)" %nul6%') do (if exist "%%a\Integration\Integrator.exe" set o16uwp=Office UWP )
+)
 
 if not "%o14msi%%o14c2r%%o16uwp%"=="" (
 echo:
 call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%%o16uwp%]"
+if not "%o14msi%%o16uwp%"=="" call :dk_color %Blue% "Use Online KMS option to activate it."
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -2550,14 +2553,15 @@ exit /b
 
 if not defined _oLPath exit /b
 
+if defined _oIntegrator (
 if %oVer%==16 (
 "!_oIntegrator!" /I /License PRIDName=%_License%.16 PidKey=%key% %nul%
 ) else (
 "!_oIntegrator!" /I /License PRIDName=%_License% PidKey=%key% %nul%
 )
-
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
 echo "!allapps!" | find /i "!_actid!" %nul1% && exit /b
+)
 
 ::  Fallback to manual method to install licenses incase integrator.exe is not working
 
@@ -2882,6 +2886,23 @@ reg delete "HKLM\SOFTWARE\Microsoft\Office\%%x.0\Common\Licensing" /f %nul%
 reg delete "HKLM\SOFTWARE\Microsoft\Office\%%x.0\Common\Licensing" /f /reg:32 %nul%
 reg delete "HKLM\SOFTWARE\Policies\Microsoft\Office\%%x.0\Common\Licensing" /f %nul%
 reg delete "HKLM\SOFTWARE\Policies\Microsoft\Office\%%x.0\Common\Licensing" /f /reg:32 %nul%
+)
+
+::  Clear vNext in UWP Office
+
+if defined o16uwpapplist (
+for %%# in (%_sidlist%) do (
+for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\%%#" /v ProfileImagePath" %nul6%') do (
+rmdir /s /q "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\LocalCache\Local\Microsoft\Office\Licenses\" %nul%
+if exist "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\SystemAppData\Helium\User.dat" (
+set defname=DEFTEMP-%%#
+reg load HKU\!defname! "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\SystemAppData\Helium\User.dat" %nul%
+reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Licensing /f %nul%
+reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Identity /f %nul%
+reg unload HKU\!defname! %nul%
+)
+)
+)
 )
 
 ::  Clear SharedComputerLicensing for office
@@ -4657,18 +4678,14 @@ call :dk_color %Gray% "Checking Ohook                          [Ohook activation
 ::  Check unsupported office versions
 
 set o14c2r=
-set o16uwp=
-
 set _68=HKLM\SOFTWARE\Microsoft\Office
 set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
 %nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 %nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 
-if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.Office.Desktop"" | find /i "Office" %nul1% && set o16uwp=Office UWP 
-
-if not "%o14c2r%%o16uwp%"=="" (
+if not "%o14c2r%"=="" (
 echo:
-call :dk_color %Red% "Checking Unsupported Office Install     [ %o14c2r%%o16uwp%]"
+call :dk_color %Red% "Checking Unsupported Office Install     [ %o14c2r%]"
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -4680,6 +4697,13 @@ set ohub=1
 ::  Check supported office versions
 
 call :ks_getpath
+
+set o16uwp=
+set o16uwp_path=
+
+if %winbuild% GEQ 10240 (
+for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Desktop' | Select-Object -ExpandProperty InstallLocation)" %nul6%') do (if exist "%%a\Integration\Integrator.exe" (set o16uwp=1&set "o16uwp_path=%%a"))
+)
 
 sc query ClickToRunSvc %nul%
 set error1=%errorlevel%
@@ -4701,10 +4725,10 @@ set o15c2r=
 set error=1
 )
 
-if "%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="" (
+if "%o16uwp%%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="" (
 set error=1
 echo:
-if not "%o14c2r%%o16uwp%"=="" (
+if not "%o14c2r%"=="" (
 call :dk_color %Red% "Checking Supported Office Install       [Not Found]"
 ) else (
 call :dk_color %Red% "Checking Installed Office               [Not Found]"
@@ -4721,13 +4745,51 @@ goto :ks_activate
 )
 
 set multioffice=
-if not "%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="1" set multioffice=1
-if not "%o14c2r%%o16uwp%"=="" set multioffice=1
+if not "%o16uwp%%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="1" set multioffice=1
+if not "%o14c2r%"=="" set multioffice=1
 
 if defined multioffice (
 echo:
 call :dk_color %Gray% "Checking Multiple Office Install        [Found. Recommended to install one version only]"
 )
+
+::========================================================================================================================================
+
+::  Process Office UWP
+
+if not defined o16uwp goto :ks_starto15c2r
+
+call :ks_reset
+call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
+
+set oVer=16
+set "_oLPath=%o16uwp_path%\Licenses16"
+for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Desktop' | Select-Object -ExpandProperty Dependencies) | Select-Object PackageFullName" %nul6%') do (set "o16uwpapplist=!o16uwpapplist! %%a")
+
+echo "%o16uwpapplist%" | findstr /i "Access Excel OneNote Outlook PowerPoint Publisher SkypeForBusiness Word" %nul% && set "_oIds=O365HomePremRetail"
+
+for %%# in (Project Visio) do (
+echo "%o16uwpapplist%" | findstr /i "%%#" %nul% && (
+set _lat=
+if exist "%_oLPath%\%%#Pro2024VL*.xrm-ms" set "_oIds= !_oIds! %%#Pro2024Retail " & set _lat=1
+if not defined _lat if exist "%_oLPath%\%%#Pro2021VL*.xrm-ms" set "_oIds= !_oIds! %%#Pro2021Retail " & set _lat=1
+if not defined _lat if exist "%_oLPath%\%%#Pro2019VL*.xrm-ms" set "_oIds= !_oIds! %%#Pro2019Retail " & set _lat=1
+if not defined _lat set "_oIds= !_oIds! %%#ProRetail "
+)
+)
+
+set uwpinfo=%o16uwp_path:C:\Program Files\WindowsApps\Microsoft.Office.Desktop_=%
+
+echo:
+echo Processing Office...                    [UWP ^| %uwpinfo%]
+
+if not defined _oIds (
+call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+set error=1
+goto :ks_starto15c2r
+)
+
+call :ks_process
 
 ::========================================================================================================================================
 
@@ -4821,7 +4883,7 @@ if defined o16msi call :ks_processmsi 16 %o16msi_reg%
 
 echo:
 call :oh_clearblock
-if "%o16msi%%o15msi%"=="" if not "%o16c2r%%o15c2r%"=="" if "%keyerror%"=="0" if %_NoEditionChange%==0 call :oh_uninstkey
+if "%o16msi%%o15msi%"=="" if not "%o16uwp%%o16c2r%%o15c2r%"=="" if "%keyerror%"=="0" if %_NoEditionChange%==0 call :oh_uninstkey
 call :oh_licrefresh
 
 ::========================================================================================================================================
@@ -4987,6 +5049,8 @@ exit /b
 ::  After retail to volume conversion, new product ID needs .OSPPReady key in registry, otherwise product info may not fully reflect 
 
 :ks_osppready
+
+if not defined _config exit /b
 
 echo: %_config% | find /i "propertyBag" %nul1% && (
 set "_osppt=REG_DWORD"

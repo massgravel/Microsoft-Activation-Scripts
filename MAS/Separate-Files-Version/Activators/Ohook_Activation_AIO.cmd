@@ -410,11 +410,14 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v P
 %nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 %nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 
-if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.Office.Desktop"" | find /i "Office" %nul1% && set o16uwp=Office UWP 
+if %winbuild% GEQ 10240 (
+for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Desktop' | Select-Object -ExpandProperty InstallLocation)" %nul6%') do (if exist "%%a\Integration\Integrator.exe" set o16uwp=Office UWP )
+)
 
 if not "%o14msi%%o14c2r%%o16uwp%"=="" (
 echo:
 call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%%o16uwp%]"
+if not "%o14msi%%o16uwp%"=="" call :dk_color %Blue% "Use Online KMS option to activate it."
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -844,14 +847,15 @@ exit /b
 
 if not defined _oLPath exit /b
 
+if defined _oIntegrator (
 if %oVer%==16 (
 "!_oIntegrator!" /I /License PRIDName=%_License%.16 PidKey=%key% %nul%
 ) else (
 "!_oIntegrator!" /I /License PRIDName=%_License% PidKey=%key% %nul%
 )
-
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
 echo "!allapps!" | find /i "!_actid!" %nul1% && exit /b
+)
 
 ::  Fallback to manual method to install licenses incase integrator.exe is not working
 
@@ -1176,6 +1180,23 @@ reg delete "HKLM\SOFTWARE\Microsoft\Office\%%x.0\Common\Licensing" /f %nul%
 reg delete "HKLM\SOFTWARE\Microsoft\Office\%%x.0\Common\Licensing" /f /reg:32 %nul%
 reg delete "HKLM\SOFTWARE\Policies\Microsoft\Office\%%x.0\Common\Licensing" /f %nul%
 reg delete "HKLM\SOFTWARE\Policies\Microsoft\Office\%%x.0\Common\Licensing" /f /reg:32 %nul%
+)
+
+::  Clear vNext in UWP Office
+
+if defined o16uwpapplist (
+for %%# in (%_sidlist%) do (
+for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\%%#" /v ProfileImagePath" %nul6%') do (
+rmdir /s /q "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\LocalCache\Local\Microsoft\Office\Licenses\" %nul%
+if exist "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\SystemAppData\Helium\User.dat" (
+set defname=DEFTEMP-%%#
+reg load HKU\!defname! "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\SystemAppData\Helium\User.dat" %nul%
+reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Licensing /f %nul%
+reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Identity /f %nul%
+reg unload HKU\!defname! %nul%
+)
+)
+)
 )
 
 ::  Clear SharedComputerLicensing for office
