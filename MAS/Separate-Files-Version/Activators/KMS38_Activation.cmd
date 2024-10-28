@@ -1490,12 +1490,10 @@ call :dk_color2 %Red% "Checking ClipSVC                        " %Blue% "[System
 ::  This "WLMS" service was included in previous Eval editions (which were activable) to automatically shut down the system every hour after the evaluation period expired and prevent SPPSVC from stopping.
 
 if exist "%SysPath%\wlms\wlms.exe" (
-sc query wlms | find /i "RUNNING" %nul% && (
 if %winbuild% LSS 9200 (
 echo Checking Eval WLMS Service              [Found]
 ) else (
 call :dk_color %Red% "Checking Eval WLMS Service              [Found]"
-)
 )
 )
 
