@@ -38,10 +38,12 @@ set "Path=%SystemRoot%\Sysnative;%SystemRoot%;%SystemRoot%\Sysnative\Wbem;%Syste
 set "ComSpec=%SysPath%\cmd.exe"
 set "PSModulePath=%ProgramFiles%\WindowsPowerShell\Modules;%SysPath%\WindowsPowerShell\v1.0\Modules"
 
+set re1=
+set re2=
 set "_cmdf=%~f0"
 for %%# in (%*) do (
-if /i "%%#"=="re1" (set re1=1) else (set re1=)
-if /i "%%#"=="re2" (set re2=1) else (set re2=)
+if /i "%%#"=="re1" set re1=1
+if /i "%%#"=="re2" set re2=1
 )
 
 :: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
