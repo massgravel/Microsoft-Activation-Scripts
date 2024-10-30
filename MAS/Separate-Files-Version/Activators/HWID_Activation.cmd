@@ -46,24 +46,24 @@ set "PSModulePath=%ProgramFiles%\WindowsPowerShell\Modules;%SysPath%\WindowsPowe
 
 set "_cmdf=%~f0"
 for %%# in (%*) do (
-if /i "%%#"=="r1" set r1=1
-if /i "%%#"=="r2" set r2=1
+if /i "%%#"=="re1" (set re1=1) else (set re1=)
+if /i "%%#"=="re2" (set re2=1) else (set re2=)
 )
 
 :: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
 :: or with ARM64 process if it was initiated by x86/ARM32 process on ARM64 Windows
 
-if exist %SystemRoot%\Sysnative\cmd.exe if not defined r1 (
+if exist %SystemRoot%\Sysnative\cmd.exe if not defined re1 (
 setlocal EnableDelayedExpansion
-start %SystemRoot%\Sysnative\cmd.exe /c ""!_cmdf!" %* r1"
+start %SystemRoot%\Sysnative\cmd.exe /c ""!_cmdf!" %* re1"
 exit /b
 )
 
 :: Re-launch the script with ARM32 process if it was initiated by x64 process on ARM64 Windows
 
-if exist %SystemRoot%\SysArm32\cmd.exe if %PROCESSOR_ARCHITECTURE%==AMD64 if not defined r2 (
+if exist %SystemRoot%\SysArm32\cmd.exe if %PROCESSOR_ARCHITECTURE%==AMD64 if not defined re2 (
 setlocal EnableDelayedExpansion
-start %SystemRoot%\SysArm32\cmd.exe /c ""!_cmdf!" %* r2"
+start %SystemRoot%\SysArm32\cmd.exe /c ""!_cmdf!" %* re2"
 exit /b
 )
 
@@ -143,6 +143,8 @@ set _unattended=0
 
 set _args=%*
 if defined _args set _args=%_args:"=%
+if defined _args set _args=%_args:re1=%
+if defined _args set _args=%_args:re2=%
 if defined _args (
 for %%A in (%_args%) do (
 if /i "%%A"=="/HWID"                  set _act=1
@@ -263,6 +265,7 @@ if defined terminal (
 %psc% "%d2%" %nul2% | find /i "True" %nul1% && set terminal=
 )
 
+if defined ps32onArm goto :skipQE
 if %_unattended%==1 goto :skipQE
 for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
 
@@ -748,6 +751,8 @@ for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
 if %winbuild% GEQ 10586 reg query "HKCU\Console" /v ForceV2 %nul2% | find /i "0x0" %nul1% && (set _NCS=0)
+
+echo "%PROCESSOR_ARCHITECTURE% %PROCESSOR_ARCHITEW6432%" | find /i "ARM64" %nul1% && (if %winbuild% LSS 21277 set ps32onArm=1)
 
 if %_NCS% EQU 1 (
 for /F %%a in ('echo prompt $E ^| cmd') do set "esc=%%a"
@@ -1452,7 +1457,7 @@ call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!, Syste
 ::  This code checks if SPP has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers.
 
 set permerror=
-if %winbuild% GEQ 9200 (
+if %winbuild% GEQ 9200 if not defined ps32onArm (
 for %%# in (
 "%tokenstore%+FullControl"
 "HKLM:\SYSTEM\WPA+QueryValues, EnumerateSubKeys, WriteKey"
