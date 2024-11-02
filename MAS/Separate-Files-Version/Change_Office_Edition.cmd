@@ -522,13 +522,23 @@ goto :oe_goback
 set inpt=
 set counter=0
 set verified=0
+set _notfound=
 set targetedition=
 
 %line%
 echo:
 call :dk_color %Gray% "Installed Office editions: %_oIds%"
 call :dk_color %Gray% "You can select one of the following Office Editions."
-if %winbuild% LSS 10240 echo Unsupported products such as 2019/2021/2024 are excluded from this list.
+if %winbuild% LSS 10240 (
+echo Unsupported products such as 2019/2021/2024 are excluded from this list.
+) else (
+for %%# in (2019 2021 2024) do (
+find /i "%%#" "%SystemRoot%\Temp\%list%.txt" %nul1% || (
+if defined _notfound (set _notfound=%%#, !_notfound!) else (set _notfound=%%#)
+)
+)
+if defined _notfound call :dk_color %Gray% "Office !_notfound! is not in this list because old version of Office is installed."
+)
 %line%
 echo:
 
