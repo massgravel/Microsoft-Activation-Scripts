@@ -9001,6 +9001,17 @@ exit /b
 
 ::========================================================================================================================================
 
+::  Get Edition list
+
+:ced_edilist
+
+if %_wmic% EQU 1 set "chkedi=for /f "tokens=2 delims==" %%a in ('"wmic path %spp% where (ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' AND LicenseDependsOn is NULL) get LicenseFamily /VALUE" %nul6%')"
+if %_wmic% EQU 0 set "chkedi=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT LicenseFamily FROM %spp% WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND LicenseDependsOn is NULL').Get()).LicenseFamily ^| %% {echo ('LicenseFamily='+$_)}" %nul6%')"
+%chkedi% do call set "_wtarget= !_wtarget! %%a "
+exit /b
+
+::========================================================================================================================================
+
 ::  Check pending reboot flags
 
 :ced_rebootflag
