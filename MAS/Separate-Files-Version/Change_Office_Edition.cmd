@@ -537,7 +537,7 @@ find /i "%%#" "%SystemRoot%\Temp\%list%.txt" %nul1% || (
 if defined _notfound (set _notfound=%%#, !_notfound!) else (set _notfound=%%#)
 )
 )
-if defined _notfound call :dk_color %Gray% "Office !_notfound! is not in this list because old version of Office is installed."
+if defined _notfound call :dk_color %Gray% "Office !_notfound! is not in this list because old version [%_version%] of Office is installed."
 )
 %line%
 echo:
@@ -1374,7 +1374,7 @@ echo sc start sppsvc [Error Code: %spperror%]
 )
 
 echo:
-%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 20)) {write-host 'sppsvc is not working correctly. Help - %mas%troubleshoot'}"
+%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host 'sppsvc is not working correctly. Help - %mas%troubleshoot'}"
 exit /b
 
 ::  Common lines used in PowerShell reflection code

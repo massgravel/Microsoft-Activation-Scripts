@@ -780,7 +780,7 @@ echo Generating GenuineTicket.xml            [Successful]
 set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 
 %_xmlexist% (
-%psc% "Start-Job { Restart-Service ClipSVC } | Wait-Job -Timeout 10 | Out-Null"
+%psc% "Start-Job { Restart-Service ClipSVC } | Wait-Job -Timeout 20 | Out-Null"
 %_xmlexist% timeout /t 2 %nul%
 %_xmlexist% timeout /t 2 %nul%
 
@@ -849,7 +849,7 @@ echo:
 set error=1
 call :dk_color %Red% "Deleting IdentityCRL Registry           [Failed] [%_ident%]"
 )
-for %%# in (wlidsvc LicenseManager sppsvc) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 10 | Out-Null")
+for %%# in (wlidsvc LicenseManager sppsvc) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 20 | Out-Null")
 call :dk_refresh
 call :dk_act
 call :dk_checkperm
@@ -918,7 +918,7 @@ reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv\%%G %nul% || set wucor
 if defined wucorrupt (
 call :dk_color %Red% "Checking Windows Update Registry        [Corruption Found]"
 ) else (
-%psc% "Start-Job { Start-Service wuauserv } | Wait-Job -Timeout 10 | Out-Null"
+%psc% "Start-Job { Start-Service wuauserv } | Wait-Job -Timeout 20 | Out-Null"
 sc query wuauserv | find /i "RUNNING" %nul% || (
 set wuerror=1
 sc start wuauserv %nul%
@@ -1185,7 +1185,7 @@ reg delete "%ruleskey%" /v "SuppressRulesEngine" /f %nul%
 set r1=$TB = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);
 set r2=%r1% [void]$TB.DefinePInvokeMethod('SLpTriggerServiceWorker', 'sppc.dll', 22, 1, [Int32], @([UInt32], [IntPtr], [String], [UInt32]), 1, 3);
 set d1=%r2% [void]$TB.CreateType()::SLpTriggerServiceWorker(0, 0, 'reeval', 0)
-%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 10 | Out-Null; %d1%"
+%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null; %d1%"
 exit /b
 
 ::  Get Activation IDs from licensing files if not found through WMI
@@ -1254,7 +1254,7 @@ echo sc start sppsvc [Error Code: %spperror%]
 )
 
 echo:
-%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 20)) {write-host 'sppsvc is not working correctly. Help - %mas%troubleshoot'}"
+%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host 'sppsvc is not working correctly. Help - %mas%troubleshoot'}"
 exit /b
 
 ::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
@@ -1425,7 +1425,7 @@ set errorcode=
 set checkerror=
 
 sc query %%# | find /i "RUNNING" %nul% || (
-%psc% "Start-Job { Start-Service %%# } | Wait-Job -Timeout 10 | Out-Null"
+%psc% "Start-Job { Start-Service %%# } | Wait-Job -Timeout 20 | Out-Null"
 set errorcode=!errorlevel!
 sc query %%# | find /i "RUNNING" %nul% || set checkerror=1
 )
@@ -1614,7 +1614,7 @@ echo Checking SPP In IFEO                    [%_sppint%]
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
 call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
-%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 10 | Out-Null"
+%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 set error=1
 )
 
@@ -1663,7 +1663,7 @@ set showfix=1
 
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
-%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 10 | Out-Null; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"
@@ -3930,7 +3930,7 @@ set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 
 ::  Stop sppsvc
 
-%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 10 | Out-Null"
+%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 
 sc query sppsvc | find /i "STOPPED" %nul% && (
 echo Stopping sppsvc Service                 [Successful]
@@ -3939,7 +3939,7 @@ call :dk_color %Gray% "Stopping sppsvc Service                 [Failed]"
 )
 
 %_xmlexist% (
-%psc% "Start-Job { Restart-Service ClipSVC } | Wait-Job -Timeout 10 | Out-Null"
+%psc% "Start-Job { Restart-Service ClipSVC } | Wait-Job -Timeout 20 | Out-Null"
 %_xmlexist% timeout /t 2 %nul%
 %_xmlexist% timeout /t 2 %nul%
 
@@ -7782,7 +7782,7 @@ echo [Successful]
 
 echo:
 echo Restarting wlidsvc ^& LicenseManager services...
-for %%# in (wlidsvc LicenseManager) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 10 | Out-Null")
+for %%# in (wlidsvc LicenseManager) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 20 | Out-Null")
 
 ::========================================================================================================================================
 
@@ -9667,7 +9667,7 @@ find /i "%%#" "%SystemRoot%\Temp\%list%.txt" %nul1% || (
 if defined _notfound (set _notfound=%%#, !_notfound!) else (set _notfound=%%#)
 )
 )
-if defined _notfound call :dk_color %Gray% "Office !_notfound! is not in this list because old version of Office is installed."
+if defined _notfound call :dk_color %Gray% "Office !_notfound! is not in this list because old version [%_version%] of Office is installed."
 )
 %line%
 echo:

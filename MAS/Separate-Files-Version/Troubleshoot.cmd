@@ -599,7 +599,7 @@ echo [Successful]
 
 echo:
 echo Restarting wlidsvc ^& LicenseManager services...
-for %%# in (wlidsvc LicenseManager) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 10 | Out-Null")
+for %%# in (wlidsvc LicenseManager) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 20 | Out-Null")
 
 ::========================================================================================================================================
 
