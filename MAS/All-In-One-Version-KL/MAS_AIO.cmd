@@ -9325,11 +9325,15 @@ if (!$Dism::_DismSetEdition($Session, "$TargetEdition", "$Key", 0, 0, 0)) {
 ::  Separator  = _
 
 ::  For Windows 10/11 editions, HWID key is listed where ever possible, in Server versions, KMS key is listed where ever possible.
-::  Only RS3 and older version Generic keys are stored here, later ones are extracted from the pkeyhelper.dll itself
+::  For Windows, generic keys are mentioned till 22000 and for Server, generic keys are mentioned till 17763, later ones are extracted from the pkeyhelper.dll
 
 :changeeditiondata
 
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 if %winbuild% GTR 17763 exit /b
+) else (
+if %winbuild% GEQ 22000 exit /b
+)
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*CorEdition~*.mum" (set Cor=Cor) else (set Cor=)
 
 set h=
@@ -9347,8 +9351,12 @@ YTMG3-N6DKC-DKB77-7M9GH-8HV%h%X7______Retail_Core
 XKCNC-J26Q9-KFHD2-FKTHY-KD7%h%2Y__OEM:NONSLP_PPIPro
 YNMGQ-8RYV3-4PGQ3-C8XTP-7CF%h%BY______Retail_Education
 84NGF-MHBT6-FXBX8-QWJK7-DRR%h%8H______Retail_EducationN
+KCNVH-YKWX8-GJJB9-H9FDT-6F7%h%W2__Volume:MAK_EnterpriseS_VB
+43TBQ-NH92J-XKTM7-KT3KK-P39%h%PB__OEM:NONSLP_EnterpriseS_RS5
 NK96Y-D9CD8-W44CQ-R8YTK-DYJ%h%WX__OEM:NONSLP_EnterpriseS_RS1
 FWN7H-PF93Q-4GGP8-M8RF3-MDW%h%WW__OEM:NONSLP_EnterpriseS_TH
+RQFNW-9TPM3-JQ73T-QV4VQ-DV9%h%PT__Volume:MAK_EnterpriseSN_VB
+M33WV-NHY3C-R7FPM-BQGPT-239%h%PG__Volume:MAK_EnterpriseSN_RS5
 2DBW3-N2PJG-MVHW3-G7TDK-9HK%h%R4__Volume:MAK_EnterpriseSN_RS1
 NTX6B-BRYC2-K6786-F6MVQ-M7V%h%2X__Volume:MAK_EnterpriseSN_TH
 G3KNM-CHG6T-R36X3-9QDG6-8M8%h%K9______Retail_ProfessionalSingleLanguage
@@ -9360,6 +9368,10 @@ GJTYN-HDMQY-FRR76-HVGC7-QPF%h%8P______Retail_ProfessionalEducationN
 C4NTJ-CX6Q2-VXDMR-XVKGM-F9D%h%JC__Volume:MAK_EnterpriseG
 46PN6-R9BK9-CVHKB-HWQ9V-MBJ%h%Y8__Volume:MAK_EnterpriseGN
 NJCF7-PW8QT-3324D-688JX-2YV%h%66______Retail_ServerRdsh
+XQQYW-NFFMW-XJPBH-K8732-CKF%h%FD______OEM:DM_IoTEnterprise
+QPM6N-7J2WJ-P88HH-P3YRH-YY7%h%4H__OEM:NONSLP_IoTEnterpriseS
+K9VKN-3BGWV-Y624W-MCRMQ-BHD%h%CD______Retail_CloudEditionN
+KY7PN-VR6RX-83W6Y-6DDYQ-T6R%h%4W______Retail_CloudEdition
 V3WVW-N2PV2-CGWC3-34QGF-VMJ%h%2C______Retail_Cloud
 NH9J3-68WK7-6FB93-4K3DF-DJ4%h%F6______Retail_CloudN
 2HN6V-HGTM8-6C97C-RK67V-JQP%h%FD______Retail_CloudE
