@@ -790,14 +790,6 @@ echo:
 call :dk_color %Blue% "Repairing Office licenses..."
 echo:
 
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE') do set arch=%%b
-
-if /i "%arch%"=="x86" (
-set arch=X86
-) else (
-set arch=X64
-)
-
 for %%# in (68 86) do (
 for %%A in (msi14 msi15 msi16 c2r14 c2r15 c2r16) do (set %%A_%%#=&set %%Arepair%%#=)
 )
@@ -815,10 +807,10 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v P
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi16_86=Office 16.0 MSI x86"      & call :getrepairsetup msi16repair86 16)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi16_68=Office 16.0 MSI x86/x64"  & call :getrepairsetup msi16repair68 16)
 
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_86=Office 15.0 C2R x86"      & set "c2r15repair86=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\integratedoffice.exe")
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_68=Office 15.0 C2R x86/x64"  & set "c2r15repair68=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\integratedoffice.exe")
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_86=Office 16.0 C2R x86"      & set "c2r16repair86=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\OfficeClickToRun.exe")
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_68=Office 16.0 C2R x86/x64"  & set "c2r16repair68=%systemdrive%\Program Files\Microsoft Office 15\Client%arch%\OfficeClickToRun.exe")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_86=Office 15.0 C2R x86"      & call :getc2rrepair c2r15repair86 integratedoffice.exe)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_68=Office 15.0 C2R x86/x64"  & call :getc2rrepair c2r15repair68 integratedoffice.exe)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_86=Office 16.0 C2R x86"      & call :getc2rrepair c2r16repair86 OfficeClickToRun.exe)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_68=Office 16.0 C2R x86/x64"  & call :getc2rrepair c2r16repair68 OfficeClickToRun.exe)
 
 set uwp16=
 if %winbuild% GEQ 10240 (
@@ -879,11 +871,8 @@ pause %nul1%
 
 if defined uwp16 (
 echo:
-echo Note: Skipping repair for Office 16.0 UWP... 
-echo       You need to use the Reset option in Windows Settings instead.
-echo ________________________________________________________________
+echo Skipping repair for Office 16.0 UWP... 
 echo:
-start ms-settings:appsfeatures
 )
 
 set c2r14=
@@ -892,11 +881,8 @@ if defined c2r14_86 set c2r14=1
 
 if defined c2r14 (
 echo:
-echo Note: Skipping repair for Office 14.0 C2R...
-echo       You need to use the Repair option in Windows Settings for it.
-echo ________________________________________________________________
+echo Skipping repair for Office 14.0 C2R...
 echo:
-start appwiz.cpl
 )
 
 if defined msi14_68 if exist "%msi14repair68%" echo Running - "%msi14repair68%"                    & "%msi14repair68%"
@@ -918,6 +904,15 @@ echo:
 echo:
 call :dk_color %Green% "Finished"
 goto :at_back
+
+:getc2rrepair
+
+for %%# in (X86 X64) do (
+if exist "%systemdrive%\Program Files\Microsoft Office 15\Client%%#\%2" (
+set "%1=%systemdrive%\Program Files\Microsoft Office 15\Client%%#\%2"
+)
+)
+exit /b
 
 :getrepairsetup
 
