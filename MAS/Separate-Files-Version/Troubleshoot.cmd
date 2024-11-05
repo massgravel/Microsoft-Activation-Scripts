@@ -1078,7 +1078,7 @@ if %errorlevel% NEQ 0 (set error=1& exit /b)
 
 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM SoftwareLicensingService').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
 cmd /c exit /b %errorlevel%
-echo "0x%=ExitCode%" | findstr /i "0x800410 0x800440" %nul1%
+echo "0x%=ExitCode%" | findstr /i "0x800410 0x800440 0x80131501" %nul1%
 if %errorlevel% EQU 0 set error=1
 exit /b
 
