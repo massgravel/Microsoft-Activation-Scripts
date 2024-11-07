@@ -1372,13 +1372,20 @@ call :dk_color2 %Red% "Checking Boot Mode                      [%safeboot_option
 )
 
 
+::  https://learn.microsoft.com/windows-hardware/manufacture/desktop/windows-setup-states
+
 for /f "skip=2 tokens=2*" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" /v ImageState') do (set imagestate=%%B)
+
 if /i not "%imagestate%"=="IMAGE_STATE_COMPLETE" (
-call :dk_color %Gray% "Checking Windows Setup State            [%imagestate%]"
-echo "%imagestate%" | find /i "RESEAL" %nul% && (
 set error=1
 set showfix=1
+call :dk_color %Gray% "Checking Windows Setup State            [%imagestate%]"
+echo "%imagestate%" | find /i "RESEAL" %nul% && (
 call :dk_color %Blue% "You need to run it in normal mode in case you are running it in Audit Mode."
+)
+echo "%imagestate%" | find /i "UNDEPLOYABLE" %nul% && (
+set fixes=%fixes% %mas%in-place_repair_upgrade
+call :dk_color2 %Blue% "If the activation fails, do this - " %_Yellow% " %mas%in-place_repair_upgrade"
 )
 )
 
