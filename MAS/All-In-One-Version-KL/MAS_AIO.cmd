@@ -1000,6 +1000,7 @@ set     "Red="41;97m""
 set    "Gray="100;97m""
 set   "Green="42;97m""
 set    "Blue="44;97m""
+set   "White="107;91m""
 set    "_Red="40;91m""
 set  "_White="40;37m""
 set  "_Green="40;92m""
@@ -1009,6 +1010,7 @@ set     "Red="Red" "white""
 set    "Gray="Darkgray" "white""
 set   "Green="DarkGreen" "white""
 set    "Blue="Blue" "white""
+set   "White="White" "DarkRed""
 set    "_Red="Black" "Red""
 set  "_White="Black" "Gray""
 set  "_Green="Black" "Green""
@@ -1838,6 +1840,10 @@ echo:
 if %_unattended%==1 timeout /t 2 & exit /b
 
 if defined fixes (
+call :dk_color %White% "                                   "
+call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
+call :dk_color %White% "                                   "
+echo:
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
@@ -10201,6 +10207,10 @@ call :oe_tempcleanup
 
 echo:
 if defined fixes (
+call :dk_color %White% "                                   "
+call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
+call :dk_color %White% "                                   "
+echo:
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
