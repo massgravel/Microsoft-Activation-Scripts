@@ -522,17 +522,28 @@ call :dk_color %Red% "Checking Alternate Edition for KMS38    [%altedition% Acti
 )
 
 if not defined key if not defined _gvlk (
-%eline%
+echo:
 echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
-if not defined skunotfound (
-echo This product does not support KMS38 activation.
-echo Make sure you are using the latest version of the script.
-set fixes=%fixes% %mas%
-echo %mas%
-) else (
-echo Required license files were not found in %SysPath%\spp\tokens\skus\
+
+if exist "%SysPath%\spp\tokens\skus\%osedition%\*GVLK*.xrm-ms" set sppks=1
+
+if defined skunotfound (
+call :dk_color %Red% "Required license files not found in %SysPath%\spp\tokens\skus\"
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+)
+
+if defined sppks (
+call :dk_color %Red% "KMS38 activation is supported but failed to find the key."
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+)
+
+if not defined skunotfound if not defined sppks (
+call :dk_color %Red% "This product does not support KMS38 activation."
+call :dk_color %Blue% "Make sure you are using the latest version of the script."
+set fixes=%fixes% %mas%
+echo %mas%
 )
 echo:
 goto dk_done
