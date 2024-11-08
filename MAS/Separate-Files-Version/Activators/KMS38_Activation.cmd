@@ -1238,11 +1238,10 @@ exit /b
 
 set w=
 set results=
-if exist "%ProgramFiles%\KM%w%Spico" set pupfound1= KM%w%Spico 
-if exist "%SysPath%\Tasks\R@1n-KMS"  set pupfound2= R@inKMS 
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "AutoPico" %nul% && set pupfound1= KM%w%Spico 
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "R@1n" %nul% && set pupfound2= R@inKMS 
-set pupfound=%pupfound1%%pupfound2%
+if exist "%ProgramFiles%\KM%w%Spico" set pupfound= KM%w%Spico 
+if not defined pupfound (
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "AutoPico" %nul% && set pupfound= KM%w%Spico 
+)
 
 set hcount=0
 for %%# in (avira.com kaspersky.com virustotal.com mcafee.com) do (
@@ -1264,6 +1263,13 @@ set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
 )
+
+::  Remove the scheduled task of R@1n-KMS (old version) that runs the activation command every minute, as it leads to high CPU usage.
+
+if exist %SysPath%\Tasks\R@1n-KMS (
+for /f %%A in ('dir /b /a:-d %SysPath%\Tasks\R@1n-KMS %nul6%') do (schtasks /delete /tn \R@1n-KMS\%%A /f %nul%)
+)
+
 exit /b
 
 ::========================================================================================================================================
