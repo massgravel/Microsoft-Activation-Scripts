@@ -352,15 +352,17 @@ goto dk_done
 
 ::  Check Windows Edition and branch
 
-set osedition=0
-set dismedition=
+set osedition=
 set dismnotworking=
+
+for /f "tokens=3 delims=: " %%a in ('DISM /English /Online /Get-CurrentEdition %nul6% ^| find /i "1Current Edition :"') do set "osedition=%%a"
+if not defined osedition set dismnotworking=1
 
 if %_wmic% EQU 1 set "chkedi=for /f "tokens=2 delims==" %%a in ('"wmic path %spp% where (ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' AND LicenseDependsOn is NULL AND PartialProductKey IS NOT NULL) get LicenseFamily /VALUE" %nul6%')"
 if %_wmic% EQU 0 set "chkedi=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT LicenseFamily FROM %spp% WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND LicenseDependsOn is NULL AND PartialProductKey IS NOT NULL').Get()).LicenseFamily ^| %% {echo ('LicenseFamily='+$_)}" %nul6%')"
-%chkedi% do if not errorlevel 1 (call set "osedition=%%a")
+if not defined osedition %chkedi% do if not errorlevel 1 (call set "osedition=%%a")
 
-if %osedition%==0 (
+if not defined osedition (
 %eline%
 echo Failed to detect OS edition, aborting...
 echo:
@@ -371,11 +373,8 @@ goto dk_done
 
 for /f "skip=2 tokens=3" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul6%') do set "regedition=%%a"
 if /i not "%osedition%"=="%regedition%" (
-set "showeditionerror=call :dk_color %_Yellow% "Mismatch found [WMI-%osedition%] [Reg-%regedition%].""
+set "showeditionerror=call :dk_color %_Yellow% "[%osedition%] [Reg-%regedition%].""
 )
-
-for /f "tokens=3 delims=: " %%a in ('DISM /English /Online /Get-CurrentEdition %nul6% ^| find /i "Current Edition :"') do set "dismedition=%%a"
-if not defined dismedition set dismnotworking=1
 
 set branch=
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v BuildBranch %nul6%') do set "branch=%%b"
