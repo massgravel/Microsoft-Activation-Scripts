@@ -78,7 +78,7 @@ Release date: 6-Sep-2024
 [1.1]: https://massgrave.dev/img/logo_discord.png (Chat with us without signup)
 [1.2]: https://massgrave.dev/img/logo_github.png (GitHub)
 [1.3]: https://massgrave.dev/img/logo_reddit.png (Reddit)
-[1.4]: https://massgrave.dev/img/logo_x.png (Follow on 𝕏/Twitter)
+[1.4]: https://massgrave.dev/img/logo_x.png (Follow us on X)
 
 [1]: https://discord.gg/tVFN4N84PP
 [2]: https://github.com/massgravel/Microsoft-Activation-Scripts
