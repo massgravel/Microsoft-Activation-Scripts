@@ -1,5 +1,5 @@
-@::03938c58-ded9-4e95-b879-cb81e3e77c93
-@set masver=2.7
+@::b879-random
+@set masver=2.8
 @setlocal DisableDelayedExpansion
 @echo off
 

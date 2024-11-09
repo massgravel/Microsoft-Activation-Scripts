@@ -34,7 +34,7 @@ irm https://massgrave.dev/get | iex
 ### Method 2 - Traditional (Windows 7 and later)
 
 <details>
-  <summary>Info</summary>
+  <summary>Click here for info</summary>
 
 1.   Download the file under the code button from [GitHub](https://github.com/massgravel/Microsoft-Activation-Scripts) or [Azure DevOps](https://dev.azure.com/massgrave/_git/Microsoft-Activation-Scripts) or [Self-hosted Git](https://git.activated.win/massgrave/Microsoft-Activation-Scripts)
 2.   Right-click on the downloaded zip file and extract
@@ -58,8 +58,8 @@ irm https://massgrave.dev/get | iex
 To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches).
 
 ```
-Latest Version: 2.7
-Release date: 6-Sep-2024
+Latest Version: 2.8
+Release date: 9-Nov-2024
 ```
 
 ### [Troubleshooting / Help](https://massgrave.dev/troubleshoot)
