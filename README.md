@@ -65,12 +65,15 @@ Release date: 6-Sep-2024
 ### [Troubleshooting / Help](https://massgrave.dev/troubleshoot)
 ### [Download Original Windows & Office](https://massgrave.dev/genuine-installation-media)
 ### Homepage - [https://massgrave.dev/](https://massgrave.dev/)
-</br>
 
+<div align="center">
+  
 [![1.1]][1]
 [![1.2]][2]
 [![1.3]][3]
 [![1.4]][4]
+
+</div>
 
 [1.1]: https://massgrave.dev/img/logo_discord.png (Chat with us without signup)
 [1.2]: https://massgrave.dev/img/logo_github.png (GitHub)
