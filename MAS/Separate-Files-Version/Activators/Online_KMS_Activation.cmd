@@ -2479,6 +2479,22 @@ set allapps=
 if %_wmic% EQU 1 set "chkapp=for /f "tokens=2 delims==" %%a in ('"wmic path %spp% where (ApplicationID='%1') get ID /VALUE" %nul6%')"
 if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT ID FROM %spp% WHERE ApplicationID=''%1''').Get()).ID ^| %% {echo ('ID='+$_)}" %nul6%')"
 %chkapp% do (if defined allapps (call set "allapps=!allapps! %%a") else (call set "allapps=%%a"))
+
+::  Check potential script crash issue when user manually installs way too many licenses for Office (length limit in variable)
+
+if defined allapps if %1==0ff1ce15-a989-479d-af46-f275c6370663 (
+set len=0
+echo:!allapps!> %SystemRoot%\Temp\chklen
+for %%A in (%SystemRoot%\Temp\chklen) do (set len=%%~zA)
+del %SystemRoot%\Temp\chklen %nul%
+
+if !len! GTR 6000 (
+%eline%
+echo Too many licenses are installed, the script may crash.
+call :dk_color %Blue% "%_fixmsg%"
+timeout /t 30
+)
+)
 exit /b
 
 ::  Get installed products Activation IDs
