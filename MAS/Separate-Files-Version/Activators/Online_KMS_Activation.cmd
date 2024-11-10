@@ -3211,10 +3211,7 @@ echo:
 if %_unattended%==1 timeout /t 2 & exit /b
 
 if defined fixes (
-call :dk_color %White% "                                   "
 call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
-call :dk_color %White% "                                   "
-echo:
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
