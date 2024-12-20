@@ -2909,7 +2909,6 @@ rmdir /s /q "%ProgramData%\Microsoft\Office\Licenses\" %nul%
 for %%x in (15 16) do (
 for %%# in (%_sidlist%) do (
 reg delete HKU\%%#\Software\Microsoft\Office\%%x.0\Common\Licensing /f %nul%
-reg delete HKU\%%#\Software\Microsoft\Office\%%x.0\Common\Identity /f %nul%
 
 for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\%%#" /v ProfileImagePath" %nul6%') do (
 rmdir /s /q "%%b\AppData\Local\Microsoft\Office\Licenses\" %nul%
@@ -2932,7 +2931,6 @@ if exist "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\Syst
 set defname=DEFTEMP-%%#
 reg load HKU\!defname! "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\SystemAppData\Helium\User.dat" %nul%
 reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Licensing /f %nul%
-reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Identity /f %nul%
 reg unload HKU\!defname! %nul%
 )
 )
