@@ -69,7 +69,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20

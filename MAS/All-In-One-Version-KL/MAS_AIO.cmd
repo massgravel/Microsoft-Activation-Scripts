@@ -76,7 +76,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -1477,6 +1477,11 @@ set error=1
 call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
 echo %serv_e% | findstr /i "ClipSVC-1058 sppsvc-1058" %nul% && (
 call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
+set showfix=1
+)
+echo %serv_e% | findstr /i "sppsvc-1060" %nul% && (
+set fixes=%fixes% %mas%fix_service
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_service"
 set showfix=1
 )
 )
