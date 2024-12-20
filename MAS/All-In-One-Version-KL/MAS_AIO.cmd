@@ -1,5 +1,5 @@
 @::b879-random
-@set masver=2.8
+@set masver=2.9
 @setlocal DisableDelayedExpansion
 @echo off
 
