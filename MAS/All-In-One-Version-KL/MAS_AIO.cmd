@@ -8646,12 +8646,12 @@ if defined UBR (set "fullbuild=%%G.!UBR!") else (set "fullbuild=%%G.%%H")
 
 ::========================================================================================================================================
 
-::  Check Activation ID
+::  Check Activation IDs
 
-call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
-if not defined apps (
+call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+if not defined allapps (
 %eline%
-echo Either key is not insalled or script failed to get installed key's activation ID. Aborting...
+echo Failed to find activation IDs. Aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
