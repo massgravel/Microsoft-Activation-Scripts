@@ -912,11 +912,11 @@ call :dk_color %Blue% "If you have used any tool to block Store, undo it."
 )
 
 set wcount=0
-for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type ServiceSidType RequiredPrivileges FailureActions) do if not defined wucorrupt (
+for %%G in (DependOnService Description DisplayName ErrorControl ImagePath ObjectName Start Type ServiceSidType RequiredPrivileges FailureActions) do (
 reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv /v %%G %nul% || (set wucorrupt=1&set /a wcount+=1)
 )
 
-for %%G in (Parameters Security) do if not defined wucorrupt (
+for %%G in (Parameters Security) do (
 reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv\%%G %nul% || (set wucorrupt=1&set /a wcount+=1)
 )
 
