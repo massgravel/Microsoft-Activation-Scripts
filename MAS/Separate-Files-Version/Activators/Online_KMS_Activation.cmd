@@ -1615,7 +1615,7 @@ set _tserror=
 set winbuild=1
 set "nul=>nul 2>&1"
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
-set psc=powershell.exe
+set psc=powershell.exe -nop
 
 set run_once=
 set t_name=Renewal Task
@@ -2302,7 +2302,7 @@ exit /b
 
 :dk_setvar
 
-set psc=powershell.exe
+set psc=powershell.exe -nop
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 

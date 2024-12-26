@@ -1425,7 +1425,7 @@ exit /b
 
 :dk_setvar
 
-set psc=powershell.exe
+set psc=powershell.exe -nop
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 
