@@ -1470,9 +1470,9 @@ if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"
 call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined allapps (
+set error=1
 set "_notfoundids=Not found"
 )
-set error=1
 call :dk_color %Red% "Checking Activation IDs                 [!_notfoundids!]"
 )
 )
