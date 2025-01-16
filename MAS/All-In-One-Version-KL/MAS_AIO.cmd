@@ -8853,7 +8853,7 @@ set _dismapi=0
 
 ::  Check if DISM API or slmgr.vbs is required for edition upgrade
 
-if not exist "%SysPath%\spp\tokens\skus\%targetedition%\" (
+if not exist "%SysPath%\spp\tokens\skus\%targetedition%\%targetedition%*.xrm-ms" (
 echo %_wtarget% | find /i " %targetedition% " || (
 set _dismapi=1
 )
