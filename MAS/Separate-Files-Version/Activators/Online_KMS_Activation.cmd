@@ -483,6 +483,7 @@ set "_serv=sppsvc Winmgmt"
 ::  Software Protection
 ::  Windows Management Instrumentation
 
+if %_actwin%==0 set notwinact=1
 call :dk_errorcheck
 
 ::========================================================================================================================================
@@ -1393,7 +1394,7 @@ echo Clearing Office License Blocks          [Successfully cleared from all %cou
 set defname=DEFTEMP-%random%
 for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList" /v Default" %nul6%') do call set "defdat=%%b"
 
-if defined o16c2r if defined officeact (
+if defined o16c2r if defined ohookact (
 if exist "%defdat%\NTUSER.DAT" (
 reg load HKU\%defname% "%defdat%\NTUSER.DAT" %nul%
 reg query HKU\%defname%\Software %nul% && (
@@ -1448,7 +1449,7 @@ set upk_result=2
 )
 )
 
-if defined officeact if not %upk_result%==0 echo:
+if defined ohookact if not %upk_result%==0 echo:
 if %upk_result%==1 echo Uninstalling Other/Grace Keys           [Successful]
 if %upk_result%==2 call :dk_color %Red% "Uninstalling Other/Grace Keys           [Failed]"
 exit /b
@@ -2860,7 +2861,7 @@ echo Checking WPA Registry Count             [%wpainfo%]
 )
 
 
-if not defined officeact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
+if not defined notwinact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% || (
 set error=1
 call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
@@ -2884,7 +2885,7 @@ if "%osSKU%"=="164" set osedition=ProfessionalEducation
 if "%osSKU%"=="165" set osedition=ProfessionalEducationN
 )
 
-if not defined officeact (
+if not defined notwinact (
 if %osedition%==0 (
 call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
 ) else (
@@ -2927,7 +2928,7 @@ set showfix=1
 )
 
 
-if not defined officeact (
+if not defined notwinact (
 if %winbuild% GEQ 10240 (
 %nul% set /a "sum=%slcSKU%+%regSKU%+%wmiSKU%"
 set /a "sum/=3"
