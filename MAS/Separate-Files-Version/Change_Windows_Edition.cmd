@@ -393,7 +393,7 @@ if %winbuild% GEQ 10240 for /f "tokens=4" %%a in ('dism /online /english /Get-Ta
 if %winbuild% LSS 10240 for /f "tokens=4" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':cbsxml\:.*';& ([ScriptBlock]::Create($f[1])) -GetTargetEditions;" ^| findstr /i /c:"Target Edition : "') do (if defined _ptarget (set "_ptarget= !_ptarget! %%a ") else (set "_ptarget= %%a "))
 
 if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
-call :ced_edilist
+if %winbuild% GEQ 17063 call :ced_edilist
 if /i "%osedition:~0,4%"=="Core" set _pro=Professional
 if /i "%osedition%"=="CoreN" set _pro=ProfessionalN
 set "_dtarget= %_dtarget% !_wtarget! !_pro! "
