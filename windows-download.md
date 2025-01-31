@@ -1,4 +1,4 @@
-# Download Links for Windows/Office
+# Download Links for Windows
 
 ##### Windows 10/11 Official Links
 https://www.microsoft.com/software-download/windows11
