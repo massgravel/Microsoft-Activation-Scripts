@@ -6,7 +6,9 @@
 
 <hr>
   
-## Download / Tata Cara Penggunaan
+## Download [Windows](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/windows-download.md) dan [Office](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/office-download.md)
+
+## Tata Cara Penggunaan
 
 ### Metode 1 - Melalui PowerShell (Windows 8 keatas, disarankan.) ❤️
 
