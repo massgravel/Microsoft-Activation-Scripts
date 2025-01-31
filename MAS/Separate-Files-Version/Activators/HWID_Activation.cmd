@@ -636,10 +636,12 @@ set "d1=!d1! $client = [System.Net.Http.HttpClient]::new();"
 set "d1=!d1! $response = $client.GetAsync('https://%%#').GetAwaiter().GetResult();"
 set "d1=!d1! $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()"
 %psc% "!tls! !d1!" %nul2% | findstr /i "PurchaseFD DeviceAddResponse" %nul1% || set resfail=1
+if defined resfail %psc% "!tls! !d1!"
 )
 
 if not defined resfail (
 %psc% "!tls! irm https://licensing.mp.microsoft.com/v7.0/licenses/content -Method POST" | find /i "traceId" %nul1% || set resfail=1
+if defined resfail %psc% "!tls! irm https://licensing.mp.microsoft.com/v7.0/licenses/content -Method POST"
 )
 
 if defined resfail (
