@@ -15,7 +15,7 @@
 ```
 irm https://get.activated.win | iex
 ```
-3.   Anda akan melihat opsi aktivasi. Pilih salah satu. [keterangan opsi dibawah ini](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesia/blob/indonesia/README.md#keterangan-opsi)
+3.   Anda akan melihat opsi aktivasi. Pilih salah satu. [keterangan opsi dibawah ini](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/README.md#keterangan-opsi)
 4.   Itu saja.
 
 <details>
@@ -42,7 +42,7 @@ atau
 3.   Klik kanan pada file .zip yang telah didownload dan klik extract
 4.   Pada folder yang telah diekstrak, cari dan masuk kedalam folder `All-In-One-Version`
 5.   Klik dua kali file `MAS_AIO.cmd`
-6.   Anda akan melihat opsi aktivasi, Pilih salah satu, [keterangan opsi dibawah ini](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesia/blob/indonesia/README.md#keterangan-opsi)
+6.   Anda akan melihat opsi aktivasi, Pilih salah satu, [keterangan opsi dibawah ini](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesia/blob/indonesian/README.md#keterangan-opsi)
 7.   Itu saja.
 
 </details>
