@@ -2,70 +2,87 @@
 
 <h1 align="center">Microsoft  Activation  Scripts (MAS)</h1>
 
-<p align="center">Open-source Windows and Office activator featuring HWID, Ohook, KMS38, and Online KMS activation methods, along with advanced troubleshooting.</p>
+<p align="center">Aktivator Windows dan Office sumber terbuka yang menggunakan metode aktivasi HWID, Ohook, KMS38, dan KMS Online, juga dengan pemecahan masalah tingkat lanjut.</p>
 
 <hr>
   
-## Download / How to use it?
+## Download / Tata Cara Penggunaan
 
-### Method 1 - PowerShell (Windows 8 and later) ❤️
+### Metode 1 - Melalui PowerShell (Windows 8 keatas, disarankan.) ❤️
 
-1.   Open PowerShell (Not CMD). To do that, right-click on the Windows start menu and select PowerShell or Terminal.
-2.   Copy and paste the code below and press enter  
+1.   Buka PowerShell (Bukan Command Prompt atau CMD). Untuk melakukannya, klik kanan pada menu start Windows dan pilih PowerShell atau Terminal.
+2.   Salin dan tempelkan perintah berikut dan klik enter
 ```
 irm https://get.activated.win | iex
 ```
-3.   You will see the activation options. Choose (1) HWID for Windows activation. Choose (2) Ohook for Office activation.
-4.   That's all.
+3.   Anda akan melihat opsi aktivasi. Pilih salah satu. [keterangan opsi dibawah ini](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesia/blob/indonesia/README.md#keterangan-opsi)
+4.   Itu saja.
 
 <details>
-  <summary>More options</summary>
+  <summary>Opsi lainnya</summary>
 
-- Alternatively, you can use the following (It will be deprecated in the future.)
+- Alternatifnya, Anda dapat menggunakan URL berikut ini (Ini akan dihentikan dalam waktu dekat)
 ```
 irm https://massgrave.dev/get | iex
 ```
-- The URL `get.activated.win` might be blocked by some DNS services because it is a new domain.
-
+- Gunakan ini jika URL `get.activated.win` tidak dapat diakses, kemungkinan URL ini diblokir oleh beberapa penyedia DNS karena itu merupakan domain baru. 
 </details>
 
 ---
 
-### Method 2 - Traditional (Windows 7 and later)
+### Methode 2 - Manual (Windows 7 keatas)
 
 <details>
-  <summary>Click here for info</summary>
+  <summary>klik disini</summary>
 
-1.   Download the file using the links provided below.  
-`https://github.com/massgravel/Microsoft-Activation-Scripts/archive/refs/heads/master.zip`  
-or  
+1.   Download file secara manual melalui tautan berikut ini 
+`https://github.com/massgravel/Microsoft-Activation-Scripts/archive/refs/heads/master.zip`
+atau
 `https://git.activated.win/massgrave/Microsoft-Activation-Scripts/archive/master.zip`
-2.   Right-click on the downloaded zip file and extract
-3.   In the extracted folder, find the folder named `All-In-One-Version`
-4.   Run the file named `MAS_AIO.cmd`
-5.   You will see the activation options, follow the on-screen instructions.
-6.   That's all.
+3.   Klik kanan pada file .zip yang telah didownload dan klik extract
+4.   Pada folder yang telah diekstrak, cari dan masuk kedalam folder `All-In-One-Version`
+5.   Klik dua kali file `MAS_AIO.cmd`
+6.   Anda akan melihat opsi aktivasi, Pilih salah satu, [keterangan opsi dibawah ini](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesia/blob/indonesia/README.md#keterangan-opsi)
+7.   Itu saja.
 
 </details>
 
 ---
 
-> [!NOTE]
->
-> - The IRM command in PowerShell downloads a script from a specified URL, and the IEX command executes it.
-> - Always double-check the URL before executing the command and verify the source if manually downloading files.
-> - Be cautious, as some spread malware disguised as MAS by using different URLs in the IRM command.
+### Keterangan Opsi
+1.   HWID (Windows 10,11, Permanen)
+2.   Ohook (Office 2013 keatas di Windows 8/8.1/10/11, Permanen)
+3.   KMS38 (Windows 10,11, Sampai tahun 2038)
+4.   Online KMS (180 hari, Permanen dengan Auto-Renewal)
+##### Keterangan Opsi 4
+   1.  Windows (7 Pro/Enterprise, 8, 8.1, 10, 11)
+   2.  Office (Semua)
+   3.  Office (Project/Visio)
+   4.  Keduanya (Windows+Office)
 
 ---
 
-To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches).
+> [!CATATAN]
+> - Perintah IRM di PowerShell mengunduh skrip dari URL tertentu, dan perintah IEX menjalankannya.
+> - Selalu periksa ulang URL sebelum menjalankan perintah dan verifikasi sumbernya jika mengunduh file secara manual.
+> - Berhati-hatilah, karena beberapa malware menyebarkan malware yang menyamar sebagai MAS dengan menggunakan URL berbeda dalam perintah IRM.
+
+---
+
+### Aktivasi Produk Yang tidak didukung
+
+MAS Hanya Mendukung Windows 7 keatas, untuk tata cara mengaktifkan Produk sebelum Windows 7, Klik [Disini.](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesia/blob/indonesia/older-product.md)
+
+---
+
+[Command Flags untuk melewati opsi](https://massgrave.dev/command_line_switches).
 
 ```
 Latest Version: 2.9
 Release date: 20-Dec-2024
 ```
 
-### [Troubleshooting / Help](https://massgrave.dev/troubleshoot)
+### [Bantuan/Troubleshooting](https://massgrave.dev/troubleshoot)
 ### [Download Original Windows & Office](https://massgrave.dev/genuine-installation-media)
 ### Homepage - [https://massgrave.dev/](https://massgrave.dev/)
 
@@ -106,3 +123,5 @@ Release date: 20-Dec-2024
 ---
 
 <p align="center">Made with Love ❤️</p>
+
+#### DISCLAIMER: WE DONT AFFILIATE WITH ANY OFFICIAL MAINTAINER OF MAS, THIS PAGE IS TRANSLATED VERSION OF ORIGINAL PAGE WITH ADDITION OF ACTIVATION TUTORIAL FOR OLDER WINDOWS VERSION AND DOWNLOAD LINK DIRECTORY FOR WINDOWS/OFFICE THAT REFER TO ORIGINAL MASSGRAVE DOWNLOAD LINKS
