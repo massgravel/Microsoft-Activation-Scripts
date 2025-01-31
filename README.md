@@ -73,7 +73,7 @@ atau
 
 ### Aktivasi Produk Yang tidak didukung
 
-MAS Hanya Mendukung Windows 7 keatas, untuk tata cara mengaktifkan Produk sebelum Windows 7, Klik [Disini.](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesia/blob/indonesia/older-products.md)
+MAS Hanya Mendukung Windows 7 keatas, untuk tata cara mengaktifkan Produk sebelum Windows 7, Klik [Disini.](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/older-products.md)
 
 ---
 
