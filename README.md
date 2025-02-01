@@ -6,7 +6,7 @@
 
 <hr>
   
-## Download [Windows](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/windows-download.md) dan [Office](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/office-download.md)
+## Download [Windows](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/docs/windows-download.md) dan [Office](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/docs/office-download.md)
 
 ## Tata Cara Penggunaan
 
@@ -73,7 +73,7 @@ atau
 
 ### Aktivasi Produk Yang tidak didukung
 
-MAS Hanya Mendukung Windows 7 keatas, untuk tata cara mengaktifkan Produk sebelum Windows 7, Klik [Disini.](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/older-products.md)
+MAS Hanya Mendukung Windows 7 keatas, untuk tata cara mengaktifkan Produk sebelum Windows 7, Klik [Disini.](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/docs/older-products.md)
 
 ---
 
