@@ -842,17 +842,18 @@ goto :dl_final
 
 set "_ident=HKU\S-1-5-19\SOFTWARE\Microsoft\IdentityCRL"
 
-if defined _int (
+if %keyerror% EQU 0 if defined _int (
 reg delete "%_ident%" /f %nul%
-reg query "%_ident%" %nul% && (
-echo:
-set error=1
-call :dk_color %Red% "Deleting IdentityCRL Registry           [Failed] [%_ident%]"
-)
 for %%# in (wlidsvc LicenseManager sppsvc) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 20 | Out-Null")
 call :dk_refresh
 call :dk_act
 call :dk_checkperm
+
+reg query "%_ident%" %nul% || (
+set error=1
+echo:
+call :dk_color %Red% "Generating New IdentityCRL Registry     [Failed] [%_ident%]"
+)
 )
 
 ::==========================================================================================================================================
@@ -860,7 +861,6 @@ call :dk_checkperm
 ::  Extended licensing servers tests incase error not found and activation failed
 
 if %keyerror% EQU 0 if not defined _perm if defined _int (
-set resfail=
 ipconfig /flushdns %nul%
 set "tls=[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;"
 
@@ -873,30 +873,35 @@ set "d1=!d1! $client = [System.Net.Http.HttpClient]::new();"
 set "d1=!d1! $response = $client.GetAsync('https://%%#').GetAwaiter().GetResult();"
 set "d1=!d1! $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()"
 %psc% "!tls! !d1!" %nul2% | findstr /i "PurchaseFD DeviceAddResponse" %nul1% || set resfail=1
+if defined resfail %psc% "!tls! !d1!"
 )
 
 if not defined resfail (
 %psc% "!tls! irm https://licensing.mp.microsoft.com/v7.0/licenses/content -Method POST" | find /i "traceId" %nul1% || set resfail=1
+if defined resfail %psc% "!tls! irm https://licensing.mp.microsoft.com/v7.0/licenses/content -Method POST"
+)
 )
 
 if defined resfail (
 set error=1
 echo:
-call :dk_color %Red% "Checking Licensing Servers              [Failed to Connect]"
+for %%# in (
+login.live.com
+purchase.mp.microsoft.com
+licensing.mp.microsoft.com
+) do (
+findstr /i "%%#" "%SysPath%\drivers\etc\hosts" %nul1% && set "hosfail= [Blocked in Hosts]"
+)
+call :dk_color %Red% "Checking Licensing Servers              [Failed to Connect]!hosfail!"
 set fixes=%fixes% %mas%licensing-servers-issue
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%licensing-servers-issue"
-)
 )
 
 ::==========================================================================================================================================
 
-if %keyerror% EQU 0 if not defined _perm if defined _int (
+::  Windows update and store block check
 
-reg query "%_ident%" %nul% || (
-set error=1
-echo:
-call :dk_color %Red% "Generating New IdentityCRL Registry     [Failed] [%_ident%]"
-)
+if %keyerror% EQU 0 if not defined _perm if defined _int (
 
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DisableWindowsUpdateAccess %nul2% | find /i "0x1" %nul% && set wublock=1
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DoNotConnectToWindowsUpdateInternetLocations %nul2% | find /i "0x1" %nul% && set wublock=1
@@ -921,6 +926,7 @@ reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv\%%G %nul% || (set wuco
 )
 
 if defined wucorrupt (
+set error=1
 call :dk_color %Red% "Checking Windows Update Registry        [Corruption Found]"
 if !wcount! GTR 2 (
 call :dk_color %Red% "Windows seems to be infected with Mal%w%ware."
@@ -932,16 +938,21 @@ call :dk_color %Blue% "HWID activation needs working Windows updates, if you hav
 ) else (
 %psc% "Start-Job { Start-Service wuauserv } | Wait-Job -Timeout 20 | Out-Null"
 sc query wuauserv | find /i "RUNNING" %nul% || (
+set error=1
 set wuerror=1
 sc start wuauserv %nul%
 call :dk_color %Red% "Starting Windows Update Service         [Failed] [!errorlevel!]"
 call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
 )
 )
+)
 
-REM Check Internet related error codes
+::==========================================================================================================================================
 
-if not defined wucorrupt if not defined wublock if not defined wuerror if not defined storeblock (
+::  Check Internet related error codes
+
+if %keyerror% EQU 0 if not defined _perm if defined _int (
+if not defined wucorrupt if not defined wublock if not defined wuerror if not defined storeblock if not defined resfail (
 echo "%error_code%" | findstr /i "0x80072e 0x80072f 0x800704cf 0x87e10bcf 0x800705b4" %nul% && (
 call :dk_color %Red% "Checking Internet Issues                [Found] %error_code%"
 set fixes=%fixes% %mas%licensing-servers-issue
