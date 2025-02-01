@@ -1,4 +1,4 @@
-# Windows Vista (Gunakan Edisi Business dan Enterprise)
+# Windows Vista (Edisi Business dan Enterprise)
 1. Pastikan perangkat memiliki akses internet 
 2. Buka CMD sebagai Administrator kemudian salin dan tempel perintah ini satu persatu.
 3. Jika menggunakan edisi Business
@@ -20,6 +20,9 @@
        slmgr /skms kms8.msguides.com
    
        slmgr /ato
+
+# Windows Vista (Edisi lainnya, contoh: Ultimate, HomePremium, HomePremium N, HomeBasic, HomeBasic N, Starter)
+Gunakan [Windows Loader by Daz](https://app.box.com/s/bnchc6hten44adunlcpz9ya9j0uucfs2)
        
 # Office 2010 di Windows XP/Vista
 1. Pastikan perangkat memiliki akses internet 
