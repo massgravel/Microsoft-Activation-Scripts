@@ -140,23 +140,6 @@ $Admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 $line2 = "============================================================"
 $line3 = "____________________________________________________________"
 
-function UnQuickEdit
-{
-	$t=[AppDomain]::CurrentDomain.DefineDynamicAssembly((Get-Random), 1).DefineDynamicModule((Get-Random), $False).DefineType((Get-Random))
-	$t.DefinePInvokeMethod('GetStdHandle', 'kernel32.dll', 22, 1, [IntPtr], @([Int32]), 1, 3).SetImplementationFlags(128)
-	$t.DefinePInvokeMethod('SetConsoleMode', 'kernel32.dll', 22, 1, [Boolean], @([IntPtr], [Int32]), 1, 3).SetImplementationFlags(128)
-	$t.DefinePInvokeMethod('GetConsoleWindow', 'kernel32.dll', 22, 1, [IntPtr], @(), 1, 3).SetImplementationFlags(128)
-	$t.DefinePInvokeMethod('SendMessageW', 'user32.dll', 22, 1, [IntPtr], @([IntPtr], [UInt32], [IntPtr], [IntPtr]), 1, 3).SetImplementationFlags(128)
-	$k=$t.CreateType()
-	if ($winbuild -GE 17763) {
-		if ($k::SendMessageW($k::GetConsoleWindow(), 127, 0, 0) -EQ [IntPtr]::Zero) {
-			return
-		}
-	}
-	$v=(0x0080, 0x00A0)[!($winbuild -GE 10586)]
-	$b=$k::SetConsoleMode($k::GetStdHandle(-10), $v)
-}
-
 function echoWindows
 {
 	CONOUT "$line2"
@@ -1065,7 +1048,6 @@ function ClicRun
 #endregion
 
 $Host.UI.RawUI.WindowTitle = "Check Activation Status"
-UnQuickEdit
 if ($All.IsPresent) {
 	$B=$Host.UI.RawUI.BufferSize;$B.Height=3000;$Host.UI.RawUI.BufferSize=$B;
 	if (!$Pass.IsPresent) {clear;}
