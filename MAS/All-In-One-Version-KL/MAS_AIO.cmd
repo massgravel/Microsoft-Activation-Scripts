@@ -600,7 +600,6 @@ cls
 echo ___________________________________________________________________________________________
 echo:
 call :dk_color2 %_White% "     " %Green% "%winos% is already permanently activated."
-call :dk_color2 %_White% "     " %Gray% "Activation is not required."
 echo ___________________________________________________________________________________________
 if %_unattended%==1 goto dk_done
 echo:
