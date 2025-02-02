@@ -632,12 +632,8 @@ licensing.mp.microsoft.com/v7.0/licenses/content
 login.live.com/ppsecure/deviceaddcredential.srf
 purchase.mp.microsoft.com/v7.0/users/me/orders
 ) do if not defined resfail (
-%psc% "try { !tls! irm https://%%# -Method POST } catch { if ($_.Exception.Response -eq $null) { exit 3 } }"
-if !errorlevel!==3 (
-echo:
-set resfail=1
-%psc% "try { !tls! irm https://%%# -Method POST } catch { Write-Host """"[%%#] $($_.Exception.Message)"""" -ForegroundColor Red -BackgroundColor Black }"
-)
+%psc% "try { !tls! irm https://%%# -Method POST } catch { if ($_.Exception.Response -eq $null) { Write-Host """"[%%#] $($_.Exception.Message)"""" -ForegroundColor Red -BackgroundColor Black; exit 3 } }"
+if !errorlevel!==3 set resfail=1
 )
 )
 
