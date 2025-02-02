@@ -865,26 +865,21 @@ ipconfig /flushdns %nul%
 set "tls=[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;"
 
 for %%# in (
+licensing.mp.microsoft.com/v7.0/licenses/content
 login.live.com/ppsecure/deviceaddcredential.srf
 purchase.mp.microsoft.com/v7.0/users/me/orders
 ) do if not defined resfail (
-set "d1=Add-Type -AssemblyName System.Net.Http;"
-set "d1=!d1! $client = [System.Net.Http.HttpClient]::new();"
-set "d1=!d1! $response = $client.GetAsync('https://%%#').GetAwaiter().GetResult();"
-set "d1=!d1! $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()"
-%psc% "!tls! !d1!" %nul2% | findstr /i "PurchaseFD DeviceAddResponse" %nul1% || set resfail=1
-if defined resfail %psc% "!tls! !d1!"
+%psc% "try { !tls! irm https://%%# -Method POST } catch { if ($_.Exception.Response -eq $null) { exit 3 } }"
+if !errorlevel!==3 (
+echo:
+set resfail=1
+%psc% "try { !tls! irm https://%%# -Method POST } catch { Write-Host """"[%%#] $($_.Exception.Message)"""" -ForegroundColor Red -BackgroundColor Black }"
 )
-
-if not defined resfail (
-%psc% "!tls! irm https://licensing.mp.microsoft.com/v7.0/licenses/content -Method POST" | find /i "traceId" %nul1% || set resfail=1
-if defined resfail %psc% "!tls! irm https://licensing.mp.microsoft.com/v7.0/licenses/content -Method POST"
 )
 )
 
 if defined resfail (
 set error=1
-echo:
 for %%# in (
 login.live.com
 purchase.mp.microsoft.com
