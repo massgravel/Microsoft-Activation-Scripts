@@ -876,11 +876,13 @@ if !errorlevel!==3 set resfail=1
 if defined resfail (
 set error=1
 for %%# in (
+live.com
+microsoft.com
 login.live.com
 purchase.mp.microsoft.com
 licensing.mp.microsoft.com
 ) do (
-findstr /i "%%#" "%SysPath%\drivers\etc\hosts" %nul1% && set "hosfail= [Blocked in Hosts]"
+findstr /i "%%#" "%SysPath%\drivers\etc\hosts" %nul1% && set "hosfail= [%%# Blocked in Hosts]"
 )
 call :dk_color %Red% "Checking Licensing Servers              [Failed to Connect]!hosfail!"
 set fixes=%fixes% %mas%licensing-servers-issue
