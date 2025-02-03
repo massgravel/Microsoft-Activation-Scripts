@@ -103,21 +103,6 @@ if ($winbuild -LT 2600) {
 	ExitScript 1
 }
 
-$SysPath = "$env:SystemRoot\System32"
-if (Test-Path "$env:SystemRoot\Sysnative\reg.exe") {
-	$SysPath = "$env:SystemRoot\Sysnative"
-}
-
-if (Test-Path "$SysPath\sppc.dll") {
-	$SLdll = 'sppc.dll'
-} elseif (Test-Path "$SysPath\slc.dll") {
-	$SLdll = 'slc.dll'
-} else {
-	"==== ERROR ====`r`n"
-	"Software Licensing Client Dll is not detected."
-	ExitScript 1
-}
-
 if ($All.IsPresent)
 {
 	$isAll = {CONOUT "`r"}
@@ -512,7 +497,7 @@ function GetResult($strSLP, $strSLS, $strID)
 		}
 	}
 
-	if ($winPR -And $Dlv -And $null -EQ $RemainingAppReArmCount) {
+	if ($winPR -And $Dlv -And $NT7 -And $null -EQ $RemainingAppReArmCount) {
 		try
 		{
 			$tmp = [wmisearcher]"SELECT RemainingWindowsReArmCount FROM $strSLS"
@@ -581,14 +566,9 @@ function GetResult($strSLP, $strSLS, $strID)
 		$objSvc = New-Object PSObject
 		$wmiSvc = [wmisearcher]"SELECT * FROM $strSLS"
 		$wmiSvc.Options.Rewindable = $false
-		$wmiSvc.Get() | select -Expand Properties -EA 0 | foreach {
-			if (-Not [String]::IsNullOrEmpty($_.Value))
-			{
-				$objSvc | Add-Member 8 $_.Name $_.Value
-				if ($null -EQ $IsKeyManagementServiceMachine) {set $_.Name $_.Value}
-			}
-		}
+		$wmiSvc.Get() | select -Expand Properties -EA 0 | foreach { if (-Not [String]::IsNullOrEmpty($_.Value)) {$objSvc | Add-Member 8 $_.Name $_.Value} }
 		$wmiSvc.Dispose()
+		if ($null -EQ $IsKeyManagementServiceMachine) {$objSvc.PSObject.Properties | foreach {set $_.Name $_.Value}}
 	}
 	catch
 	{
@@ -699,12 +679,7 @@ function PrintSharedComputerLicensing
 	{
 		$tokenFiles = Get-ChildItem -Path $tokenPath -Filter "*authString*" -Recurse | Where-Object { !$_.PSIsContainer }
 	}
-	If ($null -Eq $tokenFiles)
-	{
-		CONOUT "No tokens found."
-		Return
-	}
-	If ($tokenFiles.Length -Eq 0)
+	If ($null -Eq $tokenFiles -Or $tokenFiles.Length -Eq 0)
 	{
 		CONOUT "No tokens found."
 		Return
@@ -1051,6 +1026,11 @@ $Host.UI.RawUI.WindowTitle = "Check Activation Status"
 if ($All.IsPresent) {
 	$B=$Host.UI.RawUI.BufferSize;$B.Height=3000;$Host.UI.RawUI.BufferSize=$B;
 	if (!$Pass.IsPresent) {clear;}
+}
+
+$SysPath = "$env:SystemRoot\System32"
+if (Test-Path "$env:SystemRoot\Sysnative\reg.exe") {
+	$SysPath = "$env:SystemRoot\Sysnative"
 }
 
 $wslp = "SoftwareLicensingProduct"
