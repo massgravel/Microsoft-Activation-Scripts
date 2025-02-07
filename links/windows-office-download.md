@@ -3,12 +3,14 @@
 |[Windows](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows)|[Office](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office)|
 | --- | --- |
 |[Windows 10/11 Official Links](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-1011-official-links)|[Office 365](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-365)
-|[Windows 11 Consumer 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-consumer-24h2)
-
-|[Office 2024](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2024)
-|[Windows 11 IoT LTSC 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-iot-ltsc-24h2)|[Office 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2021)
-|[Windows 10 Consumer 22H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-consumer-22h2)|[Office 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2021)
-|[Windows 10 IoT LTSC 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-iot-ltsc-2021)|[Office 2019](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2019)
+|[Windows 11 Consumer 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-consumer-24h2)|[Office 2024](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2024)
+|[Windows 11 Business 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-11-enterprise)|[Office 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2021)
+|[Windows 11 IoT Enterprise 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-11-iot-enterprise-24h2)|[Office 2019](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2019)
+|[Windows 11 IoT Enterprise LTSC 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-iot-ltsc-24h2)
+|[Windows 10 Consumer 22H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-consumer-22h2)
+|[Windows 10 Business 22H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-10-business-22h2)
+|[Windows 10 IoT Enterprise 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-10-iot-enterprise-22h2)
+|[Windows 10 IoT Enterprise LTSC 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-iot-ltsc-2021)
 |[Windows 10 Enterprise LTSC 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-enterprise-ltsc-2021-hanya-bisa-diaktifkan-dengan-opsi-kms38-dan-online-kms)
 |[Windows 8.1 Core/Pro - MSDL Official Links](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-81-corepro---msdl-official-links-generic-vl-product-key)
 |[Windows 8.1 Pro VL](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-81-pro-vl)
@@ -41,17 +43,17 @@ https://msdl.gravesoft.dev/#3113
 #### Windows 11 IoT Enterprise 24H2
 [English - x64 (64-bit)](https://drive.massgrave.dev/en-us_windows_11_iot_enterprise_version_24h2_x64_dvd_3a99b72b.iso)
 
-##### Windows 10 Consumer 22H2
+#### Windows 10 Consumer 22H2
 [English - x64 (64-Bit)](https://drive.massgrave.dev/en-us_windows_10_consumer_editions_version_22h2_updated_nov_2024_x64_dvd_3eeacab9.iso)
 
 [English - x86 (32-Bit)](https://drive.massgrave.dev/en-us_windows_10_consumer_editions_version_22h2_updated_nov_2024_x86_dvd_3eeacab9.iso)
 
-##### Windows 10 Business 22H2
+#### Windows 10 Business 22H2
 [English - x64 (64-Bit)](https://drive.massgrave.dev/en-us_windows_10_business_editions_version_22h2_updated_nov_2024_x64_dvd_60ca6446.iso)
 
 [English - x86 (32-Bit)](https://drive.massgrave.dev/en-us_windows_10_business_editions_version_22h2_updated_nov_2024_x86_dvd_428d8965.iso)
 
-##### Windows 10 IoT Enterprise 22H2
+#### Windows 10 IoT Enterprise 22H2
 [English - x64 (64-Bit)](https://drive.massgrave.dev/en-us_windows_10_iot_enterprise_version_22h2_x64_dvd_51cc370f.iso)
 
 #### Windows 10 IoT LTSC 2021 
