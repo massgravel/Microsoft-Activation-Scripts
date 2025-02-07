@@ -182,19 +182,24 @@ https://msdl.gravesoft.dev/#52
 [Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/VisioProRetail.img)
 
 
-#### Office 2024
+## Office 2024
+#### ProPlus (Access, Excel, OneNote, Outlook, PowerPoint, Word, OneDrive)
 [Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2024Retail&platform=x64&language=en-us&version=O16GA)
 
 [Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2024Retail&platform=x86&language=en-us&version=O16GA)
 
 [Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/ProPlus2024Retail.img)
-#### Office 2021
+
+## Office 2021
+#### ProPlus (Access, Excel, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
 [Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2021Retail&platform=x64&language=en-us&version=O16GA)
 
 [Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2021Retail&platform=x86&language=en-us&version=O16GA)
 
 [Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/ProPlus2021Retail.img)
-#### Office 2019
+
+## Office 2019 
+#### ProPlus (Access, Excel, Lync, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
 [Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2019Retail&platform=x64&language=en-us&version=O16GA)
 
 [Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2019Retail&platform=x86&language=en-us&version=O16GA)
