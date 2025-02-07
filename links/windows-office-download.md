@@ -1,8 +1,24 @@
 # Download Links for Windows/Office
 
+## Download Populer
+[Windows 11 - Microsoft Official Links](https://www.microsoft.com/software-download/windows11)
+#### Windows 10 - Direct ISO
+[64-bit](https://drive.massgrave.dev/en-us_windows_10_consumer_editions_version_22h2_updated_nov_2024_x64_dvd_3eeacab9.iso)
+
+[32-bit](https://drive.massgrave.dev/en-us_windows_10_consumer_editions_version_22h2_updated_nov_2024_x86_dvd_3eeacab9.iso)
+
+#### Office 365 ProPlus (Access, Excel, Lync, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365ProPlusRetail&platform=x64&language=en-us&version=O16GA)
+
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365ProPlusRetail&platform=x86&language=en-us&version=O16GA)
+
+[Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/O365ProPlusRetail.img)
+
+## Download Lainnya
+
 |[Windows](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows)|[Office](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office)|
 | --- | --- |
-|[Windows 10/11 Official Links](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-1011-official-links)|[Office 365](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-365)
+|[Windows 11 Official Links](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-1011-official-links)|[Office 365](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-365)
 |[Windows 11 Consumer 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-consumer-24h2)|[Office 2024](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2024)
 |[Windows 11 Business 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-11-enterprise)|[Office 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2021)
 |[Windows 11 IoT Enterprise 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-11-iot-enterprise-24h2)|[Office 2019](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2019)
@@ -29,7 +45,7 @@
 
 # Windows 
 
-##### Windows 10/11 Official Links
+##### Windows 11 Official Links
 https://www.microsoft.com/software-download/windows11
 
 ## Massgrave Links
@@ -56,7 +72,7 @@ https://msdl.gravesoft.dev/#3113
 #### Windows 10 IoT Enterprise 22H2
 [English - x64 (64-Bit)](https://drive.massgrave.dev/en-us_windows_10_iot_enterprise_version_22h2_x64_dvd_51cc370f.iso)
 
-#### Windows 10 IoT LTSC 2021 
+#### Windows 10 IoT Enterprise LTSC 2021 
 [English - x64 (64-bit)](https://drive.massgrave.dev/en-us_windows_10_iot_enterprise_ltsc_2021_x64_dvd_257ad90f.iso)
 #### Windows 10 Enterprise LTSC 2021 (Hanya bisa diaktifkan dengan opsi KMS38 dan Online KMS)
 [English - x86 (32-bit)](https://drive.massgrave.dev/en-us_windows_10_enterprise_ltsc_2021_x86_dvd_9f4aa95f.iso)
@@ -116,12 +132,28 @@ https://msdl.gravesoft.dev/#52
 [English x64 (64-bit)](https://drive.massgrave.dev/en_win_xp_pro_x64_with_sp2_vl_x13-41611.iso)
 
 # Office
-#### Office 365
+## Office 365
+#### ProPlus (Access, Excel, Lync, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
+
 [Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365ProPlusRetail&platform=x64&language=en-us&version=O16GA)
 
 [Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365ProPlusRetail&platform=x86&language=en-us&version=O16GA)
 
 [Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/O365ProPlusRetail.img)
+
+#### Business (Access, Excel, Lync, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365BusinessRetail&platform=x64&language=en-us&version=O16GA)
+
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365BusinessRetail&platform=x86&language=en-us&version=O16GA)
+
+[Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/O365BusinessRetail.img)
+
+#### EduCloud (Excel, OneNote, PowerPoint, Word, OneDrive)
+
+#### Home Premium (Access, Excel, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
+
+
+
 #### Office 2024
 [Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2024Retail&platform=x64&language=en-us&version=O16GA)
 
