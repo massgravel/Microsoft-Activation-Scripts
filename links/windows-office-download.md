@@ -96,6 +96,23 @@ https://msdl.gravesoft.dev/#52
 #### Windows XP Professional x64 SP2 `VCFQD-V9FX9-46WVH-K3CD4-4J3JM`
 [English x64 (64-bit)](https://drive.massgrave.dev/en_win_xp_pro_x64_with_sp2_vl_x13-41611.iso)
 
+# Office
+#### Office 365 ProPlus
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365ProPlusRetail&platform=x64&language=en-us&version=O16GA)
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365ProPlusRetail&platform=x86&language=en-us&version=O16GA)
+[Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/O365ProPlusRetail.img)
+#### Office 2024
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2024Retail&platform=x64&language=en-us&version=O16GA)
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2024Retail&platform=x86&language=en-us&version=O16GA)
+[Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/ProPlus2024Retail.img)
+#### Office 2021
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2021Retail&platform=x64&language=en-us&version=O16GA)
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2021Retail&platform=x86&language=en-us&version=O16GA)
+[Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/ProPlus2021Retail.img)
+#### Office 2019
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2019Retail&platform=x64&language=en-us&version=O16GA)
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2019Retail&platform=x86&language=en-us&version=O16GA)
+[Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/ProPlus2019Retail.img)
 
 
 
