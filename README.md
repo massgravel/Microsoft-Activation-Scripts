@@ -6,7 +6,7 @@
 
 <hr>
   
-## Download [Windows](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/docs/windows-download.md) dan [Office](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/docs/office-download.md)
+## Download [Windows/Office](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/docs/windows-office-download.md)
 
 ## Tata Cara Penggunaan
 
