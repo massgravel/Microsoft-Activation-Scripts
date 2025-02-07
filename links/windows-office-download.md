@@ -149,9 +149,34 @@ https://msdl.gravesoft.dev/#52
 [Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/O365BusinessRetail.img)
 
 #### EduCloud (Excel, OneNote, PowerPoint, Word, OneDrive)
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365EduCloudRetail&platform=x64&language=en-us&version=O16GA)
 
-#### Home Premium (Access, Excel, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365EduCloudRetail&platform=x86&language=en-us&version=O16GA)
 
+#### HomePrem (Access, Excel, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365HomePremRetail&platform=x64&language=en-us&version=O16GA)
+
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365HomePremRetail&platform=x86&language=en-us&version=O16GA)
+
+[Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/O365HomePremRetail.img)
+
+#### SmallBusPrem(Access, Excel, Lync, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365SmallBusPremRetail&platform=x64&language=en-us&version=O16GA)
+
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365SmallBusPremRetail&platform=x86&language=en-us&version=O16GA)
+
+
+#### Access
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=AccessRuntimeRetail&platform=x64&language=en-us&version=O16GA)
+
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=AccessRuntimeRetail&platform=x86&language=en-us&version=O16GA)
+
+#### VisioPro (Visio, OneDrive)
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=VisioProRetail&platform=x64&language=en-us&version=O16GA)
+
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=VisioProRetail&platform=x86&language=en-us&version=O16GA)
+
+[Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/VisioProRetail.img)
 
 
 #### Office 2024
