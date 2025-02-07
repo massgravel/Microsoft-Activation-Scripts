@@ -1,4 +1,18 @@
-# Download Links for Windows
+# Download Links for Windows/Office
+
+|Windows|Office|
+| --- | --- |
+|[Windows 10/11 Official Links](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-1011-official-links)
+|[Windows 11 Consumer 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-consumer-24h2)
+|[Windows 11 IoT LTSC 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-iot-ltsc-24h2)
+|[Windows 10 Consumer 22H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-consumer-22h2)
+|[Windows 10 IoT LTSC 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-iot-ltsc-2021)
+|[Windows 10 Enterprise LTSC 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-enterprise-ltsc-2021-hanya-bisa-diaktifkan-dengan-opsi-kms38-dan-online-kms)
+
+
+
+
+# Windows 
 
 ##### Windows 10/11 Official Links
 https://www.microsoft.com/software-download/windows11
