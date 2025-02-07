@@ -46,7 +46,7 @@ https://msdl.gravesoft.dev/#3113
 
 [English - x86 (32-Bit)](https://drive.massgrave.dev/en-us_windows_10_consumer_editions_version_22h2_updated_nov_2024_x86_dvd_3eeacab9.iso)
 
-##### Windows 10 Busieness 22H2
+##### Windows 10 Business 22H2
 [English - x64 (64-Bit)](https://drive.massgrave.dev/en-us_windows_10_business_editions_version_22h2_updated_nov_2024_x64_dvd_60ca6446.iso)
 
 [English - x86 (32-Bit)](https://drive.massgrave.dev/en-us_windows_10_business_editions_version_22h2_updated_nov_2024_x86_dvd_428d8965.iso)
