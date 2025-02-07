@@ -14,6 +14,8 @@
 
 [Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/O365ProPlusRetail.img)
 
+#### [Office Language Pack Untuk Bahasa Indonesia (Office 2016 dan yang terbaru)](https://support.microsoft.com/id-id/office/language-accessory-pack-for-microsoft-365-82ee1236-0f9a-45ee-9c72-05b026ee809f)
+
 ## Download Lainnya
 
 |[Windows](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows)|[Office](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office)|
@@ -132,6 +134,7 @@ https://msdl.gravesoft.dev/#52
 [English x64 (64-bit)](https://drive.massgrave.dev/en_win_xp_pro_x64_with_sp2_vl_x13-41611.iso)
 
 # Office
+## [Office Language Pack Untuk Bahasa Indonesia (Office 2016 dan yang terbaru)](https://support.microsoft.com/id-id/office/language-accessory-pack-for-microsoft-365-82ee1236-0f9a-45ee-9c72-05b026ee809f)
 ## Office 365
 #### ProPlus (Access, Excel, Lync, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
 
@@ -197,6 +200,37 @@ https://msdl.gravesoft.dev/#52
 [Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlus2019Retail&platform=x86&language=en-us&version=O16GA)
 
 [Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/ProPlus2019Retail.img)
+## Office 2016
+#### ProPlus (Access, Excel, Lync, OneNote, Outlook, PowerPoint, Publisher, Word, OneDrive)
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlusRetail&platform=x64&language=en-us&version=O16GA)
+
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlusRetail&platform=x86&language=en-us&version=O16GA)
+
+[Offline Installer (Universal)](https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/en-us/ProPlusRetail.img)
+
+[MSI Installer x64 (64-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2016_64Bit_English_MLF_X20-42432.ISO)
+
+[MSI Installer x86 (32-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2016_W32_English_MLF_X20-41353.ISO)
+## Office 2013 
+#### ProPlus(Access, Excel, Groove, InfoPath, Lync, OneNote, Outlook, PowerPoint, Publisher, Word)
+[Online Installer x64 (64-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlusRetail&platform=x64&language=en-us&version=O15GA)
+
+[Online Installer x86 (32-bit)](https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=ProPlusRetail&platform=x86&language=en-us&version=O15GA)
+
+[MSI Installer x64 (64-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2013w_SP1_64Bit_English_MLF_X19-35976.iso)
+
+[MSI Installer x86 (32-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2013w_SP1_W32_English_MLF_X19-35821.iso)
+
+## Office 2010 Pro Plus
+[x64 (64-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2010w_SP1_64Bit_English_CORE_MLF_X17-76756.ISO)
+[x86 (32-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2010w_SP1_W32_English_CORE_MLF_X17-76748.ISO)
+
+## Office 2007 Enterprise `BQDQB-KRRY9-43DBR-4P9J4-DH7D8`
+[x86 (32-bit)](https://drive.massgrave.dev/en_office_enterprise_2007_united_states_x86_cd_481472.iso)
+
+
+
+
 
 
 
