@@ -43,7 +43,7 @@ https://msdl.gravesoft.dev/#3113
 [English - x86 (32-bit)](https://drive.massgrave.dev/en-us_windows_10_enterprise_ltsc_2021_x86_dvd_9f4aa95f.iso)
 
 [English - x64 (64-bit)](https://drive.massgrave.dev/en-us_windows_10_enterprise_ltsc_2021_x64_dvd_d289cf96.iso)
-#### Windows 8.1 Core/Pro - MSDL Official Links [Generic VL Product Key]()
+#### Windows 8.1 Core/Pro - MSDL Official Links [Generic VL Product Key](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/raw/indonesia/docs/8.1-generic.txt)
 https://msdl.gravesoft.dev/#52
 #### Windows 8.1 Pro VL
 [English x64 (64-bit)](https://drive.massgrave.dev/en_windows_8.1_pro_vl_with_update_x64_dvd_6050880.iso)
