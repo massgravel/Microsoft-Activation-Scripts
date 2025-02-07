@@ -8,6 +8,19 @@
 |[Windows 10 Consumer 22H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-consumer-22h2)
 |[Windows 10 IoT LTSC 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-iot-ltsc-2021)
 |[Windows 10 Enterprise LTSC 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-enterprise-ltsc-2021-hanya-bisa-diaktifkan-dengan-opsi-kms38-dan-online-kms)
+|[Windows 8.1 Core/Pro - MSDL Official Links](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-81-corepro---msdl-official-links-generic-vl-product-key)
+|[Windows 8.1 Pro VL](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-81-pro-vl)
+|[Windows 8.1 Enterprise](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-81-enterprise)
+|[Windows 8.1 Embedded Enterprise](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-81-embedded-enterprise)
+|[Windows 7 Professional SP1](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-7-professional-sp1)
+|[Windows 7 Enterprise SP1](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-7-enterprise-sp1)
+|[Windows 7 Ultimate SP1](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-7-ultimate-sp1)
+|[Windows Embeddded POSReady 7](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-embeddded-posready-7)
+|[Windows Vista SP2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-vista-sp2)
+|[Windows Vista Enterprise](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-vista-enterprise)
+|[Windows XP Professional SP3](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-xp-professional-sp3-xcybk-2b3kv-g8t8f-wxjm7-wctyt)
+|[Windows XP Professional x64 SP2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-xp-professional-x64-sp2-vcfqd-v9fx9-46wvh-k3cd4-4j3jm)
+
 
 
 # Windows 
