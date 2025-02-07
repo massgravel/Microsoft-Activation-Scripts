@@ -24,10 +24,10 @@
 |[Windows 11 Consumer 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-consumer-24h2)|[Office 2024](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2024)
 |[Windows 11 Business 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-11-enterprise)|[Office 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2021)
 |[Windows 11 IoT Enterprise 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-11-iot-enterprise-24h2)|[Office 2019](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2019)
-|[Windows 11 IoT Enterprise LTSC 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-iot-ltsc-24h2)
-|[Windows 10 Consumer 22H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-consumer-22h2)
-|[Windows 10 Business 22H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-10-business-22h2)
-|[Windows 10 IoT Enterprise 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-10-iot-enterprise-22h2)
+|[Windows 11 IoT Enterprise LTSC 24H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-11-iot-ltsc-24h2)|[Office 2016](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2016)
+|[Windows 10 Consumer 22H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-consumer-22h2)|[Office 2013](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2013)
+|[Windows 10 Business 22H2](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-10-business-22h2)|[Office 2010 Pro Plus](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2010-pro-plus)
+|[Windows 10 IoT Enterprise 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-10-iot-enterprise-22h2)|[Office 2007 Enterprise](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#office-2007-enterprise-bqdqb-krry9-43dbr-4p9j4-dh7d8)
 |[Windows 10 IoT Enterprise LTSC 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-iot-ltsc-2021)
 |[Windows 10 Enterprise LTSC 2021](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-download.md#windows-10-enterprise-ltsc-2021-hanya-bisa-diaktifkan-dengan-opsi-kms38-dan-online-kms)
 |[Windows 8.1 Core/Pro - MSDL Official Links](https://github.com/zjnix/Microsoft-Activation-Scripts-Indonesian/blob/indonesia/links/windows-office-download.md#windows-81-corepro---msdl-official-links-generic-vl-product-key)
@@ -222,11 +222,12 @@ https://msdl.gravesoft.dev/#52
 [MSI Installer x86 (32-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2013w_SP1_W32_English_MLF_X19-35821.iso)
 
 ## Office 2010 Pro Plus
-[x64 (64-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2010w_SP1_64Bit_English_CORE_MLF_X17-76756.ISO)
-[x86 (32-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2010w_SP1_W32_English_CORE_MLF_X17-76748.ISO)
+[English - x64 (64-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2010w_SP1_64Bit_English_CORE_MLF_X17-76756.ISO)
+
+[English - x86 (32-bit)](https://drive.massgrave.dev/SW_DVD5_Office_Professional_Plus_2010w_SP1_W32_English_CORE_MLF_X17-76748.ISO)
 
 ## Office 2007 Enterprise `BQDQB-KRRY9-43DBR-4P9J4-DH7D8`
-[x86 (32-bit)](https://drive.massgrave.dev/en_office_enterprise_2007_united_states_x86_cd_481472.iso)
+[English - x86 (32-bit)](https://drive.massgrave.dev/en_office_enterprise_2007_united_states_x86_cd_481472.iso)
 
 
 
