@@ -1,6 +1,6 @@
 # Download Links for Windows/Office
 
-## Download Populer
+## Direkomendasikan
 [Windows 11 - Microsoft Official Links](https://www.microsoft.com/software-download/windows11)
 #### Windows 10 - Direct ISO
 [64-bit](https://drive.massgrave.dev/en-us_windows_10_consumer_editions_version_22h2_updated_nov_2024_x64_dvd_3eeacab9.iso)
