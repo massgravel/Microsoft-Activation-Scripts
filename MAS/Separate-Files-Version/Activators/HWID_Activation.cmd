@@ -1,4 +1,4 @@
-@set masver=2.9
+@set masver=3.0
 @echo off
 
 
@@ -161,19 +161,29 @@ for %%A in (%_act% %_NoEditionChange%) do (if "%%A"=="1" set _unattended=1)
 
 call :dk_setvar
 
+if %winbuild% EQU 1 (
+%eline%
+echo Failed to detect Windows build number.
+echo:
+setlocal EnableDelayedExpansion
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+goto dk_done
+)
+
 if %winbuild% LSS 10240 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
 echo HWID Activation is only supported on Windows 10/11.
 echo:
-call :dk_color %Blue% "Use Online KMS activation option."
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 goto dk_done
 )
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 %eline%
 echo HWID Activation is not supported on Windows Server.
-call :dk_color %Blue% "Use KMS38 or Online KMS activation option."
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 goto dk_done
 )
 
@@ -294,9 +304,13 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 activ%-%ated.win') do (
+if not "%%#"=="" set old=1
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck%upver%.activ%-%ated.win') do (
+if not "%%#"=="" set old=
+)
 )
 
 if defined old (
@@ -312,7 +326,7 @@ echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
-if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+if !errorlevel!==1 (start %mas% & exit /b)
 )
 )
 
@@ -380,7 +394,8 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2
 %eline%
 echo [%winos% ^| %winbuild%]
 echo:
-echo Evaluation editions cannot be activated outside of their evaluation period. 
+echo Evaluation editions cannot be activated outside of their evaluation period.
+call :dk_color %Blue% "Use TSforge activation option from the main menu to reset evaluation period."
 echo:
 set fixes=%fixes% %mas%evaluation_editions
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
@@ -464,7 +479,7 @@ echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 if not defined skunotfound (
 echo This product does not support HWID activation.
 echo Make sure you are using the latest version of the script.
-echo If you are, then try KMS38 activation option.
+echo If you are, then try TSforge activation option from the main menu.
 set fixes=%fixes% %mas%
 echo %mas%
 ) else (
@@ -725,7 +740,7 @@ call :dk_color %Green% "%winos% is permanently activated with a digital license.
 call :dk_color %Red% "Activation Failed %error_code%"
 if defined notworking (
 call :dk_color %Blue% "At the time of writing, HWID Activation is not supported for this product."
-call :dk_color %Blue% "Use KMS38 activation option instead."
+call :dk_color %Blue% "Use TSforge activation option from the main menu instead."
 ) else (
 if not defined error call :dk_color %Blue% "%_fixmsg%"
 set fixes=%fixes% %mas%troubleshoot

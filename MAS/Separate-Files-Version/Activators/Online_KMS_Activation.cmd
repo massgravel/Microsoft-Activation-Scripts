@@ -1,4 +1,4 @@
-@set masver=2.9
+@set masver=3.0
 @echo off
 
 
@@ -192,6 +192,16 @@ for %%A in (%_actwin% %_actoff% %_actprojvis% %_actwinoff% %_uni%) do (if "%%A"=
 
 call :dk_setvar
 
+if %winbuild% EQU 1 (
+%eline%
+echo Failed to detect Windows build number.
+echo:
+setlocal EnableDelayedExpansion
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+goto dk_done
+)
+
 if %winbuild% LSS 7600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
@@ -316,9 +326,13 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 activ%-%ated.win') do (
+if not "%%#"=="" set old=1
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck%upver%.activ%-%ated.win') do (
+if not "%%#"=="" set old=
+)
 )
 
 if defined old (
@@ -334,7 +348,7 @@ echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
-if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+if !errorlevel!==1 (start %mas% & exit /b)
 )
 )
 
@@ -520,6 +534,7 @@ call :dk_color %Red% "Checking Evaluation Edition             [Evaluation editio
 if defined _evalserv (
 call :dk_color %Blue% "Go back to main menu and use [Change Edition] option."
 ) else (
+call :dk_color %Blue% "Use TSforge activation option from the main menu to reset evaluation period."
 set fixes=%fixes% %mas%evaluation_editions
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
 )
@@ -582,10 +597,7 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 
 if not defined skunotfound if not defined sppks (
 call :dk_color %Red% "This product does not support %KS% activation."
-if %winbuild% LSS 9200 (
-call :dk_color2 %Blue% "Use the alternative activator listed here - " %_Yellow% " %mas%unsupported_products_activation"
-)
-set fixes=%fixes% %mas%unsupported_products_activation
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 )
 echo:
 goto :ks_office
@@ -1828,8 +1840,7 @@ if defined t_name (
 echo %prodname% cannot be KMS-activated on this computer due to unqualified OEM BIOS [0xC004F035].
 ) else (
 call :dk_color %Red% "%prodname% cannot be KMS-activated on this computer due to unqualified OEM BIOS [0xC004F035]."
-set fixes=%fixes% %mas%unsupported_products_activation
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%unsupported_products_activation"
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 )
 set oemerr=1
 set showfix=1

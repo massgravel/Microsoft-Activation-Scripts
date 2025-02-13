@@ -1,4 +1,4 @@
-@set masver=2.9
+@set masver=3.0
 @echo off
 
 
@@ -167,15 +167,25 @@ set _k38=
 call :dk_setvar
 set "specific_kms=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\55c92734-d682-4d71-983e-d6ec3f16059f"
 
+if %winbuild% EQU 1 (
+%eline%
+echo Failed to detect Windows build number.
+echo:
+setlocal EnableDelayedExpansion
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+goto dk_done
+)
+
 if %winbuild% LSS 14393 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
 echo KMS38 activation is only supported on Windows 10/11/Server, build 14393 and later.
 echo:
 if %winbuild% LSS 10240 (
-call :dk_color %Blue% "Use Online KMS activation option."
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 ) else (
-call :dk_color %Blue% "Use HWID activation option."
+call :dk_color %Blue% "Use HWID activation option from the main menu."
 )
 goto dk_done
 )
@@ -297,9 +307,13 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 activ%-%ated.win') do (
+if not "%%#"=="" set old=1
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck%upver%.activ%-%ated.win') do (
+if not "%%#"=="" set old=
+)
 )
 
 if defined old (
@@ -315,7 +329,7 @@ echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
-if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+if !errorlevel!==1 (start %mas% & exit /b)
 )
 )
 cls
@@ -431,7 +445,8 @@ echo Server Evaluation cannot be activated. Convert it to full Server OS.
 echo:
 call :dk_color %Blue% "Go Back to main menu and use [Change Edition] option."
 ) else (
-echo Evaluation editions cannot be activated outside of their evaluation period. 
+echo Evaluation editions cannot be activated outside of their evaluation period.
+call :dk_color %Blue% "Use TSforge activation option from the main menu to reset evaluation period."
 echo:
 set fixes=%fixes% %mas%evaluation_editions
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
@@ -541,7 +556,7 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 
 if not defined skunotfound if not defined sppks (
 call :dk_color %Red% "This product does not support KMS38 activation."
-call :dk_color %Blue% "Make sure you are using the latest version of the script."
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 set fixes=%fixes% %mas%
 echo %mas%
 )

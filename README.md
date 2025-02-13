@@ -2,7 +2,7 @@
 
 <h1 align="center">Microsoft  Activation  Scripts (MAS)</h1>
 
-<p align="center">Open-source Windows and Office activator featuring HWID, Ohook, KMS38, and Online KMS activation methods, along with advanced troubleshooting.</p>
+<p align="center">Open-source Windows and Office activator featuring HWID, Ohook, TSforge, KMS38, and Online KMS activation methods, along with advanced troubleshooting.</p>
 
 <hr>
   
@@ -15,19 +15,12 @@
 ```
 irm https://get.activated.win | iex
 ```
-3.   You will see the activation options. Choose (1) HWID for Windows activation. Choose (2) Ohook for Office activation.
-4.   That's all.
-
-<details>
-  <summary>More options</summary>
-
-- Alternatively, you can use the following (It will be deprecated in the future.)
+Alternatively, you can use the following (It will be deprecated in the future.)  
 ```
 irm https://massgrave.dev/get | iex
 ```
-- The URL `get.activated.win` might be blocked by some DNS services because it is a new domain.
-
-</details>
+3.   You will see the activation options. Choose (1) HWID for Windows activation. Choose (2) Ohook for Office activation.
+4.   That's all.
 
 ---
 
@@ -50,6 +43,14 @@ or
 
 ---
 
+### Not working ❓
+
+- If you are **unable to launch MAS** using the PowerShell method, please refer to **Method 2** listed above.
+- If MAS is launched and the script shows any errors, check for any troubleshooting steps mentioned in blue color and try to follow those.
+- If you have any issues, please feel free to reach out to us [here](https://massgrave.dev/troubleshoot).
+
+---
+
 > [!NOTE]
 >
 > - The IRM command in PowerShell downloads a script from a specified URL, and the IEX command executes it.
@@ -61,8 +62,8 @@ or
 To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches).
 
 ```
-Latest Version: 2.9
-Release date: 20-Dec-2024
+Latest Version: 3.0
+Release date: 14-Feb-2025
 ```
 
 ### [Troubleshooting / Help](https://massgrave.dev/troubleshoot)

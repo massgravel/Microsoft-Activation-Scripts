@@ -1,4 +1,4 @@
-@set masver=2.9
+@set masver=3.0
 @echo off
 
 
@@ -161,6 +161,16 @@ for %%A in (%_act% %_rem%) do (if "%%A"=="1" set _unattended=1)
 
 call :dk_setvar
 
+if %winbuild% EQU 1 (
+%eline%
+echo Failed to detect Windows build number.
+echo:
+setlocal EnableDelayedExpansion
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+goto dk_done
+)
+
 if %winbuild% LSS 9200 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
@@ -287,9 +297,13 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 activ%-%ated.win') do (
+if not "%%#"=="" set old=1
+for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck%upver%.activ%-%ated.win') do (
+if not "%%#"=="" set old=
+)
 )
 
 if defined old (
@@ -305,7 +319,7 @@ echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
-if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+if !errorlevel!==1 (start %mas% & exit /b)
 )
 )
 cls
@@ -520,11 +534,11 @@ echo "!_oIds!" | find /i " %%a " %nul1% || (set "_oIds= !_oIds! %%a ")
 set "_oLPath=%_oRoot%\Licenses"
 set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
-if "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
-if "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
+if /i "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
+if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
 if not "%osarch%"=="x86" (
-if "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
+if /i "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+if /i "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
 ) else (
 set "_sppcPath=%SystemRoot%\System32\sppc.dll"
 )
@@ -570,11 +584,11 @@ set _o16c2rIds=%_oIds%
 set "_oLPath=%_oRoot%\Licenses16"
 set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
-if "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
-if "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
+if /i "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
+if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
 if not "%osarch%"=="x86" (
-if "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
+if /i "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+if /i "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
 ) else (
 set "_sppcPath=%SystemRoot%\System32\sppc.dll"
 )
@@ -1020,11 +1034,11 @@ echo "%2" | find /i "Wow6432Node" %nul1% && set _oArch=x86
 if not "%osarch%"=="x86" if not defined _oArch set _oArch=x64
 if "%osarch%"=="x86" set _oArch=x86
 
-if "%_oArch%"=="x64" (set "_hookPath=%_oRoot%" & set "_hook=sppc64.dll")
-if "%_oArch%"=="x86" (set "_hookPath=%_oRoot%" & set "_hook=sppc32.dll")
+if /i "%_oArch%"=="x64" (set "_hookPath=%_oRoot%" & set "_hook=sppc64.dll")
+if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%" & set "_hook=sppc32.dll")
 if not "%osarch%"=="x86" (
-if "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
+if /i "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+if /i "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
 ) else (
 set "_sppcPath=%SystemRoot%\System32\sppc.dll"
 )
