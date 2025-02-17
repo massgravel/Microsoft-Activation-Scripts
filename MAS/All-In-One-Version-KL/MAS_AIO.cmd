@@ -4699,13 +4699,13 @@ set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
 ) else (
 echo "%tsids%" | find /i "7e94be23-b161-4956-a682-146ab291774c" %nul1% && (
-call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 year ESU is not officially supported, but you can manually install updates."
+call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 years ESU is not officially supported, but you can manually install updates."
 )
 echo "%tsids%" | findstr /i "4afc620f-12a4-48ad-8015-2aebfbd6e47c 11be7019-a309-4763-9a09-091d1722ffe3" %nul1% && (
 call :dk_color %Gray% "ESU is not officially supported on Windows 8.1, but you can manually install updates until Jan-2024."
 )
 echo "%tsids%" | findstr /i "0b533b5e-08b6-44f9-b885-c2de291ba456 f69e2d51-3bbd-4ddf-8da7-a145e9dca597" %nul1% && (
-call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 year ESU license is added just as a placeholder."
+call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 years ESU is not officially supported, but it might be useful."
 )
 )
 
