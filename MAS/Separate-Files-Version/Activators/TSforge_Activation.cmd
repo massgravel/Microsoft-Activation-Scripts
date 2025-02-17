@@ -735,10 +735,10 @@ REM Windows8.1
 REM WindowsServer2012/2012R2
 55b1dd2d-2209-4ea0-a805-06298bad25b3_Server-ESU-Year3[1-3y]_-ServerDatacenter-ServerDatacenterCore-ServerDatacenterV-ServerDatacenterVCore-ServerStandard-ServerStandardCore-ServerStandardV-ServerStandardVCore-
 REM Windows10
-83d49986-add3-41d7-ba33-87c7bfb5c0fb_Client-ESU-Year3[1-3y]_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-
-0b533b5e-08b6-44f9-b885-c2de291ba456_Client-ESU-Year6[4-6y]_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-
-4dac5a0c-5709-4595-a32c-14a56a4a6b31_Client-IoT-ESU-Year3[1-3y]_-IoTEnterprise- REM Removed IoTEnterpriseS because it already has longer support
-f69e2d51-3bbd-4ddf-8da7-a145e9dca597_Client-IoT-ESU-Year6[4-6y]_-IoTEnterprise- REM Removed IoTEnterpriseS because it already has longer support
+83d49986-add3-41d7-ba33-87c7bfb5c0fb_Client-ESU-Year3[1-3y]_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+0b533b5e-08b6-44f9-b885-c2de291ba456_Client-ESU-Year6[4-6y]_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+4dac5a0c-5709-4595-a32c-14a56a4a6b31_Client-IoT-ESU-Year3[1-3y]_-IoTEnterprise-
+f69e2d51-3bbd-4ddf-8da7-a145e9dca597_Client-IoT-ESU-Year6[4-6y]_-IoTEnterprise-
 ) do (
 for /f "tokens=1-3 delims=_" %%A in ("%%#") do (
 echo "%allapps%" | find /i "%%A" %nul1% && (
