@@ -1438,8 +1438,7 @@ mode 100, 30
 title  Remove TSforge Activation %masver%
 
 echo:
-echo TSforge activation doesn't modify any Windows component.
-echo TSforge activation doesn't install any new file in the system.
+echo TSforge activation doesn't modify any Windows components and doesn't install any new files.
 echo:
 echo Instead, it appends data to one of data files used by Software Protection Platform.
 echo:
