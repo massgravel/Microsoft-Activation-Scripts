@@ -262,12 +262,18 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set pingp=
 set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 activ%-%ated.win') do (
-if not "%%#"=="" set old=1
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck%upver%.activ%-%ated.win') do (
-if not "%%#"=="" set old=
+for %%A in (
+activ%-%ated.win
+mass%-%grave.dev
+) do if not defined pingp (
+for /f "delims=[] tokens=2" %%B in ('ping -n 1 %%A') do (
+if not "%%B"=="" (set old=1& set pingp=1)
+for /f "delims=[] tokens=2" %%C in ('ping -n 1 updatecheck%upver%.%%A') do (
+if not "%%C"=="" set old=
+)
 )
 )
 
