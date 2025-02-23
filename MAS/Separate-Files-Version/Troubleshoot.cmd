@@ -188,11 +188,18 @@ goto dk_done
 
 ::pstst $ExecutionContext.SessionState.LanguageMode :pstst
 
-for /f "delims=" %%a in ('cmd /c "%psc% ""$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])""" %nul6%') do (set tstresult=%%a)
+for /f "delims=" %%a in ('cmd /c "%psc% ""if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}""" %nul6%') do (set tstresult=%%a)
 
-if /i "%tstresult%"=="ConstrainedLanguage" (
+if /i not "%tstresult%"=="FullLanguage" (
 %eline%
-echo ConstrainedLanguage mode found in PowerShell. Aborting...
+echo %tstresult%
+cmd /c "%psc% $ExecutionContext.SessionState.LanguageMode"
+
+REM check LanguageMode
+
+cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | findstr /i "ConstrainedLanguage RestrictedLanguage NoLanguage" %nul1% && (
+%eline%
+echo FullLanguage mode not found in PowerShell. Aborting...
 echo If you have applied restrictions on Powershell then undo those changes.
 echo:
 set fixes=%fixes% %mas%fix_powershell
@@ -200,10 +207,15 @@ call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_powershell"
 goto dk_done
 )
 
-if /i not "%tstresult%"=="FullLanguage" (
-%eline%
-echo "%tstresult%"
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
+REM check Powershell core version
+
+cmd /c "%psc% "$PSVersionTable.PSEdition"" | find /i "Core" %nul1% && (
+echo Windows Powershell is needed for MAS but it seems to be replaced with Powershell core. Aborting...
+goto dk_done
+)
+
+REM check antivirus and other errors
+
 echo PowerShell is not working properly. Aborting...
 cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { if ($i.displayName -notlike '*windows*') { $n += $i.displayName } }; if ($n) { Write-Host ('Installed 3rd party Antivirus might be blocking the script - ' + ($n -join ', ')) -ForegroundColor White -BackgroundColor Blue }"""
 echo:
