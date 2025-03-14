@@ -1,4 +1,4 @@
-@::u78r-random
+@::63489fhty3-random
 @set masver=3.0
 @setlocal DisableDelayedExpansion
 @echo off
