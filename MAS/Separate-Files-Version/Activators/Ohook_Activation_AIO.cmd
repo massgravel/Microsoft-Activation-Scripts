@@ -2013,7 +2013,7 @@ exit /b
 $wpaKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $env:COMPUTERNAME).OpenSubKey("SYSTEM\\WPA")
 $count = 0
 foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
-    if ($subkeyName -match '.*-.*-.*-.*-.*-') {
+    if ($subkeyName -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
         $count++
     }
 }
@@ -2022,7 +2022,7 @@ $minBuildNumber = 14393
 if ($osVersion.Build -ge $minBuildNumber) {
     $subkeyHashTable = @{}
     foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
-        if ($subkeyName -match '.*-.*-.*-.*-.*-') {
+        if ($subkeyName -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
             $keyNumber = $subkeyName -replace '.*-', ''
             $subkeyHashTable[$keyNumber] = $true
         }
@@ -2036,7 +2036,7 @@ if ($osVersion.Build -ge $minBuildNumber) {
     }
 }
 $wpaKey.GetSubKeyNames() | ForEach-Object {
-    if ($_ -match '.*-.*-.*-.*-.*-') {
+    if ($_ -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
         if ($PSVersionTable.PSVersion.Major -lt 3) {
             cmd /c "reg query "HKLM\SYSTEM\WPA\$_" /ve /t REG_BINARY >nul 2>&1"
 			if ($LASTEXITCODE -ne 0) {
