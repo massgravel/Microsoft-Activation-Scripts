@@ -1230,7 +1230,7 @@ for /r "%_common%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if ex
 if not defined _oBranding for /r "%_common2%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
 
 call :ksdata getmsiprod %2
-call :ks_msiretaildata getmsiret %2
+call :msiofficedata %2 getmsiret
 
 echo:
 echo Processing Office...                    [MSI ^| %_version% ^| %_oArch%]
@@ -3261,132 +3261,195 @@ exit /b
 
 ::  1st column = Office version number
 ::  2nd column = Activation ID
-::  3rd column = Edition
-::  4th column = Other Edition IDs if they are part of the same primary product (For reference only)
+::  3rd column = Product ID from branding.xml
+::  4th column = Edition
+::  5th column = Other Edition IDs if they are part of the same primary product (For reference only)
 ::  Separator  = "_"
 
-:ks_msiretaildata
+:: EditionID Notes:
+:: For Office 2013 and later, all Edition IDs are clearly defined, and each ID corresponds to its specific licensing.
+
+:: In Office 2010, the situation is a bit more complicated.
+:: Products typically fall into two separate categories: Volume License (VL) and Non-VL. This is because a single installation cannot include both Retail and VL licensing types.
+:: Some Edition IDs share the same primary product ID. For example, installing ProPlusVL also installs ProPlusAcadVL licenses, as both use 0011 as the primary product ID.
+:: Therefore, in the script, we grouped VL and Non-VL versions by primary product ID and selected the highest Edition ID when multiple Edition IDs existed for the same primary product ID.
+
+:: There are a few exceptions to this 2010 rule: Visio (Premium, Pro, Standard) and OEM-SingleImage.
+
+:: For Visio, the issue is that branding.xml lists incorrect primary product IDs. The correct primary product ID for all three Visio variants is 0057. Based on the criteria above, we chose Visio-Premium as the representative Edition ID among the three.
+:: For OEM-SingleImage, it installs multiple Edition IDs and uses 003D as the primary product ID. Following our method, we selected the highest available Edition ID—ProfessionalR in this case.
+
+:msiofficedata
 
 for %%# in (
-:: Office 2010
-14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_AccessR
-14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_AccessRuntimeR
-14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_ExcelR
-14_7004b7f0-6407-4f45-8eac-966e5f868bde_GrooveR
-14_7b7d1f17-fdcb-4820-9789-9bec6e377821_HomeBusinessR_[HomeBusinessDemoR]
-14_19316117-30a8-4773-8fd9-7f7231f4e060_HomeBusinessSubR
-14_09e2d37e-474b-4121-8626-58ad9be5776f_HomeStudentR_[HomeStudentDemoR]
-14_c3ae020c-5a71-4cc5-a27a-2a97c2d46860_HSExcelR
-14_25fe4611-b44d-49cc-ae87-2143d299194e_HSOneNoteR
-14_d652ad8d-da5c-4358-b928-7fb1b4de7a7c_HSPowerPointR
-14_a963d7ae-7a88-41a7-94da-8bb5635a8af9_HSWordR
-14_ef1da464-01c8-43a6-91af-e4e5713744f9_InfoPathR
-14_14f5946a-debc-4716-babc-7e2c240fec08_MondoR
-14_c1ceda8b-c578-4d5d-a4aa-23626be4e234_OEM
-14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_OneNoteR
-14_fbf4ac36-31c8-4340-8666-79873129cf40_OutlookR
-14_acb51361-c0db-4895-9497-1831c41f31a6_PersonalR_[PersonalDemoR,PersonalPrepaidR]
-14_133c8359-4e93-4241-8118-30bb18737ea0_PowerPointR
-14_8b559c37-0117-413e-921b-b853aeb6e210_ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR]
-14_725714d7-d58f-4d12-9fa8-35873c6f7215_ProjectProR_[ProjectProMSDNR]
-14_4d06f72e-fd50-4bc2-a24b-d448d7f17ef2_ProjectProSubR
-14_688f6589-2bd9-424e-a152-b13f36aa6de1_ProjectStdR
-14_71af7e84-93e6-4363-9b69-699e04e74071_ProPlusR_[ProPlusAcadR,ProPlusMSDNR,Sub4R]
-14_e98ef0c0-71c4-42ce-8305-287d8721e26c_ProPlusSubR
-14_98677603-a668-4fa4-9980-3f1f05f78f69_PublisherR
-14_dbe3aee0-5183-4ff7-8142-66050173cb01_SmallBusBasicsR_[SmallBusBasicsMSDNR]
-14_b78df69e-0966-40b1-ae85-30a5134dedd0_SPDR
-14_d3422cfb-8d8b-4ead-99f9-eab0ccd990d7_StandardR
-14_2745e581-565a-4670-ae90-6bf7c57ffe43_StarterR
-14_66cad568-c2dc-459d-93ec-2f3cb967ee34_VisioSIR_Prem[Pro,Std]
-14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_WordR
+14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_0015_AccessR
+14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_001C_AccessRuntimeR
+14_95ab3ec8-4106-4f9d-b632-03c019d1d23f_0015_AccessVL
+14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_0016_ExcelR
+14_71dc86ff-f056-40d0-8ffb-9592705c9b76_0016_ExcelVL
+14_7004b7f0-6407-4f45-8eac-966e5f868bde_00BA_GrooveR
+14_fdad0dfa-417d-4b4f-93e4-64ea8867b7fd_00BA_GrooveVL
+14_7b7d1f17-fdcb-4820-9789-9bec6e377821_0013_HomeBusinessR_[HomeBusinessDemoR]
+14_19316117-30a8-4773-8fd9-7f7231f4e060_011E_HomeBusinessSubR
+14_09e2d37e-474b-4121-8626-58ad9be5776f_002F_HomeStudentR_[HomeStudentDemoR]
+14_c3ae020c-5a71-4cc5-a27a-2a97c2d46860_0029_HSExcelR
+14_25fe4611-b44d-49cc-ae87-2143d299194e_00A3_HSOneNoteR
+14_d652ad8d-da5c-4358-b928-7fb1b4de7a7c_0037_HSPowerPointR
+14_a963d7ae-7a88-41a7-94da-8bb5635a8af9_002B_HSWordR
+14_ef1da464-01c8-43a6-91af-e4e5713744f9_0044_InfoPathR
+14_85e22450-b741-430c-a172-a37962c938af_0044_InfoPathVL
+14_14f5946a-debc-4716-babc-7e2c240fec08_000F_MondoR
+14_533b656a-4425-480b-8e30-1a2358898350_000F_MondoVL
+14_c1ceda8b-c578-4d5d-a4aa-23626be4e234_003D_ProfessionalR_[OEM-SingleImage]Exception
+14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_00A1_OneNoteR
+14_6860b31f-6a67-48b8-84b9-e312b3485c4b_00A1_OneNoteVL
+14_fbf4ac36-31c8-4340-8666-79873129cf40_001A_OutlookR
+14_a9aeabd8-63b8-4079-a28e-f531807fd6b8_001A_OutlookVL
+14_acb51361-c0db-4895-9497-1831c41f31a6_0033_PersonalR_[PersonalDemoR,PersonalPrepaidR]
+14_133c8359-4e93-4241-8118-30bb18737ea0_0018_PowerPointR
+14_38252940-718c-4aa6-81a4-135398e53851_0018_PowerPointVL
+14_8b559c37-0117-413e-921b-b853aeb6e210_0014_ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR]
+14_725714d7-d58f-4d12-9fa8-35873c6f7215_003B_ProjectProR_[ProjectProMSDNR]
+14_4d06f72e-fd50-4bc2-a24b-d448d7f17ef2_011F_ProjectProSubR
+14_1cf57a59-c532-4e56-9a7d-ffa2fe94b474_003B_ProjectProVL
+14_688f6589-2bd9-424e-a152-b13f36aa6de1_003A_ProjectStdR
+14_11b39439-6b93-4642-9570-f2eb81be2238_003A_ProjectStdVL
+14_71af7e84-93e6-4363-9b69-699e04e74071_0011_ProPlusR_[ProPlusAcadR,ProPlusMSDNR,Sub4R]
+14_e98ef0c0-71c4-42ce-8305-287d8721e26c_011D_ProPlusSubR
+14_fdf3ecb9-b56f-43b2-a9b8-1b48b6bae1a7_0011_ProPlusVL_[ProPlusAcadVL]
+14_98677603-a668-4fa4-9980-3f1f05f78f69_0019_PublisherR
+14_3d014759-b128-4466-9018-e80f6320d9d0_0019_PublisherVL
+14_dbe3aee0-5183-4ff7-8142-66050173cb01_008B_SmallBusBasicsR_[SmallBusBasicsMSDNR]
+14_8090771e-d41a-4482-929e-de87f1f47e46_008B_SmallBusBasicsVL
+14_b78df69e-0966-40b1-ae85-30a5134dedd0_0017_SPDR
+14_d3422cfb-8d8b-4ead-99f9-eab0ccd990d7_0012_StandardR
+14_1f76e346-e0be-49bc-9954-70ec53a4fcfe_0012_StandardVL_[StandardAcadVL]
+14_2745e581-565a-4670-ae90-6bf7c57ffe43_0066_StarterR
+14_66cad568-c2dc-459d-93ec-2f3cb967ee34_0057_VisioSIR_Prem[Pro,Std]Exception
+14_36756cb8-8e69-4d11-9522-68899507cd6a_0057_VisioSIVL_Prem[Pro,Std]Exception
+14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_001B_WordR
+14_98d4050e-9c98-49bf-9be1-85e12eb3ab13_001B_WordVL
 :: Office 2013
-15_ab4d047b-97cf-4126-a69f-34df08e2f254_AccessRetail
-15_259de5be-492b-44b3-9d78-9645f848f7b0_AccessRuntimeRetail
-15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_ExcelRetail
-15_cfaf5356-49e3-48a8-ab3c-e729ab791250_GrooveRetail
-15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_HomeBusinessPipcRetail
-15_a2b90e7a-a797-4713-af90-f0becf52a1dd_HomeBusinessRetail
-15_1fdfb4e4-f9c9-41c4-b055-c80daf00697d_HomeStudentARMRetail
-15_ebef9f05-5273-404a-9253-c5e252f50555_HomeStudentPlusARMRetail
-15_f2de350d-3028-410a-bfae-283e00b44d0e_HomeStudentRetail
-15_44984381-406e-4a35-b1c3-e54f499556e2_InfoPathRetail
-15_9103f3ce-1084-447a-827e-d6097f68c895_LyncAcademicRetail
-15_ff693bf4-0276-4ddb-bb42-74ef1a0c9f4d_LyncEntryRetail
-15_fada6658-bfc6-4c4e-825a-59a89822cda8_LyncRetail
-15_69ec9152-153b-471a-bf35-77ec88683eae_MondoRetail
-15_3391e125-f6e4-4b1e-899c-a25e6092d40d_OneNoteFreeRetail
-15_8b524bcc-67ea-4876-a509-45e46f6347e8_OneNoteRetail
-15_12004b48-e6c8-4ffa-ad5a-ac8d4467765a_OutlookRetail
-15_5aab8561-1686-43f7-9ff5-2c861da58d17_PersonalPipcRetail
-15_17e9df2d-ed91-4382-904b-4fed6a12caf0_PersonalRetail
-15_31743b82-bfbc-44b6-aa12-85d42e644d5b_PowerPointRetail
-15_064383fa-1538-491c-859b-0ecab169a0ab_ProPlusRetail
-15_4e26cac1-e15a-4467-9069-cb47b67fe191_ProfessionalPipcRetail
-15_44bc70e2-fb83-4b09-9082-e5557e0c2ede_ProfessionalRetail
-15_2f72340c-b555-418d-8b46-355944fe66b8_ProjectProRetail
-15_58d95b09-6af6-453d-a976-8ef0ae0316b1_ProjectStdRetail
-15_c3a0814a-70a4-471f-af37-2313a6331111_PublisherRetail
-15_ba3e3833-6a7e-445a-89d0-7802a9a68588_SPDRetail
-15_32255c0a-16b4-4ce2-b388-8a4267e219eb_StandardRetail
-15_a56a3b37-3a35-4bbb-a036-eee5f1898eee_VisioProRetail
-15_980f9e3e-f5a8-41c8-8596-61404addf677_VisioStdRetail
-15_191509f2-6977-456f-ab30-cf0492b1e93a_WordRetail
+15_ab4d047b-97cf-4126-a69f-34df08e2f254_0015_AccessRetail
+15_259de5be-492b-44b3-9d78-9645f848f7b0_001C_AccessRuntimeRetail
+15_4374022d-56b8-48c1-9bb7-d8f2fc726343_0015_AccessVolume
+15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_0016_ExcelRetail
+15_ac1ae7fd-b949-4e04-a330-849bc40638cf_0016_ExcelVolume
+15_cfaf5356-49e3-48a8-ab3c-e729ab791250_00BA_GrooveRetail
+15_4825ac28-ce41-45a7-9e6e-1fed74057601_00BA_GrooveVolume
+15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_00E7_HomeBusinessPipcRetail
+15_cd256150-a898-441f-aac0-9f8f33390e45_0013_HomeBusinessRetail
+15_1fdfb4e4-f9c9-41c4-b055-c80daf00697d_00CE_HomeStudentARMRetail
+15_ebef9f05-5273-404a-9253-c5e252f50555_00DA_HomeStudentPlusARMRetail
+15_98685d21-78bd-4c62-bc4f-653344a63035_002F_HomeStudentRetail
+15_44984381-406e-4a35-b1c3-e54f499556e2_0044_InfoPathRetail
+15_9e016989-4007-42a6-8051-64eb97110cf2_0044_InfoPathVolume
+15_9103f3ce-1084-447a-827e-d6097f68c895_00EA_LyncAcademicRetail
+15_ff693bf4-0276-4ddb-bb42-74ef1a0c9f4d_012D_LyncEntryRetail
+15_fada6658-bfc6-4c4e-825a-59a89822cda8_012C_LyncRetail
+15_e1264e10-afaf-4439-a98b-256df8bb156f_012C_LyncVolume
+15_3169c8df-f659-4f95-9cc6-3115e6596e83_000F_MondoRetail
+15_f33485a0-310b-4b72-9a0e-b1d605510dbd_000F_MondoVolume
+15_3391e125-f6e4-4b1e-899c-a25e6092d40d_00A1_OneNoteFreeRetail
+15_8b524bcc-67ea-4876-a509-45e46f6347e8_00A1_OneNoteRetail
+15_b067e965-7521-455b-b9f7-c740204578a2_00A1_OneNoteVolume
+15_12004b48-e6c8-4ffa-ad5a-ac8d4467765a_001A_OutlookRetail
+15_8d577c50-ae5e-47fd-a240-24986f73d503_001A_OutlookVolume
+15_5aab8561-1686-43f7-9ff5-2c861da58d17_00E6_PersonalPipcRetail
+15_17e9df2d-ed91-4382-904b-4fed6a12caf0_0033_PersonalRetail
+15_31743b82-bfbc-44b6-aa12-85d42e644d5b_0018_PowerPointRetail
+15_e40dcb44-1d5c-4085-8e8f-943f33c4f004_0018_PowerPointVolume
+15_4e26cac1-e15a-4467-9069-cb47b67fe191_00E8_ProfessionalPipcRetail
+15_44bc70e2-fb83-4b09-9082-e5557e0c2ede_0014_ProfessionalRetail
+15_f2435de4-5fc0-4e5b-ac97-34f515ec5ee7_003B_ProjectProRetail
+15_ed34dc89-1c27-4ecd-8b2f-63d0f4cedc32_003B_ProjectProVolume
+15_5517e6a2-739b-4822-946f-7f0f1c5934b1_003A_ProjectStdRetail
+15_2b9e4a37-6230-4b42-bee2-e25ce86c8c7a_003A_ProjectStdVolume
+15_064383fa-1538-491c-859b-0ecab169a0ab_0011_ProPlusRetail
+15_2b88c4f2-ea8f-43cd-805e-4d41346e18a7_0011_ProPlusVolume
+15_c3a0814a-70a4-471f-af37-2313a6331111_0019_PublisherRetail
+15_38ea49f6-ad1d-43f1-9888-99a35d7c9409_0019_PublisherVolume
+15_ba3e3833-6a7e-445a-89d0-7802a9a68588_0017_SPDRetail
+15_32255c0a-16b4-4ce2-b388-8a4267e219eb_0012_StandardRetail
+15_a24cca51-3d54-4c41-8a76-4031f5338cb2_0012_StandardVolume
+15_15d12ad4-622d-4257-976c-5eb3282fb93d_0051_VisioProRetail
+15_3e4294dd-a765-49bc-8dbd-cf8b62a4bd3d_0051_VisioProVolume
+15_dae597ce-5823-4c77-9580-7268b93a4b23_0053_VisioStdRetail
+15_44a1f6ff-0876-4edb-9169-dbb43101ee89_0053_VisioStdVolume
+15_191509f2-6977-456f-ab30-cf0492b1e93a_001B_WordRetail
+15_9cedef15-be37-4ff0-a08a-13a045540641_001B_WordVolume
 :: Office 365 - 15.0 version
-15_6337137e-7c07-4197-8986-bece6a76fc33_O365BusinessRetail
-15_537ea5b5-7d50-4876-bd38-a53a77caca32_O365HomePremRetail
-15_149dbce7-a48e-44db-8364-a53386cd4580_O365ProPlusRetail
-15_bacd4614-5bef-4a5e-bafc-de4c788037a2_O365SmallBusPremRetail
+15_befee371-a2f5-4648-85db-a2c55fdf324c_00E9_O365BusinessRetail
+15_537ea5b5-7d50-4876-bd38-a53a77caca32_00D6_O365HomePremRetail
+15_149dbce7-a48e-44db-8364-a53386cd4580_00D4_O365ProPlusRetail
+15_bacd4614-5bef-4a5e-bafc-de4c788037a2_00D5_O365SmallBusPremRetail
 :: Office 365 - 16.0 version
-16_6337137e-7c07-4197-8986-bece6a76fc33_O365BusinessRetail
-16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_O365EduCloudRetail
-16_537ea5b5-7d50-4876-bd38-a53a77caca32_O365HomePremRetail
-16_149dbce7-a48e-44db-8364-a53386cd4580_O365ProPlusRetail
-16_bacd4614-5bef-4a5e-bafc-de4c788037a2_O365SmallBusPremRetail
+16_6337137e-7c07-4197-8986-bece6a76fc33_00E9_O365BusinessRetail
+16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_00D6_O365EduCloudRetail
+16_537ea5b5-7d50-4876-bd38-a53a77caca32_00D6_O365HomePremRetail
+16_149dbce7-a48e-44db-8364-a53386cd4580_00D4_O365ProPlusRetail
+16_bacd4614-5bef-4a5e-bafc-de4c788037a2_00D5_O365SmallBusPremRetail
 :: Office 2016
-16_bfa358b0-98f1-4125-842e-585fa13032e6_AccessRetail
-16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_AccessRuntimeRetail
-16_424d52ff-7ad2-4bc7-8ac6-748d767b455d_ExcelRetail
-16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_HomeBusinessPipcRetail
-16_86834d00-7896-4a38-8fae-32f20b86fa2b_HomeBusinessRetail
-16_c28acdb8-d8b3-4199-baa4-024d09e97c99_HomeStudentRetail
-16_090896a0-ea98-48ac-b545-ba5da0eb0c9c_HomeStudentARMRetail
-16_6bbe2077-01a4-4269-bf15-5bf4d8efc0b2_HomeStudentPlusARMRetail
-16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_HomeStudentVNextRetail
-16_69ec9152-153b-471a-bf35-77ec88683eae_MondoRetail
-16_436366de-5579-4f24-96db-3893e4400030_OneNoteFreeRetail
-16_83ac4dd9-1b93-40ed-aa55-ede25bb6af38_OneNoteRetail
-16_5a670809-0983-4c2d-8aad-d3c2c5b7d5d1_OutlookRetail
-16_5aab8561-1686-43f7-9ff5-2c861da58d17_PersonalPipcRetail
-16_a9f645a1-0d6a-4978-926a-abcb363b72a6_PersonalRetail
-16_f32d1284-0792-49da-9ac6-deb2bc9c80b6_PowerPointRetail
-16_de52bd50-9564-4adc-8fcb-a345c17f84f9_ProPlusRetail
-16_4e26cac1-e15a-4467-9069-cb47b67fe191_ProfessionalPipcRetail
-16_d64edc00-7453-4301-8428-197343fafb16_ProfessionalRetail
-16_2f72340c-b555-418d-8b46-355944fe66b8_ProjectProRetail
-16_58d95b09-6af6-453d-a976-8ef0ae0316b1_ProjectStdRetail
-16_6e0c1d99-c72e-4968-bcb7-ab79e03e201e_PublisherRetail
-16_9103f3ce-1084-447a-827e-d6097f68c895_SkypeServiceBypassRetail
-16_971cd368-f2e1-49c1-aedd-330909ce18b6_SkypeforBusinessEntryRetail
-16_418d2b9f-b491-4d7f-84f1-49e27cc66597_SkypeforBusinessRetail
-16_4a31c291-3a12-4c64-b8ab-cd79212be45e_StandardRetail
-16_a56a3b37-3a35-4bbb-a036-eee5f1898eee_VisioProRetail
-16_980f9e3e-f5a8-41c8-8596-61404addf677_VisioStdRetail
-16_cacaa1bf-da53-4c3b-9700-11738ef1c2a5_WordRetail
+16_bfa358b0-98f1-4125-842e-585fa13032e6_0015_AccessRetail
+16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_001C_AccessRuntimeRetail
+16_3b2fa33f-cd5a-43a5-bd95-f49f3f546b0b_0015_AccessVolume
+16_424d52ff-7ad2-4bc7-8ac6-748d767b455d_0016_ExcelRetail
+16_685062a7-6024-42e7-8c5f-6bb9e63e697f_0016_ExcelVolume
+16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_00E7_HomeBusinessPipcRetail
+16_86834d00-7896-4a38-8fae-32f20b86fa2b_0013_HomeBusinessRetail
+16_090896a0-ea98-48ac-b545-ba5da0eb0c9c_00CE_HomeStudentARMRetail
+16_6bbe2077-01a4-4269-bf15-5bf4d8efc0b2_00DA_HomeStudentPlusARMRetail
+16_c28acdb8-d8b3-4199-baa4-024d09e97c99_002F_HomeStudentRetail
+16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_002F_HomeStudentVNextRetail
+16_b21367df-9545-4f02-9f24-240691da0e58_000F_MondoRetail
+16_2cd0ea7e-749f-4288-a05e-567c573b2a6c_000F_MondoVolume
+16_436366de-5579-4f24-96db-3893e4400030_00A3_OneNoteFreeRetail
+16_83ac4dd9-1b93-40ed-aa55-ede25bb6af38_00A1_OneNoteRetail
+16_23b672da-a456-4860-a8f3-e062a501d7e8_00A1_OneNoteVolume
+16_5a670809-0983-4c2d-8aad-d3c2c5b7d5d1_001A_OutlookRetail
+16_50059979-ac6f-4458-9e79-710bcb41721a_001A_OutlookVolume
+16_5aab8561-1686-43f7-9ff5-2c861da58d17_00E6_PersonalPipcRetail
+16_a9f645a1-0d6a-4978-926a-abcb363b72a6_0033_PersonalRetail
+16_f32d1284-0792-49da-9ac6-deb2bc9c80b6_0018_PowerPointRetail
+16_9b4060c9-a7f5-4a66-b732-faf248b7240f_0018_PowerPointVolume
+16_4e26cac1-e15a-4467-9069-cb47b67fe191_00E8_ProfessionalPipcRetail
+16_d64edc00-7453-4301-8428-197343fafb16_0014_ProfessionalRetail
+16_0f42f316-00b1-48c5-ada4-2f52b5720ad0_003B_ProjectProRetail
+16_82f502b5-b0b0-4349-bd2c-c560df85b248_003B_ProjectProVolume
+16_16728639-a9ab-4994-b6d8-f81051e69833_003B_ProjectProXVolume
+16_e9f0b3fc-962f-4944-ad06-05c10b6bcd5e_003A_ProjectStdRetail
+16_82e6b314-2a62-4e51-9220-61358dd230e6_003A_ProjectStdVolume
+16_431058f0-c059-44c5-b9e7-ed2dd46b6789_003A_ProjectStdXVolume
+16_de52bd50-9564-4adc-8fcb-a345c17f84f9_0011_ProPlusRetail
+16_c47456e3-265d-47b6-8ca0-c30abbd0ca36_0011_ProPlusVolume
+16_6e0c1d99-c72e-4968-bcb7-ab79e03e201e_0019_PublisherRetail
+16_fcc1757b-5d5f-486a-87cf-c4d6dedb6032_0019_PublisherVolume
+16_971cd368-f2e1-49c1-aedd-330909ce18b6_012D_SkypeforBusinessEntryRetail
+16_418d2b9f-b491-4d7f-84f1-49e27cc66597_012C_SkypeforBusinessRetail
+16_03ca3b9a-0869-4749-8988-3cbc9d9f51bb_012C_SkypeforBusinessVolume
+16_9103f3ce-1084-447a-827e-d6097f68c895_012C_SkypeServiceBypassRetail
+16_4a31c291-3a12-4c64-b8ab-cd79212be45e_0012_StandardRetail
+16_0ed94aac-2234-4309-ba29-74bdbb887083_0012_StandardVolume
+16_2dfe2075-2d04-4e43-816a-eb60bbb77574_0051_VisioProRetail
+16_295b2c03-4b1c-4221-b292-1411f468bd02_0051_VisioProVolume
+16_0594dc12-8444-4912-936a-747ca742dbdb_0051_VisioProXVolume
+16_c76dbcbc-d71b-4f45-b5b3-b7494cb4e23e_0053_VisioStdRetail
+16_44151c2d-c398-471f-946f-7660542e3369_0053_VisioStdVolume
+16_1d1c6879-39a3-47a5-9a6d-aceefa6a289d_0053_VisioStdXVolume
+16_cacaa1bf-da53-4c3b-9700-11738ef1c2a5_001B_WordRetail
+16_c3000759-551f-4f4a-bcac-a4b42cbf1de2_001B_WordVolume
 ) do (
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do (
 
-if %1==getmsiret if "%oVer%"=="%%A" (
-for /f "tokens=*" %%x in ('findstr /i /c:"%%B" "%_oBranding%"') do set "prodId=%%x"
-set prodId=!prodId:"/>=!
-set prodId=!prodId:~-4!
-if "%oVer%"=="14" (
-REM Exception case for Visio because wrong primary product ID is mentioned in Branding.xml
-echo %%C | find /i "Visio" %nul% && set prodId=0057
+set getIds=1
+if "%oVer%"=="%%A" (
+if /i "%2"=="getmsiret" (echo %%D | findstr /i "Volume VL" %nul% && set getIds=)
+
+if defined getIds (
+reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-%%C-" %nul% && (
+reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
+if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
 )
-reg query "%2\Registration\{%%B}" /v ProductCode %nul2% | find /i "-!prodId!-" %nul% && (
-reg query "%2\Common\InstalledPackages" %nul2% | find /i "-!prodId!-" %nul% && (
-if defined _oIds (set _oIds=!_oIds! %%C) else (set _oIds=%%C)
 )
 )
 )

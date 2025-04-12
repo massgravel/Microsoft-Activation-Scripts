@@ -1071,7 +1071,7 @@ set "_common2=%CommonProgramFiles(x86)%"
 for /r "%_common%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
 if not defined _oBranding for /r "%_common2%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
 
-call :ohookdata getmsiprod %2
+call :msiofficedata %2
 
 echo:
 echo Activating Office...                    [MSI ^| %_version% ^| %_oArch%]
@@ -2338,13 +2338,143 @@ if %oVer%==16 (echo "%%D" | find /i "Subscription" %nul% && set _sublic=1)
 )
 )
 
-if %1==getmsiprod if %oVer%==%%A (
-for /f "tokens=*" %%x in ('findstr /i /c:"%%B" "%_oBranding%"') do set "prodId=%%x"
-set prodId=!prodId:"/>=!
-set prodId=!prodId:~-4!
-reg query "%2\Registration\{%%B}" /v ProductCode %nul2% | find /i "-!prodId!-" %nul% && (
-reg query "%2\Common\InstalledPackages" %nul2% | find /i "-!prodId!-" %nul% && (
-if defined _oIds (set _oIds=!_oIds! %%E) else (set _oIds=%%E)
+)
+)
+exit /b
+
+::========================================================================================================================================
+
+::  1st column = Office version number
+::  2nd column = Activation ID
+::  3rd column = Product ID from branding.xml
+::  4th column = Edition
+::  5th column = Other Edition IDs if they are part of the same primary product (For reference only)
+::  Separator  = "_"
+
+:msiofficedata
+
+for %%# in (
+:: Office 2013
+15_ab4d047b-97cf-4126-a69f-34df08e2f254_0015_AccessRetail
+15_259de5be-492b-44b3-9d78-9645f848f7b0_001C_AccessRuntimeRetail
+15_4374022d-56b8-48c1-9bb7-d8f2fc726343_0015_AccessVolume
+15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_0016_ExcelRetail
+15_ac1ae7fd-b949-4e04-a330-849bc40638cf_0016_ExcelVolume
+15_cfaf5356-49e3-48a8-ab3c-e729ab791250_00BA_GrooveRetail
+15_4825ac28-ce41-45a7-9e6e-1fed74057601_00BA_GrooveVolume
+15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_00E7_HomeBusinessPipcRetail
+15_cd256150-a898-441f-aac0-9f8f33390e45_0013_HomeBusinessRetail
+15_1fdfb4e4-f9c9-41c4-b055-c80daf00697d_00CE_HomeStudentARMRetail
+15_ebef9f05-5273-404a-9253-c5e252f50555_00DA_HomeStudentPlusARMRetail
+15_98685d21-78bd-4c62-bc4f-653344a63035_002F_HomeStudentRetail
+15_44984381-406e-4a35-b1c3-e54f499556e2_0044_InfoPathRetail
+15_9e016989-4007-42a6-8051-64eb97110cf2_0044_InfoPathVolume
+15_9103f3ce-1084-447a-827e-d6097f68c895_00EA_LyncAcademicRetail
+15_ff693bf4-0276-4ddb-bb42-74ef1a0c9f4d_012D_LyncEntryRetail
+15_fada6658-bfc6-4c4e-825a-59a89822cda8_012C_LyncRetail
+15_e1264e10-afaf-4439-a98b-256df8bb156f_012C_LyncVolume
+15_3169c8df-f659-4f95-9cc6-3115e6596e83_000F_MondoRetail
+15_f33485a0-310b-4b72-9a0e-b1d605510dbd_000F_MondoVolume
+15_3391e125-f6e4-4b1e-899c-a25e6092d40d_00A1_OneNoteFreeRetail
+15_8b524bcc-67ea-4876-a509-45e46f6347e8_00A1_OneNoteRetail
+15_b067e965-7521-455b-b9f7-c740204578a2_00A1_OneNoteVolume
+15_12004b48-e6c8-4ffa-ad5a-ac8d4467765a_001A_OutlookRetail
+15_8d577c50-ae5e-47fd-a240-24986f73d503_001A_OutlookVolume
+15_5aab8561-1686-43f7-9ff5-2c861da58d17_00E6_PersonalPipcRetail
+15_17e9df2d-ed91-4382-904b-4fed6a12caf0_0033_PersonalRetail
+15_31743b82-bfbc-44b6-aa12-85d42e644d5b_0018_PowerPointRetail
+15_e40dcb44-1d5c-4085-8e8f-943f33c4f004_0018_PowerPointVolume
+15_4e26cac1-e15a-4467-9069-cb47b67fe191_00E8_ProfessionalPipcRetail
+15_44bc70e2-fb83-4b09-9082-e5557e0c2ede_0014_ProfessionalRetail
+15_f2435de4-5fc0-4e5b-ac97-34f515ec5ee7_003B_ProjectProRetail
+15_ed34dc89-1c27-4ecd-8b2f-63d0f4cedc32_003B_ProjectProVolume
+15_5517e6a2-739b-4822-946f-7f0f1c5934b1_003A_ProjectStdRetail
+15_2b9e4a37-6230-4b42-bee2-e25ce86c8c7a_003A_ProjectStdVolume
+15_064383fa-1538-491c-859b-0ecab169a0ab_0011_ProPlusRetail
+15_2b88c4f2-ea8f-43cd-805e-4d41346e18a7_0011_ProPlusVolume
+15_c3a0814a-70a4-471f-af37-2313a6331111_0019_PublisherRetail
+15_38ea49f6-ad1d-43f1-9888-99a35d7c9409_0019_PublisherVolume
+15_ba3e3833-6a7e-445a-89d0-7802a9a68588_0017_SPDRetail
+15_32255c0a-16b4-4ce2-b388-8a4267e219eb_0012_StandardRetail
+15_a24cca51-3d54-4c41-8a76-4031f5338cb2_0012_StandardVolume
+15_15d12ad4-622d-4257-976c-5eb3282fb93d_0051_VisioProRetail
+15_3e4294dd-a765-49bc-8dbd-cf8b62a4bd3d_0051_VisioProVolume
+15_dae597ce-5823-4c77-9580-7268b93a4b23_0053_VisioStdRetail
+15_44a1f6ff-0876-4edb-9169-dbb43101ee89_0053_VisioStdVolume
+15_191509f2-6977-456f-ab30-cf0492b1e93a_001B_WordRetail
+15_9cedef15-be37-4ff0-a08a-13a045540641_001B_WordVolume
+:: Office 365 - 15.0 version
+15_befee371-a2f5-4648-85db-a2c55fdf324c_00E9_O365BusinessRetail
+15_537ea5b5-7d50-4876-bd38-a53a77caca32_00D6_O365HomePremRetail
+15_149dbce7-a48e-44db-8364-a53386cd4580_00D4_O365ProPlusRetail
+15_bacd4614-5bef-4a5e-bafc-de4c788037a2_00D5_O365SmallBusPremRetail
+:: Office 365 - 16.0 version
+16_6337137e-7c07-4197-8986-bece6a76fc33_00E9_O365BusinessRetail
+16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_00D6_O365EduCloudRetail
+16_537ea5b5-7d50-4876-bd38-a53a77caca32_00D6_O365HomePremRetail
+16_149dbce7-a48e-44db-8364-a53386cd4580_00D4_O365ProPlusRetail
+16_bacd4614-5bef-4a5e-bafc-de4c788037a2_00D5_O365SmallBusPremRetail
+:: Office 2016
+16_bfa358b0-98f1-4125-842e-585fa13032e6_0015_AccessRetail
+16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_001C_AccessRuntimeRetail
+16_3b2fa33f-cd5a-43a5-bd95-f49f3f546b0b_0015_AccessVolume
+16_424d52ff-7ad2-4bc7-8ac6-748d767b455d_0016_ExcelRetail
+16_685062a7-6024-42e7-8c5f-6bb9e63e697f_0016_ExcelVolume
+16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_00E7_HomeBusinessPipcRetail
+16_86834d00-7896-4a38-8fae-32f20b86fa2b_0013_HomeBusinessRetail
+16_090896a0-ea98-48ac-b545-ba5da0eb0c9c_00CE_HomeStudentARMRetail
+16_6bbe2077-01a4-4269-bf15-5bf4d8efc0b2_00DA_HomeStudentPlusARMRetail
+16_c28acdb8-d8b3-4199-baa4-024d09e97c99_002F_HomeStudentRetail
+16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_002F_HomeStudentVNextRetail
+16_b21367df-9545-4f02-9f24-240691da0e58_000F_MondoRetail
+16_2cd0ea7e-749f-4288-a05e-567c573b2a6c_000F_MondoVolume
+16_436366de-5579-4f24-96db-3893e4400030_00A3_OneNoteFreeRetail
+16_83ac4dd9-1b93-40ed-aa55-ede25bb6af38_00A1_OneNoteRetail
+16_23b672da-a456-4860-a8f3-e062a501d7e8_00A1_OneNoteVolume
+16_5a670809-0983-4c2d-8aad-d3c2c5b7d5d1_001A_OutlookRetail
+16_50059979-ac6f-4458-9e79-710bcb41721a_001A_OutlookVolume
+16_5aab8561-1686-43f7-9ff5-2c861da58d17_00E6_PersonalPipcRetail
+16_a9f645a1-0d6a-4978-926a-abcb363b72a6_0033_PersonalRetail
+16_f32d1284-0792-49da-9ac6-deb2bc9c80b6_0018_PowerPointRetail
+16_9b4060c9-a7f5-4a66-b732-faf248b7240f_0018_PowerPointVolume
+16_4e26cac1-e15a-4467-9069-cb47b67fe191_00E8_ProfessionalPipcRetail
+16_d64edc00-7453-4301-8428-197343fafb16_0014_ProfessionalRetail
+16_0f42f316-00b1-48c5-ada4-2f52b5720ad0_003B_ProjectProRetail
+16_82f502b5-b0b0-4349-bd2c-c560df85b248_003B_ProjectProVolume
+16_16728639-a9ab-4994-b6d8-f81051e69833_003B_ProjectProXVolume
+16_e9f0b3fc-962f-4944-ad06-05c10b6bcd5e_003A_ProjectStdRetail
+16_82e6b314-2a62-4e51-9220-61358dd230e6_003A_ProjectStdVolume
+16_431058f0-c059-44c5-b9e7-ed2dd46b6789_003A_ProjectStdXVolume
+16_de52bd50-9564-4adc-8fcb-a345c17f84f9_0011_ProPlusRetail
+16_c47456e3-265d-47b6-8ca0-c30abbd0ca36_0011_ProPlusVolume
+16_6e0c1d99-c72e-4968-bcb7-ab79e03e201e_0019_PublisherRetail
+16_fcc1757b-5d5f-486a-87cf-c4d6dedb6032_0019_PublisherVolume
+16_971cd368-f2e1-49c1-aedd-330909ce18b6_012D_SkypeforBusinessEntryRetail
+16_418d2b9f-b491-4d7f-84f1-49e27cc66597_012C_SkypeforBusinessRetail
+16_03ca3b9a-0869-4749-8988-3cbc9d9f51bb_012C_SkypeforBusinessVolume
+16_9103f3ce-1084-447a-827e-d6097f68c895_012C_SkypeServiceBypassRetail
+16_4a31c291-3a12-4c64-b8ab-cd79212be45e_0012_StandardRetail
+16_0ed94aac-2234-4309-ba29-74bdbb887083_0012_StandardVolume
+16_2dfe2075-2d04-4e43-816a-eb60bbb77574_0051_VisioProRetail
+16_295b2c03-4b1c-4221-b292-1411f468bd02_0051_VisioProVolume
+16_0594dc12-8444-4912-936a-747ca742dbdb_0051_VisioProXVolume
+16_c76dbcbc-d71b-4f45-b5b3-b7494cb4e23e_0053_VisioStdRetail
+16_44151c2d-c398-471f-946f-7660542e3369_0053_VisioStdVolume
+16_1d1c6879-39a3-47a5-9a6d-aceefa6a289d_0053_VisioStdXVolume
+16_cacaa1bf-da53-4c3b-9700-11738ef1c2a5_001B_WordRetail
+16_c3000759-551f-4f4a-bcac-a4b42cbf1de2_001B_WordVolume
+) do (
+for /f "tokens=1-5 delims=_" %%A in ("%%#") do (
+
+set getIds=1
+if "%oVer%"=="%%A" (
+if /i "%2"=="getmsiret" (echo %%D | findstr /i "Volume VL" %nul% && set getIds=)
+
+if defined getIds (
+reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-%%C-" %nul% && (
+reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
+if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
+)
 )
 )
 )
