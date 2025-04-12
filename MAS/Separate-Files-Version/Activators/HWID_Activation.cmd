@@ -239,7 +239,7 @@ for /f "delims=" %%a in ('cmd /c "%psc% ""if ($PSVersionTable.PSEdition -ne 'Cor
 
 if /i not "%tstresult%"=="FullLanguage" (
 %eline%
-echo %tstresult%
+echo: %tstresult%
 cmd /c "%psc% $ExecutionContext.SessionState.LanguageMode"
 
 REM check LanguageMode
@@ -799,7 +799,7 @@ goto :dk_done
 
 :dk_setvar
 
-set psc=powershell.exe
+set psc=powershell.exe -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 
