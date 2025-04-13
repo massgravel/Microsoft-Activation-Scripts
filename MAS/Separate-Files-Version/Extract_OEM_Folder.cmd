@@ -245,34 +245,33 @@ set terminal=
 
 ::  Check if script is running in Terminal app
 
-set r1=$TB = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);
-set r2=%r1% [void]$TB.DefinePInvokeMethod('GetConsoleWindow', 'kernel32.dll', 22, 1, [IntPtr], @(), 1, 3).SetImplementationFlags(128);
-set r3=%r2% [void]$TB.DefinePInvokeMethod('SendMessageW', 'user32.dll', 22, 1, [IntPtr], @([IntPtr], [UInt32], [IntPtr], [IntPtr]), 1, 3).SetImplementationFlags(128);
-set d1=%r3% $hIcon = $TB.CreateType(); $hWnd = $hIcon::GetConsoleWindow();
-set d2=%d1% echo $($hIcon::SendMessageW($hWnd, 127, 0, 0) -ne [IntPtr]::Zero);
-
 if defined terminal (
-%psc% "%d2%" %nul2% | find /i "True" %nul1% && set terminal=
+set lines=0
+for /f "skip=2 tokens=2 delims=: " %%A in ('mode con') do if "!lines!"=="0" set lines=%%A
+if !lines! GEQ 100 set terminal=
 )
 
-if defined ps32onArm goto :skipQE
 if %_unattended%==1 goto :skipQE
 for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
 
+::  Relaunch to disable QuickEdit in the current session and use conhost.exe instead of the Terminal app
+::  This code disables QuickEdit for the current cmd.exe session without making permanent registry changes
+::  It is included because clicking on the script window can pause execution, causing confusion that the script has stopped due to an error
+
+set resetQE=1
+reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% && set resetQE=0
+reg add HKCU\Console /v QuickEdit /t REG_DWORD /d 0 /f %nul1%
+
 if defined terminal (
-set "launchcmd=start conhost.exe %psc%"
-) else (
-set "launchcmd=%psc%"
+start conhost.exe "!_batf!" %_args% -qedit
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
+) else if %resetQE% EQU 1 (
+start cmd.exe /c ""!_batf!" %_args% -qedit"
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
 )
 
-::  Disable QuickEdit in current session
-
-set "d1=$t=[AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);"
-set "d2=$t.DefinePInvokeMethod('GetStdHandle', 'kernel32.dll', 22, 1, [IntPtr], @([Int32]), 1, 3).SetImplementationFlags(128);"
-set "d3=$t.DefinePInvokeMethod('SetConsoleMode', 'kernel32.dll', 22, 1, [Boolean], @([IntPtr], [Int32]), 1, 3).SetImplementationFlags(128);"
-set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080);"
-
-%launchcmd% "%d1% %d2% %d3% %d4% & cmd.exe '/c' '!_PSarg! -qedit'" && (exit /b) || (set terminal=1)
 :skipQE
 
 ::========================================================================================================================================
