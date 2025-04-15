@@ -1029,7 +1029,7 @@ set _prids=
 set _config=
 set _version=
 set _License=
-set _oBranding=
+set _oMSI=
 exit /b
 
 ::========================================================================================================================================
@@ -1143,7 +1143,7 @@ exit /b
 for %%# in (%_oIds%) do (
 
 set skipprocess=
-if %_NoEditionChange%==1 if not defined _oBranding (
+if %_NoEditionChange%==1 if not defined _oMSI (
 set foundprod=
 call :ksdata chkprod %%#
 if not defined foundprod (
@@ -1192,7 +1192,7 @@ if not "!key!"=="" (
 echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
 call :dk_inskey "[!key!] [!_prod!]"
 ) else (
-if not defined _oBranding (
+if not defined _oMSI (
 set error=1
 call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !_prod! not found in script]"
 call :dk_color %Blue% "Make sure you are using Latest MAS script."
@@ -1215,6 +1215,7 @@ exit /b
 ::  Process Office MSI Version
 
 call :ks_reset
+set _oMSI=1
 
 if "%1"=="14" (
 call :dk_actids 59a52881-a989-479d-af46-f275c6370663
@@ -1235,20 +1236,10 @@ set "_common=%CommonProgramFiles%"
 if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
 set "_common2=%CommonProgramFiles(x86)%"
 
-for /r "%_common%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-if not defined _oBranding for /r "%_common2%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-
-call :ksdata getmsiprod %2
-call :msiofficedata %2 getmsiret
+call :msiofficedata %2
 
 echo:
 echo Processing Office...                    [MSI ^| %_version% ^| %_oArch%]
-
-if not defined _oBranding (
-set error=1
-call :dk_color %Red% "Checking BRANDING.XML                   [Not Found. Aborting activation...]"
-exit /b
-)
 
 if not defined _oIds (
 set error=1
@@ -3450,15 +3441,10 @@ for %%# in (
 ) do (
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do (
 
-set getIds=1
 if "%oVer%"=="%%A" (
-if /i "%2"=="getmsiret" (echo %%D | findstr /i "Volume VL" %nul% && set getIds=)
-
-if defined getIds (
 reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-%%C-" %nul% && (
 reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
 if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
-)
 )
 )
 )
@@ -3734,27 +3720,12 @@ if /i "%2"=="%%D" (
 set key=%%B
 set _actid=%%A
 set _allactid=!_allactid! %%A
-) else if not defined _oBranding if %_NoEditionChange%==0 (
+) else if not defined _oMSI if %_NoEditionChange%==0 (
 echo: %%E | find /i "-%2-" %nul% && (
 set key=%%B
 set _altoffid=%%D
 set _actid=%%A
 set _allactid=!_allactid! %%A
-)
-)
-)
-
-if %1==getmsiprod if "%oVer%"=="%%C" (
-for /f "tokens=*" %%x in ('findstr /i /c:"%%A" "%_oBranding%"') do set "prodId=%%x"
-set prodId=!prodId:"/>=!
-set prodId=!prodId:~-4!
-if "%oVer%"=="14" (
-REM Exception case for Visio because wrong primary product ID is mentioned in Branding.xml
-echo %%D | find /i "Visio" %nul% && set prodId=0057
-)
-reg query "%2\Registration\{%%A}" /v ProductCode %nul2% | find /i "-!prodId!-" %nul% && (
-reg query "%2\Common\InstalledPackages" %nul2% | find /i "-!prodId!-" %nul% && (
-if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
 )
 )
 )

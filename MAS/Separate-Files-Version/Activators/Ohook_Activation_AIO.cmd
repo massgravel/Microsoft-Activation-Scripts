@@ -823,7 +823,6 @@ set _prids=
 set _config=
 set _version=
 set _License=
-set _oBranding=
 exit /b
 
 ::========================================================================================================================================
@@ -1077,19 +1076,10 @@ set "_common=%CommonProgramFiles%"
 if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
 set "_common2=%CommonProgramFiles(x86)%"
 
-for /r "%_common%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-if not defined _oBranding for /r "%_common2%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-
 call :msiofficedata %2
 
 echo:
 echo Activating Office...                    [MSI ^| %_version% ^| %_oArch%]
-
-if not defined _oBranding (
-set error=1
-call :dk_color %Red% "Checking BRANDING.XML                   [Not Found, aborting activation...]"
-exit /b
-)
 
 if not defined _oIds (
 set error=1
@@ -2475,15 +2465,10 @@ for %%# in (
 ) do (
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do (
 
-set getIds=1
 if "%oVer%"=="%%A" (
-if /i "%2"=="getmsiret" (echo %%D | findstr /i "Volume VL" %nul% && set getIds=)
-
-if defined getIds (
 reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-%%C-" %nul% && (
 reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
 if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
-)
 )
 )
 )
