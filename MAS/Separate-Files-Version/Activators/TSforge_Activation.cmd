@@ -6747,6 +6747,24 @@ function Get-WmiInfo {
     }
 }
 
+function slGetSkuInfo($SkuId) {
+    $t = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0)
+    $t.DefinePInvokeMethod('SLOpen', 'slc.dll', 22, 1, [Int32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+    $t.DefinePInvokeMethod('SLClose', 'slc.dll', 22, 1, [IntPtr], @([IntPtr]), 1, 3).SetImplementationFlags(128)
+    $t.DefinePInvokeMethod('SLGetProductSkuInformation', 'slc.dll', 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+    $w = $t.CreateType()
+    $hSLC = 0
+    try {
+        [void]$w::SLOpen([ref]$hSLC)
+        $c = 0; $b = 0
+        $r = $w::SLGetProductSkuInformation($hSLC, [ref][Guid]$SkuId, "msft:sl/EUL/PHONE/PUBLIC", [ref]$null, [ref]$c, [ref]$b)
+        return ($r -eq 0)
+    }
+    finally {
+        [void]$w::SLClose($hSLC)
+    }
+}
+
 if ($env:resetstuff -eq $null) {
     foreach ($tsactid in $tsactids) {
         try {
@@ -6757,6 +6775,13 @@ if ($env:resetstuff -eq $null) {
                 $prodName = if ($nameParts.Count -gt 1) { ($nameParts[1].Trim() -split '[ ,]')[0] } else { $null }
             }
             [LibTSforge.Modifiers.GenPKeyInstall]::InstallGenPKey($ver, $prod, $tsactid)
+            if ($prodName -match 'Office' -and -not (slGetSkuInfo($tsactid))) {
+                $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
+                if ($licenseStatus -eq 1) {
+                    Write-Host "[$prodName] is already permanently activated." -ForegroundColor White -BackgroundColor DarkGreen
+                    continue
+                }
+            }
             [LibTSforge.Activators.ZeroCID]::Activate($ver, $prod, $tsactid)
             $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
             if ($licenseStatus -eq 1) {
