@@ -4832,7 +4832,11 @@ call :dk_color %Gray% "Skipping Because Project/Visio Mode     [%%#]"
 
 if not defined skipprocess (
 
-echo %%# | findstr /i "O365" %nul% && (
+set no365=
+if "%oVer%"=="15" (echo %%# | findstr /i "O365HomePremRetail" %nul% && set no365=1)
+if "%oVer%"=="16" (echo %%# | findstr /i "O365" %nul% && set no365=1)
+
+if defined no365 (
 set _License=MondoRetail
 set _altoffid=MondoRetail
 call :ks_osppready
