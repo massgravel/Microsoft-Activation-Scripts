@@ -228,7 +228,7 @@ goto dk_done
 
 ::pstst $ExecutionContext.SessionState.LanguageMode :pstst
 
-for /f "delims=" %%a in ('cmd /c "%psc% ""if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}""" %nul6%') do (set tstresult=%%a)
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}" %nul6%') do (set tstresult=%%a)
 
 if /i not "%tstresult%"=="FullLanguage" (
 %eline%

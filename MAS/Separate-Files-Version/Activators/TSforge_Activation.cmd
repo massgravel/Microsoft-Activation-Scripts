@@ -221,7 +221,6 @@ goto dk_done
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
-set "_workp=%_work:'=''%"
 
 set "_batf=%~f0"
 set "_batp=%_batf:'=''%"
@@ -264,7 +263,7 @@ goto dk_done
 
 ::pstst $ExecutionContext.SessionState.LanguageMode :pstst
 
-for /f "delims=" %%a in ('cmd /c "%psc% ""if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}""" %nul6%') do (set tstresult=%%a)
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}" %nul6%') do (set tstresult=%%a)
 
 if /i not "%tstresult%"=="FullLanguage" (
 %eline%
@@ -7616,9 +7615,9 @@ namespace LibTSforge.PhysicalStore
 }
 '@
 $ErrorActionPreference = 'Stop'
-$binPath = Join-Path -Path $env:_workp -ChildPath "BIN\LibTSforge.dll"
+$binPath = "$env:_work\BIN\LibTSforge.dll"
 
-if (Test-Path -Path $binPath) {
+if (Test-Path -LiteralPath $binPath) {
     Write-Host "LibTSforge.dll found in BIN folder. Loading the DLL..."
     Add-Type -Path $binPath
 }
