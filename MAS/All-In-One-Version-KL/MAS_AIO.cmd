@@ -4951,23 +4951,16 @@ $src = @'
 // Common.cs
 namespace LibTSforge
 {
-    using Microsoft.Win32;
     using System;
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
-    using System.ServiceProcess;
     using System.Text;
-    using LibTSforge.Crypto;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
-    using LibTSforge.TokenStore;
 
     public enum PSVersion
     {
         Vista,
         Win7,
-        Win8Early,
         Win8,
         WinBlue,
         WinModern
@@ -5038,8 +5031,8 @@ namespace LibTSforge
             0x92, 0xA6, 0x56, 0x96
         };
 
-        // 2^31 - 1 minutes
-        public static ulong TimerMax = (ulong)TimeSpan.FromMinutes(2147483647).Ticks;
+        // 2^31 - 8 minutes
+        public static readonly ulong TimerMax = (ulong)TimeSpan.FromMinutes(2147483640).Ticks;
 
         public static readonly string ZeroCID = new string('0', 48);
     }
@@ -5107,20 +5100,6 @@ namespace LibTSforge
             }
             return result;
         }
-
-        public static T CastToStruct<T>(this byte[] data) where T : struct
-        {
-            GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-            try
-            {
-                IntPtr ptr = handle.AddrOfPinnedObject();
-                return (T)Marshal.PtrToStructure(ptr, typeof(T));
-            }
-            finally
-            {
-                handle.Free();
-            }
-        }
     }
 
     public static class FileStreamExt
@@ -5141,6 +5120,12 @@ namespace LibTSforge
 
     public static class Utils
     {
+        [DllImport("kernel32.dll")]
+        public static extern uint GetSystemDefaultLCID();
+
+        [DllImport("kernel32.dll")]
+        public static extern bool Wow64EnableWow64FsRedirection(bool Wow64FsEnableRedirection);
+
         public static string DecodeString(byte[] data)
         {
             return Encoding.Unicode.GetString(data).Trim('\0');
@@ -5150,9 +5135,6 @@ namespace LibTSforge
         {
             return Encoding.Unicode.GetBytes(str + '\0');
         }
-
-        [DllImport("kernel32.dll")]
-        public static extern uint GetSystemDefaultLCID();
 
         public static uint CRC32(byte[] data)
         {
@@ -5177,157 +5159,6 @@ namespace LibTSforge
             return ~crc;
         }
 
-        public static void KillSPP()
-        {
-            ServiceController sc;
-
-            try
-            {
-                sc = new ServiceController("sppsvc");
-
-                if (sc.Status == ServiceControllerStatus.Stopped)
-                    return;
-            }
-            catch (InvalidOperationException ex)
-            {
-                throw new InvalidOperationException("Unable to access sppsvc: " + ex.Message);
-            }
-
-            Logger.WriteLine("Stopping sppsvc...");
-
-            bool stopped = false;
-
-            for (int i = 0; stopped == false && i < 60; i++)
-            {
-                try
-                {
-                    if (sc.Status != ServiceControllerStatus.StopPending)
-                        sc.Stop();
-
-                    sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromMilliseconds(500));
-                }
-                catch (System.ServiceProcess.TimeoutException)
-                {
-                    continue;
-                }
-                catch (InvalidOperationException)
-                {
-                    System.Threading.Thread.Sleep(500);
-                    continue;
-                }
-
-                stopped = true;
-            }
-
-            if (!stopped)
-                throw new System.TimeoutException("Failed to stop sppsvc");
-
-            Logger.WriteLine("sppsvc stopped successfully.");
-        }
-
-        public static string GetPSPath(PSVersion version)
-        {
-            switch (version)
-            {
-                case PSVersion.Win7:
-                    return Directory.GetFiles(
-                        Environment.GetFolderPath(Environment.SpecialFolder.System),
-                        "7B296FB0-376B-497e-B012-9C450E1B7327-*.C7483456-A289-439d-8115-601632D005A0")
-                    .FirstOrDefault() ?? "";
-                case PSVersion.Win8Early:
-                case PSVersion.WinBlue:
-                case PSVersion.Win8:
-                case PSVersion.WinModern:
-                    return Path.Combine(
-                        Environment.ExpandEnvironmentVariables(
-                            (string)Registry.GetValue(
-                                @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
-                                "TokenStore",
-                                string.Empty
-                                )
-                            ),
-                            "data.dat"
-                        );
-                default:
-                    return "";
-            }
-        }
-
-        public static string GetTokensPath(PSVersion version)
-        {
-            switch (version)
-            {
-                case PSVersion.Win7:
-                    return Path.Combine(
-                        Environment.ExpandEnvironmentVariables("%WINDIR%"),
-                        @"ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\tokens.dat"
-                    );
-                case PSVersion.Win8Early:
-                case PSVersion.WinBlue:
-                case PSVersion.Win8:
-                case PSVersion.WinModern:
-                    return Path.Combine(
-                        Environment.ExpandEnvironmentVariables(
-                            (string)Registry.GetValue(
-                                @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
-                                "TokenStore",
-                                string.Empty
-                                )
-                            ),
-                            "tokens.dat"
-                        );
-                default:
-                    return "";
-            }
-        }
-
-        public static IPhysicalStore GetStore(PSVersion version, bool production)
-        {
-            string psPath;
-
-            try
-            {
-                psPath = GetPSPath(version);
-            }
-            catch
-            {
-                throw new FileNotFoundException("Failed to get path of physical store.");
-            }
-
-            if (string.IsNullOrEmpty(psPath) || !File.Exists(psPath))
-            {
-                throw new FileNotFoundException(string.Format("Physical store not found at expected path {0}.", psPath));
-            }
-
-            if (version == PSVersion.Vista)
-            {
-                throw new NotSupportedException("Physical store editing is not supported for Windows Vista.");
-            }
-
-            return version == PSVersion.Win7 ? new PhysicalStoreWin7(psPath, production) : (IPhysicalStore)new PhysicalStoreModern(psPath, production, version);
-        }
-
-        public static ITokenStore GetTokenStore(PSVersion version)
-        {
-            string tokPath;
-
-            try
-            {
-                tokPath = GetTokensPath(version);
-            }
-            catch
-            {
-                throw new FileNotFoundException("Failed to get path of physical store.");
-            }
-
-            if (string.IsNullOrEmpty(tokPath) || !File.Exists(tokPath))
-            {
-                throw new FileNotFoundException(string.Format("Token store not found at expected path {0}.", tokPath));
-            }
-
-            return new TokenStoreModern(tokPath);
-        }
-
         public static string GetArchitecture()
         {
             string arch = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE", EnvironmentVariableTarget.Machine).ToUpperInvariant();
@@ -5343,65 +5174,7 @@ namespace LibTSforge
             if (build >= 7600 && build <= 7602) return PSVersion.Win7;
             if (build == 9200) return PSVersion.Win8;
 
-            throw new NotSupportedException("Unable to auto-detect version info, please specify one manually using the /ver argument.");
-        }
-
-        public static bool DetectCurrentKey()
-        {
-            SLApi.RefreshLicenseStatus();
-
-            using (RegistryKey wpaKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\WPA"))
-            {
-                foreach (string subKey in wpaKey.GetSubKeyNames())
-                {
-                    if (subKey.StartsWith("8DEC0AF1") && subKey.EndsWith("-1"))
-                    {
-                        return subKey.Contains("P");
-                    }
-                }
-            }
-
-            throw new FileNotFoundException("Failed to autodetect key type, specify physical store key with /prod or /test arguments.");
-        }
-
-        public static void DumpStore(PSVersion version, bool production, string filePath, string encrFilePath)
-        {
-            if (encrFilePath == null)
-            {
-                encrFilePath = GetPSPath(version);
-            }
-
-            if (string.IsNullOrEmpty(encrFilePath) || !File.Exists(encrFilePath))
-            {
-                throw new FileNotFoundException("Store does not exist at expected path '" + encrFilePath + "'.");
-            }
-
-            KillSPP();
-
-            using (FileStream fs = File.Open(encrFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
-            {
-                byte[] encrData = fs.ReadAllBytes();
-                File.WriteAllBytes(filePath, PhysStoreCrypto.DecryptPhysicalStore(encrData, production));
-            }
-
-            Logger.WriteLine("Store dumped successfully to '" + filePath + "'.");
-        }
-
-        public static void LoadStore(PSVersion version, bool production, string filePath)
-        {
-            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-            {
-                throw new FileNotFoundException("Store file '" + filePath + "' does not exist.");
-            }
-
-            KillSPP();
-
-            using (IPhysicalStore store = GetStore(version, production))
-            {
-                store.WriteRaw(File.ReadAllBytes(filePath));
-            }
-
-            Logger.WriteLine("Loaded store file succesfully.");
+            throw new NotSupportedException("Unable to auto-detect version info");
         }
     }
 
@@ -5494,8 +5267,8 @@ namespace LibTSforge.SPP
 
     public class PKeyConfig
     {
-        public Dictionary<Guid, ProductConfig> Products = new Dictionary<Guid, ProductConfig>();
-        private List<Guid> loadedPkeyConfigs = new List<Guid>();
+        public readonly Dictionary<Guid, ProductConfig> Products = new Dictionary<Guid, ProductConfig>();
+        private readonly List<Guid> loadedPkeyConfigs = new List<Guid>();
 
         public void LoadConfig(Guid actId)
         {
@@ -5556,12 +5329,14 @@ namespace LibTSforge.SPP
                         ranges[refActIdStr] = new List<KeyRange>();
                     }
 
-                    KeyRange keyRange = new KeyRange();
-                    keyRange.Start = int.Parse(rangeNode.SelectSingleNode("./p:Start", nsmgr).InnerText);
-                    keyRange.End = int.Parse(rangeNode.SelectSingleNode("./p:End", nsmgr).InnerText);
-                    keyRange.EulaType = rangeNode.SelectSingleNode("./p:EulaType", nsmgr).InnerText;
-                    keyRange.PartNumber = rangeNode.SelectSingleNode("./p:PartNumber", nsmgr).InnerText;
-                    keyRange.Valid = rangeNode.SelectSingleNode("./p:IsValid", nsmgr).InnerText.ToLower() == "true";
+                    KeyRange keyRange = new KeyRange
+                    {
+                        Start = int.Parse(rangeNode.SelectSingleNode("./p:Start", nsmgr).InnerText),
+                        End = int.Parse(rangeNode.SelectSingleNode("./p:End", nsmgr).InnerText),
+                        EulaType = rangeNode.SelectSingleNode("./p:EulaType", nsmgr).InnerText,
+                        PartNumber = rangeNode.SelectSingleNode("./p:PartNumber", nsmgr).InnerText,
+                        Valid = rangeNode.SelectSingleNode("./p:IsValid", nsmgr).InnerText.ToLower() == "true"
+                    };
 
                     ranges[refActIdStr].Add(keyRange);
                 }
@@ -5575,15 +5350,17 @@ namespace LibTSforge.SPP
 
                     if (keyRanges.Count > 0 && !Products.ContainsKey(refActId))
                     {
-                        ProductConfig productConfig = new ProductConfig();
-                        productConfig.GroupId = group;
-                        productConfig.Edition = configNode.SelectSingleNode("./p:EditionId", nsmgr).InnerText;
-                        productConfig.Description = configNode.SelectSingleNode("./p:ProductDescription", nsmgr).InnerText;
-                        productConfig.Channel = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText;
-                        productConfig.Randomized = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText.ToLower() == "true";
-                        productConfig.Algorithm = algorithms[group];
-                        productConfig.Ranges = keyRanges;
-                        productConfig.ActivationId = refActId;
+                        ProductConfig productConfig = new ProductConfig
+                        {
+                            GroupId = group,
+                            Edition = configNode.SelectSingleNode("./p:EditionId", nsmgr).InnerText,
+                            Description = configNode.SelectSingleNode("./p:ProductDescription", nsmgr).InnerText,
+                            Channel = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText,
+                            Randomized = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText.ToLower() == "true",
+                            Algorithm = algorithms[group],
+                            Ranges = keyRanges,
+                            ActivationId = refActId
+                        };
 
                         Products[refActId] = productConfig;
                     }
@@ -5626,11 +5403,6 @@ namespace LibTSforge.SPP
                 }
             }
         }
-
-        public PKeyConfig()
-        {
-
-        }
     }
 }
 
@@ -5641,8 +5413,8 @@ namespace LibTSforge.SPP
     using System;
     using System.IO;
     using System.Linq;
-    using LibTSforge.Crypto;
-    using LibTSforge.PhysicalStore;
+    using Crypto;
+    using PhysicalStore;
 
     public class ProductKey
     {
@@ -5656,11 +5428,11 @@ namespace LibTSforge.SPP
         public ulong Security;
         public bool Upgrade;
         public PKeyAlgorithm Algorithm;
-        public string EulaType;
-        public string PartNumber;
-        public string Edition;
-        public string Channel;
-        public Guid ActivationId;
+        public readonly string EulaType;
+        public readonly string PartNumber;
+        public readonly string Edition;
+        public readonly string Channel;
+        public readonly Guid ActivationId;
 
         private string mpc;
         private string pid2;
@@ -5668,6 +5440,11 @@ namespace LibTSforge.SPP
         public byte[] KeyBytes
         {
             get { return BitConverter.GetBytes(klow).Concat(BitConverter.GetBytes(khigh)).ToArray(); }
+        }
+
+        public ProductKey()
+        {
+
         }
 
         public ProductKey(int serial, ulong security, bool upgrade, PKeyAlgorithm algorithm, ProductConfig config, KeyRange range)
@@ -5698,22 +5475,22 @@ namespace LibTSforge.SPP
 
         public Guid GetPkeyId()
         {
-            VariableBag pkb = new VariableBag();
-            pkb.Blocks.AddRange(new CRCBlock[]
+            VariableBag pkb = new VariableBag(PSVersion.WinModern);
+            pkb.Blocks.AddRange(new[]
             {
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingProductKey",
                     ValueAsStr = ToString()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingMiscData",
                     Value = new byte[] { }
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingAlgorithm",
@@ -5724,16 +5501,6 @@ namespace LibTSforge.SPP
             return new Guid(CryptoUtils.SHA256Hash(pkb.Serialize()).Take(16).ToArray());
         }
 
-        public string GetDefaultMPC()
-        {
-            int build = Environment.OSVersion.Version.Build;
-            string defaultMPC = build >= 10240 ? "03612" :
-                                build >= 9600 ? "06401" :
-                                build >= 9200 ? "05426" :
-                                "55041";
-            return defaultMPC;
-        }
-
         public string GetMPC()
         {
             if (mpc != null)
@@ -5741,10 +5508,15 @@ namespace LibTSforge.SPP
                 return mpc;
             }
 
-            mpc = GetDefaultMPC();
+            int build = Environment.OSVersion.Version.Build;
+
+            mpc = build >= 10240 ? "03612" :
+                    build >= 9600 ? "06401" :
+                    build >= 9200 ? "05426" :
+                    "55041";
 
             // setup.cfg doesn't exist in Windows 8+
-            string setupcfg = string.Format("{0}\\oobe\\{1}", Environment.SystemDirectory, "setup.cfg");
+            string setupcfg = string.Format(@"{0}\oobe\{1}", Environment.SystemDirectory, "setup.cfg");
 
             if (!File.Exists(setupcfg) || Edition.Contains(";"))
             {
@@ -5882,17 +5654,17 @@ namespace LibTSforge.SPP
         {
             if (version == PSVersion.Win7)
             {
-                Random rnd = new Random(Group * 1000000000 + Serial);
-                byte[] data = new byte[8];
-                rnd.NextBytes(data);
-                return data;
+                ulong shortauth = ((ulong)Group << 41) | (Security << 31) | ((ulong)Serial << 1) | (Upgrade ? (ulong)1 : 0);
+                return BitConverter.GetBytes(shortauth);
             }
 
             int serialHigh = Serial / 1000000;
             int serialLow = Serial % 1000000;
 
             BinaryWriter writer = new BinaryWriter(new MemoryStream());
-            writer.Write(new Guid("B8731595-A2F6-430B-A799-FBFFB81A8D73").ToByteArray());
+            string algoId = Algorithm == PKeyAlgorithm.PKEY2005 ? "B8731595-A2F6-430B-A799-FBFFB81A8D73" : "660672EF-7809-4CFD-8D54-41B7FB738988";
+
+            writer.Write(new Guid(algoId).ToByteArray());
             writer.Write(Group);
             writer.Write(serialHigh);
             writer.Write(serialLow);
@@ -5998,40 +5770,40 @@ namespace LibTSforge.SPP
 
         public static readonly Guid WINDOWS_APP_ID = new Guid("55c92734-d682-4d71-983e-d6ec3f16059f");
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
         private static extern void SLOpen(out IntPtr hSLC);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
         private static extern void SLClose(IntPtr hSLC);
 
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetWindowsInformationDWORD(string ValueName, ref int Value);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLInstallProofOfPurchase(IntPtr hSLC, string pwszPKeyAlgorithm, string pwszPKeyString, uint cbPKeySpecificData, byte[] pbPKeySpecificData, ref Guid PKeyId);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLUninstallProofOfPurchase(IntPtr hSLC, ref Guid PKeyId);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetPKeyInformation(IntPtr hSLC, ref Guid pPKeyId, string pwszValueName, out SLDATATYPE peDataType, out uint pcbValue, out IntPtr ppbValue);
 
-        [DllImport("sppcext.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slcext.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLActivateProduct(IntPtr hSLC, ref Guid pProductSkuId, byte[] cbAppSpecificData, byte[] pvAppSpecificData, byte[] pActivationInfo, string pwszProxyServer, ushort wProxyPort);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGenerateOfflineInstallationId(IntPtr hSLC, ref Guid pProductSkuId, ref string ppwszInstallationId);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLDepositOfflineConfirmationId(IntPtr hSLC, ref Guid pProductSkuId, string pwszInstallationId, string pwszConfirmationId);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetSLIDList(IntPtr hSLC, SLIDTYPE eQueryIdType, ref Guid pQueryId, SLIDTYPE eReturnIdType, out uint pnReturnIds, out IntPtr ppReturnIds);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
         private static extern void SLGetLicensingStatusInformation(IntPtr hSLC, ref Guid pAppID, IntPtr pProductSkuId, string pwszRightName, out uint pnStatusCount, out IntPtr ppLicensingStatus);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetInstalledProductKeyIds(IntPtr hSLC, ref Guid pProductSkuId, out uint pnProductKeyIds, out IntPtr ppProductKeyIds);
 
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
@@ -6039,9 +5811,6 @@ namespace LibTSforge.SPP
 
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetProductSkuInformation(IntPtr hSLC, ref Guid pProductSkuId, string pwszValueName, out SLDATATYPE peDataType, out uint pcbValue, out IntPtr ppbValue);
-
-        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
-        private static extern uint SLGetProductSkuInformation(IntPtr hSLC, ref Guid pProductSkuId, string pwszValueName, IntPtr peDataType, out uint pcbValue, out IntPtr ppbValue);
 
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetLicense(IntPtr hSLC, ref Guid pLicenseFileId, out uint pcbLicenseFile, out IntPtr ppbLicenseFile);
@@ -6052,7 +5821,7 @@ namespace LibTSforge.SPP
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLFireEvent(IntPtr hSLC, string pwszEventId, ref Guid pApplicationId);
 
-        public class SLContext : IDisposable
+        private class SLContext : IDisposable
         {
             public readonly IntPtr Handle;
 
@@ -6115,11 +5884,10 @@ namespace LibTSforge.SPP
         {
             using (SLContext sl = new SLContext())
             {
-                uint status;
                 uint count;
                 IntPtr pProductKeyIds;
 
-                status = SLGetInstalledProductKeyIds(sl.Handle, ref actId, out count, out pProductKeyIds);
+                uint status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_PRODUCT_SKU, ref actId, SLIDTYPE.SL_ID_PKEY, out count, out pProductKeyIds);
 
                 if (status != 0 || count == 0)
                 {
@@ -6143,7 +5911,7 @@ namespace LibTSforge.SPP
             SLConsumeWindowsRight(0);
         }
 
-        public static bool RefreshTrustedTime(Guid actId)
+        public static void RefreshTrustedTime(Guid actId)
         {
             using (SLContext sl = new SLContext())
             {
@@ -6151,8 +5919,7 @@ namespace LibTSforge.SPP
                 uint count;
                 IntPtr ppbValue;
 
-                uint status = SLGetProductSkuInformation(sl.Handle, ref actId, "TrustedTime", out type, out count, out ppbValue);
-                return (int)status >= 0 && status != 0xC004F012;
+                SLGetProductSkuInformation(sl.Handle, ref actId, "TrustedTime", out type, out count, out ppbValue);
             }
         }
 
@@ -6168,11 +5935,10 @@ namespace LibTSforge.SPP
         {
             using (SLContext sl = new SLContext())
             {
-                uint status;
                 uint count;
                 IntPtr pAppIds;
 
-                status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_PRODUCT_SKU, ref actId, SLIDTYPE.SL_ID_APPLICATION, out count, out pAppIds);
+                uint status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_PRODUCT_SKU, ref actId, SLIDTYPE.SL_ID_APPLICATION, out count, out pAppIds);
 
                 if (status != 0 || count == 0)
                 {
@@ -6200,11 +5966,10 @@ namespace LibTSforge.SPP
         {
             using (SLContext sl = new SLContext())
             {
-                uint status;
                 uint count;
                 IntPtr ppReturnLics;
 
-                status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_LICENSE, ref licId, SLIDTYPE.SL_ID_LICENSE_FILE, out count, out ppReturnLics);
+                uint status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_LICENSE, ref licId, SLIDTYPE.SL_ID_LICENSE_FILE, out count, out ppReturnLics);
 
                 if (status != 0 || count == 0)
                 {
@@ -6266,7 +6031,7 @@ namespace LibTSforge.SPP
                 IntPtr ppbValue;
 
                 uint status = SLGetProductSkuInformation(sl.Handle, ref actId, "msft:sl/EUL/PHONE/PUBLIC", out type, out count, out ppbValue);
-                return status >= 0 && status != 0xC004F012;
+                return status != 0xC004F012;
             }
         }
 
@@ -6349,11 +6114,11 @@ namespace LibTSforge.SPP
             }
         }
 
-        public static uint UninstallProductKey(Guid pkeyId)
+        public static void UninstallProductKey(Guid pkeyId)
         {
             using (SLContext sl = new SLContext())
             {
-                return SLUninstallProofOfPurchase(sl.Handle, ref pkeyId);
+                SLUninstallProofOfPurchase(sl.Handle, ref pkeyId);
             }
         }
 
@@ -6366,6 +6131,390 @@ namespace LibTSforge.SPP
                 if (IsAddon(actId)) continue;
                 UninstallProductKey(pkeyId);
             }
+        }
+    }
+}
+
+
+// SPP/SPPUtils.cs
+namespace LibTSforge.SPP
+{
+    using Microsoft.Win32;
+    using System;
+    using System.IO;
+    using System.Linq;
+    using System.ServiceProcess;
+    using Crypto;
+    using PhysicalStore;
+    using TokenStore;
+
+    public static class SPPUtils
+    {
+        public static void KillSPP(PSVersion version)
+        {
+            ServiceController sc;
+
+            string svcName = version == PSVersion.Vista ? "slsvc" : "sppsvc";
+
+            try
+            {
+                sc = new ServiceController(svcName);
+
+                if (sc.Status == ServiceControllerStatus.Stopped)
+                    return;
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException(string.Format("Unable to access {0}: ", svcName) + ex.Message);
+            }
+
+            Logger.WriteLine(string.Format("Stopping {0}...", svcName));
+
+            bool stopped = false;
+
+            for (int i = 0; stopped == false && i < 1080; i++)
+            {
+                try
+                {
+                    if (sc.Status != ServiceControllerStatus.StopPending)
+                        sc.Stop();
+
+                    sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromMilliseconds(500));
+                }
+                catch (System.ServiceProcess.TimeoutException)
+                {
+                    continue;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Logger.WriteLine("Warning: Stopping sppsvc failed, retrying. Details: " + ex.Message);
+                    System.Threading.Thread.Sleep(500);
+                    continue;
+                }
+
+                stopped = true;
+            }
+
+            if (!stopped)
+                throw new System.TimeoutException(string.Format("Failed to stop {0}", svcName));
+
+            Logger.WriteLine(string.Format("{0} stopped successfully.", svcName));
+
+            if (version == PSVersion.Vista && SPSys.IsSpSysRunning())
+            {
+                Logger.WriteLine("Unloading spsys...");
+
+                int status = SPSys.ControlSpSys(false);
+
+                if (status < 0)
+                {
+                    throw new IOException("Failed to unload spsys");
+                }
+
+                Logger.WriteLine("spsys unloaded successfully.");
+            }
+        }
+
+        public static void RestartSPP(PSVersion version)
+        {
+            if (version == PSVersion.Vista)
+            {
+                ServiceController sc;
+
+                try
+                {
+                    sc = new ServiceController("slsvc");
+
+                    if (sc.Status == ServiceControllerStatus.Running)
+                        return;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    throw new InvalidOperationException("Unable to access slsvc: " + ex.Message);
+                }
+
+                Logger.WriteLine("Starting slsvc...");
+
+                bool started = false;
+
+                for (int i = 0; started == false && i < 360; i++)
+                {
+                    try
+                    {
+                        if (sc.Status != ServiceControllerStatus.StartPending)
+                            sc.Start();
+
+                        sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromMilliseconds(500));
+                    }
+                    catch (System.ServiceProcess.TimeoutException)
+                    {
+                        continue;
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        Logger.WriteLine("Warning: Starting slsvc failed, retrying. Details: " + ex.Message);
+                        System.Threading.Thread.Sleep(500);
+                        continue;
+                    }
+
+                    started = true;
+                }
+
+                if (!started)
+                    throw new System.TimeoutException("Failed to start slsvc");
+
+                Logger.WriteLine("slsvc started successfully.");
+            }
+
+            SLApi.RefreshLicenseStatus();
+        }
+
+        public static bool DetectCurrentKey()
+        {
+            SLApi.RefreshLicenseStatus();
+
+            using (RegistryKey wpaKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\WPA"))
+            {
+                foreach (string subKey in wpaKey.GetSubKeyNames())
+                {
+                    if (subKey.StartsWith("8DEC0AF1"))
+                    {
+                        return subKey.Contains("P");
+                    }
+                }
+            }
+
+            throw new FileNotFoundException("Failed to autodetect key type, specify physical store key with /prod or /test arguments.");
+        }
+
+        public static string GetPSPath(PSVersion version)
+        {
+            switch (version)
+            {
+                case PSVersion.Vista:
+                case PSVersion.Win7:
+                    return Directory.GetFiles(
+                        Environment.GetFolderPath(Environment.SpecialFolder.System),
+                        "7B296FB0-376B-497e-B012-9C450E1B7327-*.C7483456-A289-439d-8115-601632D005A0")
+                    .FirstOrDefault() ?? "";
+                default:
+                    string psDir = Environment.ExpandEnvironmentVariables(
+                        (string)Registry.GetValue(
+                            @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
+                            "TokenStore",
+                            ""
+                        )
+                    );
+                    string psPath = Path.Combine(psDir, "data.dat");
+
+                    if (string.IsNullOrEmpty(psDir) || !File.Exists(psPath))
+                    {
+                        string[] psDirs =
+                        {
+                            @"spp\store",
+                            @"spp\store\2.0",
+                            @"spp\store_test",
+                            @"spp\store_test\2.0"
+                        };
+
+                        foreach (string dir in psDirs)
+                        {
+                            psPath = Path.Combine(
+                                Path.Combine(
+                                    Environment.GetFolderPath(Environment.SpecialFolder.System),
+                                    dir
+                                ),
+                                "data.dat"
+                            );
+
+                            if (File.Exists(psPath)) return psPath;
+                        }
+                    } 
+                    else
+                    {
+                        return psPath;
+                    }
+
+                    throw new FileNotFoundException("Failed to locate physical store.");
+            }
+        }
+
+        public static string GetTokensPath(PSVersion version)
+        {
+            switch (version)
+            {
+                case PSVersion.Vista:
+                    return Path.Combine(
+                        Environment.ExpandEnvironmentVariables("%WINDIR%"),
+                        @"ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareLicensing\tokens.dat"
+                    );
+                case PSVersion.Win7:
+                    return Path.Combine(
+                        Environment.ExpandEnvironmentVariables("%WINDIR%"),
+                        @"ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\tokens.dat"
+                    );
+                default:
+                    string tokDir = Environment.ExpandEnvironmentVariables(
+                        (string)Registry.GetValue(
+                            @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
+                            "TokenStore",
+                            ""
+                        )
+                    );
+                    string tokPath = Path.Combine(tokDir, "tokens.dat");
+
+                    if (string.IsNullOrEmpty(tokDir) || !File.Exists(tokPath))
+                    {
+                        string[] tokDirs =
+                        {
+                            @"spp\store",
+                            @"spp\store\2.0",
+                            @"spp\store_test",
+                            @"spp\store_test\2.0"
+                        };
+
+                        foreach (string dir in tokDirs)
+                        {
+                            tokPath = Path.Combine(
+                                Path.Combine(
+                                    Environment.GetFolderPath(Environment.SpecialFolder.System),
+                                    dir
+                                ),
+                                "tokens.dat"
+                            );
+
+                            if (File.Exists(tokPath)) return tokPath;
+                        }
+                    }
+                    else
+                    {
+                        return tokPath;
+                    }
+
+                    throw new FileNotFoundException("Failed to locate token store.");
+            }
+        }
+
+        public static IPhysicalStore GetStore(PSVersion version, bool production)
+        {
+            string psPath = GetPSPath(version);
+
+            switch (version)
+            {
+                case PSVersion.Vista:
+                    return new PhysicalStoreVista(psPath, production);
+                case PSVersion.Win7:
+                    return new PhysicalStoreWin7(psPath, production);
+                default:
+                    return new PhysicalStoreModern(psPath, production, version);
+            }
+        }
+
+        public static ITokenStore GetTokenStore(PSVersion version)
+        {
+            string tokPath = GetTokensPath(version);
+
+            return new TokenStoreModern(tokPath);
+        }
+
+        public static void DumpStore(PSVersion version, bool production, string filePath, string encrFilePath)
+        {
+            bool manageSpp = false;
+
+            if (encrFilePath == null)
+            {
+                encrFilePath = GetPSPath(version);
+                manageSpp = true;
+                KillSPP(version);
+            }
+
+            if (string.IsNullOrEmpty(encrFilePath) || !File.Exists(encrFilePath))
+            {
+                throw new FileNotFoundException("Store does not exist at expected path '" + encrFilePath + "'.");
+            }
+
+            try
+            {
+                using (FileStream fs = File.Open(encrFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    byte[] encrData = fs.ReadAllBytes();
+                    File.WriteAllBytes(filePath, PhysStoreCrypto.DecryptPhysicalStore(encrData, production, version));
+                }
+                Logger.WriteLine("Store dumped successfully to '" + filePath + "'.");
+            }
+            finally
+            {
+                if (manageSpp)
+                {
+                    RestartSPP(version);
+                }
+            }
+        }
+
+        public static void LoadStore(PSVersion version, bool production, string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                throw new FileNotFoundException("Store file '" + filePath + "' does not exist.");
+            }
+
+            KillSPP(version);
+
+            using (IPhysicalStore store = GetStore(version, production))
+            {
+                store.WriteRaw(File.ReadAllBytes(filePath));
+            }
+
+            RestartSPP(version);
+
+            Logger.WriteLine("Loaded store file successfully.");
+        }
+    }
+}
+
+
+// SPP/SPSys.cs
+namespace LibTSforge.SPP
+{
+    using Microsoft.Win32.SafeHandles;
+    using System;
+    using System.Runtime.InteropServices;
+
+    public class SPSys
+    {
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr CreateFile(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
+        private static SafeFileHandle CreateFileSafe(string device)
+        {
+            return new SafeFileHandle(CreateFile(device, 0xC0000000, 0, IntPtr.Zero, 3, 0, IntPtr.Zero), true);
+        }
+
+        [return: MarshalAs(UnmanagedType.Bool)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool DeviceIoControl([In] SafeFileHandle hDevice, [In] uint dwIoControlCode, [In] IntPtr lpInBuffer, [In] int nInBufferSize, [Out] IntPtr lpOutBuffer, [In] int nOutBufferSize, out int lpBytesReturned, [In] IntPtr lpOverlapped);
+
+        public static bool IsSpSysRunning()
+        {
+            SafeFileHandle file = CreateFileSafe(@"\\.\SpDevice");
+            IntPtr buffer = Marshal.AllocHGlobal(1);
+            int bytesReturned;
+            DeviceIoControl(file, 0x80006008, IntPtr.Zero, 0, buffer, 1, out bytesReturned, IntPtr.Zero);
+            bool running = Marshal.ReadByte(buffer) != 0;
+            Marshal.FreeHGlobal(buffer);
+            file.Close();
+            return running;
+        }
+
+        public static int ControlSpSys(bool start)
+        {
+            SafeFileHandle file = CreateFileSafe(@"\\.\SpDevice");
+            IntPtr buffer = Marshal.AllocHGlobal(4);
+            int bytesReturned;
+            DeviceIoControl(file, start ? 0x8000a000 : 0x8000a004, IntPtr.Zero, 0, buffer, 4, out bytesReturned, IntPtr.Zero);
+            int result = Marshal.ReadInt32(buffer);
+            Marshal.FreeHGlobal(buffer);
+            file.Close();
+            return result;
         }
     }
 }
@@ -6480,8 +6629,19 @@ namespace LibTSforge.Crypto
 
         public static bool HMACVerify(byte[] key, byte[] data, byte[] signature)
         {
-            HMACSHA1 hmac = new HMACSHA1(key);
             return Enumerable.SequenceEqual(signature, HMACSign(key, data));
+        }
+
+        public static byte[] SaltSHASum(byte[] salt, byte[] data)
+        {
+            SHA1 sha1 = SHA1.Create();
+            byte[] sha_data = salt.Concat(data).ToArray();
+            return sha1.ComputeHash(sha_data);
+        }
+
+        public static bool SaltSHAVerify(byte[] salt, byte[] data, byte[] checksum)
+        {
+            return Enumerable.SequenceEqual(checksum, SaltSHASum(salt, data));
         }
 
         public static byte[] SHA256Hash(byte[] data)
@@ -6596,7 +6756,7 @@ namespace LibTSforge.Crypto
 
     public static class PhysStoreCrypto
     {
-        public static byte[] DecryptPhysicalStore(byte[] data, bool production)
+        public static byte[] DecryptPhysicalStore(byte[] data, bool production, PSVersion version)
         {
             byte[] rsaKey = production ? Keys.PRODUCTION : Keys.TEST;
             BinaryReader br = new BinaryReader(new MemoryStream(data));
@@ -6604,29 +6764,40 @@ namespace LibTSforge.Crypto
             byte[] aesKeySig = br.ReadBytes(0x80);
             byte[] encAesKey = br.ReadBytes(0x80);
 
-            if (CryptoUtils.RSAVerifySignature(rsaKey, encAesKey, aesKeySig))
+            if (!CryptoUtils.RSAVerifySignature(rsaKey, encAesKey, aesKeySig))
             {
-                byte[] aesKey = CryptoUtils.RSADecrypt(rsaKey, encAesKey);
-                byte[] decData = CryptoUtils.AESDecrypt(br.ReadBytes((int)br.BaseStream.Length - 0x110), aesKey);
-                byte[] hmacKey = decData.Take(0x10).ToArray();
-                byte[] hmacSig = decData.Skip(0x10).Take(0x14).ToArray();
-                byte[] psData = decData.Skip(0x28).ToArray();
-
-                if (!CryptoUtils.HMACVerify(hmacKey, psData, hmacSig))
-                {
-                    Logger.WriteLine("Warning: Failed to verify HMAC. Physical store is either corrupt or in Vista format.");
-                }
-
-                return psData;
+                throw new Exception("Failed to decrypt physical store.");
             }
 
-            throw new Exception("Failed to decrypt physical store.");
+            byte[] aesKey = CryptoUtils.RSADecrypt(rsaKey, encAesKey);
+            byte[] decData = CryptoUtils.AESDecrypt(br.ReadBytes((int)br.BaseStream.Length - 0x110), aesKey);
+            byte[] hmacKey = decData.Take(0x10).ToArray(); // SHA-1 salt on Vista
+            byte[] hmacSig = decData.Skip(0x10).Take(0x14).ToArray(); // SHA-1 hash on Vista
+            byte[] psData = decData.Skip(0x28).ToArray();
+
+            if (version != PSVersion.Vista)
+            {
+                if (!CryptoUtils.HMACVerify(hmacKey, psData, hmacSig))
+                {
+                    throw new InvalidDataException("Failed to verify HMAC. Physical store is corrupt.");
+                }
+            }
+            else
+            {
+                if (!CryptoUtils.SaltSHAVerify(hmacKey, psData, hmacSig))
+                {
+                    throw new InvalidDataException("Failed to verify checksum. Physical store is corrupt.");
+                }
+            }
+
+            return psData;
         }
 
         public static byte[] EncryptPhysicalStore(byte[] data, bool production, PSVersion version)
         {
             Dictionary<PSVersion, int> versionTable = new Dictionary<PSVersion, int>
             {
+                {PSVersion.Vista, 2},
                 {PSVersion.Win7, 5},
                 {PSVersion.Win8, 1},
                 {PSVersion.WinBlue, 2},
@@ -6640,9 +6811,9 @@ namespace LibTSforge.Crypto
 
             byte[] encAesKey = CryptoUtils.RSAEncrypt(rsaKey, aesKey);
             byte[] aesKeySig = CryptoUtils.RSASign(rsaKey, encAesKey);
-            byte[] hmacSig = CryptoUtils.HMACSign(hmacKey, data);
+            byte[] hmacSig = version != PSVersion.Vista ? CryptoUtils.HMACSign(hmacKey, data) : CryptoUtils.SaltSHASum(hmacKey, data);
 
-            byte[] decData = new byte[] { };
+            byte[] decData = { };
             decData = decData.Concat(hmacKey).Concat(hmacSig).Concat(BitConverter.GetBytes(0)).Concat(data).ToArray();
             byte[] encData = CryptoUtils.AESEncrypt(decData, aesKey);
 
@@ -6665,9 +6836,9 @@ namespace LibTSforge.Modifiers
     using System;
     using System.IO;
     using Microsoft.Win32;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
-    using LibTSforge.TokenStore;
+    using PhysicalStore;
+    using SPP;
+    using TokenStore;
 
     public static class GenPKeyInstall
     {
@@ -6693,6 +6864,7 @@ namespace LibTSforge.Modifiers
 
         public static void InstallGenPKey(PSVersion version, bool production, Guid actId)
         {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
             if (actId == Guid.Empty) throw new ArgumentException("Activation ID must be specified for generated product key install.");
 
             PKeyConfig pkc = new PKeyConfig();
@@ -6719,7 +6891,7 @@ namespace LibTSforge.Modifiers
             if (pkey.Algorithm == PKeyAlgorithm.PKEY2009)
             {
                 uint status = SLApi.InstallProductKey(pkey);
-                Logger.WriteLine(string.Format("Installing generated product key {0} status {1:X}", pkey.ToString(), status));
+                Logger.WriteLine(string.Format("Installing generated product key {0} status {1:X}", pkey, status));
 
                 if ((int)status < 0)
                 {
@@ -6734,57 +6906,57 @@ namespace LibTSforge.Modifiers
 
             if (pkey.Channel == "Volume:GVLK" && version == PSVersion.Win7) throw new NotSupportedException("Fake GVLK generation is not supported on Windows 7.");
 
-            VariableBag pkb = new VariableBag();
-            pkb.Blocks.AddRange(new CRCBlock[]
+            VariableBag pkb = new VariableBag(version);
+            pkb.Blocks.AddRange(new[]
             {
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingProductKey",
                     ValueAsStr = pkey.ToString()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingMPC",
                     ValueAsStr = pkey.GetMPC()
                 },
-                new CRCBlock {
+                new CRCBlockModern {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingPid2",
                     ValueAsStr = pkey.GetPid2()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingPid3",
                     Value = pkey.GetPid3()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingPid4",
                     Value = pkey.GetPid4()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyChannelId",
                     ValueAsStr = pkey.Channel
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingEditionId",
                     ValueAsStr = pkey.Edition
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = (version == PSVersion.Win7) ? "SppPkeyShortAuthenticator" : "SppPkeyPhoneActivationData",
                     Value = pkey.GetPhoneData(version)
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingMiscData",
@@ -6802,11 +6974,11 @@ namespace LibTSforge.Modifiers
                 SLApi.UninstallAllProductKeys(appId);
             }
 
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
-            using (IPhysicalStore ps = Utils.GetStore(version, production))
+            using (IPhysicalStore ps = SPPUtils.GetStore(version, production))
             {
-                using (ITokenStore tks = Utils.GetTokenStore(version))
+                using (ITokenStore tks = SPPUtils.GetTokenStore(version))
                 {
                     Logger.WriteLine("Writing to physical store and token store...");
 
@@ -6830,7 +7002,7 @@ namespace LibTSforge.Modifiers
                     uriMap.Data[pkeyId] = pkey.GetAlgoUri();
                     tks.SetEntry(uriMapName, "xml", uriMap.Serialize());
 
-                    string skuMetaName = actId.ToString() + metSuffix;
+                    string skuMetaName = actId + metSuffix;
                     TokenMeta skuMeta = tks.GetMetaEntry(skuMetaName);
 
                     foreach (string k in skuMeta.Data.Keys)
@@ -6857,7 +7029,7 @@ namespace LibTSforge.Modifiers
                         Data = pkb.Serialize()
                     });
 
-                    string cachePath = Utils.GetTokensPath(version).Replace("tokens.dat", @"cache\cache.dat");
+                    string cachePath = SPPUtils.GetTokensPath(version).Replace("tokens.dat", @"cache\cache.dat");
                     if (File.Exists(cachePath)) File.Delete(cachePath);
                 }
             }
@@ -6872,19 +7044,19 @@ namespace LibTSforge.Modifiers
 // Modifiers/GracePeriodReset.cs
 namespace LibTSforge.Modifiers
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
-    using LibTSforge.PhysicalStore;
+    using PhysicalStore;
+    using SPP;
 
     public static class GracePeriodReset
     {
         public static void Reset(PSVersion version, bool production)
         {
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 string value = "msft:sl/timer";
                 List<PSBlock> blocks = store.FindBlocks(value).ToList();
@@ -6895,6 +7067,7 @@ namespace LibTSforge.Modifiers
                 }
             }
 
+            SPPUtils.RestartSPP(version);
             Logger.WriteLine("Successfully reset all grace and evaluation period timers.");
         }
     }
@@ -6906,15 +7079,19 @@ namespace LibTSforge.Modifiers
 {
     using System.Collections.Generic;
     using System.Linq;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge;
+    using PhysicalStore;
+    using SPP;
+    using System;
+
     public static class KeyChangeLockDelete
     {
         public static void Delete(PSVersion version, bool production)
         {
-            Utils.KillSPP();
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+
+            SPPUtils.KillSPP(version);
             Logger.WriteLine("Writing TrustedStore data...");
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 List<string> values = new List<string>
                 {
@@ -6942,12 +7119,12 @@ namespace LibTSforge.Modifiers
 {
     using System;
     using System.IO;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
+    using PhysicalStore;
+    using SPP;
 
     public static class KMSHostCharge
     {
-        public static void Charge(PSVersion version, Guid actId, bool production)
+        public static void Charge(PSVersion version, bool production, Guid actId)
         {
             if (actId == Guid.Empty)
             {
@@ -6971,76 +7148,113 @@ namespace LibTSforge.Modifiers
             string key = string.Format("SPPSVC\\{0}", appId);
             long ldapTimestamp = DateTime.Now.ToFileTime();
 
+            byte[] cmidGuids = { };
+            byte[] reqCounts = { };
+            byte[] kmsChargeData = { };
+
             BinaryWriter writer = new BinaryWriter(new MemoryStream());
 
-            for (int i = 0; i < currClients; i++)
+            if (version == PSVersion.Vista)
             {
-                writer.Write(ldapTimestamp - (10 * (i + 1)));
-                writer.Write(Guid.NewGuid().ToByteArray());
+                writer.Write(new byte[44]);
+                writer.Seek(0, SeekOrigin.Begin);
+
+                writer.Write(totalClients);
+                writer.Write(43200);
+                writer.Write(32);
+
+                writer.Seek(20, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                writer.Seek(32, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                writer.Seek(0, SeekOrigin.End);
+
+                for (int i = 0; i < currClients; i++)
+                {
+                    writer.Write(Guid.NewGuid().ToByteArray());
+                    writer.Write(ldapTimestamp - (10 * (i + 1)));
+                }
+
+                kmsChargeData = writer.GetBytes();
+            } 
+            else
+            {
+                for (int i = 0; i < currClients; i++)
+                {
+                    writer.Write(ldapTimestamp - (10 * (i + 1)));
+                    writer.Write(Guid.NewGuid().ToByteArray());
+                }
+
+                cmidGuids = writer.GetBytes();
+
+                writer = new BinaryWriter(new MemoryStream());
+
+                writer.Write(new byte[40]);
+
+                writer.Seek(4, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                writer.Seek(24, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                reqCounts = writer.GetBytes();
             }
 
-            byte[] cmidGuids = writer.GetBytes();
-
-            writer = new BinaryWriter(new MemoryStream());
-
-            writer.Write(new byte[40]);
-
-            writer.Seek(4, SeekOrigin.Begin);
-            writer.Write((byte)currClients);
-
-            writer.Seek(24, SeekOrigin.Begin);
-            writer.Write((byte)currClients);
-            byte[] reqCounts = writer.GetBytes();
-
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
-                VariableBag kmsCountData = new VariableBag();
-                kmsCountData.Blocks.AddRange(new CRCBlock[]
+                if (version != PSVersion.Vista)
                 {
-                    new CRCBlock
+                    VariableBag kmsCountData = new VariableBag(version);
+                    kmsCountData.Blocks.AddRange(new[]
                     {
-                        DataType = CRCBlockType.BINARY,
-                        KeyAsStr = "SppBindingLicenseData",
-                        Value = hwidBlock
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.UINT,
-                        Key = new byte[] { },
-                        ValueAsInt = (uint)totalClients
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.UINT,
-                        Key = new byte[] { },
-                        ValueAsInt = 1051200000
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.UINT,
-                        Key = new byte[] { },
-                        ValueAsInt = (uint)currClients
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.BINARY,
-                        Key = new byte[] { },
-                        Value = cmidGuids
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.BINARY,
-                        Key = new byte[] { },
-                        Value = reqCounts
-                    }
-                });
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.BINARY,
+                            KeyAsStr = "SppBindingLicenseData",
+                            Value = hwidBlock
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.UINT,
+                            Key = new byte[] { },
+                            ValueAsInt = (uint)totalClients
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.UINT,
+                            Key = new byte[] { },
+                            ValueAsInt = 1051200000
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.UINT,
+                            Key = new byte[] { },
+                            ValueAsInt = (uint)currClients
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.BINARY,
+                            Key = new byte[] { },
+                            Value = cmidGuids
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.BINARY,
+                            Key = new byte[] { },
+                            Value = reqCounts
+                        }
+                    });
 
-                byte[] kmsChargeData = kmsCountData.Serialize();
-                string countVal = string.Format("msft:spp/kms/host/2.0/store/counters/{0}", appId);
+                    kmsChargeData = kmsCountData.Serialize();
+                }
+
+                string countVal = version == PSVersion.Vista ? "C8F6FFF1-79CE-404C-B150-F97991273DF1" : string.Format("msft:spp/kms/host/2.0/store/counters/{0}", appId);
 
                 store.DeleteBlock(key, countVal);
                 store.AddBlock(new PSBlock
@@ -7054,6 +7268,8 @@ namespace LibTSforge.Modifiers
 
                 Logger.WriteLine(string.Format("Set charge count to {0} successfully.", currClients));
             }
+
+            SPPUtils.RestartSPP(version);
         }
     }
 }
@@ -7062,24 +7278,28 @@ namespace LibTSforge.Modifiers
 // Modifiers/RearmReset.cs
 namespace LibTSforge.Modifiers
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
-    using LibTSforge.PhysicalStore;
+    using PhysicalStore;
+    using SPP;
 
     public static class RearmReset
     {
         public static void Reset(PSVersion version, bool production)
         {
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 List<PSBlock> blocks;
 
-                if (version == PSVersion.Win7)
+                if (version == PSVersion.Vista)
+                {
+                    blocks = store.FindBlocks("740D70D8-6448-4b2f-9063-4A7A463600C5").ToList();
+                }
+                else if (version == PSVersion.Win7)
                 {
                     blocks = store.FindBlocks(0xA0000).ToList();
                 }
@@ -7090,7 +7310,11 @@ namespace LibTSforge.Modifiers
 
                 foreach (PSBlock block in blocks)
                 {
-                    if (version == PSVersion.Win7)
+                    if (version == PSVersion.Vista)
+                    {
+                        store.DeleteBlock(block.KeyAsStr, block.ValueAsStr);
+                    }
+                    else if (version == PSVersion.Win7)
                     {
                         store.SetBlock(block.KeyAsStr, block.ValueAsInt, new byte[8]);
                     }
@@ -7107,38 +7331,110 @@ namespace LibTSforge.Modifiers
 }
 
 
+// Modifiers/SetIIDParams.cs
+namespace LibTSforge.Modifiers
+{
+    using PhysicalStore;
+    using SPP;
+    using System.IO;
+    using System;
+
+    public static class SetIIDParams
+    {
+        public static void SetParams(PSVersion version, bool production, Guid actId, PKeyAlgorithm algorithm, int group, int serial, ulong security)
+        {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+
+            Guid appId;
+
+            if (actId == Guid.Empty)
+            {
+                appId = SLApi.WINDOWS_APP_ID;
+                actId = SLApi.GetDefaultActivationID(appId, true);
+
+                if (actId == Guid.Empty)
+                {
+                    throw new Exception("No applicable activation IDs found.");
+                }
+            }
+            else
+            {
+                appId = SLApi.GetAppId(actId);
+            }
+
+            Guid pkeyId = SLApi.GetInstalledPkeyID(actId);
+
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
+                PSBlock keyBlock = store.GetBlock(key, pkeyId.ToString());
+
+                if (keyBlock == null)
+                {
+                    throw new InvalidDataException("Failed to get product key data for activation ID " + actId + ".");
+                }
+
+                VariableBag pkb = new VariableBag(keyBlock.Data, version);
+
+                ProductKey pkey = new ProductKey
+                {
+                    Group = group,
+                    Serial = serial,
+                    Security = security,
+                    Algorithm = algorithm,
+                    Upgrade = false
+                };
+
+                string blockName = version == PSVersion.Win7 ? "SppPkeyShortAuthenticator" : "SppPkeyPhoneActivationData";
+                pkb.SetBlock(blockName, pkey.GetPhoneData(version));
+                store.SetBlock(key, pkeyId.ToString(), pkb.Serialize());
+            }
+
+            Logger.WriteLine("Successfully set IID parameters.");
+        }
+    }
+}
+
+
 // Modifiers/TamperedFlagsDelete.cs
 namespace LibTSforge.Modifiers
 {
-    using System;
     using System.Linq;
-    using LibTSforge.PhysicalStore;
+    using PhysicalStore;
+    using SPP;
 
     public static class TamperedFlagsDelete
     {
         public static void DeleteTamperFlags(PSVersion version, bool production)
         {
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
-                if (version != PSVersion.Win7)
+                if (version == PSVersion.Vista)
                 {
-                    string recreatedFlag = "__##USERSEP-RESERVED##__$$RECREATED-FLAG$$";
-                    string recoveredFlag = "__##USERSEP-RESERVED##__$$RECOVERED-FLAG$$";
-
-                    DeleteFlag(store, recreatedFlag);
-                    DeleteFlag(store, recoveredFlag);
+                    DeleteFlag(store, "6BE8425B-E3CF-4e86-A6AF-5863E3DCB606");
+                }
+                else if (version == PSVersion.Win7)
+                {
+                    SetFlag(store, 0xA0001);
                 }
                 else
                 {
-                    SetFlag(store, 0xA0001);
+                    DeleteFlag(store, "__##USERSEP-RESERVED##__$$RECREATED-FLAG$$");
+                    DeleteFlag(store, "__##USERSEP-RESERVED##__$$RECOVERED-FLAG$$");
                 }
 
                 Logger.WriteLine("Successfully cleared the tamper state.");
             }
+
+            SPPUtils.RestartSPP(version);
         }
 
         private static void DeleteFlag(IPhysicalStore store, string flag)
@@ -7158,13 +7454,15 @@ namespace LibTSforge.Modifiers
 namespace LibTSforge.Modifiers
 {
     using System;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
+    using PhysicalStore;
+    using SPP;
 
     public static class UniqueIdDelete
     {
         public static void DeleteUniqueId(PSVersion version, bool production, Guid actId)
         {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+
             Guid appId;
 
             if (actId == Guid.Empty)
@@ -7182,14 +7480,13 @@ namespace LibTSforge.Modifiers
                 appId = SLApi.GetAppId(actId);
             }
 
-            string instId = SLApi.GetInstallationID(actId);
             Guid pkeyId = SLApi.GetInstalledPkeyID(actId);
 
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
                 PSBlock keyBlock = store.GetBlock(key, pkeyId.ToString());
@@ -7199,7 +7496,7 @@ namespace LibTSforge.Modifiers
                     throw new Exception("No product key found.");
                 }
 
-                VariableBag pkb = new VariableBag(keyBlock.Data);
+                VariableBag pkb = new VariableBag(keyBlock.Data, version);
 
                 pkb.DeleteBlock("SppPkeyUniqueIdToken");
 
@@ -7212,18 +7509,143 @@ namespace LibTSforge.Modifiers
 }
 
 
+// Activators/AVMA4K.cs
+namespace LibTSforge.Activators
+{
+    using System;
+    using PhysicalStore;
+    using SPP;
+
+    public static class AVMA4k
+    {
+        public static void Activate(PSVersion version, bool production, Guid actId)
+        {
+            if (version != PSVersion.WinModern && version != PSVersion.WinBlue)
+            {
+                throw new NotSupportedException("AVMA licenses are not available for this product.");
+            }
+
+            Guid appId;
+            if (actId == Guid.Empty)
+            {
+                appId = SLApi.WINDOWS_APP_ID;
+                actId = SLApi.GetDefaultActivationID(appId, false);
+
+                if (actId == Guid.Empty)
+                {
+                    throw new NotSupportedException("No applicable activation IDs found.");
+                }
+            }
+            else
+            {
+                appId = SLApi.GetAppId(actId);
+            }
+
+            if (SLApi.GetPKeyChannel(SLApi.GetInstalledPkeyID(actId)) != "VT:IA")
+            {
+                throw new NotSupportedException("Non-VT:IA product key installed.");
+            }
+
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
+
+                long creationTime = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-CREATION-TIME$$").Data, 0);
+                long tickCount = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-TICKCOUNT-UPTIME$$").Data, 0);
+                long deltaTime = BitConverter.ToInt64(store.GetBlock(key, "__##USERSEP-RESERVED##__$$UP-TIME-DELTA$$").Data, 0);
+
+                const ulong unknown = 0;
+                ulong time1 = (ulong)(creationTime + tickCount + deltaTime);
+                ulong crcBindTime = (ulong)DateTime.UtcNow.ToFileTime();
+                ulong timerTime = crcBindTime / 10000;
+                ulong expiry = Constants.TimerMax / 10000;
+
+                VariableBag avmaBinding = new VariableBag(version);
+
+                avmaBinding.Blocks.AddRange(new[]
+                {
+                    new CRCBlockModern
+                    {
+                        DataType = CRCBlockType.BINARY,
+                        Key = new byte[] { },
+                        Value = BitConverter.GetBytes(crcBindTime),
+                    },
+                    new CRCBlockModern
+                    {
+                        DataType = CRCBlockType.STRING,
+                        Key = new byte[] { },
+                        ValueAsStr = "AVMA4K",
+                    },
+                    new CRCBlockModern
+                    {
+                        DataType = CRCBlockType.STRING,
+                        Key = new byte[] { },
+                        ValueAsStr = "00491-50000-00001-AA666",
+                    }
+                });
+
+                byte[] avmaBindingData = avmaBinding.Serialize();
+
+                Timer avmaTimer = new Timer
+                {
+                    Unknown = unknown,
+                    Time1 = time1,
+                    Time2 = timerTime,
+                    Expiry = expiry
+                };
+
+                string storeVal = string.Format("msft:spp/ia/bind/1.0/store/{0}/{1}", appId, actId);
+                string timerVal = string.Format("msft:spp/ia/bind/1.0/timer/{0}/{1}", appId, actId);
+
+                store.DeleteBlock(key, storeVal);
+                store.DeleteBlock(key, timerVal);
+
+                store.AddBlocks(new[]
+                {
+                    new PSBlock
+                    {
+                        Type = BlockType.NAMED,
+                        Flags = 0x400,
+                        KeyAsStr = key,
+                        ValueAsStr = storeVal,
+                        Data = avmaBindingData,
+                    },
+                    new PSBlock
+                    {
+                        Type = BlockType.TIMER,
+                        Flags = 0x4,
+                        KeyAsStr = key,
+                        ValueAsStr = timerVal,
+                        Data = avmaTimer.CastToArray()
+                    }
+                });
+            }
+
+            SLApi.RefreshLicenseStatus();
+            SLApi.FireStateChangedEvent(appId);
+            Logger.WriteLine("Activated using AVMA4k successfully.");
+        }
+    }
+}
+
+
 // Activators/ZeroCID.cs
 namespace LibTSforge.Activators
 {
     using System;
     using System.IO;
-    using LibTSforge.Crypto;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
+    using System.Linq;
+    using Crypto;
+    using PhysicalStore;
+    using SPP;
 
     public static class ZeroCID
     {
-        public static void Deposit(Guid actId, string instId)
+        private static void Deposit(Guid actId, string instId)
         {
             uint status = SLApi.DepositConfirmationID(actId, instId, Constants.ZeroCID);
             Logger.WriteLine(string.Format("Depositing fake CID status {0:X}", status));
@@ -7261,16 +7683,16 @@ namespace LibTSforge.Activators
             string instId = SLApi.GetInstallationID(actId);
             Guid pkeyId = SLApi.GetInstalledPkeyID(actId);
 
-            if (version == PSVersion.Win7)
+            if (version == PSVersion.Vista || version == PSVersion.Win7)
             {
                 Deposit(actId, instId);
             }
 
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 byte[] hwidBlock = Constants.UniversalHWIDBlock;
 
@@ -7280,7 +7702,11 @@ namespace LibTSforge.Activators
 
                 byte[] iidHash;
 
-                if (version == PSVersion.Win7)
+                if (version == PSVersion.Vista)
+                {
+                    iidHash = CryptoUtils.SHA256Hash(Utils.EncodeString(instId)).Take(0x10).ToArray();
+                }
+                else if (version == PSVersion.Win7)
                 {
                     iidHash = CryptoUtils.SHA256Hash(Utils.EncodeString(instId));
                 }
@@ -7297,11 +7723,39 @@ namespace LibTSforge.Activators
                     throw new InvalidDataException("Failed to get product key data for activation ID " + actId + ".");
                 }
 
-                VariableBag pkb = new VariableBag(keyBlock.Data);
+                VariableBag pkb = new VariableBag(keyBlock.Data, version);
 
                 byte[] pkeyData;
 
-                if (version == PSVersion.Win7)
+                if (version == PSVersion.Vista)
+                {
+                    pkeyData = pkb.GetBlock("PKeyBasicInfo").Value;
+                    string uniqueId = Utils.DecodeString(pkeyData.Skip(0x120).Take(0x80).ToArray());
+                    string extPid = Utils.DecodeString(pkeyData.Skip(0x1A0).Take(0x80).ToArray());
+
+                    uint group;
+                    uint.TryParse(extPid.Split('-')[1], out group);
+
+                    if (group == 0)
+                    {
+                        throw new FormatException("Extended PID has invalid format.");
+                    }
+
+                    ulong shortauth;
+
+                    try
+                    {
+                        shortauth = BitConverter.ToUInt64(Convert.FromBase64String(uniqueId.Split('&')[1]), 0);
+                    } 
+                    catch
+                    {
+                        throw new FormatException("Key Unique ID has invalid format.");
+                    }
+
+                    shortauth |= (ulong)group << 41;
+                    pkeyData = BitConverter.GetBytes(shortauth);
+                }
+                else if (version == PSVersion.Win7)
                 {
                     pkeyData = pkb.GetBlock("SppPkeyShortAuthenticator").Value;
                 }
@@ -7314,26 +7768,34 @@ namespace LibTSforge.Activators
                 store.SetBlock(key, pkeyId.ToString(), pkb.Serialize());
 
                 BinaryWriter writer = new BinaryWriter(new MemoryStream());
-                writer.Write(0x20);
+                writer.Write(iidHash.Length);
                 writer.Write(iidHash);
                 writer.Write(hwidBlock.Length);
                 writer.Write(hwidBlock);
                 byte[] tsHwidData = writer.GetBytes();
 
                 writer = new BinaryWriter(new MemoryStream());
-                writer.Write(0x20);
+                writer.Write(iidHash.Length);
                 writer.Write(iidHash);
                 writer.Write(pkeyData.Length);
                 writer.Write(pkeyData);
                 byte[] tsPkeyInfoData = writer.GetBytes();
 
-                store.AddBlocks(new PSBlock[] {
+                string phoneVersion = version == PSVersion.Vista ? "6.0" : "7.0";
+                Guid indexSlid = version == PSVersion.Vista ? actId : pkeyId;
+                string hwidBlockName = string.Format("msft:Windows/{0}/Phone/Cached/HwidBlock/{1}", phoneVersion, indexSlid);
+                string pkeyInfoName = string.Format("msft:Windows/{0}/Phone/Cached/PKeyInfo/{1}", phoneVersion, indexSlid);
+
+                store.DeleteBlock(key, hwidBlockName);
+                store.DeleteBlock(key, pkeyInfoName);
+
+                store.AddBlocks(new[] {
                     new PSBlock
                     {
                         Type = BlockType.NAMED,
                         Flags = 0,
                         KeyAsStr = key,
-                        ValueAsStr = "msft:Windows/7.0/Phone/Cached/HwidBlock/" + pkeyId,
+                        ValueAsStr = hwidBlockName,
                         Data = tsHwidData
                     }, 
                     new PSBlock
@@ -7341,18 +7803,18 @@ namespace LibTSforge.Activators
                         Type = BlockType.NAMED,
                         Flags = 0,
                         KeyAsStr = key,
-                        ValueAsStr = "msft:Windows/7.0/Phone/Cached/PKeyInfo/" + pkeyId,
+                        ValueAsStr = pkeyInfoName,
                         Data = tsPkeyInfoData
                     }
                 });
             }
 
-            if (version != PSVersion.Win7)
+            if (version != PSVersion.Vista && version != PSVersion.Win7)
             {
                 Deposit(actId, instId);
             }
 
-            SLApi.RefreshLicenseStatus();
+            SPPUtils.RestartSPP(version);
             SLApi.FireStateChangedEvent(appId);
             Logger.WriteLine("Activated using ZeroCID successfully.");
         }
@@ -7377,7 +7839,7 @@ namespace LibTSforge.TokenStore
     public class TokenMeta
     {
         public string Name;
-        public Dictionary<string, string> Data = new Dictionary<string, string>();
+        public readonly Dictionary<string, string> Data = new Dictionary<string, string>();
 
         public byte[] Serialize()
         {
@@ -7400,7 +7862,7 @@ namespace LibTSforge.TokenStore
             return writer.GetBytes();
         }
 
-        public void Deserialize(byte[] data)
+        private void Deserialize(byte[] data)
         {
             BinaryReader reader = new BinaryReader(new MemoryStream(data));
             reader.ReadInt32();
@@ -7457,7 +7919,7 @@ namespace LibTSforge.TokenStore
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using LibTSforge.Crypto;
+    using Crypto;
 
     public class TokenStoreModern : ITokenStore
     {
@@ -7471,29 +7933,29 @@ namespace LibTSforge.TokenStore
         private static readonly byte[] CONTS_FOOTER = Enumerable.Repeat((byte)0xAA, 0x20).ToArray();
 
         private List<TokenEntry> Entries = new List<TokenEntry>();
-        public FileStream TokensFile;
+        private readonly FileStream TokensFile;
 
         public void Deserialize()
         {
             if (TokensFile.Length < BLOCK_SIZE) return;
 
             TokensFile.Seek(0x24, SeekOrigin.Begin);
-            uint nextBlock = 0;
+            uint nextBlock;
 
             BinaryReader reader = new BinaryReader(TokensFile);
             do
             {
-                uint curOffset = reader.ReadUInt32();
+                reader.ReadUInt32();
                 nextBlock = reader.ReadUInt32();
 
                 for (int i = 0; i < ENTRIES_PER_BLOCK; i++)
                 {
-                    curOffset = reader.ReadUInt32();
+                    uint curOffset = reader.ReadUInt32();
                     bool populated = reader.ReadUInt32() == 1;
                     uint contentOffset = reader.ReadUInt32();
                     uint contentLength = reader.ReadUInt32();
                     uint allocLength = reader.ReadUInt32();
-                    byte[] contentData = new byte[] { };
+                    byte[] contentData = { };
 
                     if (populated)
                     {
@@ -7593,11 +8055,10 @@ namespace LibTSforge.TokenStore
                         writer.WritePadding(BLOCK_PAD_SIZE);
 
                         writer.BaseStream.Seek(curBlockOffset, SeekOrigin.Begin);
-                        byte[] blockHash;
                         byte[] blockData = new byte[BLOCK_SIZE - 0x20];
 
                         tokens.Read(blockData, 0, BLOCK_SIZE - 0x20);
-                        blockHash = CryptoUtils.SHA256Hash(blockData);
+                        byte[] blockHash = CryptoUtils.SHA256Hash(blockData);
 
                         writer.BaseStream.Seek(curBlockOffset + BLOCK_SIZE - 0x20, SeekOrigin.Begin);
                         writer.Write(blockHash);
@@ -7728,11 +8189,6 @@ namespace LibTSforge.TokenStore
             Deserialize();
         }
 
-        public TokenStoreModern()
-        {
-
-        }
-
         public void Dispose()
         {
             Serialize();
@@ -7761,6 +8217,13 @@ namespace LibTSforge.PhysicalStore
         public ulong Unknown;
         public ulong Time1;
         public ulong Time2;
+        public ulong Expiry;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct VistaTimer
+    {
+        public ulong Time;
         public ulong Expiry;
     }
 }
@@ -7867,7 +8330,7 @@ namespace LibTSforge.PhysicalStore
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using LibTSforge.Crypto;
+    using Crypto;
 
     public class ModernBlock
     {
@@ -7957,7 +8420,7 @@ namespace LibTSforge.PhysicalStore
 
     public sealed class PhysicalStoreModern : IPhysicalStore
     {
-        private byte[] PreHeaderBytes = new byte[] { };
+        private byte[] PreHeaderBytes = { };
         private readonly Dictionary<string, List<ModernBlock>> Data = new Dictionary<string, List<ModernBlock>>();
         private readonly FileStream TSFile;
         private readonly PSVersion Version;
@@ -8145,46 +8608,50 @@ namespace LibTSforge.PhysicalStore
 
         public void DeleteBlock(string key, string value)
         {
-            if (Data.ContainsKey(key))
+            if (!Data.ContainsKey(key))
             {
-                List<ModernBlock> blocks = Data[key];
-
-                foreach (ModernBlock block in blocks)
-                {
-                    if (block.ValueAsStr == value)
-                    {
-                        blocks.Remove(block);
-                        break;
-                    }
-                }
-
-                Data[key] = blocks;
+                return;
             }
+
+            List<ModernBlock> blocks = Data[key];
+
+            foreach (ModernBlock block in blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    blocks.Remove(block);
+                    break;
+                }
+            }
+
+            Data[key] = blocks;
         }
 
         public void DeleteBlock(string key, uint value)
         {
-            if (Data.ContainsKey(key))
+            if (!Data.ContainsKey(key))
             {
-                List<ModernBlock> blocks = Data[key];
-
-                foreach (ModernBlock block in blocks)
-                {
-                    if (block.ValueAsInt == value)
-                    {
-                        blocks.Remove(block);
-                        break;
-                    }
-                }
-
-                Data[key] = blocks;
+                return;
             }
+
+            List<ModernBlock> blocks = Data[key];
+
+            foreach (ModernBlock block in blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    blocks.Remove(block);
+                    break;
+                }
+            }
+
+            Data[key] = blocks;
         }
 
         public PhysicalStoreModern(string tsPath, bool production, PSVersion version)
         {
             TSFile = File.Open(tsPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), production));
+            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), production, version));
             TSFile.Seek(0, SeekOrigin.Begin);
             Version = version;
             Production = production;
@@ -8204,7 +8671,7 @@ namespace LibTSforge.PhysicalStore
 
         public byte[] ReadRaw()
         {
-            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), Production);
+            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), Production, Version);
             TSFile.Seek(0, SeekOrigin.Begin);
             return data;
         }
@@ -8275,13 +8742,372 @@ namespace LibTSforge.PhysicalStore
 }
 
 
+// PhysicalStore/PhysicalStoreVista.cs
+namespace LibTSforge.PhysicalStore
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using Crypto;
+
+    public class VistaBlock
+    {
+        public BlockType Type;
+        public uint Flags;
+        public byte[] Value;
+        public string ValueAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Value);
+            }
+            set
+            {
+                Value = Utils.EncodeString(value);
+            }
+        }
+        public uint ValueAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Value, 0);
+            }
+            set
+            {
+                Value = BitConverter.GetBytes(value);
+            }
+        }
+        public byte[] Data;
+        public string DataAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Data);
+            }
+            set
+            {
+                Data = Utils.EncodeString(value);
+            }
+        }
+        public uint DataAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Data, 0);
+            }
+            set
+            {
+                Data = BitConverter.GetBytes(value);
+            }
+        }
+
+        internal void Encode(BinaryWriter writer)
+        {
+            writer.Write((uint)Type);
+            writer.Write(Flags);
+            writer.Write(Value.Length);
+            writer.Write(Data.Length);
+            writer.Write(Value);
+            writer.Write(Data);
+        }
+
+        internal static VistaBlock Decode(BinaryReader reader)
+        {
+            uint type = reader.ReadUInt32();
+            uint flags = reader.ReadUInt32();
+
+            int valueLen = reader.ReadInt32();
+            int dataLen = reader.ReadInt32();
+
+            byte[] value = reader.ReadBytes(valueLen);
+            byte[] data = reader.ReadBytes(dataLen);
+            return new VistaBlock
+            {
+                Type = (BlockType)type,
+                Flags = flags,
+                Value = value,
+                Data = data,
+            };
+        }
+    }
+
+    public sealed class PhysicalStoreVista : IPhysicalStore
+    {
+        private byte[] PreHeaderBytes = { };
+        private readonly List<VistaBlock> Blocks = new List<VistaBlock>();
+        private readonly FileStream TSPrimary;
+        private readonly FileStream TSSecondary;
+        private readonly bool Production;
+
+        public byte[] Serialize()
+        {
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+            writer.Write(PreHeaderBytes);
+
+            foreach (VistaBlock block in Blocks)
+            {
+                block.Encode(writer);
+                writer.Align(4);
+            }
+
+            return writer.GetBytes();
+        }
+
+        public void Deserialize(byte[] data)
+        {
+            int len = data.Length;
+
+            BinaryReader reader = new BinaryReader(new MemoryStream(data));
+            PreHeaderBytes = reader.ReadBytes(8);
+
+            while (reader.BaseStream.Position < len - 0x14)
+            {
+                Blocks.Add(VistaBlock.Decode(reader));
+                reader.Align(4);
+            }
+        }
+
+        public void AddBlock(PSBlock block)
+        {
+            Blocks.Add(new VistaBlock
+            {
+                Type = block.Type,
+                Flags = block.Flags,
+                Value = block.Value,
+                Data = block.Data
+            });
+        }
+
+        public void AddBlocks(IEnumerable<PSBlock> blocks)
+        {
+            foreach (PSBlock block in blocks)
+            {
+                AddBlock(block);
+            }
+        }
+
+        public PSBlock GetBlock(string key, string value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public PSBlock GetBlock(string key, uint value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public void SetBlock(string key, string value, byte[] data)
+        {
+            for (int i = 0; i < Blocks.Count; i++)
+            {
+                VistaBlock block = Blocks[i];
+
+                if (block.ValueAsStr == value)
+                {
+                    block.Data = data;
+                    Blocks[i] = block;
+                    break;
+                }
+            }
+        }
+
+        public void SetBlock(string key, uint value, byte[] data)
+        {
+            for (int i = 0; i < Blocks.Count; i++)
+            {
+                VistaBlock block = Blocks[i];
+
+                if (block.ValueAsInt == value)
+                {
+                    block.Data = data;
+                    Blocks[i] = block;
+                    break;
+                }
+            }
+        }
+
+        public void SetBlock(string key, string value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, string value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void SetBlock(string key, uint value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, uint value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void DeleteBlock(string key, string value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    Blocks.Remove(block);
+                    return;
+                }
+            }
+        }
+
+        public void DeleteBlock(string key, uint value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    Blocks.Remove(block);
+                    return;
+                }
+            }
+        }
+
+        public PhysicalStoreVista(string primaryPath, bool production)
+        {
+            TSPrimary = File.Open(primaryPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            TSSecondary = File.Open(primaryPath.Replace("-0.", "-1."), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            Production = production;
+
+            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), production, PSVersion.Vista));
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+        }
+
+        public void Dispose()
+        {
+            if (TSPrimary.CanWrite && TSSecondary.CanWrite)
+            {
+                byte[] data = PhysStoreCrypto.EncryptPhysicalStore(Serialize(), Production, PSVersion.Vista);
+
+                TSPrimary.SetLength(data.LongLength);
+                TSSecondary.SetLength(data.LongLength);
+
+                TSPrimary.Seek(0, SeekOrigin.Begin);
+                TSSecondary.Seek(0, SeekOrigin.Begin);
+
+                TSPrimary.WriteAllBytes(data);
+                TSSecondary.WriteAllBytes(data);
+
+                TSPrimary.Close();
+                TSSecondary.Close();
+            }
+        }
+
+        public byte[] ReadRaw()
+        {
+            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), Production, PSVersion.Vista);
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+            return data;
+        }
+
+        public void WriteRaw(byte[] data)
+        {
+            byte[] encrData = PhysStoreCrypto.EncryptPhysicalStore(data, Production, PSVersion.Vista);
+
+            TSPrimary.SetLength(encrData.LongLength);
+            TSSecondary.SetLength(encrData.LongLength);
+
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+            TSSecondary.Seek(0, SeekOrigin.Begin);
+
+            TSPrimary.WriteAllBytes(encrData);
+            TSSecondary.WriteAllBytes(encrData);
+
+            TSPrimary.Close();
+            TSSecondary.Close();
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(string valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsStr.Contains(valueSearch))
+                {
+                    results.Add(new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(uint valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsInt == valueSearch)
+                {
+                    results.Add(new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    });
+                }
+            }
+
+            return results;
+        }
+    }
+}
+
+
 // PhysicalStore/PhysicalStoreWin7.cs
 namespace LibTSforge.PhysicalStore
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using LibTSforge.Crypto;
+    using Crypto;
 
     public class Win7Block
     {
@@ -8383,7 +9209,7 @@ namespace LibTSforge.PhysicalStore
 
     public sealed class PhysicalStoreWin7 : IPhysicalStore
     {
-        private byte[] PreHeaderBytes = new byte[] { };
+        private byte[] PreHeaderBytes = { };
         private readonly List<Win7Block> Blocks = new List<Win7Block>();
         private readonly FileStream TSPrimary;
         private readonly FileStream TSSecondary;
@@ -8557,7 +9383,7 @@ namespace LibTSforge.PhysicalStore
             TSSecondary = File.Open(primaryPath.Replace("-0.", "-1."), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             Production = production;
 
-            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), production));
+            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), production, PSVersion.Win7));
             TSPrimary.Seek(0, SeekOrigin.Begin);
         }
 
@@ -8583,7 +9409,7 @@ namespace LibTSforge.PhysicalStore
 
         public byte[] ReadRaw()
         {
-            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), Production);
+            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), Production, PSVersion.Win7);
             TSPrimary.Seek(0, SeekOrigin.Begin);
             return data;
         }
@@ -8666,7 +9492,7 @@ namespace LibTSforge.PhysicalStore
         BINARY = 1 << 2
     }
 
-    public class CRCBlock
+    public abstract class CRCBlock
     {
         public CRCBlockType DataType;
         public byte[] Key;
@@ -8705,7 +9531,57 @@ namespace LibTSforge.PhysicalStore
             }
         }
 
-        public void Encode(BinaryWriter writer)
+        public abstract void Encode(BinaryWriter writer);
+        public abstract void Decode(BinaryReader reader);
+        public abstract uint CRC();
+    }
+
+    public class CRCBlockVista : CRCBlock
+    {
+        public override void Encode(BinaryWriter writer)
+        {
+            uint crc = CRC();
+            writer.Write((uint)DataType);
+            writer.Write(0);
+            writer.Write(Key.Length);
+            writer.Write(Value.Length);
+            writer.Write(crc);
+
+            writer.Write(Key);
+
+            writer.Write(Value);
+        }
+
+        public override void Decode(BinaryReader reader)
+        {
+            uint type = reader.ReadUInt32();
+            reader.ReadUInt32();
+            uint lenName = reader.ReadUInt32();
+            uint lenVal = reader.ReadUInt32();
+            uint crc = reader.ReadUInt32();
+
+            byte[] key = reader.ReadBytes((int)lenName);
+            byte[] value = reader.ReadBytes((int)lenVal);
+
+            DataType = (CRCBlockType)type;
+            Key = key;
+            Value = value;
+
+            if (CRC() != crc)
+            {
+                throw new InvalidDataException("Invalid CRC in variable bag.");
+            }
+        }
+
+        public override uint CRC()
+        {
+            return Utils.CRC32(Value);
+        }
+    }
+
+    public class CRCBlockModern : CRCBlock
+    {
+        public override void Encode(BinaryWriter writer)
         {
             uint crc = CRC();
             writer.Write(crc);
@@ -8720,7 +9596,7 @@ namespace LibTSforge.PhysicalStore
             writer.Align(8);
         }
 
-        public static CRCBlock Decode(BinaryReader reader)
+        public override void Decode(BinaryReader reader)
         {
             uint crc = reader.ReadUInt32();
             uint type = reader.ReadUInt32();
@@ -8733,22 +9609,17 @@ namespace LibTSforge.PhysicalStore
             byte[] value = reader.ReadBytes((int)lenVal);
             reader.Align(8);
 
-            CRCBlock block = new CRCBlock
-            {
-                DataType = (CRCBlockType)type,
-                Key = key,
-                Value = value,
-            };
+            DataType = (CRCBlockType)type;
+            Key = key;
+            Value = value;
 
-            if (block.CRC() != crc)
+            if (CRC() != crc)
             {
                 throw new InvalidDataException("Invalid CRC in variable bag.");
             }
-
-            return block;
         }
 
-        public uint CRC()
+        public override uint CRC()
         {
             BinaryWriter wtemp = new BinaryWriter(new MemoryStream());
             wtemp.Write(0);
@@ -8764,8 +9635,9 @@ namespace LibTSforge.PhysicalStore
     public class VariableBag
     {
         public List<CRCBlock> Blocks = new List<CRCBlock>();
+        private readonly PSVersion Version;
 
-        public void Deserialize(byte[] data)
+        private void Deserialize(byte[] data)
         {
             int len = data.Length;
 
@@ -8773,7 +9645,19 @@ namespace LibTSforge.PhysicalStore
 
             while (reader.BaseStream.Position < len - 0x10)
             {
-                Blocks.Add(CRCBlock.Decode(reader));
+                CRCBlock block;
+
+                if (Version == PSVersion.Vista)
+                {
+                    block = new CRCBlockVista();
+                }
+                else
+                {
+                    block = new CRCBlockModern();
+                }
+
+                block.Decode(reader);
+                Blocks.Add(block);
             }
         }
 
@@ -8783,7 +9667,13 @@ namespace LibTSforge.PhysicalStore
 
             foreach (CRCBlock block in Blocks)
             {
-                block.Encode(writer);
+                if (Version == PSVersion.Vista)
+                {
+                    ((CRCBlockVista)block).Encode(writer);
+                } else
+                {
+                    ((CRCBlockModern)block).Encode(writer);
+                }
             }
 
             return writer.GetBytes();
@@ -8829,14 +9719,15 @@ namespace LibTSforge.PhysicalStore
             }
         }
 
-        public VariableBag(byte[] data)
+        public VariableBag(byte[] data, PSVersion version)
         {
+            Version = version;
             Deserialize(data);
         }
 
-        public VariableBag()
+        public VariableBag(PSVersion version)
         {
-
+            Version = version;
         }
     }
 }
@@ -8866,7 +9757,7 @@ if ($env:_debug -eq '0') {
     [LibTSforge.Logger]::HideOutput = $true
 }
 $ver = [LibTSforge.Utils]::DetectVersion()
-$prod = [LibTSforge.Utils]::DetectCurrentKey()
+$prod = [LibTSforge.SPP.SPPUtils]::DetectCurrentKey()
 $tsactids = @($args)
 
 function Get-WmiInfo {
@@ -8918,7 +9809,7 @@ if ($env:resetstuff -eq $null) {
             $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
             if ($licenseStatus -eq 1) {
                 if ($prodDes -match 'KMS' -and $prodDes -notmatch 'CLIENT') {
-                    [LibTSforge.Modifiers.KMSHostCharge]::Charge($ver, $tsactid, $prod)
+                    [LibTSforge.Modifiers.KMSHostCharge]::Charge($ver, $prod, $tsactid)
                     Write-Host "[$prodName] CSVLK is permanently activated with ZeroCID." -ForegroundColor White -BackgroundColor DarkGreen
                     Write-Host "[$prodName] CSVLK is charged with 25 clients for 30 days." -ForegroundColor White -BackgroundColor DarkGreen
                 }
