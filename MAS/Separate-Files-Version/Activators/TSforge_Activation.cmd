@@ -1500,6 +1500,7 @@ set _prids=
 set _config=
 set _version=
 set _License=
+set _oMSI=
 exit /b
 
 ::========================================================================================================================================
@@ -1622,6 +1623,15 @@ call :ks_osppready
 echo Converting Unsupported O365 Office      [%%# To MondoRetail]
 )
 
+if not defined _oMSI (
+echo %%# | findstr /i "ARM" %nul% && (
+set _License=MondoRetail
+set _altoffid=MondoRetail
+call :ks_osppready
+echo Converting Unsupported OEM-ARM Office   [%%# To MondoRetail]
+)
+)
+
 set keytype=zero
 for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':offtsid\:.*';iex ($f[1])" %nul6%') do (
 echo "%%a" | findstr /r ".*-.*-.*-.*-.*" %nul1% && (set tsids=!tsids! %%a& set _actid=%%a)
@@ -1670,6 +1680,7 @@ exit /b
 call :ts_reset
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
 
+set _oMSI=1
 set oVer=%1
 for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\InstallRoot /v Path" %nul6%') do (set "_oRoot=%%b")
 for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\ProductVersion /v LastProduct" %nul6%') do (set "_version=%%b")
