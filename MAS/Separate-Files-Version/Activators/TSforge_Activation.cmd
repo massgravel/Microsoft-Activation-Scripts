@@ -221,6 +221,7 @@ goto dk_done
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
+set "_workp=%_work:'=''%"
 
 set "_batf=%~f0"
 set "_batp=%_batf:'=''%"
@@ -6709,17 +6710,26 @@ namespace LibTSforge.PhysicalStore
 }
 '@
 $ErrorActionPreference = 'Stop'
-$cp = [CodeDom.Compiler.CompilerParameters] [string[]]@("System.dll", "System.Core.dll", "System.ServiceProcess.dll", "System.Xml.dll")
-$cp.CompilerOptions = "/unsafe"
-$lang = If ((Get-Host).Version.Major -gt 2) { "CSharp" } Else { "CSharpVersion3" }
+$binPath = Join-Path -Path $env:_workp -ChildPath "BIN\LibTSforge.dll"
 
-$ctemp = "$env:SystemRoot\Temp\"
-if (-Not (Test-Path -Path $ctemp)) { New-Item -Path $ctemp -ItemType Directory > $null }
-$env:TMP = $ctemp
-$env:TEMP = $ctemp
+if (Test-Path -Path $binPath) {
+    Write-Host "LibTSforge.dll found in BIN folder. Loading the DLL..."
+    Add-Type -Path $binPath
+}
+else {
+    $cp = [CodeDom.Compiler.CompilerParameters] [string[]]@("System.dll", "System.Core.dll", "System.ServiceProcess.dll", "System.Xml.dll")
+    $cp.CompilerOptions = "/unsafe"
+    $lang = If ((Get-Host).Version.Major -gt 2) { "CSharp" } Else { "CSharpVersion3" }
 
-$cp.GenerateInMemory = $true
-Add-Type -Language $lang -TypeDefinition $src -CompilerParameters $cp
+    $ctemp = "$env:SystemRoot\Temp\"
+    if (-Not (Test-Path -Path $ctemp)) { New-Item -Path $ctemp -ItemType Directory > $null }
+    $env:TMP = $ctemp
+    $env:TEMP = $ctemp
+
+    $cp.GenerateInMemory = $true
+    Add-Type -Language $lang -TypeDefinition $src -CompilerParameters $cp
+}
+
 if ($env:_debug -eq '0') {
     [LibTSforge.Logger]::HideOutput = $true
 }
