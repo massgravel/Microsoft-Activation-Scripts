@@ -808,9 +808,15 @@ goto :dk_done
 
 :dk_setvar
 
-set psc=powershell.exe -nop -c
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
@@ -1002,6 +1008,8 @@ exit /b
 
 :dk_reeval
 
+if %winbuild% LSS 7600 exit /b
+
 ::  This key is left by the system in rearm process and sppsvc sometimes fails to delete it, it causes issues in working of the Scheduled Tasks of SPP
 
 set "ruleskey=HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedSystemState"
@@ -1047,13 +1055,13 @@ function InstallLicenseArr($Str) {
     ForEach ($x in $a) {InstallLicenseFile "$x"}
 }
 function InstallLicenseDir($Loc) {
-    dir $Loc *.xrm-ms -af -s | select -expand FullName | % {InstallLicenseFile "$_"}
+	Get-ChildItem $Loc -Recurse -Filter *.xrm-ms | ForEach-Object {InstallLicenseFile $_.FullName}
 }
 function ReinstallLicenses() {
-    $Oem = "$env:SysPath\oem"
-    $Spp = "$env:SysPath\spp\tokens"
-    InstallLicenseDir "$Spp"
-    If (Test-Path $Oem) {InstallLicenseDir "$Oem"}
+	$Paths = @("$env:SysPath\oem", "$env:SysPath\licensing", "$env:SysPath\spp\tokens")
+	foreach ($Path in $Paths) {
+    if (Test-Path $Path) { InstallLicenseDir "$Path" }
+	}
 }
 :xrm:
 
@@ -1071,16 +1079,16 @@ exit /b
 
 :dk_sppissue
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 set spperror=%errorlevel%
 
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
-echo sc start sppsvc [Error Code: %spperror%]
+echo sc start %_slser% [Error Code: %spperror%]
 )
 
 echo:
-%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host 'sppsvc is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
+%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host '%_slser% is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
 exit /b
 
 ::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
@@ -1097,6 +1105,10 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 if %winbuild% GEQ 22000 (
 set winos=!winos:Windows 10=Windows 11!
 )
+)
+if %winbuild% LSS 7600 (
+set "winos=!winos:VistaT=Vista!"
+set "winos=!winos:Serverr=Server!"
 )
 
 if not defined winsub exit /b
@@ -1144,11 +1156,11 @@ for %%# in (avira.com kaspersky.com virustotal.com mcafee.com) do (
 find /i "%%#" %SysPath%\drivers\etc\hosts %nul% && set /a hcount+=1)
 if %hcount%==4 set "results=[Antivirus URLs are blocked in hosts]"
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 echo "%errorlevel%" | findstr "577 225" %nul% && (
 set "results=%results%[Likely File Infector]"
 ) || (
-if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
+if not exist %SysPath%\%_slexe% if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
 )
 
 if not "%results%%pupfound%"=="" (
@@ -1228,6 +1240,7 @@ for %%# in (%serv_ste%) do (
 if /i %%#==ClipSVC          (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
 if /i %%#==wlidsvc          sc config %%# start= demand %nul%
 if /i %%#==sppsvc           (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
+if /i %%#==SLsvc            sc config %%# start= auto %nul%
 if /i %%#==KeyIso           sc config %%# start= demand %nul%
 if /i %%#==LicenseManager   sc config %%# start= demand %nul%
 if /i %%#==Winmgmt          sc config %%# start= auto %nul%
@@ -1357,7 +1370,7 @@ if %osedition%==0 (
 call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
 ) else (
 
-if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
+if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" if not exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set skunotfound=1
 call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
 )
@@ -1439,7 +1452,7 @@ call :dk_color2 %Blue% "In case of activation issues, do this - " %_Yellow% " %m
 )
 
 
-for %%# in (SppEx%w%tComObj.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
+for %%# in (SppEx%w%tComObj.exe SLsvc.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (if defined _sppint (set "_sppint=!_sppint!, %%#") else (set "_sppint=%%#"))
 )
 if defined _sppint (
@@ -1453,14 +1466,14 @@ echo Checking SPP In IFEO                    [%_sppint%]
 )
 
 
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
+if %winbuild% GEQ 7600 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
 call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 )
 
 
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
+if %winbuild% GEQ 7600 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
 call :dk_color2 %Blue% "Most likely caused by gaming spoofers. Check this webpage for help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
@@ -1470,21 +1483,22 @@ set showfix=1
 
 
 set tokenstore=
+if %winbuild% GEQ 7600 (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore %nul6%') do call set "tokenstore=%%b"
 if %winbuild% LSS 9200 set "tokenstore=%Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform"
-if %winbuild% GEQ 9200 if /i not "%tokenstore%"=="%SysPath%\spp\store" if /i not "%tokenstore%"=="%SysPath%\spp\store\2.0" if /i not "%tokenstore%"=="%SysPath%\spp\store_test\2.0" (
+if %winbuild% GEQ 9200 if /i not "!tokenstore!"=="%SysPath%\spp\store" if /i not "!tokenstore!"=="%SysPath%\spp\store\2.0" if /i not "!tokenstore!"=="%SysPath%\spp\store_test\2.0" (
 set toerr=1
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [%tokenstore%]"
+call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [!tokenstore!]"
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
-
+)
 
 ::  This code creates token folder only if it's missing and sets default permission for it
 
-if not defined toerr if not exist "%tokenstore%\" (
+if %winbuild% GEQ 7600 if not defined toerr if not exist "%tokenstore%\" (
 mkdir "%tokenstore%" %nul%
 if %winbuild% LSS 9200 set "d=$sddl = 'O:NSG:NSD:AI(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;NS)';"
 if %winbuild% GEQ 9200 set "d=$sddl = 'O:BAG:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICIIO;GR;;;BU)(A;;FR;;;BU)(A;OICI;FA;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)';"
@@ -1505,7 +1519,7 @@ set showfix=1
 if not defined notwinact (
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
-%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"
@@ -1520,7 +1534,7 @@ call :dk_color %Red% "Checking Activation IDs                 [!_notfoundids!]"
 )
 
 
-if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
+if %winbuild% GEQ 7600 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
 set error=1
 call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
 )
@@ -1655,8 +1669,10 @@ $wpaKey.Close()
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
 )
 exit /b
 
@@ -1664,8 +1680,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
 )
 exit /b
 

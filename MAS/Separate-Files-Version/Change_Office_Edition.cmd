@@ -134,9 +134,9 @@ goto dk_done
 )
 
 if %winbuild% LSS 7600 (
-%nceline%
+%eline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+echo This option is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
 goto dk_done
 )
 
@@ -1352,9 +1352,15 @@ if ($appIdsList.Count -gt 0) {
 
 :dk_setvar
 
-set psc=powershell.exe -nop -c
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
@@ -1412,16 +1418,16 @@ exit /b
 
 :dk_sppissue
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 set spperror=%errorlevel%
 
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
-echo sc start sppsvc [Error Code: %spperror%]
+echo sc start %_slser% [Error Code: %spperror%]
 )
 
 echo:
-%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host 'sppsvc is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
+%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host '%_slser% is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
 exit /b
 
 ::  Common lines used in PowerShell reflection code
@@ -1439,8 +1445,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
 )
 exit /b
 
@@ -1448,8 +1456,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
 )
 exit /b
 

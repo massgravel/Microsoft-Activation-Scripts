@@ -133,10 +133,27 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%trouble
 goto dk_done
 )
 
-if %winbuild% LSS 7600 (
+if %winbuild% LSS 6001 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
+if %winbuild% EQU 6000 (
+echo:
+echo Windows Vista RTM is not supported because Powershell cannot be installed.
+echo Upgrade to Windows Vista SP1 or SP2.
+)
+goto dk_done
+)
+
+if not exist %ps% (
+%nceline%
+echo PowerShell is not installed in your system.
+if %winbuild% LSS 7600 (
+echo Install PowerShell using the following URL.
+echo:
+echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+)
 goto dk_done
 )
 
@@ -515,6 +532,13 @@ mode 125, 32
 )
 title  Fix Licensing ^(ClipSVC ^+ SPP ^+ OSPP^)
 
+if %winbuild% EQU 6001 (
+%eline%
+echo This option is not supported on Windows Vista SP1.
+echo Upgrade to Windows Vista SP2.
+goto :at_back
+)
+
 echo:
 echo %line%
 echo:   
@@ -531,7 +555,7 @@ echo            - Clear ClipSVC, SPP and OSPP licenses.
 echo            - Fix permissions of SPP tokens folder and registries.
 echo            - Trigger the repair option for Office.
 echo:
-call :dk_color2 %_White% "      - " %Red% "Apply this option only when it is necessary."
+call :dk_color2 %_White% "      - " %Blue% "Apply this option only when it is necessary."
 echo:
 echo %line%
 echo:
@@ -695,19 +719,19 @@ echo [No Error Found]
 )
 
 echo:
-echo Stopping sppsvc service...
-%psc% Stop-Service sppsvc -force %nul%
+echo Stopping %_slser% service...
+%psc% Stop-Service %_slser% -force %nul%
 
 set w=
 set _sppint=
-for %%# in (SppEx%w%tComObj.exe sppsvc.exe) do (reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (set _sppint=1))
+for %%# in (SppEx%w%tComObj.exe %_slexe%) do (reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (set _sppint=1))
 if defined _sppint (
 echo:
 echo Removing SPP IFEO registry keys...
-for %%# in (SppE%w%xtComObj.exe sppsvc.exe) do (reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%)
+for %%# in (SppE%w%xtComObj.exe %_slexe%) do (reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%)
 )
 
-if %winbuild% LSS 9200 (
+if %winbuild% LSS 9200 if not defined _vis (
 REM Fix issues caused by Update KB971033 in Windows 7
 REM https://support.microsoft.com/help/4487266
 echo:
@@ -726,6 +750,7 @@ del /f /q %SysPath%\7B296FB0-376B-497e-B012-9C450E1B7327-*.C7483456-A289-439d-81
 
 ::  Delete registry keys that are not deleted by activation scripts
 
+if not defined _vis (
 echo:
 echo Cleaning some licensing-related registry keys...
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "ServiceSessionId" /f
@@ -733,6 +758,7 @@ echo Cleaning some licensing-related registry keys...
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "PolicyValuesArray" /f
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "actionlist" /f
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform\data" /f
+)
 
 echo:
 call :scandat delete
@@ -744,9 +770,13 @@ call :dk_color %Red% "Failed to delete .dat files."
 echo:
 )
 
+if defined _vis (
+%psc% Start-Service %_slser% %nul%
+)
+
 echo:
 echo Reinstalling system licenses...
-%psc% "Stop-Service sppsvc -force; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if %errorlevel% NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
@@ -763,7 +793,7 @@ call :dk_color %Red% "Failed to rebuild tokens.dat file."
 echo tokens.dat file was rebuilt successfully.
 )
 
-if %winbuild% LSS 9200 (
+if %winbuild% LSS 9200 if not defined _vis (
 sc config sppuinotify start= demand
 )
 
@@ -1329,13 +1359,13 @@ function InstallLicenseArr($Str) {
     ForEach ($x in $a) {InstallLicenseFile "$x"}
 }
 function InstallLicenseDir($Loc) {
-    dir $Loc *.xrm-ms -af -s | select -expand FullName | % {InstallLicenseFile "$_"}
+	Get-ChildItem $Loc -Recurse -Filter *.xrm-ms | ForEach-Object {InstallLicenseFile $_.FullName}
 }
 function ReinstallLicenses() {
-    $Oem = "$env:SysPath\oem"
-    $Spp = "$env:SysPath\spp\tokens"
-    InstallLicenseDir "$Spp"
-    If (Test-Path $Oem) {InstallLicenseDir "$Oem"}
+	$Paths = @("$env:SysPath\oem", "$env:SysPath\licensing", "$env:SysPath\spp\tokens")
+	foreach ($Path in $Paths) {
+    if (Test-Path $Path) { InstallLicenseDir "$Path" }
+	}
 }
 :xrm:
 
@@ -1349,6 +1379,7 @@ for %%# in (
 %SysPath%\spp\store\
 %SysPath%\spp\store\2.0\
 %Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\
+%Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareLicensing\
 ) do (
 
 if %1==check (
@@ -1424,9 +1455,35 @@ $key.SetAccessControl($acl)
 
 ::========================================================================================================================================
 
+:dk_color
+
+if %_NCS% EQU 1 (
+echo %esc%[%~1%~2%esc%[0m
+) else if exist %ps% (
+%psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
+)
+exit /b
+
+:dk_color2
+
+if %_NCS% EQU 1 (
+echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
+) else if exist %ps% (
+%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
+)
+exit /b
+
+::========================================================================================================================================
+
 :dk_done
 
 echo:
+if %_unattended%==1 timeout /t 2 & exit /b
+
 if defined fixes (
 call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
@@ -1441,26 +1498,7 @@ choice /c 0 /n
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
 pause %nul1%
 )
-exit /b
 
-::========================================================================================================================================
-
-:dk_color
-
-if %_NCS% EQU 1 (
-echo %esc%[%~1%~2%esc%[0m
-) else (
-%psc% write-host -back '%1' -fore '%2' '%3'
-)
-exit /b
-
-:dk_color2
-
-if %_NCS% EQU 1 (
-echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
-%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
-)
 exit /b
 
 ::========================================================================================================================================
@@ -1469,9 +1507,15 @@ exit /b
 
 :dk_setvar
 
-set psc=powershell.exe -nop -c
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0

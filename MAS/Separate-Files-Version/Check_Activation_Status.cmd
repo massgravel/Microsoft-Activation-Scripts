@@ -23,10 +23,11 @@ set "Path=%SystemRoot%\Sysnative;%SystemRoot%;%SystemRoot%\Sysnative\Wbem;%Syste
 set "ComSpec=%SysPath%\cmd.exe"
 set "PSModulePath=%ProgramFiles%\WindowsPowerShell\Modules;%SysPath%\WindowsPowerShell\v1.0\Modules"
 
-set "_psc=powershell -nop -c"
+set "ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe"
+set "_psc=%ps% -nop -c"
 set "_err===== ERROR ===="
 set _pwsh=1
-for %%# in (powershell.exe) do @if "%%~$PATH:#"=="" set _pwsh=0
+if not exist %ps% set _pwsh=0
 cmd /c "%_psc% "$ExecutionContext.SessionState.LanguageMode"" | find /i "FullLanguage" 1>nul || (set _pwsh=0)
 if %_pwsh% equ 0 (
 echo %_err%

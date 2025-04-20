@@ -141,10 +141,27 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%trouble
 goto dk_done
 )
 
-if %winbuild% LSS 7600 (
+if %winbuild% LSS 6001 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
+if %winbuild% EQU 6000 (
+echo:
+echo Windows Vista RTM is not supported because Powershell cannot be installed.
+echo Upgrade to Windows Vista SP1 or SP2.
+)
+goto dk_done
+)
+
+if not exist %ps% (
+%nceline%
+echo PowerShell is not installed in your system.
+if %winbuild% LSS 7600 (
+echo Install PowerShell using the following URL.
+echo:
+echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+)
 goto dk_done
 )
 
@@ -1077,9 +1094,15 @@ goto :dk_done
 
 :dk_setvar
 
-set psc=powershell.exe -nop -c
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
@@ -1287,6 +1310,8 @@ exit /b
 
 :dk_reeval
 
+if %winbuild% LSS 7600 exit /b
+
 ::  This key is left by the system in rearm process and sppsvc sometimes fails to delete it, it causes issues in working of the Scheduled Tasks of SPP
 
 set "ruleskey=HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedSystemState"
@@ -1332,13 +1357,13 @@ function InstallLicenseArr($Str) {
     ForEach ($x in $a) {InstallLicenseFile "$x"}
 }
 function InstallLicenseDir($Loc) {
-    dir $Loc *.xrm-ms -af -s | select -expand FullName | % {InstallLicenseFile "$_"}
+	Get-ChildItem $Loc -Recurse -Filter *.xrm-ms | ForEach-Object {InstallLicenseFile $_.FullName}
 }
 function ReinstallLicenses() {
-    $Oem = "$env:SysPath\oem"
-    $Spp = "$env:SysPath\spp\tokens"
-    InstallLicenseDir "$Spp"
-    If (Test-Path $Oem) {InstallLicenseDir "$Oem"}
+	$Paths = @("$env:SysPath\oem", "$env:SysPath\licensing", "$env:SysPath\spp\tokens")
+	foreach ($Path in $Paths) {
+    if (Test-Path $Path) { InstallLicenseDir "$Path" }
+	}
 }
 :xrm:
 
@@ -1356,16 +1381,16 @@ exit /b
 
 :dk_sppissue
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 set spperror=%errorlevel%
 
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
-echo sc start sppsvc [Error Code: %spperror%]
+echo sc start %_slser% [Error Code: %spperror%]
 )
 
 echo:
-%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host 'sppsvc is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
+%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host '%_slser% is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
 exit /b
 
 ::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
@@ -1382,6 +1407,10 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 if %winbuild% GEQ 22000 (
 set winos=!winos:Windows 10=Windows 11!
 )
+)
+if %winbuild% LSS 7600 (
+set "winos=!winos:VistaT=Vista!"
+set "winos=!winos:Serverr=Server!"
 )
 
 if not defined winsub exit /b
@@ -1429,11 +1458,11 @@ for %%# in (avira.com kaspersky.com virustotal.com mcafee.com) do (
 find /i "%%#" %SysPath%\drivers\etc\hosts %nul% && set /a hcount+=1)
 if %hcount%==4 set "results=[Antivirus URLs are blocked in hosts]"
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 echo "%errorlevel%" | findstr "577 225" %nul% && (
 set "results=%results%[Likely File Infector]"
 ) || (
-if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
+if not exist %SysPath%\%_slexe% if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
 )
 
 if not "%results%%pupfound%"=="" (
@@ -1513,6 +1542,7 @@ for %%# in (%serv_ste%) do (
 if /i %%#==ClipSVC          (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
 if /i %%#==wlidsvc          sc config %%# start= demand %nul%
 if /i %%#==sppsvc           (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
+if /i %%#==SLsvc            sc config %%# start= auto %nul%
 if /i %%#==KeyIso           sc config %%# start= demand %nul%
 if /i %%#==LicenseManager   sc config %%# start= demand %nul%
 if /i %%#==Winmgmt          sc config %%# start= auto %nul%
@@ -1642,7 +1672,7 @@ if %osedition%==0 (
 call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
 ) else (
 
-if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
+if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" if not exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set skunotfound=1
 call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
 )
@@ -1724,7 +1754,7 @@ call :dk_color2 %Blue% "In case of activation issues, do this - " %_Yellow% " %m
 )
 
 
-for %%# in (SppEx%w%tComObj.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
+for %%# in (SppEx%w%tComObj.exe SLsvc.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (if defined _sppint (set "_sppint=!_sppint!, %%#") else (set "_sppint=%%#"))
 )
 if defined _sppint (
@@ -1738,14 +1768,14 @@ echo Checking SPP In IFEO                    [%_sppint%]
 )
 
 
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
+if %winbuild% GEQ 7600 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
 call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 )
 
 
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
+if %winbuild% GEQ 7600 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
 call :dk_color2 %Blue% "Most likely caused by gaming spoofers. Check this webpage for help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
@@ -1755,21 +1785,22 @@ set showfix=1
 
 
 set tokenstore=
+if %winbuild% GEQ 7600 (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore %nul6%') do call set "tokenstore=%%b"
 if %winbuild% LSS 9200 set "tokenstore=%Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform"
-if %winbuild% GEQ 9200 if /i not "%tokenstore%"=="%SysPath%\spp\store" if /i not "%tokenstore%"=="%SysPath%\spp\store\2.0" if /i not "%tokenstore%"=="%SysPath%\spp\store_test\2.0" (
+if %winbuild% GEQ 9200 if /i not "!tokenstore!"=="%SysPath%\spp\store" if /i not "!tokenstore!"=="%SysPath%\spp\store\2.0" if /i not "!tokenstore!"=="%SysPath%\spp\store_test\2.0" (
 set toerr=1
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [%tokenstore%]"
+call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [!tokenstore!]"
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
-
+)
 
 ::  This code creates token folder only if it's missing and sets default permission for it
 
-if not defined toerr if not exist "%tokenstore%\" (
+if %winbuild% GEQ 7600 if not defined toerr if not exist "%tokenstore%\" (
 mkdir "%tokenstore%" %nul%
 if %winbuild% LSS 9200 set "d=$sddl = 'O:NSG:NSD:AI(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;NS)';"
 if %winbuild% GEQ 9200 set "d=$sddl = 'O:BAG:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICIIO;GR;;;BU)(A;;FR;;;BU)(A;OICI;FA;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)';"
@@ -1790,7 +1821,7 @@ set showfix=1
 if not defined notwinact (
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
-%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"
@@ -1805,7 +1836,7 @@ call :dk_color %Red% "Checking Activation IDs                 [!_notfoundids!]"
 )
 
 
-if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
+if %winbuild% GEQ 7600 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
 set error=1
 call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
 )
@@ -1940,8 +1971,10 @@ $wpaKey.Close()
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
 )
 exit /b
 
@@ -1949,8 +1982,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
 )
 exit /b
 
@@ -3669,6 +3704,18 @@ if /i "%%A"=="/Z-Reset"                (set _resall=1)
 if not defined tsids set _actman=0
 for %%A in (%_actwin% %_actesu% %_actoff% %_actprojvis% %_actwinesuoff% %_actwinhost% %_actoffhost% %_actappx% %_actman% %_resall%) do (if "%%A"=="1" set _unattended=1)
 
+if %winbuild% LSS 7600 (
+reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" /v Install %nul2% | find /i "0x1" %nul1% || (
+%eline%
+echo .NET 3.5 Framework is not installed in your system.
+echo Install it using the following URL.
+echo:
+echo https://www.microsoft.com/download/details.aspx?id=25150
+start https://www.microsoft.com/download/details.aspx?id=25150
+goto dk_done
+)
+)
+
 ::========================================================================================================================================
 
 :ts_menu
@@ -3696,7 +3743,11 @@ echo               [A] Activate - Windows %KS% Host
 echo               [B] Activate - Office %KS% Host
 echo               [C] Activate - Windows 8/8.1 APPX Sideloading
 echo               [D] Activate - Manually Select Products
+if defined _vis (
+echo               [E] Reset    - Rearm/Timers
+) else (
 echo               [E] Reset    - Rearm/Timers/Tamper/Lock
+)
 echo               _______________________________________________       
 echo:
 echo               [6] Remove TSforge Activation
@@ -3742,9 +3793,9 @@ echo:
 echo Initializing...
 call :dk_chkmal
 
-if not exist %SysPath%\sppsvc.exe (
+if not exist %SysPath%\%_slexe% (
 %eline%
-echo [%SysPath%\sppsvc.exe] file is missing, aborting...
+echo [%SysPath%\%_slexe%] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
@@ -3767,10 +3818,10 @@ goto dk_done
 
 if %winbuild% LSS 9200 if exist "%SysPath%\wlms\wlms.exe" (
 sc query wlms | find /i "RUNNING" %nul% && (
-sc stop sppsvc %nul%
+sc stop %_slser% %nul%
 if !errorlevel! EQU 1051 (
 %eline%
-echo Evaluation WLMS service is running, sppsvc service can not be stopped. Aborting...
+echo Evaluation WLMS service is running, %_slser% service can not be stopped. Aborting...
 echo Install Non-Eval version for Windows build %winbuild%.
 echo:
 set fixes=%fixes% %mas%troubleshoot
@@ -3803,7 +3854,7 @@ call :dk_showosinfo
 
 echo Initiating Diagnostic Tests...
 
-set "_serv=sppsvc Winmgmt"
+set "_serv=%_slser% Winmgmt"
 
 ::  Software Protection
 ::  Windows Management Instrumentation
@@ -3852,6 +3903,8 @@ call :dk_color %Gray% "Checking OS Activation                  [Windows is alrea
 goto :ts_esu
 )
 
+if defined _vis goto :ts_winvista
+
 set tempid=
 set keytype=zero
 for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wintsid\:.*';iex ($f[1])" %nul6%') do (
@@ -3870,6 +3923,86 @@ if defined winsub (
 call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. Script will activate base edition [SKU ID-%regSKU%]."
 echo:
 )
+goto :ts_esu
+
+::========================================================================================================================================
+
+:ts_winvista
+
+::  Process Windows Vista
+
+::  1st column = Activation ID
+::  2nd column = Generic key
+::  3rd column = Key channel
+::  4th column = Edition ID
+::  Separator  = _
+
+::  Keys aren't available for these editions, but since these editions aren't publicly available, it doesn't matter
+::  a797d61e-1475-470b-86c8-f737a72c188d StarterN
+::  5e9f548a-c8a9-44e6-a6c2-3f8d0a7a99dd ServerComputeClusterV
+
+set f=
+set key=
+set tempid=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+::  WindowsVista
+9de9abe2-d01d-4538-af84-4498bdbc2ba3_4D2XH-PRBMM-8Q22B-K8BM3-MR%f%W4W_____Retail_Business
+db442be4-81ed-4ab3-9d66-2417e8a5c81c_76884-QXFY2-6Q2WX-2QTQ8-QX%f%X44_____Retail_BusinessN
+b51791c2-b562-4b73-97b0-735a0e4429a6_YQPQV-RW8R3-XMPFG-RXG9R-JG%f%TVF_____Retail_Enterprise
+58c37517-42f8-4723-bb44-30b05791ff2a_Q7J9R-G63R4-BFMHF-FWM9R-RW%f%DMV_____Retail_EnterpriseN
+95c6e80a-0ff8-4bd0-95f2-c4a39b79d09e_RCG7P-TX42D-HM8FM-TCFCW-3V%f%4VD_____Retail_HomeBasic
+d0333dad-c14e-46f2-b62a-8b47a1b9768b_HY2VV-XC6FF-MD6WV-FPYBQ-GF%f%JBT_____Retail_HomeBasicN
+9e042223-03bf-49ae-808f-ff37f128d40d_X9HTF-MKJQQ-XK376-TJ7T4-76%f%PKF_____Retail_HomePremium
+92d8977c-d506-4e63-b500-6d39283b6cd5_KJ6TP-PF9W2-23T3Q-XTV7M-PX%f%DT2_____Retail_HomePremiumN
+89e51a3c-76c0-4beb-a650-53d34c8f8186_X9PYV-YBQRV-9BXWV-TQDMK-QD%f%WK4_____Retail_Starter
+30fab9cc-8614-4339-989f-7ce61fb7a5c4_VMCB9-FDRV6-6CDQM-RV23K-RP%f%8F7_____Retail_Ultimate
+1eefed20-8ac0-478c-8774-70cd44782ea1_CVX38-P27B4-2X8BT-RXD4J-V7%f%CKX_____Retail_UltimateN
+::  WindowsServer2008
+c9ad502b-ef48-41d1-a2a0-38a38e82fed0_24FV9-H7JW8-C8Q6X-BQKMK-K9%f%77J_____Retail_ServerComputeCluster
+866e924e-c2a3-4872-aca1-6b48c13962d5_6QBHY-DXTPJ-T9W3P-DTJXX-4V%f%QMB_____Retail_ServerDatacenter
+d020c729-07f0-4f8f-87ce-bf803275c786_83TWG-TD3TC-HRDP2-K93FJ-Y3%f%4YC_OEM:NONSLP_ServerDatacenterV
+32b40e5e-0c6d-4c6f-ab12-a031933fd2c6_MRB7H-QJRHG-FXTBR-B2Q2M-8W%f%MTJ_____Retail_ServerEnterprise
+256cc990-1692-4ea8-965c-2d423d5dd24e_H4VB6-QPRWH-VDCYM-996P8-MH%f%KFY_OEM:NONSLP_ServerEnterpriseIA64
+1ba5e036-e386-42c4-b7eb-16bdb4fa1945_H8H7M-HDPQT-PJHQF-M7B83-9C%f%VGV_____Retail_ServerEnterpriseV
+8df04457-07c8-4301-bce9-d61eb76cb2d6_RGBMC-PQBVF-94Q9K-HD63B-VY%f%6MP_____Retail_ServerHomePremium
+5bd23b19-aa71-4a5b-8b68-c8801c2baff6_6C8KR-MD3QK-9GWFW-44CY2-W9%f%CBM_____Retail_ServerHomeStandard
+b86c7736-91ff-4de9-bfa9-b32b8a09acac_7XRBY-6MP2K-VQPT8-F37JV-YY%f%Q83_____Retail_ServerMediumBusinessManagement
+d3f5642f-081d-40b2-a4b9-efd3054d4584_6PDTD-JK48J-662TF-8J2QV-R4%f%CRB_____Retail_ServerMediumBusinessMessaging
+c6936a36-69f3-4994-9857-3069c7b9ec7a_D694V-CMWKH-PY92X-PFQKQ-JC%f%B69_____Retail_ServerMediumBusinessSecurity
+cc4c2cf8-ef29-4d8e-b168-2b65a3db3309_MRDK3-YYQF3-88BQJ-D6FJG-69%f%YJY_____Retail_ServerSBSPremium
+b3827b27-bd38-4284-98af-e4f4d1c051a0_2KB23-GJRBD-W3T9C-6CH2W-39%f%B7V_____Retail_ServerSBSPrime
+5dad0eff-3f6f-4310-8844-422f9dc7c84b_H4XDD-B27GY-667P6-XWVV7-GY%f%G8J_____Retail_ServerSBSStandard
+603504f9-109f-49f0-9271-8c66f7878f58_8YVM4-YQBDH-7WDQM-R27WR-WV%f%CWG_____Retail_ServerStandard
+65ab7338-9ad0-43fe-af1b-190b577495e2_H9MW3-6V7GK-94P9G-7FTPJ-VK%f%CKF_____Retail_ServerStandardV
+2be204da-24a0-4943-b66c-81e8464acd7e_2264C-TD9T8-P8HPW-CC9GH-MH%f%M2V_____Retail_ServerStorageEnterprise
+60207eba-8b4a-486c-a013-023b4b742c2f_RCYMT-YX342-8T6YY-XYHYC-3D%f%D7X_____Retail_ServerStorageExpress
+368856e9-43f7-4601-8358-e561f36c7dd8_FKFT2-WXYY9-WBPY7-6YMY4-X4%f%8JF_____Retail_ServerStorageStandard
+4bf433fa-ab04-4c6c-b55b-00170e14b8cd_8X9J7-HCJ7J-3WDJT-QM7D8-46%f%4YH_____Retail_ServerStorageWorkgroup
+a77a6806-f59e-4953-97d7-229317b8e6a6_BGT39-9FYH7-X2CYD-T628F-QP%f%QPW_____Retail_ServerWeb
+f92f836d-4d3e-4e90-a08f-2d612d65e716_HPH76-FHFPP-DRW9D-7W2V4-HW%f%GKT_____Retail_ServerWinSB
+3059a9fd-b068-4f0d-acaf-66324dca67ac_2V8G6-KRXYR-MMGXJ-6RWM3-GX%f%CCG_____Retail_ServerWinSBV
+) do (
+for /f "tokens=1-4 delims=_" %%A in ("%%#") do if %tsedition%==%%D if not defined key (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+set key=%%B
+set tempid=%%A
+)
+)
+)
+
+if not defined key (
+set error=1
+call :dk_color %Red% "Checking Activation ID                  [%tsedition% SKU-%osSKU% not found in the system]"
+call :dk_color %Blue% "%_fixmsg%"
+goto :ts_esu
+)
+
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+
+call :ts_inskey "[%key%]"
+if not defined error set tsids=%tsids% %tempid%
 goto :ts_esu
 
 ::========================================================================================================================================
@@ -3990,19 +4123,7 @@ goto :ts_esu
 echo Resetting Rearm / GracePeriod           [Successful]
 )
 
-%psc% "try { $null=(([WMISEARCHER]'SELECT Version FROM %sps%').Get()).InstallProductKey('%key%'); exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
-set keyerror=%errorlevel%
-cmd /c exit /b %keyerror%
-if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
-
-if %keyerror% EQU 0 (
-call :dk_refresh
-echo Installing Activable Evaluation Key     [%key%] [Successful]
-) else (
-set error=1
-call :dk_color %Red% "Installing Activable Evaluation Key     [%key%] [Failed] %keyerror%"
-call :dk_color %Blue% "%_fixmsg%"
-)
+call :ts_inskey "[%key%]"
 
 ::========================================================================================================================================
 
@@ -4038,7 +4159,7 @@ REM Windows7EmbeddedPOSReady7
 4f1f646c-1e66-4908-acc7-d1606229b29e_POS-ESU-Year3[1-3y]_-Embedded[POS]-
 REM Windows7EmbeddedStandard
 6aaf1c7d-527f-4ed5-b908-9fc039dfc654_WES-ESU-Year3[1-3y]_-Embedded[Standard]-
-REM WindowsServer2008R2
+REM WindowsServer2008/WindowsServer2008R2
 8e7bfb1e-acc1-4f56-abae-b80fce56cd4b_Server-ESU-PA[1-6y]_-ServerDatacenter-ServerDatacenterCore-ServerDatacenterV-ServerDatacenterVCore-ServerStandard-ServerStandardCore-ServerStandardV-ServerStandardVCore-ServerEnterprise-ServerEnterpriseCore-ServerEnterpriseV-ServerEnterpriseVCore-
 REM Windows8.1
 4afc620f-12a4-48ad-8015-2aebfbd6e47c_Client-ESU-Year3[1-3y]_-Enterprise-EnterpriseN-Professional-ProfessionalN-
@@ -4072,6 +4193,13 @@ set esuexistbutnosup=1
 )
 )
 
+if defined esuexistsup if defined _vis (
+set key=9FPV7-MWGT8-7XPDF-JC23W-WT7TW
+REM This is a non-generic blocked MAK key for Server-ESU-PA
+call :ts_inskey "[!key!]"
+goto :ts_off
+)
+
 if defined esuexistsup (
 echo "%tsids%" | find /i "4220f546-f522-46df-8202-4d07afd26454" %nul1% && (
 echo "%tsids%" | find /i "7e94be23-b161-4956-a682-146ab291774c" %nul1% || (
@@ -4094,7 +4222,8 @@ goto :ts_off
 )
 
 set esuavail=
-if %winbuild% LEQ 7602 if not defined isThinpc set esuavail=1
+if defined _vis if defined isServer set esuavail=1
+if %winbuild% LEQ 7602 if not defined _vis if not defined isThinpc set esuavail=1
 if %winbuild% GTR 7602 if %winbuild% LSS 10240 if defined isServer set esuavail=1
 if %winbuild% GEQ 10240 if %winbuild% LEQ 19045 if not defined isServer set esuavail=1
 if %winbuild% EQU 9600 set esuavail=1
@@ -4116,7 +4245,7 @@ if not %_actoff%==1 goto :ts_act
 if %winbuild% LSS 9200 (
 echo:
 call :dk_color %Gray% "Checking Supported Office               [TSforge for Office is supported on Windows 8 and later versions]"
-call :dk_color %Blue% "On Windows 7 build, use Online %KS% activation option for Office instead."
+call :dk_color %Blue% "On Windows Vista / 7, use Online %KS% activation option for Office instead."
 goto :ts_act
 )
 
@@ -4389,7 +4518,7 @@ echo:
 if %winbuild% GEQ 10586 (
 call :dk_color %Gray% "With %KS% Host license, system may randomly change Windows Edition later. It is a Windows issue and can be safely ignored."
 )
-call :dk_color %Gray% "%KS% Host [Not to be confused with %KS% Client] license causes the sppsvc service to run continuously."
+call :dk_color %Gray% "%KS% Host [Not to be confused with %KS% Client] license causes the %_slser% service to run continuously."
 call :dk_color %Blue% "Only use this activation when necessary, you can revert to normal activation from the previous menu."
 
 if %_unattended%==0 (
@@ -4402,6 +4531,8 @@ echo:
 set _arr=
 set tempid=
 set keytype=kmshost
+
+if defined _vis goto :ts_whost_vista
 
 ::  Install current edition csvlk license so that correct edition can reflect for csvlk
 
@@ -4434,12 +4565,65 @@ goto :ts_act
 
 ::========================================================================================================================================
 
+:ts_whost_vista
+
+::  Process Windows K-M-S host for Vista
+
+::  1st column = Activation ID
+::  2nd column = CSVLK key
+::  3rd column = Edition IDs
+::  Separator  = _
+
+set f=
+set key=
+set tempid=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+::  WindowsVista
+212a64dc-43b1-4d3d-a30c-2fc69d2095c6_TWVG3-9Q4P8-W9XJF-Y76FJ-DW%f%Q4R_-Business-BusinessN-Enterprise-EnterpriseN-
+::  WindowsServer2008
+c90d1b4e-8aa8-439e-8b9e-b6d6b6a6d975_BHC4Q-6D7B7-QMVH7-4MKQH-Y9%f%VK7_-ServerComputeCluster-ServerDatacenter-ServerDatacenterV-ServerEnterprise-ServerEnterpriseIA64-ServerEnterpriseV-ServerStandard-ServerStandardV-ServerWeb-
+56df4151-1f9f-41bf-acaa-2941c071872b_PVGKG-2R7XQ-7WTFD-FXTJR-DQ%f%BQ3_-ServerComputeCluster-ServerEnterprise-ServerEnterpriseV-ServerStandard-ServerStandardV-ServerWeb-
+c448fa06-49d1-44ec-82bb-0085545c3b51_KH4PC-KJFX6-XFVHQ-GDK2G-JC%f%JY9_-ServerComputeCluster-ServerWeb-
+) do (
+for /f "tokens=1-3 delims=_" %%A in ("%%#") do if not defined key (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+echo "%%C" | find /i "-%tsedition%-" %nul1% && (
+set key=%%B
+set tempid=%%A
+)
+)
+)
+)
+
+if defined key (
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+) else (
+call :dk_color %Red% "Checking Activation ID                  [Not Found] [%tsedition%] [%osSKU%]"
+call :dk_color %Blue% "%KS% Host license is not found on your system. It is available for the below editions."
+call :dk_color %Blue% "Business, BusinessN, Enterprise, EnterpriseN, and Server editions, etc."
+goto :ts_act
+)
+
+call :ts_inskey "[%key%]"
+if not defined error set tsids=%tsids% %tempid%
+goto :ts_act
+
+::========================================================================================================================================
+
 :ts_ohost
 
 ::  Process Office K-M-S host
 
 echo:
 echo Processing Office %KS% Host...
+
+if defined _vis (
+echo:
+call :dk_color %Blue% "Windows Vista and Server 2008 do not support the installation of Office KMS Host."
+goto :ts_act
+)
 
 set ohostexist=
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
@@ -4523,7 +4707,11 @@ goto :ts_act
 :ts_resetall
 
 echo:
+if defined _vis (
+echo Processing Reset of Rearm / Timers...
+) else (
 echo Processing Reset of Rearm / Timers / Tamper / Lock...
+)
 echo:
 
 set resetstuff=1
@@ -4572,6 +4760,10 @@ goto :dk_done
 
 for /f "delims=" %%a in ('%psc% "$ids = Get-WmiObject -Query 'SELECT ID FROM SoftwareLicensingProduct' | Select-Object -ExpandProperty ID; $ids" %nul6%') do call set "allactids= %%a !allactids! "
 
+if defined _vis (
+echo:
+call :dk_color %Blue% "On Windows Vista and Server 2008, you must manually install the key before activating it."
+)
 echo:
 call :dk_color %Gray% "Enter / Paste the Activation ID shown in first column in the opened text file, or just press Enter to return:"
 echo Add space after each Activation ID if you are adding multiple:
@@ -4702,7 +4894,7 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%trouble
 
 if defined tsids (
 echo:
-echo Installing Forged Product Key Data...
+if not defined _vis Installing Forged Product Key Data...
 echo Depositing Zero Confirmation ID...
 echo:
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':tsforge\:.*';& ([ScriptBlock]::Create($f[1])) %tsids%"
@@ -4940,7 +5132,28 @@ exit /b
 
 :ts_checkwinperm
 
-%psc% "Get-WmiObject -Query 'SELECT Name, Description FROM SoftwareLicensingProduct WHERE LicenseStatus=''1'' AND GracePeriodRemaining=''0'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn IS NULL' | Where-Object { $_.Description -notmatch 'KMS_' } | Select-Object -Property Name" %nul2% | findstr /i "Windows" %nul1% && set _perm=1||set _perm=
+%psc% "Get-WmiObject -Query 'SELECT Name, Description FROM SoftwareLicensingProduct WHERE LicenseStatus=''1'' AND GracePeriodRemaining=''0'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn IS NULL' | Where-Object { $_.Description -notmatch 'KMS' } | Select-Object -Property Name" %nul2% | findstr /i "Windows" %nul1% && set _perm=1||set _perm=
+exit /b
+
+::  Install Key
+
+:ts_inskey
+
+if %_wmic% EQU 1 wmic path %sps% where __CLASS='%sps%' call InstallProductKey ProductKey="%key%" %nul%
+if %_wmic% EQU 0 %psc% "try { $null=(([WMISEARCHER]'SELECT Version FROM %sps%').Get()).InstallProductKey('%key%'); exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
+set keyerror=%errorlevel%
+cmd /c exit /b %keyerror%
+if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
+
+if %keyerror% EQU 0 (
+if %sps%==SoftwareLicensingService call :dk_refresh
+echo Installing Product Key                  %~1 [Successful]
+) else (
+set error=1
+call :dk_color %Red% "Installing Product Key                  %~1 [Failed] %keyerror%"
+call :dk_color %Blue% "%_fixmsg%"
+)
+
 exit /b
 
 ::========================================================================================================================================
@@ -9787,7 +10000,7 @@ function slGetSkuInfo($SkuId) {
     }
 }
 
-if ($env:resetstuff -eq $null) {
+if (-not $env:resetstuff) {
     foreach ($tsactid in $tsactids) {
         try {
             $prodDes = Get-WmiInfo -tsactid $tsactid -property "Description"
@@ -9796,7 +10009,9 @@ if ($env:resetstuff -eq $null) {
                 $nameParts = $prodName -split ',', 2
                 $prodName = if ($nameParts.Count -gt 1) { ($nameParts[1].Trim() -split '[ ,]')[0] } else { $null }
             }
+			if (-not $env:_vis) {
             [LibTSforge.Modifiers.GenPKeyInstall]::InstallGenPKey($ver, $prod, $tsactid)
+			}
             if ($prodName -match 'Office' -and -not (slGetSkuInfo($tsactid))) {
                 $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
                 if ($licenseStatus -eq 1) {
@@ -9829,13 +10044,13 @@ if ($env:resetstuff -eq $null) {
     }
 }
 
-if ($env:resetstuff -eq '1') {
+if ($env:resetstuff) {
     try {
-        [LibTSforge.Modifiers.TamperedFlagsDelete]::DeleteTamperFlags($ver, $prod)
+        if (-not $env:_vis) {[LibTSforge.Modifiers.TamperedFlagsDelete]::DeleteTamperFlags($ver, $prod)}
         [LibTSforge.SPP.SLApi]::RefreshLicenseStatus()
         [LibTSforge.Modifiers.RearmReset]::Reset($ver, $prod)
         [LibTSforge.Modifiers.GracePeriodReset]::Reset($ver, $prod)
-        [LibTSforge.Modifiers.KeyChangeLockDelete]::Delete($ver, $prod)
+        if (-not $env:_vis) {[LibTSforge.Modifiers.KeyChangeLockDelete]::Delete($ver, $prod)}
     }
     catch {
         $errcode = 3
@@ -11285,9 +11500,9 @@ echo:
 echo Initializing...
 call :dk_chkmal
 
-if not exist %SysPath%\sppsvc.exe (
+if not exist %SysPath%\%_slexe% (
 %eline%
-echo [%SysPath%\sppsvc.exe] file is missing, aborting...
+echo [%SysPath%\%_slexe%] file is missing, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
@@ -11339,7 +11554,7 @@ call :dk_color %Blue% "Internet is required for Online %KS% Activation."
 
 echo Initiating Diagnostic Tests...
 
-set "_serv=sppsvc Winmgmt"
+set "_serv=%_slser% Winmgmt"
 
 ::  Software Protection
 ::  Windows Management Instrumentation
@@ -11429,9 +11644,11 @@ echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 if %winbuild% GEQ 9200 if exist "%SysPath%\spp\tokens\skus\%osedition%\*GVLK*.xrm-ms" set sppks=1
 if %winbuild% LSS 9200 if exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*VLKMS*.xrm-ms" set sppks=1
 if %winbuild% LSS 9200 if exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*VL-BYPASS*.xrm-ms" set sppks=1
+if %winbuild% LSS 7600 if exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*KMS*.xrm-ms" set sppks=1
+if %winbuild% LSS 7600 if exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*VL-BYPASS*.xrm-ms" set sppks=1
 
 if defined skunotfound (
-call :dk_color %Red% "Required license files not found in %SysPath%\spp\tokens\skus\"
+call :dk_color %Red% "Required license files not found."
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -12183,6 +12400,11 @@ set "nul=>nul 2>&1"
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
 set psc=powershell.exe -nop -c
 
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
+
 set run_once=
 set t_name=Renewal Task
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "\Activation-Run_Once" >nul && (
@@ -12246,7 +12468,7 @@ call :_taskclear-cache
 ::  Check WMI and sppsvc Errors
 
 set applist=
-net start sppsvc /y %nul%
+net start %_slser% /y %nul%
 if %_wmic% EQU 1 set "chkapp=for /f "tokens=2 delims==" %%a in ('"wmic path %slp% where (ApplicationID='%_wApp%') get ID /VALUE" 2^>nul')"
 if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT ID FROM %slp% WHERE ApplicationID=''%_wApp%''').Get()).ID ^| %% {echo ('ID='+$_)}" 2^>nul')"
 %chkapp% do (if defined applist (call set "applist=!applist! %%a") else (call set "applist=%%a"))
@@ -12548,12 +12770,20 @@ exit /b
 :_taskclear-cache
 
 set w=
-for %%# in (SppE%w%xtComObj.exe sppsvc.exe) do (
+for %%# in (SppE%w%xtComObj.exe sppsvc.exe SLsvc.exe) do (
 reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%
 )
 
 set "OPPk=SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform"
+
+if %winbuild% LSS 7600 (
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL" %nul% && (
+set "SPPk=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL"
+)
+)
+if not defined SPPk (
 set "SPPk=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
+)
 
 set "slp=SoftwareLicensingProduct"
 set "ospp=OfficeSoftwareProtectionProduct"
@@ -12669,10 +12899,11 @@ for /f %%G in ('%psc% "[Guid]::NewGuid().Guid"') do set "randguid=%%G"
 set "_temp=%SystemRoot%\Temp\%Random%%randguid%"
 
 set nil=
+if %winbuild% LSS 7600 (set _vista=_vista)
 if exist "%_temp%\.*" rmdir /s /q "%_temp%\" %nul%
 md "%_temp%\" %nul%
-call :ks_RenExport renewal "%_temp%\Renewal.xml" Unicode
-if not defined _int (call :ks_RenExport run_once "%_temp%\Run_Once.xml" Unicode)
+call :ks_RenExport renewal%_vista% "%_temp%\Renewal.xml" Unicode
+if not defined _int (call :ks_RenExport run_once%_vista% "%_temp%\Run_Once.xml" Unicode)
 s%nil%cht%nil%asks /cre%nil%ate /tn "Activation-Renewal" /ru "SYS%nil%TEM" /xml "%_temp%\Renewal.xml" %nul%
 if not defined _int (s%nil%cht%nil%asks /cre%nil%ate /tn "Activation-Run_Once" /ru "SYS%nil%TEM" /xml "%_temp%\Run_Once.xml" %nul%)
 if exist "%_temp%\.*" rmdir /s /q "%_temp%\" %nul%
@@ -12860,6 +13091,121 @@ exit /b
   </Actions>
 </Task>
 :run_once:
+
+:renewal_vista:
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Date>1999-01-01T12:00:00.34375</Date>
+    <Author>WindowsAddict</Author>
+    <Description>Online K-M-S Activation-Renewal - Weekly Task</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>1999-01-01T12:00:00.34375</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByWeek>
+        <DaysOfWeek>
+          <Sunday />
+        </DaysOfWeek>
+        <WeeksInterval>1</WeeksInterval>
+      </ScheduleByWeek>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <IdleSettings>
+      <Duration>PT10M</Duration>
+      <WaitTimeout>PT1H</WaitTimeout>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>
+    <NetworkSettings />
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
+    <Priority>7</Priority>
+    <RestartOnFailure>
+      <Interval>PT5M</Interval>
+      <Count>3</Count>
+    </RestartOnFailure>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>%ProgramFiles%\Activation-Renewal\Activation_task.cmd</Command>
+      <Arguments>Task</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+:renewal_vista:
+
+:run_once_vista:
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Date>1999-01-01T12:00:00.34375</Date>
+    <Author>WindowsAddict</Author>
+    <Description>Online K-M-S Activation Run Once - Run and Delete itself on first Internet Contact</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+    </LogonTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <IdleSettings>
+      <Duration>PT10M</Duration>
+      <WaitTimeout>PT1H</WaitTimeout>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>
+    <NetworkSettings />
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
+    <Priority>7</Priority>
+    <RestartOnFailure>
+      <Interval>PT5M</Interval>
+      <Count>3</Count>
+    </RestartOnFailure>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>%ProgramFiles%\Activation-Renewal\Activation_task.cmd</Command>
+      <Arguments>Task</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+:run_once_vista:
 
 ::========================================================================================================================================
 
@@ -13192,7 +13538,22 @@ a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4__17_Server
 cda18cf3-c196-46ad-b289-60c072869994_TT8MH-CG224-D3D7Q-498W2-9Q%f%CTX__18_ServerHPC
 a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4__29_ServerWebCore
 f772515c-0e87-48d5-a676-e6962c3e1195_736RG-XDKJK-V34PF-BHK87-J6%f%X3K__56_ServerEmbeddedSolution
-::========================================================================================================================================
+:: Windows Vista
+cfd8ff08-c0d7-452b-9f60-ef5c70c32094_VKK3X-68KWM-X2YGT-QR4M6-4B%f%WMV___4_Enterprise
+4f3d1606-3fea-4c01-be3c-8d671c401e3b_YFKBB-PQJJV-G996G-VWGXY-2V%f%3X8___6_Business
+2c682dc2-8b68-4f63-a165-ae291d4cf138_HMBQG-8H2RH-C77VX-27R82-VM%f%QBT__16_BusinessN
+d4f54950-26f2-4fb4-ba21-ffab16afcade_VTC42-BM838-43QHV-84HX6-XJ%f%XKV__27_EnterpriseN
+:: Windows Server 2008
+ad2542d4-9154-4c6d-8a44-30f11ee96989_TM24T-X9RMF-VWXK6-X8JC9-BF%f%GM2___7_ServerStandard
+68b6e220-cf09-466b-92d3-45cd964b9509_7M67G-PC374-GR742-YH8V4-TC%f%BY3___8_ServerDatacenter
+c1af4d90-d1bc-44ca-85d4-003ba33db3b9_YQGMW-MPWTJ-34KDK-48M3W-X4%f%Q6V__10_ServerEnterprise
+01ef176b-3e0d-422a-b4f8-4ea880035e8f_4DWFP-JF3DJ-B7DTH-78FJB-PD%f%RHK__15_ServerEnterpriseIA64
+ddfa9f7c-f09e-40b9-8c1a-be877a9a7f4b_WYR28-R7TFJ-3X2YQ-YCY4H-M2%f%49D__17_ServerWeb
+7afb1156-2c1d-40fc-b260-aab7442b62fe_RCTX3-KWVHP-BR6TB-RB6DM-6X%f%7HP__18_ServerComputeCluster
+2401e3d0-c50a-4b58-87b2-7e794b7d2607_W7VD6-7JFBR-RX26B-YKQ3Y-6F%f%FFJ__36_ServerStandardV
+fd09ef77-5647-4eff-809c-af2b64659a45_22XQ2-VRXRG-P8D42-K34TD-G3%f%QQC__37_ServerDatacenterV
+8198490a-add0-47b2-b3ba-316b12d647b4_39BXF-X8Q23-P2WWT-38T2F-G3%f%FPG__38_ServerEnterpriseV
+::=======================================================================================================================================
 :: Office 2010
 8ce7e872-188c-4b98-9d90-f8f90b7aad02_V7Y44-9T38C-R2VJK-666HK-T7%f%DDX__14_AccessVL
 cee5d470-6e3b-4fcc-8c2b-d17428568a9f_H62QG-HXVKF-PP4HP-66KMR-CW%f%9BM__14_ExcelVL
@@ -15134,6 +15495,13 @@ mode 125, 32
 )
 title  Fix Licensing ^(ClipSVC ^+ SPP ^+ OSPP^)
 
+if %winbuild% EQU 6001 (
+%eline%
+echo This option is not supported on Windows Vista SP1.
+echo Upgrade to Windows Vista SP2.
+goto :at_back
+)
+
 echo:
 echo %line%
 echo:   
@@ -15150,7 +15518,7 @@ echo            - Clear ClipSVC, SPP and OSPP licenses.
 echo            - Fix permissions of SPP tokens folder and registries.
 echo            - Trigger the repair option for Office.
 echo:
-call :dk_color2 %_White% "      - " %Red% "Apply this option only when it is necessary."
+call :dk_color2 %_White% "      - " %Blue% "Apply this option only when it is necessary."
 echo:
 echo %line%
 echo:
@@ -15314,19 +15682,19 @@ echo [No Error Found]
 )
 
 echo:
-echo Stopping sppsvc service...
-%psc% Stop-Service sppsvc -force %nul%
+echo Stopping %_slser% service...
+%psc% Stop-Service %_slser% -force %nul%
 
 set w=
 set _sppint=
-for %%# in (SppEx%w%tComObj.exe sppsvc.exe) do (reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (set _sppint=1))
+for %%# in (SppEx%w%tComObj.exe %_slexe%) do (reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (set _sppint=1))
 if defined _sppint (
 echo:
 echo Removing SPP IFEO registry keys...
-for %%# in (SppE%w%xtComObj.exe sppsvc.exe) do (reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%)
+for %%# in (SppE%w%xtComObj.exe %_slexe%) do (reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%)
 )
 
-if %winbuild% LSS 9200 (
+if %winbuild% LSS 9200 if not defined _vis (
 REM Fix issues caused by Update KB971033 in Windows 7
 REM https://support.microsoft.com/help/4487266
 echo:
@@ -15345,6 +15713,7 @@ del /f /q %SysPath%\7B296FB0-376B-497e-B012-9C450E1B7327-*.C7483456-A289-439d-81
 
 ::  Delete registry keys that are not deleted by activation scripts
 
+if not defined _vis (
 echo:
 echo Cleaning some licensing-related registry keys...
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "ServiceSessionId" /f
@@ -15352,6 +15721,7 @@ echo Cleaning some licensing-related registry keys...
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "PolicyValuesArray" /f
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "actionlist" /f
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform\data" /f
+)
 
 echo:
 call :scandat delete
@@ -15363,9 +15733,13 @@ call :dk_color %Red% "Failed to delete .dat files."
 echo:
 )
 
+if defined _vis (
+%psc% Start-Service %_slser% %nul%
+)
+
 echo:
 echo Reinstalling system licenses...
-%psc% "Stop-Service sppsvc -force; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if %errorlevel% NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
@@ -15382,7 +15756,7 @@ call :dk_color %Red% "Failed to rebuild tokens.dat file."
 echo tokens.dat file was rebuilt successfully.
 )
 
-if %winbuild% LSS 9200 (
+if %winbuild% LSS 9200 if not defined _vis (
 sc config sppuinotify start= demand
 )
 
@@ -15941,6 +16315,7 @@ for %%# in (
 %SysPath%\spp\store\
 %SysPath%\spp\store\2.0\
 %Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\
+%Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareLicensing\
 ) do (
 
 if %1==check (
@@ -16026,6 +16401,13 @@ set "line=echo _________________________________________________________________
 cls
 if not defined terminal mode 98, 30
 title  Change Windows Edition %masver%
+
+if %winbuild% LSS 7600 (
+%eline%
+echo Unsupported OS version detected [%winbuild%].
+echo This option is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+goto dk_done
+)
 
 echo:
 echo Initializing...
@@ -16883,6 +17265,13 @@ set "line=echo _________________________________________________________________
 cls
 if not defined terminal mode 98, 30
 title  Change Office Edition %masver%
+
+if %winbuild% LSS 7600 (
+%eline%
+echo Unsupported OS version detected [%winbuild%].
+echo This option is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+goto dk_done
+)
 
 echo:
 echo Initializing...

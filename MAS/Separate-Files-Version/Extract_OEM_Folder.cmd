@@ -129,13 +129,30 @@ echo:
 setlocal EnableDelayedExpansion
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
-goto dk_done
+goto done2
 )
 
-if %winbuild% LSS 7600 (
+if %winbuild% LSS 6001 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
+if %winbuild% EQU 6000 (
+echo:
+echo Windows Vista RTM is not supported because Powershell cannot be installed.
+echo Upgrade to Windows Vista SP1 or SP2.
+)
+goto done2
+)
+
+if not exist %ps% (
+%nceline%
+echo PowerShell is not installed in your system.
+if %winbuild% LSS 7600 (
+echo Install PowerShell using the following URL.
+echo:
+echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+)
 goto done2
 )
 
@@ -732,9 +749,15 @@ exit /b
 
 :dk_setvar
 
-set psc=powershell.exe -nop -c
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
@@ -791,8 +814,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
 )
 exit /b
 
@@ -800,8 +825,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
 )
 exit /b
 
