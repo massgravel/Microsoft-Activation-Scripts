@@ -1408,6 +1408,7 @@ exit /b
 
 :dk_ckeckwmic
 
+if %winbuild% LSS 9200 (set _wmic=1&exit /b)
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" %nul2% | find /i "computersystem" %nul1% && set _wmic=1

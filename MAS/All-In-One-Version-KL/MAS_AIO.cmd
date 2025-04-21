@@ -1374,6 +1374,7 @@ function ReinstallLicenses() {
 
 :dk_ckeckwmic
 
+if %winbuild% LSS 9200 (set _wmic=1&exit /b)
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" %nul2% | find /i "computersystem" %nul1% && set _wmic=1
@@ -1687,7 +1688,8 @@ call :dk_color %Red% "Checking Package Files                  [Not Found] [%osed
 )
 
 
-%psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
+if %_wmic% EQU 1 wmic path %sps% get Version %nul%
+if %_wmic% EQU 0 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
 set error_code=%errorlevel%
 cmd /c exit /b %error_code%
 if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
@@ -10978,12 +10980,6 @@ set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 
-sc query sppsvc | find /i "STOPPED" %nul% && (
-echo Stopping sppsvc Service                 [Successful]
-) || (
-call :dk_color %Gray% "Stopping sppsvc Service                 [Failed]"
-)
-
 %_xmlexist% (
 %psc% "Start-Job { Restart-Service ClipSVC } | Wait-Job -Timeout 20 | Out-Null"
 %_xmlexist% timeout /t 2 %nul%
@@ -12431,6 +12427,7 @@ set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" 2>nul | find /i "computersystem" 1>nul && set _wmic=1
 )
+if %winbuild% LSS 9200 set _wmic=1
 
 setlocal EnableDelayedExpansion
 if exist "%ProgramFiles%\Activation-Renewal\" call :_taskstart>>"%ProgramFiles%\Activation-Renewal\Logs.txt"

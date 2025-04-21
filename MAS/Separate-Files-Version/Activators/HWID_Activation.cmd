@@ -1072,6 +1072,7 @@ function ReinstallLicenses() {
 
 :dk_ckeckwmic
 
+if %winbuild% LSS 9200 (set _wmic=1&exit /b)
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" %nul2% | find /i "computersystem" %nul1% && set _wmic=1
@@ -1385,7 +1386,8 @@ call :dk_color %Red% "Checking Package Files                  [Not Found] [%osed
 )
 
 
-%psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
+if %_wmic% EQU 1 wmic path %sps% get Version %nul%
+if %_wmic% EQU 0 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
 set error_code=%errorlevel%
 cmd /c exit /b %error_code%
 if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
