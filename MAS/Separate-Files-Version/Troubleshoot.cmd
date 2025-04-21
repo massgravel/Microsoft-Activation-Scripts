@@ -152,7 +152,7 @@ if %winbuild% LSS 7600 (
 echo Install PowerShell using the following URL.
 echo:
 echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
-start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+if %_unattended%==0 start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
 )
 goto dk_done
 )
