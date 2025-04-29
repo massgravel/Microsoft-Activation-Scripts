@@ -1,4 +1,4 @@
-@set masver=3.0
+@set masver=3.1
 @echo off
 
 
@@ -541,6 +541,7 @@ call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] detected. Script w
 echo:
 )
 
+set generickey=1
 call :dk_inskey "[%key%]"
 
 ::========================================================================================================================================
@@ -960,11 +961,12 @@ set keyerror=%errorlevel%
 cmd /c exit /b %keyerror%
 if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
 
+if defined generickey (set "keyecho=Installing Generic Product Key         ") else (set "keyecho=Installing Product Key                 ")
 if %keyerror% EQU 0 (
 if %sps%==SoftwareLicensingService call :dk_refresh
-echo Installing Generic Product Key          %~1 [Successful]
+echo %keyecho% %~1 [Successful]
 ) else (
-call :dk_color %Red% "Installing Generic Product Key          %~1 [Failed] %keyerror%"
+call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
 if not defined error (
 if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
 call :dk_color %Blue% "%_fixmsg%"
@@ -973,6 +975,7 @@ set showfix=1
 set error=1
 )
 
+set generickey=
 exit /b
 
 ::  Activation command
@@ -1100,7 +1103,7 @@ exit /b
 :dk_product
 
 set d1=%ref% $meth = $TypeBuilder.DefinePInvokeMethod('BrandingFormatString', 'winbrand.dll', 'Public, Static', 1, [String], @([String]), 1, 3);
-set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%')
+set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%') -replace [string][char]0xa9, '(C)' -replace [string][char]0xae, '(R)' -replace [string][char]0x2122, '(TM)'
 
 set winos=
 for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set winos=%%s)
@@ -1109,10 +1112,6 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 if %winbuild% GEQ 22000 (
 set winos=!winos:Windows 10=Windows 11!
 )
-)
-if %winbuild% LSS 7600 (
-set "winos=!winos:VistaT=Vista!"
-set "winos=!winos:Serverr=Server!"
 )
 
 if not defined winsub exit /b

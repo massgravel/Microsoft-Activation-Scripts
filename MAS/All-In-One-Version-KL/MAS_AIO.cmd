@@ -1,5 +1,5 @@
-@::63489fhty3-random
-@set masver=3.0
+@::de62hd8-random
+@set masver=3.1
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -386,8 +386,7 @@ if not defined terminal mode 76, 34
 if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" set _hwidgo=1
 if %winbuild% GTR 14393 if exist "%SysPath%\spp\tokens\skus\EnterpriseSN\" set _hwidgo=
 if not defined _hwidgo set _tsforgego=1
-if %winbuild% GEQ 9200 set _ohookgo=1
-if %winbuild% LSS 9200 set _okmsgo=1
+set _ohookgo=1
 
 echo:
 echo:
@@ -413,11 +412,7 @@ call :dk_color3 %_White% "             [3] " %_Green% "TSforge" %_White% "      
 echo:             [3] TSforge             - Windows / Office / ESU
 )
 echo:             [4] KMS38               - Windows
-if defined _okmsgo (
-call :dk_color3 %_White% "             [5] " %_Green% "Online KMS" %_White% "          - Windows / Office"
-) else (
 echo:             [5] Online KMS          - Windows / Office
-)
 echo:             __________________________________________________ 
 echo:
 echo:             [6] Check Activation Status
@@ -827,6 +822,7 @@ call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] detected. Script w
 echo:
 )
 
+set generickey=1
 call :dk_inskey "[%key%]"
 
 ::========================================================================================================================================
@@ -1246,11 +1242,12 @@ set keyerror=%errorlevel%
 cmd /c exit /b %keyerror%
 if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
 
+if defined generickey (set "keyecho=Installing Generic Product Key         ") else (set "keyecho=Installing Product Key                 ")
 if %keyerror% EQU 0 (
 if %sps%==SoftwareLicensingService call :dk_refresh
-echo Installing Generic Product Key          %~1 [Successful]
+echo %keyecho% %~1 [Successful]
 ) else (
-call :dk_color %Red% "Installing Generic Product Key          %~1 [Failed] %keyerror%"
+call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
 if not defined error (
 if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
 call :dk_color %Blue% "%_fixmsg%"
@@ -1259,6 +1256,7 @@ set showfix=1
 set error=1
 )
 
+set generickey=
 exit /b
 
 ::  Activation command
@@ -1402,7 +1400,7 @@ exit /b
 :dk_product
 
 set d1=%ref% $meth = $TypeBuilder.DefinePInvokeMethod('BrandingFormatString', 'winbrand.dll', 'Public, Static', 1, [String], @([String]), 1, 3);
-set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%')
+set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%') -replace [string][char]0xa9, '(C)' -replace [string][char]0xae, '(R)' -replace [string][char]0x2122, '(TM)'
 
 set winos=
 for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set winos=%%s)
@@ -1411,10 +1409,6 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 if %winbuild% GEQ 22000 (
 set winos=!winos:Windows 10=Windows 11!
 )
-)
-if %winbuild% LSS 7600 (
-set "winos=!winos:VistaT=Vista!"
-set "winos=!winos:Serverr=Server!"
 )
 
 if not defined winsub exit /b
@@ -2170,12 +2164,27 @@ for %%A in (%_act% %_rem%) do (if "%%A"=="1" set _unattended=1)
 
 ::========================================================================================================================================
 
-if %winbuild% LSS 9200 (
-%eline%
+if %winbuild% LSS 6001 (
+%nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Ohook Activation is supported only on Windows 8/10/11 and their server equivalents.
+echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
+if %winbuild% EQU 6000 (
 echo:
-call :dk_color %Blue% "Use Online KMS activation option instead."
+echo Windows Vista RTM is not supported because Powershell cannot be installed.
+echo Upgrade to Windows Vista SP1 or SP2.
+)
+goto dk_done
+)
+
+if not exist %ps% (
+%nceline%
+echo PowerShell is not installed in your system.
+if %winbuild% LSS 7600 (
+echo Install PowerShell using the following URL.
+echo:
+echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+if %_unattended%==0 start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+)
 goto dk_done
 )
 
@@ -2223,8 +2232,8 @@ goto :oh_menu
 
 cls
 if not defined terminal (
-mode 130, 32
-if exist "%SysPath%\spp\store_test\" mode 134, 32
+mode 140, 32
+if exist "%SysPath%\spp\store_test\" mode 140, 32
 %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=32;$B.Height=300;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}" %nul%
 )
 title  Ohook Activation %masver%
@@ -2233,9 +2242,9 @@ echo:
 echo Initializing...
 call :dk_chkmal
 
-if not exist %SysPath%\sppsvc.exe (
+if not exist %SysPath%\%_slexe% (
 %eline%
-echo [%SysPath%\sppsvc.exe] file is missing, aborting...
+echo [%SysPath%\%_slexe%] file is missing, aborting...
 echo:
 call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
 call :dk_color %Blue% "After that, restart system and try activation again."
@@ -2267,7 +2276,7 @@ call :dk_showosinfo
 
 echo Initiating Diagnostic Tests...
 
-set "_serv=sppsvc Winmgmt"
+set "_serv=%_slser% Winmgmt"
 
 ::  Software Protection
 ::  Windows Management Instrumentation
@@ -2276,9 +2285,10 @@ set notwinact=1
 set ohookact=1
 call :dk_errorcheck
 
+call :oh_setspp
+
 ::  Check unsupported office versions
 
-set o14msi=
 set o14c2r=
 set o16uwp=
 
@@ -2293,10 +2303,10 @@ if %winbuild% GEQ 10240 (
 for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Desktop' | Select-Object -ExpandProperty InstallLocation)" %nul6%') do (if exist "%%a\Integration\Integrator.exe" set o16uwp=Office UWP )
 )
 
-if not "%o14msi%%o14c2r%%o16uwp%"=="" (
+if not "%o14c2r%%o16uwp%"=="" (
 echo:
-call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%%o16uwp%]"
-if not "%o14msi%%o16uwp%"=="" call :dk_color %Blue% "Use Online KMS option to activate it."
+call :dk_color %Red% "Checking Unsupported Office Install     [ %o14c2r%%o16uwp%]"
+if not "%o16uwp%"=="" call :dk_color %Blue% "Use TSforge option to activate it."
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -2327,10 +2337,10 @@ set o15c2r=
 set error=1
 )
 
-if "%o16c2r%%o15c2r%%o16msi%%o15msi%"=="" (
+if "%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="" (
 set error=1
 echo:
-if not "%o14msi%%o14c2r%%o16uwp%"=="" (
+if not "%o14c2r%%o16uwp%"=="" (
 call :dk_color %Red% "Checking Supported Office Install       [Not Found]"
 ) else (
 call :dk_color %Red% "Checking Installed Office               [Not Found]"
@@ -2349,8 +2359,8 @@ goto dk_done
 )
 
 set multioffice=
-if not "%o16c2r%%o15c2r%%o16msi%%o15msi%"=="1" set multioffice=1
-if not "%o14msi%%o14c2r%%o16uwp%"=="" set multioffice=1
+if not "%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="1" set multioffice=1
+if not "%o14c2r%%o16uwp%"=="" set multioffice=1
 
 if defined multioffice (
 call :dk_color %Gray% "Checking Multiple Office Install        [Found, its recommended to install only one version]"
@@ -2394,12 +2404,8 @@ set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
 if /i "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
 if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
-if not "%osarch%"=="x86" (
-if /i "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if /i "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
-) else (
-set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-)
+
+call :oh_ppcpath
 
 echo:
 echo Activating Office...                    [C2R ^| %_version% ^| %_oArch%]
@@ -2410,9 +2416,20 @@ set error=1
 goto :starto16c2r
 )
 
+if defined noOsppc (
+call :dk_color %Red% "Checking OSPPC.DLL                      [Not found. Aborting activation...]"
+call :dk_color %Blue% "%_fixmsg%"
+set error=1
+goto :starto16c2r
+)
+
 call :oh_fixprids
 call :oh_process
+if defined isOspp (
+call :oh_hookinstall_ospp
+) else (
 call :oh_hookinstall
+)
 
 ::========================================================================================================================================
 
@@ -2444,12 +2461,8 @@ set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
 if /i "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
 if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
-if not "%osarch%"=="x86" (
-if /i "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if /i "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
-) else (
-set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-)
+
+call :oh_ppcpath
 
 echo:
 echo Activating Office...                    [C2R ^| %_version% %_AudienceData%^| %_oArch%]
@@ -2460,9 +2473,20 @@ set error=1
 goto :startmsi
 )
 
+if defined noOsppc (
+call :dk_color %Red% "Checking OSPPC.DLL                      [Not found. Aborting activation...]"
+call :dk_color %Blue% "%_fixmsg%"
+set error=1
+goto :startmsi
+)
+
 call :oh_fixprids
 call :oh_process
+if defined isOspp (
+call :oh_hookinstall_ospp
+) else (
 call :oh_hookinstall
+)
 
 ::========================================================================================================================================
 
@@ -2499,6 +2523,9 @@ echo Adding a Registry to Prevent Banner     [Successful]
 
 :startmsi
 
+if defined o14msi call :oh_setspp 14
+if defined o14msi call :oh_processmsi 14 %o14msi_reg%
+call :oh_setspp
 if defined o15msi call :oh_processmsi 15 %o15msi_reg%
 if defined o16msi call :oh_processmsi 16 %o16msi_reg%
 
@@ -2530,7 +2557,7 @@ goto :dk_done
 :oh_uninstall
 
 cls
-if not defined terminal mode 99, 32
+if not defined terminal mode 145, 32
 title  Uninstall Ohook Activation %masver%
 
 set _present=
@@ -2546,6 +2573,7 @@ if defined o16c2r_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg
 if defined o15c2r_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg% /v InstallPath" %nul6%') do (set "_15CHook=%%b\root\vfs"))
 if defined o16msi_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o16msi_reg%\Common\InstallRoot /v Path" %nul6%') do (set "_16MHook=%%b"))
 if defined o15msi_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o15msi_reg%\Common\InstallRoot /v Path" %nul6%') do (set "_15MHook=%%b"))
+if defined o14msi_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o14msi_reg%\Common\InstallRoot /v Path" %nul6%') do (set "_14MHook=%%b"))
 
 if defined _16CHook (if exist "%_16CHook%\System\sppc*dll"    (set _present=1& del /s /f /q "%_16CHook%\System\sppc*dll"    & if exist "%_16CHook%\System\sppc*dll"    set _unerror=1))
 if defined _16CHook (if exist "%_16CHook%\SystemX86\sppc*dll" (set _present=1& del /s /f /q "%_16CHook%\SystemX86\sppc*dll" & if exist "%_16CHook%\SystemX86\sppc*dll" set _unerror=1))
@@ -2553,8 +2581,9 @@ if defined _15CHook (if exist "%_15CHook%\System\sppc*dll"    (set _present=1& d
 if defined _15CHook (if exist "%_15CHook%\SystemX86\sppc*dll" (set _present=1& del /s /f /q "%_15CHook%\SystemX86\sppc*dll" & if exist "%_15CHook%\SystemX86\sppc*dll" set _unerror=1))
 if defined _16MHook (if exist "%_16MHook%sppc*dll"            (set _present=1& del /s /f /q "%_16MHook%sppc*dll"            & if exist "%_16MHook%sppc*dll"            set _unerror=1))
 if defined _15MHook (if exist "%_15MHook%sppc*dll"            (set _present=1& del /s /f /q "%_15MHook%sppc*dll"            & if exist "%_15MHook%sppc*dll"            set _unerror=1))
+if defined _14MHook (if exist "%_14MHook%sppc*dll"            (set _present=1& del /s /f /q "%_14MHook%sppc*dll"            & if exist "%_14MHook%sppc*dll"            set _unerror=1))
 
-for %%# in (15 16) do (
+for %%# in (14 15 16) do (
 for %%A in ("%ProgramFiles%" "%ProgramW6432%" "%ProgramFiles(x86)%") do (
 if exist "%%~A\Microsoft Office\Office%%#\sppc*dll" (set _present=1& del /s /f /q "%%~A\Microsoft Office\Office%%#\sppc*dll" & if exist "%%~A\Microsoft Office\Office%%#\sppc*dll" set _unerror=1)
 )
@@ -2567,6 +2596,31 @@ if exist "%%~A\Microsoft %%~G\root\vfs\%%#\sppc*dll" (set _present=1& del /s /f 
 )
 )
 )
+
+::==================================
+
+for %%# in (OSPPC.DLL sppcs.dll) do (
+for %%A in ("%CommonProgramFiles%" "%CommonProgramW6432%" "%CommonProgramFiles(x86)%") do (
+for %%G in ("%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\%%#") do (
+set size=0
+set size=%%~zG
+if !size! GEQ 1 if !size! LSS 100000 (
+set _present=1
+del /f /q "%%~G"
+if exist "%%~G" (move /y "%%~G" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+if exist "%%~G" (set _unerror=1) else (echo Deleted file - %%~G)
+)
+if /i sppcs.dll==%%# if !size! GEQ 100000 (
+move /y "%%~G" "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL" %nul%
+if exist "%%~G" (move /y "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+move /y "%%~G" "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL" %nul%
+if exist "%%~G" (set _unerror=1&echo Failed to rename sppcs.dll back to "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL") else (echo Renamed sppcs.dll back to "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL")
+)
+)
+)
+)
+
+::==================================
 
 reg query HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency %nul% && (
 echo:
@@ -2596,6 +2650,8 @@ reg unload HKU\%%# %nul%
 )
 )
 )
+
+::==================================
 
 set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
 reg query "%kmskey%" %nul% && (
@@ -2643,6 +2699,7 @@ set _oLPath=
 set _hookPath=
 set _hook=
 set _sppcPath=
+set _osppPath=
 set _actid=
 set _prod=
 set _lic=
@@ -2661,6 +2718,7 @@ set o16c2r=
 set o15c2r=
 set o16msi=
 set o15msi=
+set o14msi=
 
 set _68=HKLM\SOFTWARE\Microsoft\Office
 set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
@@ -2674,6 +2732,52 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v P
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o16msi=1&set o16msi_reg=%_68%\16.0)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_86%\15.0)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_68%\15.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=1&set o14msi_reg=%_86%\14.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=1&set o14msi_reg=%_68%\14.0)
+
+exit /b
+
+::========================================================================================================================================
+
+:oh_ppcpath
+
+if not defined isOspp (
+if not "%osarch%"=="x86" (
+if /i "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+if /i "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
+) else (
+set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+)
+)
+
+set noOsppc=
+set _hook68=
+set _hook86=
+set _osppPath68=
+set _osppPath86=
+
+if defined isOspp (
+if not "%osarch%"=="x86" (
+if /i "%_oArch%"=="x64" (
+for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform /v Path" %nul6%') do (set "_osppPath68=%%b")
+if not exist "!_osppPath68!OSPPC.DLL" set noOsppc=1
+)
+if /i "%_oArch%"=="x86" (
+for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform /v Path" %nul6%') do (set "_osppPath68=%%b")
+for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Wow6432Node\Microsoft\OfficeSoftwareProtectionPlatform /v Path" %nul6%') do (set "_osppPath86=%%b")
+if not exist "!_osppPath68!OSPPC.DLL" set noOsppc=1
+if not exist "!_osppPath86!OSPPC.DLL" set noOsppc=1
+)
+) else (
+for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform /v Path" %nul6%') do (set "_osppPath86=%%b")
+if not exist "!_osppPath86!OSPPC.DLL" set noOsppc=1
+)
+if "!_osppPath68:~-1!"=="\" set "_osppPath68=!_osppPath68:~0,-1!"
+if "!_osppPath86:~-1!"=="\" set "_osppPath86=!_osppPath86:~0,-1!"
+)
+
+if defined _osppPath68 set _hook68=sppc64.dll
+if defined _osppPath86 set _hook86=sppc32.dll
 
 exit /b
 
@@ -2769,15 +2873,24 @@ set hasherror=
 if %_hook%==sppc32.dll set offset=2564
 if %_hook%==sppc64.dll set offset=3076
 
-del /s /q "%_hookPath%\sppcs.dll" %nul%
-del /s /q "%_hookPath%\sppc.dll" %nul%
+::======================================
 
-if exist "%_hookPath%\sppcs.dll" set "ierror=Remove Previous Ohook Install"
-if exist "%_hookPath%\sppc.dll" set "ierror=Remove Previous Ohook Install"
+::  Remove previous Install
+
+for %%# in (sppcs.dll sppc.dll) do (
+del /f /q "%_hookPath%\%%#" %nul%
+if exist "%_hookPath%\%%#" (move /y "%_hookPath%\%%#" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+if exist "%_hookPath%\%%#" (set "ierror=Remove Previous Ohook Install [%%#]")
+)
+
+if defined ierror goto :oh_hookinstall_error
+
+::======================================
 
 mklink "%_hookPath%\sppcs.dll" "%_sppcPath%" %nul%
-if not %errorlevel%==0 (
-if not defined ierror set ierror=mklink
+if not exist "%_hookPath%\sppcs.dll" (
+set ierror=mklink sppcs.dll
+goto :oh_hookinstall_error
 )
 
 set exhook=
@@ -2792,17 +2905,122 @@ popd
 call :oh_extractdll "%_hookPath%\sppc.dll" "%offset%"
 )
 )
-if not exist "%_hookPath%\sppc.dll" (if not defined ierror set ierror=Copy)
+if not exist "%_hookPath%\sppc.dll" (
+set ierror=Copy
+goto :oh_hookinstall_error
+)
 
 echo:
-if not defined ierror (
-echo Symlinking System's sppc.dll to         ["%_hookPath%\sppcs.dll"] [Successful]
+echo Symlinking System's sppc.dll            ["%_hookPath%\sppcs.dll"] [Successful]
 if defined exhook (
 echo Copying Custom %_hook% to            ["%_hookPath%\sppc.dll"] [Successful]
 ) else (
 echo Extracting Custom %_hook% to         ["%_hookPath%\sppc.dll"] [Successful]
 )
+
+goto :oh_hookinstall_error
+
+::========================================================================================================================================
+
+:oh_hookinstall_ospp
+
+set ierror=
+set hasherror=
+
+if defined _hook86 set offset86=2564
+if defined _hook68 set offset68=3076
+
+::======================================
+
+::  Remove previous Install
+
+for %%# in (OSPPC.DLL sppcs.dll) do (
+for %%A in ("%_osppPath68%\%%#" "%_osppPath86%\%%#") do (
+set size=0
+set size=%%~zA
+if !size! GEQ 1 if !size! LSS 100000 (
+del /f /q "%%~A" %nul%
+if exist "%%~A" (move /y "%%~A" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+if exist "%%~A" (set "ierror=Remove Previous Ohook Install [%%#]")
+)
+)
+)
+
+if defined ierror goto :oh_hookinstall_error
+
+for %%A in ("%_osppPath68%" "%_osppPath86%") do (
+if exist "%%~A\sppcs.dll" (move /y "%%~A\sppcs.dll" "%%~A\OSPPC.DLL" %nul%)
+if exist "%%~A\sppcs.dll" (
+move /y "%%~A\OSPPC.DLL" "!_ttemp!\needsToBeDeleted%random%" %nul%
+move /y "%%~A\sppcs.dll" "%%~A\OSPPC.DLL" %nul%
+)
+if exist "%%~A\sppcs.dll" (set "ierror=Move sppcs.dll back to OSPPC.DLL")
+)
+
+del /f /q "%_hookPath%\sppcs.dll" %nul%
+if exist "%_hookPath%\sppcs.dll" (move /y "%_hookPath%\sppcs.dll" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+if exist "%_hookPath%\sppcs.dll" (set "ierror=Remove Previous Ohook mklink sppcs.dll")
+
+if defined ierror goto :oh_hookinstall_error
+
+::======================================
+
+if defined _osppPath68 (move /y "%_osppPath68%\OSPPC.DLL" "%_osppPath68%\sppcs.dll" %nul% & if not exist "%_osppPath68%\sppcs.dll" set ierror=1)
+if defined _osppPath86 (move /y "%_osppPath86%\OSPPC.DLL" "%_osppPath86%\sppcs.dll" %nul% & if not exist "%_osppPath86%\sppcs.dll" set ierror=1)
+
+if defined ierror (
+set "ierror=Rename OSPPC.DLL"
+goto :oh_hookinstall_error
+)
+
+if defined _osppPath68 if defined _osppPath86     (mklink "%_hookPath%\sppcs.dll" "%_osppPath86%\sppcs.dll" %nul%)
+if defined _osppPath68 if not defined _osppPath86 (mklink "%_hookPath%\sppcs.dll" "%_osppPath68%\sppcs.dll" %nul%)
+if defined _osppPath86 if not defined _osppPath68 (mklink "%_hookPath%\sppcs.dll" "%_osppPath86%\sppcs.dll" %nul%)
+
+if not exist "%_hookPath%\sppcs.dll" (
+set ierror=mklink sppcs.dll
+goto :oh_hookinstall_error
+)
+
+set exhook=
+if exist "!_work!\BIN\%_hook68%" if exist "!_work!\BIN\%_hook86%"  set exhook=1
+
+if defined exhook (
+pushd "!_work!\BIN\"
+if defined _osppPath68 (copy /y /b "%_hook68%" "%_osppPath68%\OSPPC.DLL" %nul%)
+if defined _osppPath86 (copy /y /b "%_hook86%" "%_osppPath86%\OSPPC.DLL" %nul%)
+popd
 ) else (
+if defined _osppPath68 (set _hook=%_hook68%&call :oh_extractdll "%_osppPath68%\OSPPC.DLL" "%offset68%")
+if defined _osppPath86 (set _hook=%_hook86%&call :oh_extractdll "%_osppPath86%\OSPPC.DLL" "%offset86%")
+)
+
+if defined _osppPath68 (if not exist "%_osppPath68%\OSPPC.DLL" set ierror=1)
+if defined _osppPath86 (if not exist "%_osppPath86%\OSPPC.DLL" set ierror=1)
+
+if defined ierror (
+set ierror=Copy
+goto :oh_hookinstall_error
+)
+
+echo:
+if defined _osppPath68 (echo Renaming OSPPC.DLL to sppcs.dll         ["%_osppPath68%\sppcs.dll"])
+if defined _osppPath86 (echo Renaming OSPPC.DLL to sppcs.dll         ["%_osppPath86%\sppcs.dll"])
+if defined exhook (
+if defined _osppPath68 (echo Copying Custom %_hook68% to            ["%_osppPath68%\OSPPC.DLL"])
+if defined _osppPath86 (echo Copying Custom %_hook86% to            ["%_osppPath86%\OSPPC.DLL"])
+) else (
+if defined _osppPath68 (echo Extracting Custom %_hook68% to         ["%_osppPath68%\OSPPC.DLL"])
+if defined _osppPath86 (echo Extracting Custom %_hook86% to         ["%_osppPath86%\OSPPC.DLL"])
+)
+
+echo Symlinking Renamed sppcs.dll            ["%_hookPath%\sppcs.dll"]
+
+::========================================================================================================================================
+
+:oh_hookinstall_error
+
+if defined ierror (
 set error=1
 call :dk_color %Red% "Installing Ohook                        [Failed to %ierror%]"
 echo:
@@ -2821,12 +3039,32 @@ if not defined exhook if not defined ierror (
 if defined hasherror (
 set error=1
 set ierror=1
-call :dk_color %Red% "Modifying Hash of Custom %_hook%     [Failed]"
+call :dk_color %Red% "Modifying Hash of Custom sppcs.dll      [Failed]"
 ) else (
-echo Modifying Hash of Custom %_hook%     [Successful]
+echo Modifying Hash of Custom sppcs.dll      [Successful]
 )
 )
 
+exit /b
+
+::========================================================================================================================================
+
+:oh_setspp
+
+set isOspp=
+if %winbuild% GEQ 9200 (
+set spp=SoftwareLicensingProduct
+set sps=SoftwareLicensingService
+) else (
+set isOspp=1
+set spp=OfficeSoftwareProtectionProduct
+set sps=OfficeSoftwareProtectionService
+)
+if "%1"=="14" (
+set isOspp=1
+set spp=OfficeSoftwareProtectionProduct
+set sps=OfficeSoftwareProtectionService
+)
 exit /b
 
 ::========================================================================================================================================
@@ -2850,10 +3088,11 @@ call :ohookdata getinfo !_prod!
 
 if not "!key!"=="" (
 echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
+if not %oVer%==14 set generickey=1
 call :dk_inskey "[!key!] [!_prod!] [!_lic!]"
 ) else (
 set error=1
-call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !_prod! not found in script]"
+call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !_prod! key not found in script]"
 call :dk_color %Blue% "Make sure you are using the latest version of MAS."
 set fixes=%fixes% %mas%
 call :dk_color %_Yellow% "%mas%"
@@ -2880,7 +3119,11 @@ exit /b
 ::  Process Office MSI Version
 
 call :oh_reset
+if "%1"=="14" (
+call :dk_actids 59a52881-a989-479d-af46-f275c6370663
+) else (
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
+)
 
 set oVer=%1
 for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\InstallRoot /v Path" %nul6%') do (set "_oRoot=%%b")
@@ -2893,16 +3136,8 @@ if "%osarch%"=="x86" set _oArch=x86
 
 if /i "%_oArch%"=="x64" (set "_hookPath=%_oRoot%" & set "_hook=sppc64.dll")
 if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%" & set "_hook=sppc32.dll")
-if not "%osarch%"=="x86" (
-if /i "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if /i "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
-) else (
-set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-)
 
-set "_common=%CommonProgramFiles%"
-if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
-set "_common2=%CommonProgramFiles(x86)%"
+call :oh_ppcpath
 
 call :msiofficedata %2
 
@@ -2915,8 +3150,23 @@ call :dk_color %Red% "Checking Installed Products             [Product IDs not f
 exit /b
 )
 
+if defined noOsppc (
+call :dk_color %Red% "Checking OSPPC.DLL                      [Not found. Aborting activation...]"
+call :dk_color %Blue% "%_fixmsg%"
+set error=1
+exit /b
+)
+
+if %oVer%==14 if defined SingleImage (
+echo Checking Installed Products             [SingleImage product found, Professional Retail key will be used for activation]
+)
+
 call :oh_process
+if defined isOspp (
+call :oh_hookinstall_ospp
+) else (
 call :oh_hookinstall
+)
 
 exit /b
 
@@ -3154,15 +3404,69 @@ exit /b
 
 ::  1st column = Office version number
 ::  2nd column = Activation ID
-::  3rd column = Generic key. Preference is given in this order, Retail:TB:Sub > Retail > OEM:NONSLP > Volume:MAK > Volume:GVLK
+::  3rd column = For Office 2013 and later, the generated keys are listed. For Office 2010, the blocked keys sourced from the Internet are listed.
+::               For Office 2013 and later, key preference is given in this order, Retail:TB:Sub > Retail > OEM:NONSLP > Volume:MAK > Volume:GVLK
+::               For Office 2010, key preference is given in this order, Retail > Volume:MAK
 ::  4th column = Last part of license description
 ::  5th column = Edition
+::  6th column = Other Edition IDs if they are part of the same primary product (For reference only)
 ::  Separator  = "_"
+
+::===============
+
+:: We couldn't find any keys (blocked/generic doesn't matter) for these Office 2010 products. If you have them, please share with us.
+
+14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_Retail________ExcelR_[HSExcelR]
+14_7004b7f0-6407-4f45-8eac-966e5f868bde_Retail________GrooveR
+14_fbf4ac36-31c8-4340-8666-79873129cf40_Retail________OutlookR
+14_133c8359-4e93-4241-8118-30bb18737ea0_Retail________PowerPointR_[HSPowerPointR]
+14_98677603-a668-4fa4-9980-3f1f05f78f69_Retail________PublisherR
+14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_Retail________WordR_[HSWordR]
+14_dbe3aee0-5183-4ff7-8142-66050173cb01_Retail________SmallBusBasicsR_[SmallBusBasicsMSDNR]
+
+:: These installers are not publicly available, so it doesn't matter if we don't have their keys.
+
+14_19316117-30a8-4773-8fd9-7f7231f4e060_SubPrepid_____HomeBusinessSubR
+14_4d06f72e-fd50-4bc2-a24b-d448d7f17ef2_SubPrepid_____ProjectProSubR
+14_e98ef0c0-71c4-42ce-8305-287d8721e26c_SubPrepid_____ProPlusSubR
+14_14f5946a-debc-4716-babc-7e2c240fec08_Retail________MondoR
+14_533b656a-4425-480b-8e30-1a2358898350_MAK___________MondoVL
 
 :ohookdata
 
 set f=
 for %%# in (
+:: Office 2010
+14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_7KTYC-XR43P-C3MRW-BJKFD-XB%f%YPG_Retail________AccessR
+14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_7XHPQ-BQMYG-YBP49-CY8B2-T8%f%CGQ_ByPass________AccessRuntimeR
+14_95ab3ec8-4106-4f9d-b632-03c019d1d23f_89RTQ-MT4GK-6CPTX-WWP7C-J9%f%KXR_MAK___________AccessVL
+14_71dc86ff-f056-40d0-8ffb-9592705c9b76_39TRR-C2F37-9WYJ2-MJQXH-B9%f%38K_MAK___________ExcelVL
+14_fdad0dfa-417d-4b4f-93e4-64ea8867b7fd_RCGT3-FPQDV-H49CD-PPDBF-TH%f%47G_MAK___________GrooveVL
+14_7b7d1f17-fdcb-4820-9789-9bec6e377821_3YR9B-D9W79-BY66R-R8XYP-QY%f%YYY_Retail________HomeBusinessR_[HomeBusinessDemoR]
+14_09e2d37e-474b-4121-8626-58ad9be5776f_3X43R-HHHXX-FRHRW-2M2WJ-8V%f%PHD_Retail________HomeStudentR_[HomeStudentDemoR]
+14_ef1da464-01c8-43a6-91af-e4e5713744f9_XDGJY-KFHW9-JWX9X-YM4GW-GC%f%8WR_Retail________InfoPathR
+14_85e22450-b741-430c-a172-a37962c938af_6GKT2-KMJPK-4RRBF-8VQKB-JB%f%6G6_MAK___________InfoPathVL
+14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_2TG3P-9DB76-4YT99-8RXGD-CW%f%XBP_Retail________OneNoteR_[HSOneNoteR]
+14_6860b31f-6a67-48b8-84b9-e312b3485c4b_CV64P-F4VRH-BJ33D-PH6MR-X6%f%9RY_MAK___________OneNoteVL
+14_a9aeabd8-63b8-4079-a28e-f531807fd6b8_J8C9M-YXMH2-9CX44-2C3YG-V7%f%692_MAK___________OutlookVL
+14_acb51361-c0db-4895-9497-1831c41f31a6_GMBWM-WVX26-7WHV4-DB43D-WV%f%DY2_Retail________PersonalR_[PersonalDemoR,PersonalPrepaidR]
+14_38252940-718c-4aa6-81a4-135398e53851_HPBQP-RJHDR-Q3472-PT9Q6-PB%f%B72_MAK___________PowerPointVL
+14_8b559c37-0117-413e-921b-b853aeb6e210_367X9-9HP9R-TKHY6-DH4QH-K9%f%PY7_Retail________ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR,OEM-SingleImage]
+14_725714d7-d58f-4d12-9fa8-35873c6f7215_6JD4G-KRW3J-48MGV-DM6FC-T9%f%WKR_Retail________ProjectProR_[ProjectProMSDNR]
+14_1cf57a59-c532-4e56-9a7d-ffa2fe94b474_3XDTH-MMGJ6-F9MKX-THP8D-G9%f%BP7_MAK___________ProjectProVL
+14_688f6589-2bd9-424e-a152-b13f36aa6de1_2W96V-RTQ9R-2BPVT-PT8H9-MV%f%68T_Retail________ProjectStdR
+14_11b39439-6b93-4642-9570-f2eb81be2238_4DTT4-D4MKX-23KFH-JKR6T-YK%f%G2J_MAK___________ProjectStdVL
+14_71af7e84-93e6-4363-9b69-699e04e74071_2J9H6-H4D3G-PCXD2-96XVM-TR%f%R73_Retail________ProPlusR_[ProPlusAcadR,ProPlusMSDNR,Sub4R]
+14_fdf3ecb9-b56f-43b2-a9b8-1b48b6bae1a7_6CD6C-9R8PB-T2D9Y-8RKKX-W7%f%DFK_MAK___________ProPlusVL_[ProPlusAcadVL]
+14_3d014759-b128-4466-9018-e80f6320d9d0_32YG9-3VX77-YXJVV-PRVFW-TT%f%8BV_MAK___________PublisherVL
+14_8090771e-d41a-4482-929e-de87f1f47e46_7VKXH-9BWCG-RPTBB-JBRV3-GR%f%HYC_MAK___________SmallBusBasicsVL
+14_b78df69e-0966-40b1-ae85-30a5134dedd0_H48K6-FB4Y6-P83GH-9J7XG-HD%f%KKX_ByPass________SPDR
+14_b6d2565c-341d-4768-ad7d-addbe00bb5ce_W3BTX-H6BW7-Q6DFW-BXFFY-8R%f%VJP_Retail________StandardR_[StandardMSDNR][KeyisforMSDNR]
+14_1f76e346-e0be-49bc-9954-70ec53a4fcfe_2XTQP-GDR7C-GTXPC-6W6PV-4R%f%XGC_MAK___________StandardVL_[StandardAcadVL]
+14_2745e581-565a-4670-ae90-6bf7c57ffe43_VXHHB-W7HBD-7M342-RJ7P8-CH%f%BD6_ByPass________StarterR
+14_66cad568-c2dc-459d-93ec-2f3cb967ee34_2RDPT-WPYQM-C2WXF-BTPDW-2J%f%2HM_Retail________VisioSIR_Prem[Pro,Std]
+14_36756cb8-8e69-4d11-9522-68899507cd6a_7PKFT-X2MKQ-GT6X2-8CB2W-CH%f%C9K_MAK___________VisioSIVL_Prem[Pro,Std]
+14_98d4050e-9c98-49bf-9be1-85e12eb3ab13_6J3XK-DFKGK-X373V-QJHYM-V3%f%FC2_MAK___________WordVL
 :: Office 2013
 15_ab4d047b-97cf-4126-a69f-34df08e2f254_B7RFY-7NXPK-Q4342-Y9X2H-3J%f%X4X_Retail________AccessRetail
 15_259de5be-492b-44b3-9d78-9645f848f7b0_X3XNB-HJB7K-66THH-8DWQ3-XH%f%GJP_Bypass________AccessRuntimeRetail
@@ -3397,7 +3701,7 @@ exit /b
 :oh_extractdll
 
 set b=
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$encoded = ($f[1]) -replace '-', 'A' -replace '_', 'a';$bytes = [Con%b%vert]::FromBas%b%e64String($encoded); $PePath='%1'; $offset='%2'; $m=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';iex ($m[1]);" %nul2% | find /i "Error found" %nul1% && set hasherror=1
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$encoded = ($f[1]) -replace '-', 'A' -replace '_', 'a';$bytes = [Con%b%vert]::FromBas%b%e64String($encoded); $PePath='%1'; $offset='%2'; $m=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';iex ($m[1])" %nul2% | find /i "Error found" %nul1% && set hasherror=1
 exit /b
 
 :hexedit:
@@ -3436,7 +3740,7 @@ $Writer.Write($unixTimestamp)
 $Writer.Flush()
 
 # Write the current state of the MemoryStream to a temporary file
-$tempFilePath = [System.IO.Path]::Combine($env:windir, "Temp", [System.IO.Path]::GetRandomFileName())
+$tempFilePath = "$env:windir\Temp\$([System.IO.Path]::GetRandomFileName())"
 [System.IO.File]::WriteAllBytes($tempFilePath, $MemoryStream.ToArray())
 
 # Update hash using the temporary file
@@ -3693,8 +3997,6 @@ set _unattended=0
 
 set _args=%*
 if defined _args set _args=%_args:"=%
-if defined _args set _args=%_args:re1=%
-if defined _args set _args=%_args:re2=%
 if defined _args for %%A in (%_args%) do (
 if /i "%%A"=="-el"                     (set _elev=1)
 if /i "%%A"=="/Z-Windows"              (set _actwin=1)
@@ -3739,9 +4041,9 @@ echo:
 echo        ______________________________________________________________
 echo: 
 echo               [1] Activate - Windows
-echo               [2] Activate - Windows [ESU]
-echo               [3] Activate - Office  [All]
-echo               [4] Activate - Office  [Project/Visio]
+echo               [2] Activate - ESU
+echo               [3] Activate - Office [All]
+echo               [4] Activate - Office [Project/Visio]
 echo               [5] Activate - All
 echo               _______________________________________________  
 echo: 
@@ -3871,13 +4173,6 @@ set "_serv=%_slser% Winmgmt"
 ::  Windows Management Instrumentation
 
 call :dk_errorcheck
-
-if defined error (
-call :dk_color %Red% "Some errors were detected. Aborting the operation..."
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
-goto :dk_done
-)
 
 call :ts_getedition
 if not defined tsedition (
@@ -4012,7 +4307,8 @@ goto :ts_esu
 
 echo Checking Activation ID                  [%tempid%] [%tsedition%]
 
-call :ts_inskey "[%key%]"
+set generickey=1
+call :dk_inskey "[%key%]"
 if not defined error set tsids=%tsids% %tempid%
 goto :ts_esu
 
@@ -4134,7 +4430,8 @@ goto :ts_esu
 echo Resetting Rearm / GracePeriod           [Successful]
 )
 
-call :ts_inskey "[%key%]"
+set generickey=1
+call :dk_inskey "[%key%]"
 
 ::========================================================================================================================================
 
@@ -4207,7 +4504,7 @@ set esuexistbutnosup=1
 if defined esuexistsup if defined _vis (
 set key=9FPV7-MWGT8-7XPDF-JC23W-WT7TW
 REM This is a non-generic blocked MAK key for Server-ESU-PA
-call :ts_inskey "[!key!]"
+call :dk_inskey "[!key!]"
 goto :ts_off
 )
 
@@ -4256,7 +4553,7 @@ if not %_actoff%==1 goto :ts_act
 if %winbuild% LSS 9200 (
 echo:
 call :dk_color %Gray% "Checking Supported Office               [TSforge for Office is supported on Windows 8 and later versions]"
-call :dk_color %Blue% "On Windows Vista / 7, use Online %KS% activation option for Office instead."
+call :dk_color %Blue% "On Windows Vista / 7, use Ohook activation option for Office instead."
 goto :ts_act
 )
 
@@ -4297,6 +4594,7 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v P
 if not "%o14msi%%o14c2r%"=="" (
 echo:
 call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%]"
+if defined o14msi call :dk_color %Blue% "Use Ohook activation option for Office 2010."
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -4617,7 +4915,7 @@ call :dk_color %Blue% "Business, BusinessN, Enterprise, EnterpriseN, and Server 
 goto :ts_act
 )
 
-call :ts_inskey "[%key%]"
+call :dk_inskey "[%key%]"
 if not defined error set tsids=%tsids% %tempid%
 goto :ts_act
 
@@ -5144,27 +5442,6 @@ exit /b
 :ts_checkwinperm
 
 %psc% "Get-WmiObject -Query 'SELECT Name, Description FROM SoftwareLicensingProduct WHERE LicenseStatus=''1'' AND GracePeriodRemaining=''0'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn IS NULL' | Where-Object { $_.Description -notmatch 'KMS' } | Select-Object -Property Name" %nul2% | findstr /i "Windows" %nul1% && set _perm=1||set _perm=
-exit /b
-
-::  Install Key
-
-:ts_inskey
-
-if %_wmic% EQU 1 wmic path %sps% where __CLASS='%sps%' call InstallProductKey ProductKey="%key%" %nul%
-if %_wmic% EQU 0 %psc% "try { $null=(([WMISEARCHER]'SELECT Version FROM %sps%').Get()).InstallProductKey('%key%'); exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
-set keyerror=%errorlevel%
-cmd /c exit /b %keyerror%
-if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
-
-if %keyerror% EQU 0 (
-if %sps%==SoftwareLicensingService call :dk_refresh
-echo Installing Product Key                  %~1 [Successful]
-) else (
-set error=1
-call :dk_color %Red% "Installing Product Key                  %~1 [Failed] %keyerror%"
-call :dk_color %Blue% "%_fixmsg%"
-)
-
 exit /b
 
 ::========================================================================================================================================
@@ -10651,7 +10928,7 @@ echo:
 echo                 [0] %_exitmsg%
 echo:           ______________________________________________________
 echo: 
-call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard [1,2,0]"
+call :dk_color2 %_White% "              " %_Green% "Choose a menu option using your keyboard [1,2,0]"
 choice /C:120 /N
 set _el=!errorlevel!
 if !_el!==3  exit /b
@@ -10882,6 +11159,7 @@ call echo Checking Installed Product Key          [Partial Key - %%_partial%%] [
 )
 
 if defined key (
+set generickey=1
 call :dk_inskey "[%key%]"
 )
 
@@ -11700,6 +11978,7 @@ call echo Checking Installed Product Key          [Partial Key - %%_partial%%] [
 )
 
 if defined key (
+set generickey=1
 call :dk_inskey "[%key%]"
 )
 
@@ -11709,7 +11988,7 @@ call :dk_inskey "[%key%]"
 
 if not %_actoff%==1 goto :ks_activate
 
-call :ks_setspp
+call :oh_setspp
 
 ::  Check ohook install
 
@@ -11754,7 +12033,7 @@ set ohub=1
 
 ::  Check supported office versions
 
-call :ks_getpath
+call :oh_getpath
 
 set o16uwp=
 set o16uwp_path=
@@ -11933,9 +12212,9 @@ call :ks_process
 
 :ks_startmsi
 
-if defined o14msi call :ks_setspp 14
+if defined o14msi call :oh_setspp 14
 if defined o14msi call :ks_processmsi 14 %o14msi_reg%
-call :ks_setspp
+call :oh_setspp
 if defined o15msi call :ks_processmsi 15 %o15msi_reg%
 if defined o16msi call :ks_processmsi 16 %o16msi_reg%
 
@@ -12079,33 +12358,6 @@ exit /b
 
 ::========================================================================================================================================
 
-:ks_getpath
-
-set o16c2r=
-set o15c2r=
-set o16msi=
-set o15msi=
-set o14msi=
-
-set _68=HKLM\SOFTWARE\Microsoft\Office
-set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
-
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set o16c2r=1&set o16c2r_reg=%_86%\ClickToRun)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set o16c2r=1&set o16c2r_reg=%_68%\ClickToRun)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_86%\15.0\ClickToRun)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_68%\15.0\ClickToRun)
-
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o16msi=1&set o16msi_reg=%_86%\16.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o16msi=1&set o16msi_reg=%_68%\16.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_86%\15.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_68%\15.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=1&set o14msi_reg=%_86%\14.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=1&set o14msi_reg=%_68%\14.0)
-
-exit /b
-
-::========================================================================================================================================
-
 ::  After retail to volume conversion, new product ID needs .OSPPReady key in registry, otherwise product info may not fully reflect 
 
 :ks_osppready
@@ -12134,16 +12386,19 @@ exit /b
 
 ::========================================================================================================================================
 
-:ks_setspp
+:oh_setspp
 
+set isOspp=
 if %winbuild% GEQ 9200 (
 set spp=SoftwareLicensingProduct
 set sps=SoftwareLicensingService
 ) else (
+set isOspp=1
 set spp=OfficeSoftwareProtectionProduct
 set sps=OfficeSoftwareProtectionService
 )
 if "%1"=="14" (
+set isOspp=1
 set spp=OfficeSoftwareProtectionProduct
 set sps=OfficeSoftwareProtectionService
 )
@@ -12203,6 +12458,7 @@ call :ks_osppready
 
 if not "!key!"=="" (
 echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
+set generickey=1
 call :dk_inskey "[!key!] [!_prod!]"
 ) else (
 if not defined _oMSI (
@@ -12211,7 +12467,7 @@ call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !
 call :dk_color %Blue% "Make sure you are using Latest MAS script."
 ) else (
 call :dk_color %Red% "Checking Product In Script              [!_prod! MSI Retail is not supported]"
-call :dk_color %Blue% "Uninstall this and Install C2R or MSI VL version of Office."
+call :dk_color %Blue% "Use Ohook option to activate it."
 )
 set fixes=%fixes% %mas%genuine-installation-media
 call :dk_color %_Yellow% "%mas%genuine-installation-media"
@@ -12244,10 +12500,6 @@ if "%_oRoot:~-1%"=="\" set "_oRoot=%_oRoot:~0,-1%"
 echo "%2" | find /i "Wow6432Node" %nul1% && set _oArch=x86
 if not "%osarch%"=="x86" if not defined _oArch set _oArch=x64
 if "%osarch%"=="x86" set _oArch=x86
-
-set "_common=%CommonProgramFiles%"
-if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
-set "_common2=%CommonProgramFiles(x86)%"
 
 call :msiofficedata %2
 
@@ -13228,47 +13480,30 @@ exit /b
 ::  5th column = Other Edition IDs if they are part of the same primary product (For reference only)
 ::  Separator  = "_"
 
-:: EditionID Notes:
-:: For Office 2013 and later, all Edition IDs are clearly defined, and each ID corresponds to its specific licensing.
-
-:: In Office 2010, the situation is a bit more complicated.
-:: Products typically fall into two separate categories: Volume License (VL) and Non-VL. This is because a single installation cannot include both Retail and VL licensing types.
-:: Some Edition IDs share the same primary product ID. For example, installing ProPlusVL also installs ProPlusAcadVL licenses, as both use 0011 as the primary product ID.
-:: Therefore, in the script, we grouped VL and Non-VL versions by primary product ID and selected the highest Edition ID when multiple Edition IDs existed for the same primary product ID.
-
-:: There are a few exceptions to this 2010 rule: Visio (Premium, Pro, Standard) and OEM-SingleImage.
-
-:: For Visio, the issue is that branding.xml lists incorrect primary product IDs. The correct primary product ID for all three Visio variants is 0057. Based on the criteria above, we chose Visio-Premium as the representative Edition ID among the three.
-:: For OEM-SingleImage, it installs multiple Edition IDs and uses 003D as the primary product ID. Following our method, we selected the highest available Edition ID—ProfessionalR in this case.
-
 :msiofficedata
 
 for %%# in (
 14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_0015_AccessR
 14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_001C_AccessRuntimeR
 14_95ab3ec8-4106-4f9d-b632-03c019d1d23f_0015_AccessVL
-14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_0016_ExcelR
+14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_0016_ExcelR_[HSExcelR]
 14_71dc86ff-f056-40d0-8ffb-9592705c9b76_0016_ExcelVL
 14_7004b7f0-6407-4f45-8eac-966e5f868bde_00BA_GrooveR
 14_fdad0dfa-417d-4b4f-93e4-64ea8867b7fd_00BA_GrooveVL
 14_7b7d1f17-fdcb-4820-9789-9bec6e377821_0013_HomeBusinessR_[HomeBusinessDemoR]
 14_19316117-30a8-4773-8fd9-7f7231f4e060_011E_HomeBusinessSubR
 14_09e2d37e-474b-4121-8626-58ad9be5776f_002F_HomeStudentR_[HomeStudentDemoR]
-14_c3ae020c-5a71-4cc5-a27a-2a97c2d46860_0029_HSExcelR
-14_25fe4611-b44d-49cc-ae87-2143d299194e_00A3_HSOneNoteR
-14_d652ad8d-da5c-4358-b928-7fb1b4de7a7c_0037_HSPowerPointR
-14_a963d7ae-7a88-41a7-94da-8bb5635a8af9_002B_HSWordR
 14_ef1da464-01c8-43a6-91af-e4e5713744f9_0044_InfoPathR
 14_85e22450-b741-430c-a172-a37962c938af_0044_InfoPathVL
 14_14f5946a-debc-4716-babc-7e2c240fec08_000F_MondoR
 14_533b656a-4425-480b-8e30-1a2358898350_000F_MondoVL
 14_c1ceda8b-c578-4d5d-a4aa-23626be4e234_003D_ProfessionalR_[OEM-SingleImage]Exception
-14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_00A1_OneNoteR
+14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_00A1_OneNoteR_[HSOneNoteR]
 14_6860b31f-6a67-48b8-84b9-e312b3485c4b_00A1_OneNoteVL
 14_fbf4ac36-31c8-4340-8666-79873129cf40_001A_OutlookR
 14_a9aeabd8-63b8-4079-a28e-f531807fd6b8_001A_OutlookVL
 14_acb51361-c0db-4895-9497-1831c41f31a6_0033_PersonalR_[PersonalDemoR,PersonalPrepaidR]
-14_133c8359-4e93-4241-8118-30bb18737ea0_0018_PowerPointR
+14_133c8359-4e93-4241-8118-30bb18737ea0_0018_PowerPointR_[HSPowerPointR]
 14_38252940-718c-4aa6-81a4-135398e53851_0018_PowerPointVL
 14_8b559c37-0117-413e-921b-b853aeb6e210_0014_ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR]
 14_725714d7-d58f-4d12-9fa8-35873c6f7215_003B_ProjectProR_[ProjectProMSDNR]
@@ -13289,7 +13524,7 @@ for %%# in (
 14_2745e581-565a-4670-ae90-6bf7c57ffe43_0066_StarterR
 14_66cad568-c2dc-459d-93ec-2f3cb967ee34_0057_VisioSIR_Prem[Pro,Std]Exception
 14_36756cb8-8e69-4d11-9522-68899507cd6a_0057_VisioSIVL_Prem[Pro,Std]Exception
-14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_001B_WordR
+14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_001B_WordR_[HSWordR]
 14_98d4050e-9c98-49bf-9be1-85e12eb3ab13_001B_WordVL
 :: Office 2013
 15_ab4d047b-97cf-4126-a69f-34df08e2f254_0015_AccessRetail
@@ -13407,6 +13642,7 @@ if "%oVer%"=="%%A" (
 reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-%%C-" %nul% && (
 reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
 if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
+if /i 003D==%%C set SingleImage=1
 )
 )
 )
@@ -13878,12 +14114,14 @@ function BoolToWStr($bVal) {
 }
 
 function InitializePInvoke($LaDll, $bOffice) {
-	$Marshal = [System.Runtime.InteropServices.Marshal]
-	$Module = [AppDomain]::CurrentDomain.DefineDynamicAssembly((Get-Random), 'Run').DefineDynamicModule((Get-Random), $False)
-	$SLApp = $NT7 -Or $bOffice -Or ($LaDll -EQ 'sppc.dll' -And [Diagnostics.FileVersionInfo]::GetVersionInfo("$SysPath\sppc.dll").FilePrivatePart -GE 16501)
-
+	$LaName = [IO.Path]::GetFileNameWithoutExtension($LaDll)
+	$SLApp = $NT7 -Or $bOffice -Or ($LaName -EQ 'sppc' -And [Diagnostics.FileVersionInfo]::GetVersionInfo("$SysPath\sppc.dll").FilePrivatePart -GE 16501)
 	$Win32 = $null
-	$Class = $Module.DefineType((Get-Random), 'Public, Abstract, Sealed, BeforeFieldInit', [Object], 0)
+
+	$Marshal = [System.Runtime.InteropServices.Marshal]
+	$Module = [AppDomain]::CurrentDomain.DefineDynamicAssembly(($LaName+"_Assembly"), 'Run').DefineDynamicModule(($LaName+"_Module"), $False)
+	$Class = $Module.DefineType(($LaName+"_Methods"), 'Public, Abstract, Sealed, BeforeFieldInit', [Object], 0)
+
 	$Class.DefinePInvokeMethod('SLClose', $LaDll, 22, 1, [Int32], @([IntPtr]), 1, 3).SetImplementationFlags(128)
 	$Class.DefinePInvokeMethod('SLOpen', $LaDll, 22, 1, [Int32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
 	$Class.DefinePInvokeMethod('SLGenerateOfflineInstallationId', $LaDll, 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
@@ -13932,10 +14170,51 @@ function SlGetInfoIID($SkuId)
 	{
 		return $null
 	}
+	else
+	{
+		return $Marshal::PtrToStringUni($bData)
+	}
+}
 
-	$rData = $Marshal::PtrToStringUni($bData)
-	$Marshal::FreeHGlobal($bData)
-	return $rData
+function SlReturnData($hrRet, $tData, $cData, $bData) {
+	if ($hrRet -NE 0 -Or $cData -EQ 0)
+	{
+		return $null
+	}
+	if ($tData -EQ 1)
+	{
+		return $Marshal::PtrToStringUni($bData)
+	}
+	elseif ($tData -EQ 4)
+	{
+		return $Marshal::ReadInt32($bData)
+	}
+	elseif ($tData -EQ 3 -And $cData -EQ 8)
+	{
+		return $Marshal::ReadInt64($bData)
+	}
+	else
+	{
+		return $null
+	}
+}
+
+function SlGetInfoPKey($PkeyId, $Value)
+{
+	$tData = 0
+	$cData = 0
+	$bData = 0
+
+	$hrRet = $Win32::SLGetPKeyInformation(
+		$hSLC,
+		[ref][Guid]$PkeyId,
+		$Value,
+		[ref]$tData,
+		[ref]$cData,
+		[ref]$bData
+	)
+
+	return SlReturnData $hrRet $tData $cData $bData
 }
 
 function SlGetInfoSku($SkuId, $Value)
@@ -13944,7 +14223,7 @@ function SlGetInfoSku($SkuId, $Value)
 	$cData = 0
 	$bData = 0
 
-	$ret = $Win32::SLGetProductSkuInformation(
+	$hrRet = $Win32::SLGetProductSkuInformation(
 		$hSLC,
 		[ref][Guid]$SkuId,
 		$Value,
@@ -13953,70 +14232,7 @@ function SlGetInfoSku($SkuId, $Value)
 		[ref]$bData
 	)
 
-	if ($ret -Or !$cData)
-	{
-		return $null
-	}
-
-	if ($tData -EQ 1)
-	{
-		$rData = $Marshal::PtrToStringUni($bData)
-	}
-	elseif ($tData -EQ 4)
-	{
-		$rData = $Marshal::ReadInt32($bData)
-	}
-	elseif ($tData -EQ 3 -And $cData -EQ 8)
-	{
-		$rData = $Marshal::ReadInt64($bData)
-	}
-	else
-	{
-		$rData = $null
-	}
-
-	$Marshal::FreeHGlobal($bData)
-	return $rData
-}
-
-function SlGetInfoService($Value)
-{
-	$tData = 0
-	$cData = 0
-	$bData = 0
-
-	$ret = $Win32::SLGetServiceInformation(
-		$hSLC,
-		$Value,
-		[ref]$tData,
-		[ref]$cData,
-		[ref]$bData
-	)
-
-	if ($ret -Or !$cData)
-	{
-		return $null
-	}
-
-	if ($tData -EQ 1)
-	{
-		$rData = $Marshal::PtrToStringUni($bData)
-	}
-	elseif ($tData -EQ 4)
-	{
-		$rData = $Marshal::ReadInt32($bData)
-	}
-	elseif ($tData -EQ 3 -And $cData -EQ 8)
-	{
-		$rData = $Marshal::ReadInt64($bData)
-	}
-	else
-	{
-		$rData = $null
-	}
-
-	$Marshal::FreeHGlobal($bData)
-	return $rData
+	return SlReturnData $hrRet $tData $cData $bData
 }
 
 function SlGetInfoApp($AppId, $Value)
@@ -14025,7 +14241,7 @@ function SlGetInfoApp($AppId, $Value)
 	$cData = 0
 	$bData = 0
 
-	$ret = $Win32::SLGetApplicationInformation(
+	$hrRet = $Win32::SLGetApplicationInformation(
 		$hSLC,
 		[ref][Guid]$AppId,
 		$Value,
@@ -14034,80 +14250,49 @@ function SlGetInfoApp($AppId, $Value)
 		[ref]$bData
 	)
 
-	if ($ret -Or !$cData)
-	{
-		return $null
-	}
+	return SlReturnData $hrRet $tData $cData $bData
+}
 
-	if ($tData -EQ 1)
-	{
-		$rData = $Marshal::PtrToStringUni($bData)
-	}
-	elseif ($tData -EQ 4)
-	{
-		$rData = $Marshal::ReadInt32($bData)
-	}
-	elseif ($tData -EQ 3 -And $cData -EQ 8)
-	{
-		$rData = $Marshal::ReadInt64($bData)
-	}
-	else
-	{
-		$rData = $null
-	}
+function SlGetInfoService($Value)
+{
+	$tData = 0
+	$cData = 0
+	$bData = 0
 
-	$Marshal::FreeHGlobal($bData)
-	return $rData
+	$hrRet = $Win32::SLGetServiceInformation(
+		$hSLC,
+		$Value,
+		[ref]$tData,
+		[ref]$cData,
+		[ref]$bData
+	)
+
+	return SlReturnData $hrRet $tData $cData $bData
 }
 
 function SlGetInfoSvcApp($strApp, $Value)
 {
 	if ($SLApp)
 	{
-		$rData = SlGetInfoApp $strApp $Value
+		return SlGetInfoApp $strApp $Value
 	}
 	else
 	{
-		$rData = SlGetInfoService $Value
+		return SlGetInfoService $Value
 	}
-	return $rData
-}
-
-function SlGetInfoPKey($PkeyId, $Value)
-{
-	$cData = 0
-	$bData = 0
-
-	$ret = $Win32::SLGetPKeyInformation(
-		$hSLC,
-		[ref][Guid]$PKeyId,
-		$Value,
-		[ref]$null,
-		[ref]$cData,
-		[ref]$bData
-	)
-
-	if ($ret -Or !$cData)
-	{
-		return $null
-	}
-
-	$rData = $Marshal::PtrToStringUni($bData)
-	$Marshal::FreeHGlobal($bData)
-	return $rData
 }
 
 function SlGetInfoLicensing($AppId, $SkuId)
 {
-	$LicenseStatus = 0
-	$GracePeriodRemaining = 0
+	$dwStatus = 0
+	$dwGrace = 0
 	$hrReason = 0
-	$EvaluationEndDate = 0
+	$qwValidity = 0
 
 	$cStatus = 0
 	$pStatus = 0
 
-	$ret = $Win32::SLGetLicensingStatusInformation(
+	$hrRet = $Win32::SLGetLicensingStatusInformation(
 		$hSLC,
 		[ref][Guid]$AppId,
 		[ref][Guid]$SkuId,
@@ -14116,72 +14301,38 @@ function SlGetInfoLicensing($AppId, $SkuId)
 		[ref]$pStatus
 	)
 
-	if ($ret -Or !$cStatus)
+	if ($hrRet -NE 0 -Or $cStatus -EQ 0)
 	{
 		return
 	}
 
 	[IntPtr]$ppStatus = [Int64]$pStatus + [Int64]40 * ($cStatus - 1)
-	$eStatus = $Marshal::ReadInt32($ppStatus, 16)
-	$GracePeriodRemaining = $Marshal::ReadInt32($ppStatus, 20)
+	$dwStatus = $Marshal::ReadInt32($ppStatus, 16)
+	$dwGrace = $Marshal::ReadInt32($ppStatus, 20)
 	$hrReason = $Marshal::ReadInt32($ppStatus, 28)
-	$EvaluationEndDate = $Marshal::ReadInt64($ppStatus, 32)
+	$qwValidity = $Marshal::ReadInt64($ppStatus, 32)
 
-	if ($eStatus -EQ 3)
+	if ($dwStatus -EQ 3)
 	{
-		$eStatus = 5
+		$dwStatus = 5
 	}
-	if ($eStatus -EQ 2)
+	if ($dwStatus -EQ 2)
 	{
 		if ($hrReason -EQ 0x4004F00D)
 		{
-			$eStatus = 3
+			$dwStatus = 3
 		}
 		elseif ($hrReason -EQ 0x4004F065)
 		{
-			$eStatus = 4
+			$dwStatus = 4
 		}
 		elseif ($hrReason -EQ 0x4004FC06)
 		{
-			$eStatus = 6
+			$dwStatus = 6
 		}
 	}
-	$LicenseStatus = $eStatus
 
-	$Marshal::FreeHGlobal($pStatus)
 	return
-}
-
-function SlCheckInfo($SkuId, $Value)
-{
-	$cData = 0
-	$bData = 0
-
-	$ret = $Win32::SLGetProductSkuInformation(
-		$hSLC,
-		[ref][Guid]$SkuId,
-		$Value,
-		[ref]$null,
-		[ref]$cData,
-		[ref]$bData
-	)
-
-	if ($ret -Or !$cData)
-	{
-		return $false
-	}
-
-	if ($Value -EQ "pkeyId")
-	{
-		$rData = $Marshal::PtrToStringUni($bData)
-	}
-	else
-	{
-		$rData = $true
-	}
-
-	$Marshal::FreeHGlobal($bData)
-	return $rData
 }
 
 function SlGetInfoSLID($AppId)
@@ -14189,7 +14340,7 @@ function SlGetInfoSLID($AppId)
 	$cReturnIds = 0
 	$pReturnIds = 0
 
-	$ret = $Win32::SLGetSLIDList(
+	$hrRet = $Win32::SLGetSLIDList(
 		$hSLC,
 		0,
 		[ref][Guid]$AppId,
@@ -14198,7 +14349,7 @@ function SlGetInfoSLID($AppId)
 		[ref]$pReturnIds
 	)
 
-	if ($ret -Or !$cReturnIds)
+	if ($hrRet -NE 0 -Or $cReturnIds -EQ 0)
 	{
 		return
 	}
@@ -14213,17 +14364,16 @@ function SlGetInfoSLID($AppId)
 		$bytes = New-Object byte[] 16
 		$Marshal::Copy([Int64]$pReturnIds + [Int64]16 * $i, $bytes, 0, 16)
 		$actid = ([Guid]$bytes).Guid
-		$gPPK = SlCheckInfo $actid "pkeyId"
-		$gAdd = SlCheckInfo $actid "DependsOn"
+		$gPPK = SlGetInfoSku $actid "pkeyId"
+		$gAdd = SlGetInfoSku $actid "DependsOn"
 		if ($All.IsPresent) {
-			if (!$gPPK -And $gAdd) { $a1List += @{id = $actid; pk = $null; ex = $true} }
-			if (!$gPPK -And !$gAdd) { $a2List += @{id = $actid; pk = $null; ex = $false} }
+			if ($null -EQ $gPPK -And $null -NE $gAdd) { $a1List += @{id = $actid; pk = $null; ex = $true} }
+			if ($null -EQ $gPPK -And $null -EQ $gAdd) { $a2List += @{id = $actid; pk = $null; ex = $false} }
 		}
-		if ($gPPK -And $gAdd) { $a3List += @{id = $actid; pk = $gPPK; ex = $true} }
-		if ($gPPK -And !$gAdd) { $a4List += @{id = $actid; pk = $gPPK; ex = $false} }
+		if ($null -NE $gPPK -And $null -NE $gAdd) { $a3List += @{id = $actid; pk = $gPPK; ex = $true} }
+		if ($null -NE $gPPK -And $null -EQ $gAdd) { $a4List += @{id = $actid; pk = $gPPK; ex = $false} }
 	}
 
-	$Marshal::FreeHGlobal($pReturnIds)
 	return ($a1List + $a2List + $a3List + $a4List)
 }
 
@@ -14280,7 +14430,7 @@ function DetectSubscription {
 
 function DetectAdbaClient
 {
-	$propADBA | foreach { set $_ (SlGetInfoSku $ID $_) }
+	$propADBA | foreach { set $_ (SlGetInfoSku $licID $_) }
 	CONOUT "`nAD Activation client information:"
 	CONOUT "    Object Name: $ADActivationObjectName"
 	CONOUT "    Domain Name: $ADActivationObjectDN"
@@ -14290,7 +14440,7 @@ function DetectAdbaClient
 
 function DetectAvmClient
 {
-	$propAVMA | foreach { set $_ (SlGetInfoSku $ID $_) }
+	$propAVMA | foreach { set $_ (SlGetInfoSku $licID $_) }
 	CONOUT "`nAutomatic VM Activation client information:"
 	if (-Not [String]::IsNullOrEmpty($InheritedActivationId)) {
 		CONOUT "    Guest IAID: $InheritedActivationId"
@@ -14321,7 +14471,6 @@ function DetectKmsHost
 	if (-Not $IsKeyManagementService) {
 		return
 	}
-	if ($null -NE $ExpireMsg) {CONOUT "`n    $ExpireMsg"}
 
 	if ($Vista -Or $NT5) {
 		$regk = $SLKeyPath
@@ -14374,9 +14523,9 @@ function DetectKmsHost
 
 function DetectKmsClient
 {
-	if ($strSLP -EQ $wslp -And $NT8)
+	if ($win8)
 	{
-		$VLType = strGetRegistry ($SPKeyPath + '\' + $strApp + '\' + $ID) "VLActivationType"
+		$VLType = strGetRegistry ($SPKeyPath + '\' + $strApp + '\' + $licID) "VLActivationType"
 		if ($null -EQ $VLType) {$VLType = strGetRegistry ($SPKeyPath + '\' + $strApp) "VLActivationType"}
 		if ($null -EQ $VLType) {$VLType = strGetRegistry ($SPKeyPath) "VLActivationType"}
 		if ($null -EQ $VLType -Or $VLType -GT 3) {$VLType = 0}
@@ -14390,7 +14539,7 @@ function DetectKmsClient
 	}
 
 	if ($NT7 -Or $strSLP -EQ $oslp) {
-		$propKMSClient | foreach { set $_ (SlGetInfoSku $ID $_) }
+		$propKMSClient | foreach { set $_ (SlGetInfoSku $licID $_) }
 		if ($strSLP -EQ $oslp) {$regk = $OPKeyPath} else {$regk = $SPKeyPath}
 		$KMSCaching = strGetRegistry $regk "DisableKeyManagementServiceHostCaching"
 		if (-Not $KMSCaching) {$KMSCaching = "TRUE"} else {$KMSCaching = BoolToWStr (!$KMSCaching)}
@@ -14448,58 +14597,90 @@ function DetectKmsClient
 
 function GetResult($strSLP, $strApp, $entry)
 {
-	$ID = $entry.id
-	$propPrd | foreach { set $_ (SlGetInfoSku $ID $_) }
-	. SlGetInfoLicensing $strApp $ID
+	$licID = $entry.id
+	$propPrd | foreach { set $_ (SlGetInfoSku $licID $_) }
+	. SlGetInfoLicensing $strApp $licID
+	$LicenseStatus = $dwStatus
+	$LicReason = $hrReason
+	$EvaluationEndDate = $qwValidity
+	$gprMnt = $dwGrace
+
+	$pkid = $entry.pk
+	$isPPK = $null -NE $pkid
+
+	$add_on = $Name.IndexOf("add-on for", 5)
+	if ($add_on -NE -1) {
+		$Name = $Name.Substring(0, $add_on + 7)
+	}
+
+	$licPHN = "empty"
+	if ($Dlv -Or $All.IsPresent) {
+		$licPHN = SlGetInfoSku $licID "msft:sl/EUL/PHONE/PUBLIC"
+	}
+
+	if ($LicenseStatus -EQ 0 -And !$isPPK) {
+		& $isAll
+		CONOUT "Name: $Name"
+		CONOUT "Description: $Description"
+		CONOUT "Activation ID: $licID"
+		CONOUT "License Status: Unlicensed"
+		if ($licPHN -NE "empty") {
+			$gPHN = [String]::IsNullOrEmpty($licPHN) -NE $true
+			CONOUT "Phone activatable: $($gPHN.ToString())"
+		}
+		return
+	}
 
 	$winID = ($strApp -EQ $winApp)
 	$winPR = ($winID -And -Not $entry.ex)
 	$Vista = ($winID -And $NT6 -And -Not $NT7)
 	$NT5 = ($strSLP -EQ $wslp -And $winbuild -LT 6001)
+	$win8 = ($strSLP -EQ $wslp -And $NT8)
 	$reapp = ("Windows", "App")[!$winID]
 	$prmnt = ("machine", "product")[!$winPR]
 
-	if ($Description | Select-String "VOLUME_KMSCLIENT") {$cKmsClient = 1; $_mTag = "Volume"}
-	if ($Description | Select-String "TIMEBASED_") {$cTblClient = 1; $_mTag = "Timebased"}
-	if ($Description | Select-String "VIRTUAL_MACHINE_ACTIVATION") {$cAvmClient = 1; $_mTag = "Automatic VM"}
-	if ($null -EQ $cKmsClient) {
-		if ($Description | Select-String "VOLUME_KMS") {$cKmsServer = 1}
+	if ($Description.Contains("VOLUME_KMSCLIENT")) {$cKmsClient = 1; $actTag = "Volume"}
+	if ($Description.Contains("TIMEBASED_")) {$cTblClient = 1; $actTag = "Timebased"}
+	if ($Description.Contains("VIRTUAL_MACHINE_ACTIVATION")) {$cAvmClient = 1; $actTag = "Automatic VM"}
+	if ($null -EQ $cKmsClient -And $Description.Contains("VOLUME_KMS")) {$cKmsServer = 1}
+
+	$gprDay = [Math]::Round($gprMnt/1440)
+	$_xpr = ""
+	$inGrace = $false
+	if ($gprMnt -GT 0) {
+		$_xpr = [DateTime]::Now.AddMinutes($gprMnt).ToString('yyyy-MM-dd hh:mm:ss tt')
+		$inGrace = $true
 	}
 
-	$_gpr = [Math]::Round($GracePeriodRemaining/1440)
-	if ($_gpr -GT 0) {
-		$_xpr = [DateTime]::Now.AddMinutes($GracePeriodRemaining).ToString('yyyy-MM-dd hh:mm:ss tt')
-	}
-
-	$LicenseReason = '0x{0:X}' -f $hrReason
-	$LicenseMsg = "Time remaining: $GracePeriodRemaining minute(s) ($_gpr day(s))"
+	$LicenseMsg = "Time remaining: $gprMnt minute(s) ($gprDay day(s))"
 	if ($LicenseStatus -EQ 0) {
 		$LicenseInf = "Unlicensed"
 		$LicenseMsg = $null
 	}
 	if ($LicenseStatus -EQ 1) {
 		$LicenseInf = "Licensed"
-		if ($GracePeriodRemaining -EQ 0) {
+		if ($gprMnt -EQ 0) {
 			$LicenseMsg = $null
 			$ExpireMsg = "The $prmnt is permanently activated."
 		} else {
-			$LicenseMsg = "$_mTag activation expiration: $GracePeriodRemaining minute(s) ($_gpr day(s))"
-			if ($null -NE $_xpr) {$ExpireMsg = "$_mTag activation will expire $_xpr"}
+			$LicenseMsg = "$actTag activation expiration: $gprMnt minute(s) ($gprDay day(s))"
+			if ($inGrace) {$ExpireMsg = "$actTag activation will expire $_xpr"}
 		}
 	}
 	if ($LicenseStatus -EQ 2) {
 		$LicenseInf = "Initial grace period"
-		if ($null -NE $_xpr) {$ExpireMsg = "Initial grace period ends $_xpr"}
+		if ($inGrace) {$ExpireMsg = "$LicenseInf ends $_xpr"}
 	}
 	if ($LicenseStatus -EQ 3) {
 		$LicenseInf = "Additional grace period (KMS license expired or hardware out of tolerance)"
-		if ($null -NE $_xpr) {$ExpireMsg = "Additional grace period ends $_xpr"}
+		if ($inGrace) {$ExpireMsg = "Additional grace period ends $_xpr"}
 	}
 	if ($LicenseStatus -EQ 4) {
 		$LicenseInf = "Non-genuine grace period"
-		if ($null -NE $_xpr) {$ExpireMsg = "Non-genuine grace period ends $_xpr"}
+		if ($inGrace) {$ExpireMsg = "$LicenseInf ends $_xpr"}
 	}
 	if ($LicenseStatus -EQ 5 -And -Not $NT5) {
+		$LicenseReason = '0x{0:X}' -f $LicReason
 		$LicenseInf = "Notification"
 		$LicenseMsg = "Notification Reason: $LicenseReason"
 		if ($LicenseReason -EQ "0xC004F00F") {if ($null -NE $cKmsClient) {$LicenseMsg = $LicenseMsg + " (KMS license expired)."} else {$LicenseMsg = $LicenseMsg + " (hardware out of tolerance)."}}
@@ -14512,36 +14693,35 @@ function GetResult($strSLP, $strApp, $entry)
 	}
 	if ($LicenseStatus -EQ 6 -And -Not $Vista -And -Not $NT5) {
 		$LicenseInf = "Extended grace period"
-		if ($null -NE $_xpr) {$ExpireMsg = "Extended grace period ends $_xpr"}
+		if ($inGrace) {$ExpireMsg = "$LicenseInf ends $_xpr"}
 	}
 
-	$pkid = $entry.pk
-	if ($null -NE $pkid) {
+	if ($isPPK) {
 		$propPkey | foreach { set $_ (SlGetInfoPKey $pkid $_) }
 	}
 
-	if ($winPR -And $null -NE $PartialProductKey -And -Not $NT8) {
-		$uxd = SlGetInfoSku $ID 'UXDifferentiator'
+	if ($winPR -And $isPPK -And -Not $NT8) {
+		$uxd = SlGetInfoSku $licID 'UXDifferentiator'
 		$script:primary += @{
-			aid = $ID;
+			aid = $licID;
 			ppk = $PartialProductKey;
 			chn = $Channel;
 			lst = $LicenseStatus;
-			lcr = $hrReason;
-			ged = $GracePeriodRemaining;
+			lcr = $LicReason;
+			ged = $gprMnt;
 			evl = $EvaluationEndDate;
 			dff = $uxd
 		}
 	}
 
-	if ($IID -And $null -NE $PartialProductKey) {
-		$OfflineInstallationId = SlGetInfoIID $ID
+	if ($IID -And $isPPK) {
+		$OfflineInstallationId = SlGetInfoIID $licID
 	}
 
 	if ($Dlv) {
-		if ($strSLP -EQ $wslp -And $NT8)
+		if ($win8)
 		{
-			$RemainingSkuReArmCount = SlGetInfoSku $ID 'RemainingRearmCount'
+			$RemainingSkuReArmCount = SlGetInfoSku $licID 'RemainingRearmCount'
 			$RemainingAppReArmCount = SlGetInfoApp $strApp 'RemainingRearmCount'
 		}
 		else
@@ -14561,16 +14741,10 @@ function GetResult($strSLP, $strApp, $entry)
 		}
 	}
 
-	if ($Dlv -Or $All.IsPresent) {
-		$gPHN = SlCheckInfo $ID "msft:sl/EUL/PHONE/PUBLIC"
-	}
-
-	$add_on = $Name.IndexOf("add-on for", 5)
-
 	& $isAll
-	if ($add_on -EQ -1) {CONOUT "Name: $Name"} else {CONOUT "Name: $($Name.Substring(0, $add_on + 7))"}
+	CONOUT "Name: $Name"
 	CONOUT "Description: $Description"
-	CONOUT "Activation ID: $ID"
+	CONOUT "Activation ID: $licID"
 	if ($null -NE $DigitalPID) {CONOUT "Extended PID: $DigitalPID"}
 	if ($null -NE $DigitalPID2 -And $Dlv) {CONOUT "Product ID: $DigitalPID2"}
 	if ($null -NE $OfflineInstallationId -And $IID) {CONOUT "Installation ID: $OfflineInstallationId"}
@@ -14582,9 +14756,9 @@ function GetResult($strSLP, $strApp, $entry)
 		$EED = [DateTime]::FromFileTimeUtc($EvaluationEndDate).ToString('yyyy-MM-dd hh:mm:ss tt')
 		CONOUT "Evaluation End Date: $EED UTC"
 	}
-	if ($LicenseStatus -NE 1 -And $null -NE $gPHN) {
-		$gPHN = $gPHN.ToString()
-		CONOUT "Phone activatable: $gPHN"
+	if ($LicenseStatus -NE 1 -And $licPHN -NE "empty") {
+		$gPHN = [String]::IsNullOrEmpty($licPHN) -NE $true
+		CONOUT "Phone activatable: $($gPHN.ToString())"
 	}
 	if ($Dlv) {
 		if ($null -NE $RemainingSLReArmCount) {
@@ -14599,11 +14773,11 @@ function GetResult($strSLP, $strApp, $entry)
 			CONOUT "Trusted time: $TTD"
 		}
 	}
-	if ($null -EQ $PartialProductKey) {
+	if (!$isPPK) {
 		return
 	}
 
-	if ($strSLP -EQ $wslp -And $NT8 -And $VLActivationType -EQ 1) {
+	if ($win8 -And $VLActivationType -EQ 1) {
 		DetectAdbaClient
 	}
 
@@ -14611,7 +14785,7 @@ function GetResult($strSLP, $strApp, $entry)
 		DetectAvmClient
 	}
 
-	$chkSub = ($winPR -And $cSub)
+	$chkSub = ($winPR -And $isSub)
 
 	$chkSLS = ($null -NE $cKmsClient -Or $null -NE $cKmsServer -Or $chkSub)
 
@@ -14620,15 +14794,14 @@ function GetResult($strSLP, $strApp, $entry)
 		return
 	}
 
-	if ($null -NE $cKmsServer) {
-		DetectKmsHost
-	}
-
 	if ($null -NE $cKmsClient) {
 		DetectKmsClient
 	}
 
-	if ($null -EQ $cKmsServer) {
+	if ($null -NE $cKmsServer) {
+		if ($null -NE $ExpireMsg) {CONOUT "`n    $ExpireMsg"}
+		DetectKmsHost
+	} else {
 		if ($null -NE $ExpireMsg) {CONOUT "`n    $ExpireMsg"}
 	}
 
@@ -15045,14 +15218,14 @@ function clcGetExpireKrn
 	$cData = 0
 	$bData = 0
 
-	$ret = $Win32::SLGetWindowsInformation(
+	$hrRet = $Win32::SLGetWindowsInformation(
 		"Kernel-ExpirationDate",
 		[ref]$tData,
 		[ref]$cData,
 		[ref]$bData
 	)
 
-	if ($ret -Or !$cData -Or $tData -NE 3)
+	if ($hrRet -Or !$cData -Or $tData -NE 3)
 	{
 		return $null
 	}
@@ -15067,7 +15240,7 @@ function clcGetExpireKrn
 		$rData = '{0}/{1}/{2}:{3}:{4}:{5}' -f $year, $Marshal::ReadInt16($bData, 2), $Marshal::ReadInt16($bData, 4), $Marshal::ReadInt16($bData, 6), $Marshal::ReadInt16($bData, 8), $Marshal::ReadInt16($bData, 10)
 	}
 
-	$Marshal::FreeHGlobal($bData)
+	#$Marshal::FreeHGlobal($bData)
 	return $rData
 }
 
@@ -15103,12 +15276,12 @@ function clcGetGenuineState($AppId)
 	$dwGenuine = 0
 
 	if ($NT7) {
-		$ret = $Win32::SLIsWindowsGenuineLocal([ref]$dwGenuine)
+		$hrRet = $Win32::SLIsWindowsGenuineLocal([ref]$dwGenuine)
 	} else {
-		$ret = $Win32::SLIsGenuineLocal([ref][Guid]$AppId, [ref]$dwGenuine, 0)
+		$hrRet = $Win32::SLIsGenuineLocal([ref][Guid]$AppId, [ref]$dwGenuine, 0)
 	}
 
-	if ($ret)
+	if ($hrRet)
 	{
 		$dwGenuine = 4
 	}
@@ -15176,7 +15349,7 @@ $osls = "OfficeSoftwareProtectionService"
 $winApp = "55c92734-d682-4d71-983e-d6ec3f16059f"
 $o14App = "59a52881-a989-479d-af46-f275c6370663"
 $o15App = "0ff1ce15-a989-479d-af46-f275c6370663"
-$cSub = ($winbuild -GE 26000) -And (Select-String -Path "$SysPath\wbem\sppwmi.mof" -Encoding unicode -Pattern "SubscriptionType")
+$isSub = ($winbuild -GE 26000) -And (Select-String -Path "$SysPath\wbem\sppwmi.mof" -Encoding unicode -Pattern "SubscriptionType")
 $DllDigital = ($winbuild -GE 14393) -And (Test-Path "$SysPath\EditionUpgradeManagerObj.dll")
 $DllSubscription = ($winbuild -GE 14393) -And (Test-Path "$SysPath\Clipc.dll")
 $VLActTypes = @("All", "AD", "KMS", "Token")

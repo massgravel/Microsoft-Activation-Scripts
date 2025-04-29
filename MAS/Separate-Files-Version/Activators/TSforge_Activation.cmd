@@ -1,4 +1,4 @@
-@set masver=3.0
+@set masver=3.1
 @echo off
 
 
@@ -432,9 +432,9 @@ echo:
 echo        ______________________________________________________________
 echo: 
 echo               [1] Activate - Windows
-echo               [2] Activate - Windows [ESU]
-echo               [3] Activate - Office  [All]
-echo               [4] Activate - Office  [Project/Visio]
+echo               [2] Activate - ESU
+echo               [3] Activate - Office [All]
+echo               [4] Activate - Office [Project/Visio]
 echo               [5] Activate - All
 echo               _______________________________________________  
 echo: 
@@ -564,13 +564,6 @@ set "_serv=%_slser% Winmgmt"
 ::  Windows Management Instrumentation
 
 call :dk_errorcheck
-
-if defined error (
-call :dk_color %Red% "Some errors were detected. Aborting the operation..."
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
-goto :dk_done
-)
 
 call :ts_getedition
 if not defined tsedition (
@@ -705,7 +698,8 @@ goto :ts_esu
 
 echo Checking Activation ID                  [%tempid%] [%tsedition%]
 
-call :ts_inskey "[%key%]"
+set generickey=1
+call :dk_inskey "[%key%]"
 if not defined error set tsids=%tsids% %tempid%
 goto :ts_esu
 
@@ -827,7 +821,8 @@ goto :ts_esu
 echo Resetting Rearm / GracePeriod           [Successful]
 )
 
-call :ts_inskey "[%key%]"
+set generickey=1
+call :dk_inskey "[%key%]"
 
 ::========================================================================================================================================
 
@@ -900,7 +895,7 @@ set esuexistbutnosup=1
 if defined esuexistsup if defined _vis (
 set key=9FPV7-MWGT8-7XPDF-JC23W-WT7TW
 REM This is a non-generic blocked MAK key for Server-ESU-PA
-call :ts_inskey "[!key!]"
+call :dk_inskey "[!key!]"
 goto :ts_off
 )
 
@@ -949,7 +944,7 @@ if not %_actoff%==1 goto :ts_act
 if %winbuild% LSS 9200 (
 echo:
 call :dk_color %Gray% "Checking Supported Office               [TSforge for Office is supported on Windows 8 and later versions]"
-call :dk_color %Blue% "On Windows Vista / 7, use Online %KS% activation option for Office instead."
+call :dk_color %Blue% "On Windows Vista / 7, use Ohook activation option for Office instead."
 goto :ts_act
 )
 
@@ -990,6 +985,7 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v P
 if not "%o14msi%%o14c2r%"=="" (
 echo:
 call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%]"
+if defined o14msi call :dk_color %Blue% "Use Ohook activation option for Office 2010."
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -1310,7 +1306,7 @@ call :dk_color %Blue% "Business, BusinessN, Enterprise, EnterpriseN, and Server 
 goto :ts_act
 )
 
-call :ts_inskey "[%key%]"
+call :dk_inskey "[%key%]"
 if not defined error set tsids=%tsids% %tempid%
 goto :ts_act
 
@@ -2286,7 +2282,7 @@ exit /b
 
 ::  Install Key
 
-:ts_inskey
+:dk_inskey
 
 if %_wmic% EQU 1 wmic path %sps% where __CLASS='%sps%' call InstallProductKey ProductKey="%key%" %nul%
 if %_wmic% EQU 0 %psc% "try { $null=(([WMISEARCHER]'SELECT Version FROM %sps%').Get()).InstallProductKey('%key%'); exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
@@ -2294,15 +2290,21 @@ set keyerror=%errorlevel%
 cmd /c exit /b %keyerror%
 if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
 
+if defined generickey (set "keyecho=Installing Generic Product Key         ") else (set "keyecho=Installing Product Key                 ")
 if %keyerror% EQU 0 (
 if %sps%==SoftwareLicensingService call :dk_refresh
-echo Installing Product Key                  %~1 [Successful]
+echo %keyecho% %~1 [Successful]
 ) else (
-set error=1
-call :dk_color %Red% "Installing Product Key                  %~1 [Failed] %keyerror%"
+call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
+if not defined error (
+if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
 call :dk_color %Blue% "%_fixmsg%"
+set showfix=1
+)
+set error=1
 )
 
+set generickey=
 exit /b
 
 ::  Activation command
@@ -2428,7 +2430,7 @@ exit /b
 :dk_product
 
 set d1=%ref% $meth = $TypeBuilder.DefinePInvokeMethod('BrandingFormatString', 'winbrand.dll', 'Public, Static', 1, [String], @([String]), 1, 3);
-set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%')
+set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%') -replace [string][char]0xa9, '(C)' -replace [string][char]0xae, '(R)' -replace [string][char]0x2122, '(TM)'
 
 set winos=
 for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set winos=%%s)
@@ -2437,10 +2439,6 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 if %winbuild% GEQ 22000 (
 set winos=!winos:Windows 10=Windows 11!
 )
-)
-if %winbuild% LSS 7600 (
-set "winos=!winos:VistaT=Vista!"
-set "winos=!winos:Serverr=Server!"
 )
 
 if not defined winsub exit /b
@@ -8207,6 +8205,49 @@ Office-ActID -pkeypath "$env:pkeypath" -edition "$env:_License" -keytype "$env:k
 :msiofficedata
 
 for %%# in (
+14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_0015_AccessR
+14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_001C_AccessRuntimeR
+14_95ab3ec8-4106-4f9d-b632-03c019d1d23f_0015_AccessVL
+14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_0016_ExcelR_[HSExcelR]
+14_71dc86ff-f056-40d0-8ffb-9592705c9b76_0016_ExcelVL
+14_7004b7f0-6407-4f45-8eac-966e5f868bde_00BA_GrooveR
+14_fdad0dfa-417d-4b4f-93e4-64ea8867b7fd_00BA_GrooveVL
+14_7b7d1f17-fdcb-4820-9789-9bec6e377821_0013_HomeBusinessR_[HomeBusinessDemoR]
+14_19316117-30a8-4773-8fd9-7f7231f4e060_011E_HomeBusinessSubR
+14_09e2d37e-474b-4121-8626-58ad9be5776f_002F_HomeStudentR_[HomeStudentDemoR]
+14_ef1da464-01c8-43a6-91af-e4e5713744f9_0044_InfoPathR
+14_85e22450-b741-430c-a172-a37962c938af_0044_InfoPathVL
+14_14f5946a-debc-4716-babc-7e2c240fec08_000F_MondoR
+14_533b656a-4425-480b-8e30-1a2358898350_000F_MondoVL
+14_c1ceda8b-c578-4d5d-a4aa-23626be4e234_003D_ProfessionalR_[OEM-SingleImage]Exception
+14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_00A1_OneNoteR_[HSOneNoteR]
+14_6860b31f-6a67-48b8-84b9-e312b3485c4b_00A1_OneNoteVL
+14_fbf4ac36-31c8-4340-8666-79873129cf40_001A_OutlookR
+14_a9aeabd8-63b8-4079-a28e-f531807fd6b8_001A_OutlookVL
+14_acb51361-c0db-4895-9497-1831c41f31a6_0033_PersonalR_[PersonalDemoR,PersonalPrepaidR]
+14_133c8359-4e93-4241-8118-30bb18737ea0_0018_PowerPointR_[HSPowerPointR]
+14_38252940-718c-4aa6-81a4-135398e53851_0018_PowerPointVL
+14_8b559c37-0117-413e-921b-b853aeb6e210_0014_ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR]
+14_725714d7-d58f-4d12-9fa8-35873c6f7215_003B_ProjectProR_[ProjectProMSDNR]
+14_4d06f72e-fd50-4bc2-a24b-d448d7f17ef2_011F_ProjectProSubR
+14_1cf57a59-c532-4e56-9a7d-ffa2fe94b474_003B_ProjectProVL
+14_688f6589-2bd9-424e-a152-b13f36aa6de1_003A_ProjectStdR
+14_11b39439-6b93-4642-9570-f2eb81be2238_003A_ProjectStdVL
+14_71af7e84-93e6-4363-9b69-699e04e74071_0011_ProPlusR_[ProPlusAcadR,ProPlusMSDNR,Sub4R]
+14_e98ef0c0-71c4-42ce-8305-287d8721e26c_011D_ProPlusSubR
+14_fdf3ecb9-b56f-43b2-a9b8-1b48b6bae1a7_0011_ProPlusVL_[ProPlusAcadVL]
+14_98677603-a668-4fa4-9980-3f1f05f78f69_0019_PublisherR
+14_3d014759-b128-4466-9018-e80f6320d9d0_0019_PublisherVL
+14_dbe3aee0-5183-4ff7-8142-66050173cb01_008B_SmallBusBasicsR_[SmallBusBasicsMSDNR]
+14_8090771e-d41a-4482-929e-de87f1f47e46_008B_SmallBusBasicsVL
+14_b78df69e-0966-40b1-ae85-30a5134dedd0_0017_SPDR
+14_d3422cfb-8d8b-4ead-99f9-eab0ccd990d7_0012_StandardR
+14_1f76e346-e0be-49bc-9954-70ec53a4fcfe_0012_StandardVL_[StandardAcadVL]
+14_2745e581-565a-4670-ae90-6bf7c57ffe43_0066_StarterR
+14_66cad568-c2dc-459d-93ec-2f3cb967ee34_0057_VisioSIR_Prem[Pro,Std]Exception
+14_36756cb8-8e69-4d11-9522-68899507cd6a_0057_VisioSIVL_Prem[Pro,Std]Exception
+14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_001B_WordR_[HSWordR]
+14_98d4050e-9c98-49bf-9be1-85e12eb3ab13_001B_WordVL
 :: Office 2013
 15_ab4d047b-97cf-4126-a69f-34df08e2f254_0015_AccessRetail
 15_259de5be-492b-44b3-9d78-9645f848f7b0_001C_AccessRuntimeRetail
@@ -8323,6 +8364,7 @@ if "%oVer%"=="%%A" (
 reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-%%C-" %nul% && (
 reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
 if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
+if /i 003D==%%C set SingleImage=1
 )
 )
 )

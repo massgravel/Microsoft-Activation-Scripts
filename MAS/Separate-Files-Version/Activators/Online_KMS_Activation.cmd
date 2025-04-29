@@ -1,4 +1,4 @@
-@set masver=3.0
+@set masver=3.1
 @echo off
 
 
@@ -677,6 +677,7 @@ call echo Checking Installed Product Key          [Partial Key - %%_partial%%] [
 )
 
 if defined key (
+set generickey=1
 call :dk_inskey "[%key%]"
 )
 
@@ -686,7 +687,7 @@ call :dk_inskey "[%key%]"
 
 if not %_actoff%==1 goto :ks_activate
 
-call :ks_setspp
+call :oh_setspp
 
 ::  Check ohook install
 
@@ -731,7 +732,7 @@ set ohub=1
 
 ::  Check supported office versions
 
-call :ks_getpath
+call :oh_getpath
 
 set o16uwp=
 set o16uwp_path=
@@ -910,9 +911,9 @@ call :ks_process
 
 :ks_startmsi
 
-if defined o14msi call :ks_setspp 14
+if defined o14msi call :oh_setspp 14
 if defined o14msi call :ks_processmsi 14 %o14msi_reg%
-call :ks_setspp
+call :oh_setspp
 if defined o15msi call :ks_processmsi 15 %o15msi_reg%
 if defined o16msi call :ks_processmsi 16 %o16msi_reg%
 
@@ -1056,7 +1057,7 @@ exit /b
 
 ::========================================================================================================================================
 
-:ks_getpath
+:oh_getpath
 
 set o16c2r=
 set o15c2r=
@@ -1143,16 +1144,19 @@ exit /b
 
 ::========================================================================================================================================
 
-:ks_setspp
+:oh_setspp
 
+set isOspp=
 if %winbuild% GEQ 9200 (
 set spp=SoftwareLicensingProduct
 set sps=SoftwareLicensingService
 ) else (
+set isOspp=1
 set spp=OfficeSoftwareProtectionProduct
 set sps=OfficeSoftwareProtectionService
 )
 if "%1"=="14" (
+set isOspp=1
 set spp=OfficeSoftwareProtectionProduct
 set sps=OfficeSoftwareProtectionService
 )
@@ -1212,6 +1216,7 @@ call :ks_osppready
 
 if not "!key!"=="" (
 echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
+set generickey=1
 call :dk_inskey "[!key!] [!_prod!]"
 ) else (
 if not defined _oMSI (
@@ -1220,7 +1225,7 @@ call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !
 call :dk_color %Blue% "Make sure you are using Latest MAS script."
 ) else (
 call :dk_color %Red% "Checking Product In Script              [!_prod! MSI Retail is not supported]"
-call :dk_color %Blue% "Uninstall this and Install C2R or MSI VL version of Office."
+call :dk_color %Blue% "Use Ohook option to activate it."
 )
 set fixes=%fixes% %mas%genuine-installation-media
 call :dk_color %_Yellow% "%mas%genuine-installation-media"
@@ -1253,10 +1258,6 @@ if "%_oRoot:~-1%"=="\" set "_oRoot=%_oRoot:~0,-1%"
 echo "%2" | find /i "Wow6432Node" %nul1% && set _oArch=x86
 if not "%osarch%"=="x86" if not defined _oArch set _oArch=x64
 if "%osarch%"=="x86" set _oArch=x86
-
-set "_common=%CommonProgramFiles%"
-if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
-set "_common2=%CommonProgramFiles(x86)%"
 
 call :msiofficedata %2
 
@@ -2633,11 +2634,12 @@ set keyerror=%errorlevel%
 cmd /c exit /b %keyerror%
 if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
 
+if defined generickey (set "keyecho=Installing Generic Product Key         ") else (set "keyecho=Installing Product Key                 ")
 if %keyerror% EQU 0 (
 if %sps%==SoftwareLicensingService call :dk_refresh
-echo Installing Generic Product Key          %~1 [Successful]
+echo %keyecho% %~1 [Successful]
 ) else (
-call :dk_color %Red% "Installing Generic Product Key          %~1 [Failed] %keyerror%"
+call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
 if not defined error (
 if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
 call :dk_color %Blue% "%_fixmsg%"
@@ -2646,6 +2648,7 @@ set showfix=1
 set error=1
 )
 
+set generickey=
 exit /b
 
 ::  Get Windows installed key channel
@@ -2768,7 +2771,7 @@ exit /b
 :dk_product
 
 set d1=%ref% $meth = $TypeBuilder.DefinePInvokeMethod('BrandingFormatString', 'winbrand.dll', 'Public, Static', 1, [String], @([String]), 1, 3);
-set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%')
+set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%') -replace [string][char]0xa9, '(C)' -replace [string][char]0xae, '(R)' -replace [string][char]0x2122, '(TM)'
 
 set winos=
 for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set winos=%%s)
@@ -2777,10 +2780,6 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 if %winbuild% GEQ 22000 (
 set winos=!winos:Windows 10=Windows 11!
 )
-)
-if %winbuild% LSS 7600 (
-set "winos=!winos:VistaT=Vista!"
-set "winos=!winos:Serverr=Server!"
 )
 
 if not defined winsub exit /b
@@ -3438,47 +3437,30 @@ exit /b
 ::  5th column = Other Edition IDs if they are part of the same primary product (For reference only)
 ::  Separator  = "_"
 
-:: EditionID Notes:
-:: For Office 2013 and later, all Edition IDs are clearly defined, and each ID corresponds to its specific licensing.
-
-:: In Office 2010, the situation is a bit more complicated.
-:: Products typically fall into two separate categories: Volume License (VL) and Non-VL. This is because a single installation cannot include both Retail and VL licensing types.
-:: Some Edition IDs share the same primary product ID. For example, installing ProPlusVL also installs ProPlusAcadVL licenses, as both use 0011 as the primary product ID.
-:: Therefore, in the script, we grouped VL and Non-VL versions by primary product ID and selected the highest Edition ID when multiple Edition IDs existed for the same primary product ID.
-
-:: There are a few exceptions to this 2010 rule: Visio (Premium, Pro, Standard) and OEM-SingleImage.
-
-:: For Visio, the issue is that branding.xml lists incorrect primary product IDs. The correct primary product ID for all three Visio variants is 0057. Based on the criteria above, we chose Visio-Premium as the representative Edition ID among the three.
-:: For OEM-SingleImage, it installs multiple Edition IDs and uses 003D as the primary product ID. Following our method, we selected the highest available Edition ID—ProfessionalR in this case.
-
 :msiofficedata
 
 for %%# in (
 14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_0015_AccessR
 14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_001C_AccessRuntimeR
 14_95ab3ec8-4106-4f9d-b632-03c019d1d23f_0015_AccessVL
-14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_0016_ExcelR
+14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_0016_ExcelR_[HSExcelR]
 14_71dc86ff-f056-40d0-8ffb-9592705c9b76_0016_ExcelVL
 14_7004b7f0-6407-4f45-8eac-966e5f868bde_00BA_GrooveR
 14_fdad0dfa-417d-4b4f-93e4-64ea8867b7fd_00BA_GrooveVL
 14_7b7d1f17-fdcb-4820-9789-9bec6e377821_0013_HomeBusinessR_[HomeBusinessDemoR]
 14_19316117-30a8-4773-8fd9-7f7231f4e060_011E_HomeBusinessSubR
 14_09e2d37e-474b-4121-8626-58ad9be5776f_002F_HomeStudentR_[HomeStudentDemoR]
-14_c3ae020c-5a71-4cc5-a27a-2a97c2d46860_0029_HSExcelR
-14_25fe4611-b44d-49cc-ae87-2143d299194e_00A3_HSOneNoteR
-14_d652ad8d-da5c-4358-b928-7fb1b4de7a7c_0037_HSPowerPointR
-14_a963d7ae-7a88-41a7-94da-8bb5635a8af9_002B_HSWordR
 14_ef1da464-01c8-43a6-91af-e4e5713744f9_0044_InfoPathR
 14_85e22450-b741-430c-a172-a37962c938af_0044_InfoPathVL
 14_14f5946a-debc-4716-babc-7e2c240fec08_000F_MondoR
 14_533b656a-4425-480b-8e30-1a2358898350_000F_MondoVL
 14_c1ceda8b-c578-4d5d-a4aa-23626be4e234_003D_ProfessionalR_[OEM-SingleImage]Exception
-14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_00A1_OneNoteR
+14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_00A1_OneNoteR_[HSOneNoteR]
 14_6860b31f-6a67-48b8-84b9-e312b3485c4b_00A1_OneNoteVL
 14_fbf4ac36-31c8-4340-8666-79873129cf40_001A_OutlookR
 14_a9aeabd8-63b8-4079-a28e-f531807fd6b8_001A_OutlookVL
 14_acb51361-c0db-4895-9497-1831c41f31a6_0033_PersonalR_[PersonalDemoR,PersonalPrepaidR]
-14_133c8359-4e93-4241-8118-30bb18737ea0_0018_PowerPointR
+14_133c8359-4e93-4241-8118-30bb18737ea0_0018_PowerPointR_[HSPowerPointR]
 14_38252940-718c-4aa6-81a4-135398e53851_0018_PowerPointVL
 14_8b559c37-0117-413e-921b-b853aeb6e210_0014_ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR]
 14_725714d7-d58f-4d12-9fa8-35873c6f7215_003B_ProjectProR_[ProjectProMSDNR]
@@ -3499,7 +3481,7 @@ for %%# in (
 14_2745e581-565a-4670-ae90-6bf7c57ffe43_0066_StarterR
 14_66cad568-c2dc-459d-93ec-2f3cb967ee34_0057_VisioSIR_Prem[Pro,Std]Exception
 14_36756cb8-8e69-4d11-9522-68899507cd6a_0057_VisioSIVL_Prem[Pro,Std]Exception
-14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_001B_WordR
+14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_001B_WordR_[HSWordR]
 14_98d4050e-9c98-49bf-9be1-85e12eb3ab13_001B_WordVL
 :: Office 2013
 15_ab4d047b-97cf-4126-a69f-34df08e2f254_0015_AccessRetail
@@ -3617,6 +3599,7 @@ if "%oVer%"=="%%A" (
 reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-%%C-" %nul% && (
 reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
 if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
+if /i 003D==%%C set SingleImage=1
 )
 )
 )
