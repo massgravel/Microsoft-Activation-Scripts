@@ -1,4 +1,4 @@
-@set masver=3.0
+@set masver=3.1
 @echo off
 
 
@@ -138,7 +138,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%fix_service
+echo Check this webpage for help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -153,7 +153,7 @@ echo:
 echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Check this webpage for help - %mas%troubleshoot
 echo:
 echo:
 ping 127.0.0.1 -n 20 >nul
@@ -204,15 +204,44 @@ echo Failed to detect Windows build number.
 echo:
 setlocal EnableDelayedExpansion
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto dk_done
+)
+
+if %winbuild% LSS 6001 (
+%nceline%
+echo Unsupported OS version detected [%winbuild%].
+echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
+if %winbuild% EQU 6000 (
+echo:
+echo Windows Vista RTM is not supported because Powershell cannot be installed.
+echo Upgrade to Windows Vista SP1 or SP2.
+)
+goto dk_done
+)
+
+if not exist %ps% (
+%nceline%
+echo PowerShell is not installed in your system.
+if %winbuild% LSS 7600 (
+echo Install PowerShell using the following URL.
+echo:
+echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+if %_unattended%==0 start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+)
 goto dk_done
 )
 
 if %winbuild% LSS 7600 (
-%nceline%
-echo Unsupported OS version detected [%winbuild%].
-echo MAS only supports Windows 7/8/8.1/10/11 and their Server equivalents.
+reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" /v Install %nul2% | find /i "0x1" %nul1% || (
+%eline%
+echo .NET 3.5 Framework is not installed in your system.
+echo Install it using the following URL.
+echo:
+echo https://www.microsoft.com/download/details.aspx?id=25150
+if %_unattended%==0 start https://www.microsoft.com/download/details.aspx?id=25150
 goto dk_done
+)
 )
 
 ::========================================================================================================================================
@@ -247,33 +276,6 @@ goto dk_done
 
 ::========================================================================================================================================
 
-::  Check PowerShell
-
-REM :PStest: $ExecutionContext.SessionState.LanguageMode :PStest:
-
-cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PStest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
-%eline%
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
-echo:
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | find /i "FullLanguage" %nul1% && (
-echo Failed to run Powershell command but Powershell is working.
-echo:
-cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { if ($i.displayName -notlike '*windows*') { $n += $i.displayName } }; if ($n) { Write-Host ('Installed 3rd party Antivirus might be blocking the script - ' + ($n -join ', ')) -ForegroundColor White -BackgroundColor Blue }"""
-echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
-) || (
-echo PowerShell is not working. Aborting...
-echo If you have applied restrictions on Powershell then undo those changes.
-echo:
-set fixes=%fixes% %mas%fix_powershell
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_powershell"
-)
-goto dk_done
-)
-
-::========================================================================================================================================
-
 ::  Elevate script as admin and pass arguments and preventing loop
 
 %nul1% fltmc || (
@@ -281,6 +283,58 @@ if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" &&
 %eline%
 echo This script needs admin rights.
 echo Right click on this script and select 'Run as administrator'.
+goto dk_done
+)
+
+::========================================================================================================================================
+
+::  Check PowerShell
+
+::pstst $ExecutionContext.SessionState.LanguageMode :pstst
+
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}" %nul6%') do (set tstresult=%%a)
+
+if /i not "%tstresult%"=="FullLanguage" (
+%eline%
+echo: %tstresult%
+cmd /c "%psc% $ExecutionContext.SessionState.LanguageMode"
+
+REM check LanguageMode
+
+cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | findstr /i "ConstrainedLanguage RestrictedLanguage NoLanguage" %nul1% && (
+echo FullLanguage mode not found in PowerShell. Aborting...
+echo If you have applied restrictions on Powershell then undo those changes.
+echo:
+set fixes=%fixes% %mas%fix_powershell
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_powershell"
+goto dk_done
+)
+
+REM check Powershell core version
+
+cmd /c "%psc% "$PSVersionTable.PSEdition"" | find /i "Core" %nul1% && (
+echo Windows Powershell is needed for MAS but it seems to be replaced with Powershell core. Aborting...
+goto dk_done
+)
+
+REM check for Mal-ware that may cause issues with Powershell
+
+for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
+echo "%%f"
+echo Mal%blank%ware found, PowerShell is not working properly.
+echo:
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+goto dk_done
+)
+
+REM check antivirus and other errors
+
+echo PowerShell is not working properly. Aborting...
+cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { if ($i.displayName -notlike '*windows*') { $n += $i.displayName } }; if ($n) { Write-Host ('Installed 3rd party Antivirus might be blocking the script - ' + ($n -join ', ')) -ForegroundColor White -BackgroundColor Blue }"""
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -296,34 +350,33 @@ set terminal=
 
 ::  Check if script is running in Terminal app
 
-set r1=$TB = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);
-set r2=%r1% [void]$TB.DefinePInvokeMethod('GetConsoleWindow', 'kernel32.dll', 22, 1, [IntPtr], @(), 1, 3).SetImplementationFlags(128);
-set r3=%r2% [void]$TB.DefinePInvokeMethod('SendMessageW', 'user32.dll', 22, 1, [IntPtr], @([IntPtr], [UInt32], [IntPtr], [IntPtr]), 1, 3).SetImplementationFlags(128);
-set d1=%r3% $hIcon = $TB.CreateType(); $hWnd = $hIcon::GetConsoleWindow();
-set d2=%d1% echo $($hIcon::SendMessageW($hWnd, 127, 0, 0) -ne [IntPtr]::Zero);
-
 if defined terminal (
-%psc% "%d2%" %nul2% | find /i "True" %nul1% && set terminal=
+set lines=0
+for /f "skip=2 tokens=2 delims=: " %%A in ('mode con') do if "!lines!"=="0" set lines=%%A
+if !lines! GEQ 100 set terminal=
 )
 
-if defined ps32onArm goto :skipQE
 if %_unattended%==1 goto :skipQE
 for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
 
+::  Relaunch to disable QuickEdit in the current session and use conhost.exe instead of the Terminal app
+::  This code disables QuickEdit for the current cmd.exe session without making permanent registry changes
+::  It is included because clicking on the script window can pause execution, causing confusion that the script has stopped due to an error
+
+set resetQE=1
+reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% && set resetQE=0
+reg add HKCU\Console /v QuickEdit /t REG_DWORD /d 0 /f %nul1%
+
 if defined terminal (
-set "launchcmd=start conhost.exe %psc%"
-) else (
-set "launchcmd=%psc%"
+start conhost.exe "!_batf!" %_args% -qedit
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
+) else if %resetQE% EQU 1 (
+start cmd.exe /c ""!_batf!" %_args% -qedit"
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
 )
 
-::  Disable QuickEdit in current session
-
-set "d1=$t=[AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);"
-set "d2=$t.DefinePInvokeMethod('GetStdHandle', 'kernel32.dll', 22, 1, [IntPtr], @([Int32]), 1, 3).SetImplementationFlags(128);"
-set "d3=$t.DefinePInvokeMethod('SetConsoleMode', 'kernel32.dll', 22, 1, [Boolean], @([IntPtr], [Int32]), 1, 3).SetImplementationFlags(128);"
-set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080);"
-
-%launchcmd% "%d1% %d2% %d3% %d4% & cmd.exe '/c' '!_PSarg! -qedit'" && (exit /b) || (set terminal=1)
 :skipQE
 
 ::========================================================================================================================================
@@ -332,12 +385,18 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set pingp=
 set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 activ%-%ated.win') do (
-if not "%%#"=="" set old=1
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck%upver%.activ%-%ated.win') do (
-if not "%%#"=="" set old=
+for %%A in (
+activ%-%ated.win
+mass%-%grave.dev
+) do if not defined pingp (
+for /f "delims=[] tokens=2" %%B in ('ping -n 1 %%A') do (
+if not "%%B"=="" (set old=1& set pingp=1)
+for /f "delims=[] tokens=2" %%C in ('ping -n 1 updatecheck%upver%.%%A') do (
+if not "%%C"=="" set old=
+)
 )
 )
 
@@ -373,9 +432,9 @@ echo:
 echo        ______________________________________________________________
 echo: 
 echo               [1] Activate - Windows
-echo               [2] Activate - Windows [ESU]
-echo               [3] Activate - Office  [All]
-echo               [4] Activate - Office  [Project/Visio]
+echo               [2] Activate - ESU
+echo               [3] Activate - Office [All]
+echo               [4] Activate - Office [Project/Visio]
 echo               [5] Activate - All
 echo               _______________________________________________  
 echo: 
@@ -385,7 +444,11 @@ echo               [A] Activate - Windows %KS% Host
 echo               [B] Activate - Office %KS% Host
 echo               [C] Activate - Windows 8/8.1 APPX Sideloading
 echo               [D] Activate - Manually Select Products
+if defined _vis (
+echo               [E] Reset    - Rearm/Timers
+) else (
 echo               [E] Reset    - Rearm/Timers/Tamper/Lock
+)
 echo               _______________________________________________       
 echo:
 echo               [6] Remove TSforge Activation
@@ -431,12 +494,15 @@ echo:
 echo Initializing...
 call :dk_chkmal
 
-if not exist %SysPath%\sppsvc.exe (
+if not exist %SysPath%\%_slexe% (
 %eline%
-echo [%SysPath%\sppsvc.exe] file is missing, aborting...
+echo [%SysPath%\%_slexe%] file is missing, aborting...
+echo:
+call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
+call :dk_color %Blue% "After that, restart system and try activation again."
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -449,21 +515,21 @@ echo Install .NET Framework 4.8 and Windows Management Framework 5.1
 )
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 )
 
 if %winbuild% LSS 9200 if exist "%SysPath%\wlms\wlms.exe" (
 sc query wlms | find /i "RUNNING" %nul% && (
-sc stop sppsvc %nul%
+sc stop %_slser% %nul%
 if !errorlevel! EQU 1051 (
 %eline%
-echo Evaluation WLMS service is running, sppsvc service can not be stopped. Aborting...
+echo Evaluation WLMS service is running, %_slser% service can not be stopped. Aborting...
 echo Install Non-Eval version for Windows build %winbuild%.
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 )
@@ -492,25 +558,18 @@ call :dk_showosinfo
 
 echo Initiating Diagnostic Tests...
 
-set "_serv=sppsvc Winmgmt"
+set "_serv=%_slser% Winmgmt"
 
 ::  Software Protection
 ::  Windows Management Instrumentation
 
 call :dk_errorcheck
 
-if defined error (
-call :dk_color %Red% "Some errors were detected. Aborting the operation..."
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
-goto :dk_done
-)
-
 call :ts_getedition
 if not defined tsedition (
 call :dk_color %Red% "Checking Windows Edition ID             [Not found in installed licenses, aborting...]"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto :dk_done
 )
 
@@ -541,6 +600,8 @@ call :dk_color %Gray% "Checking OS Activation                  [Windows is alrea
 goto :ts_esu
 )
 
+if defined _vis goto :ts_winvista
+
 set tempid=
 set keytype=zero
 for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wintsid\:.*';iex ($f[1])" %nul6%') do (
@@ -559,6 +620,87 @@ if defined winsub (
 call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. Script will activate base edition [SKU ID-%regSKU%]."
 echo:
 )
+goto :ts_esu
+
+::========================================================================================================================================
+
+:ts_winvista
+
+::  Process Windows Vista
+
+::  1st column = Activation ID
+::  2nd column = Generic key
+::  3rd column = Key channel
+::  4th column = Edition ID
+::  Separator  = _
+
+::  Keys aren't available for these editions, but since these editions aren't publicly available, it doesn't matter
+::  a797d61e-1475-470b-86c8-f737a72c188d StarterN
+::  5e9f548a-c8a9-44e6-a6c2-3f8d0a7a99dd ServerComputeClusterV
+
+set f=
+set key=
+set tempid=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+::  WindowsVista
+9de9abe2-d01d-4538-af84-4498bdbc2ba3_4D2XH-PRBMM-8Q22B-K8BM3-MR%f%W4W_____Retail_Business
+db442be4-81ed-4ab3-9d66-2417e8a5c81c_76884-QXFY2-6Q2WX-2QTQ8-QX%f%X44_____Retail_BusinessN
+b51791c2-b562-4b73-97b0-735a0e4429a6_YQPQV-RW8R3-XMPFG-RXG9R-JG%f%TVF_____Retail_Enterprise
+58c37517-42f8-4723-bb44-30b05791ff2a_Q7J9R-G63R4-BFMHF-FWM9R-RW%f%DMV_____Retail_EnterpriseN
+95c6e80a-0ff8-4bd0-95f2-c4a39b79d09e_RCG7P-TX42D-HM8FM-TCFCW-3V%f%4VD_____Retail_HomeBasic
+d0333dad-c14e-46f2-b62a-8b47a1b9768b_HY2VV-XC6FF-MD6WV-FPYBQ-GF%f%JBT_____Retail_HomeBasicN
+9e042223-03bf-49ae-808f-ff37f128d40d_X9HTF-MKJQQ-XK376-TJ7T4-76%f%PKF_____Retail_HomePremium
+92d8977c-d506-4e63-b500-6d39283b6cd5_KJ6TP-PF9W2-23T3Q-XTV7M-PX%f%DT2_____Retail_HomePremiumN
+89e51a3c-76c0-4beb-a650-53d34c8f8186_X9PYV-YBQRV-9BXWV-TQDMK-QD%f%WK4_____Retail_Starter
+30fab9cc-8614-4339-989f-7ce61fb7a5c4_VMCB9-FDRV6-6CDQM-RV23K-RP%f%8F7_____Retail_Ultimate
+1eefed20-8ac0-478c-8774-70cd44782ea1_CVX38-P27B4-2X8BT-RXD4J-V7%f%CKX_____Retail_UltimateN
+::  WindowsServer2008
+c9ad502b-ef48-41d1-a2a0-38a38e82fed0_24FV9-H7JW8-C8Q6X-BQKMK-K9%f%77J_____Retail_ServerComputeCluster
+866e924e-c2a3-4872-aca1-6b48c13962d5_6QBHY-DXTPJ-T9W3P-DTJXX-4V%f%QMB_____Retail_ServerDatacenter
+d020c729-07f0-4f8f-87ce-bf803275c786_83TWG-TD3TC-HRDP2-K93FJ-Y3%f%4YC_OEM:NONSLP_ServerDatacenterV
+32b40e5e-0c6d-4c6f-ab12-a031933fd2c6_MRB7H-QJRHG-FXTBR-B2Q2M-8W%f%MTJ_____Retail_ServerEnterprise
+256cc990-1692-4ea8-965c-2d423d5dd24e_H4VB6-QPRWH-VDCYM-996P8-MH%f%KFY_OEM:NONSLP_ServerEnterpriseIA64
+1ba5e036-e386-42c4-b7eb-16bdb4fa1945_H8H7M-HDPQT-PJHQF-M7B83-9C%f%VGV_____Retail_ServerEnterpriseV
+8df04457-07c8-4301-bce9-d61eb76cb2d6_RGBMC-PQBVF-94Q9K-HD63B-VY%f%6MP_____Retail_ServerHomePremium
+5bd23b19-aa71-4a5b-8b68-c8801c2baff6_6C8KR-MD3QK-9GWFW-44CY2-W9%f%CBM_____Retail_ServerHomeStandard
+b86c7736-91ff-4de9-bfa9-b32b8a09acac_7XRBY-6MP2K-VQPT8-F37JV-YY%f%Q83_____Retail_ServerMediumBusinessManagement
+d3f5642f-081d-40b2-a4b9-efd3054d4584_6PDTD-JK48J-662TF-8J2QV-R4%f%CRB_____Retail_ServerMediumBusinessMessaging
+c6936a36-69f3-4994-9857-3069c7b9ec7a_D694V-CMWKH-PY92X-PFQKQ-JC%f%B69_____Retail_ServerMediumBusinessSecurity
+cc4c2cf8-ef29-4d8e-b168-2b65a3db3309_MRDK3-YYQF3-88BQJ-D6FJG-69%f%YJY_____Retail_ServerSBSPremium
+b3827b27-bd38-4284-98af-e4f4d1c051a0_2KB23-GJRBD-W3T9C-6CH2W-39%f%B7V_____Retail_ServerSBSPrime
+5dad0eff-3f6f-4310-8844-422f9dc7c84b_H4XDD-B27GY-667P6-XWVV7-GY%f%G8J_____Retail_ServerSBSStandard
+603504f9-109f-49f0-9271-8c66f7878f58_8YVM4-YQBDH-7WDQM-R27WR-WV%f%CWG_____Retail_ServerStandard
+65ab7338-9ad0-43fe-af1b-190b577495e2_H9MW3-6V7GK-94P9G-7FTPJ-VK%f%CKF_____Retail_ServerStandardV
+2be204da-24a0-4943-b66c-81e8464acd7e_2264C-TD9T8-P8HPW-CC9GH-MH%f%M2V_____Retail_ServerStorageEnterprise
+60207eba-8b4a-486c-a013-023b4b742c2f_RCYMT-YX342-8T6YY-XYHYC-3D%f%D7X_____Retail_ServerStorageExpress
+368856e9-43f7-4601-8358-e561f36c7dd8_FKFT2-WXYY9-WBPY7-6YMY4-X4%f%8JF_____Retail_ServerStorageStandard
+4bf433fa-ab04-4c6c-b55b-00170e14b8cd_8X9J7-HCJ7J-3WDJT-QM7D8-46%f%4YH_____Retail_ServerStorageWorkgroup
+a77a6806-f59e-4953-97d7-229317b8e6a6_BGT39-9FYH7-X2CYD-T628F-QP%f%QPW_____Retail_ServerWeb
+f92f836d-4d3e-4e90-a08f-2d612d65e716_HPH76-FHFPP-DRW9D-7W2V4-HW%f%GKT_____Retail_ServerWinSB
+3059a9fd-b068-4f0d-acaf-66324dca67ac_2V8G6-KRXYR-MMGXJ-6RWM3-GX%f%CCG_____Retail_ServerWinSBV
+) do (
+for /f "tokens=1-4 delims=_" %%A in ("%%#") do if %tsedition%==%%D if not defined key (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+set key=%%B
+set tempid=%%A
+)
+)
+)
+
+if not defined key (
+set error=1
+call :dk_color %Red% "Checking Activation ID                  [%tsedition% SKU-%osSKU% not found in the system]"
+call :dk_color %Blue% "%_fixmsg%"
+goto :ts_esu
+)
+
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+
+set generickey=1
+call :dk_inskey "[%key%]"
+if not defined error set tsids=%tsids% %tempid%
 goto :ts_esu
 
 ::========================================================================================================================================
@@ -679,19 +821,8 @@ goto :ts_esu
 echo Resetting Rearm / GracePeriod           [Successful]
 )
 
-%psc% "try { $null=(([WMISEARCHER]'SELECT Version FROM %sps%').Get()).InstallProductKey('%key%'); exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
-set keyerror=%errorlevel%
-cmd /c exit /b %keyerror%
-if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
-
-if %keyerror% EQU 0 (
-call :dk_refresh
-echo Installing Activable Evaluation Key     [%key%] [Successful]
-) else (
-set error=1
-call :dk_color %Red% "Installing Activable Evaluation Key     [%key%] [Failed] %keyerror%"
-call :dk_color %Blue% "%_fixmsg%"
-)
+set generickey=1
+call :dk_inskey "[%key%]"
 
 ::========================================================================================================================================
 
@@ -727,7 +858,7 @@ REM Windows7EmbeddedPOSReady7
 4f1f646c-1e66-4908-acc7-d1606229b29e_POS-ESU-Year3[1-3y]_-Embedded[POS]-
 REM Windows7EmbeddedStandard
 6aaf1c7d-527f-4ed5-b908-9fc039dfc654_WES-ESU-Year3[1-3y]_-Embedded[Standard]-
-REM WindowsServer2008R2
+REM WindowsServer2008/WindowsServer2008R2
 8e7bfb1e-acc1-4f56-abae-b80fce56cd4b_Server-ESU-PA[1-6y]_-ServerDatacenter-ServerDatacenterCore-ServerDatacenterV-ServerDatacenterVCore-ServerStandard-ServerStandardCore-ServerStandardV-ServerStandardVCore-ServerEnterprise-ServerEnterpriseCore-ServerEnterpriseV-ServerEnterpriseVCore-
 REM Windows8.1
 4afc620f-12a4-48ad-8015-2aebfbd6e47c_Client-ESU-Year3[1-3y]_-Enterprise-EnterpriseN-Professional-ProfessionalN-
@@ -735,10 +866,14 @@ REM Windows8.1
 REM WindowsServer2012/2012R2
 55b1dd2d-2209-4ea0-a805-06298bad25b3_Server-ESU-Year3[1-3y]_-ServerDatacenter-ServerDatacenterCore-ServerDatacenterV-ServerDatacenterVCore-ServerStandard-ServerStandardCore-ServerStandardV-ServerStandardVCore-
 REM Windows10
-83d49986-add3-41d7-ba33-87c7bfb5c0fb_Client-ESU-Year3[1-3y]_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-
-0b533b5e-08b6-44f9-b885-c2de291ba456_Client-ESU-Year6[4-6y]_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-
-4dac5a0c-5709-4595-a32c-14a56a4a6b31_Client-IoT-ESU-Year3[1-3y]_-IoTEnterprise- REM Removed IoTEnterpriseS because it already has longer support
-f69e2d51-3bbd-4ddf-8da7-a145e9dca597_Client-IoT-ESU-Year6[4-6y]_-IoTEnterprise- REM Removed IoTEnterpriseS because it already has longer support
+f520e45e-7413-4a34-a497-d2765967d094_Client-ESU-Year1_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+1043add5-23b1-4afb-9a0f-64343c8f3f8d_Client-ESU-Year2_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+83d49986-add3-41d7-ba33-87c7bfb5c0fb_Client-ESU-Year3_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+0b533b5e-08b6-44f9-b885-c2de291ba456_Client-ESU-Year6[4-6y]_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+b8527af1-5389-447c-9a88-2d1691ea33d3_Client-IoT-ESU-Year1_-IoTEnterprise-
+7b76ee02-0a75-4f08-85d5-bd0feadad0c0_Client-IoT-ESU-Year2_-IoTEnterprise-
+4dac5a0c-5709-4595-a32c-14a56a4a6b31_Client-IoT-ESU-Year3_-IoTEnterprise-
+f69e2d51-3bbd-4ddf-8da7-a145e9dca597_Client-IoT-ESU-Year6[4-6y]_-IoTEnterprise-
 ) do (
 for /f "tokens=1-3 delims=_" %%A in ("%%#") do (
 echo "%allapps%" | find /i "%%A" %nul1% && (
@@ -755,6 +890,13 @@ set esuexistbutnosup=1
 )
 )
 )
+)
+
+if defined esuexistsup if defined _vis (
+set key=9FPV7-MWGT8-7XPDF-JC23W-WT7TW
+REM This is a non-generic blocked MAK key for Server-ESU-PA
+call :dk_inskey "[!key!]"
+goto :ts_off
 )
 
 if defined esuexistsup (
@@ -779,7 +921,8 @@ goto :ts_off
 )
 
 set esuavail=
-if %winbuild% LEQ 7602 if not defined isThinpc set esuavail=1
+if defined _vis if defined isServer set esuavail=1
+if %winbuild% LEQ 7602 if not defined _vis if not defined isThinpc set esuavail=1
 if %winbuild% GTR 7602 if %winbuild% LSS 10240 if defined isServer set esuavail=1
 if %winbuild% GEQ 10240 if %winbuild% LEQ 19045 if not defined isServer set esuavail=1
 if %winbuild% EQU 9600 set esuavail=1
@@ -787,7 +930,7 @@ if %winbuild% EQU 9600 set esuavail=1
 if defined esuavail (
 call :dk_color %Red% "Checking Activation ID                  [ESU license is not found, make sure Windows is fully updated]"
 set fixes=%fixes% %mas%tsforge#windows-esu
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%tsforge#windows-esu"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%tsforge#windows-esu"
 ) else (
 call :dk_color %Gray% "Checking Activation ID                  [ESU is not available for %winos%]"
 )
@@ -801,7 +944,7 @@ if not %_actoff%==1 goto :ts_act
 if %winbuild% LSS 9200 (
 echo:
 call :dk_color %Gray% "Checking Supported Office               [TSforge for Office is supported on Windows 8 and later versions]"
-call :dk_color %Blue% "On Windows 7 build, use Online %KS% activation option for Office instead."
+call :dk_color %Blue% "On Windows Vista / 7, use Ohook activation option for Office instead."
 goto :ts_act
 )
 
@@ -842,6 +985,7 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v P
 if not "%o14msi%%o14c2r%"=="" (
 echo:
 call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%]"
+if defined o14msi call :dk_color %Blue% "Use Ohook activation option for Office 2010."
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -1074,7 +1218,7 @@ echo:
 if %winbuild% GEQ 10586 (
 call :dk_color %Gray% "With %KS% Host license, system may randomly change Windows Edition later. It is a Windows issue and can be safely ignored."
 )
-call :dk_color %Gray% "%KS% Host [Not to be confused with %KS% Client] license causes the sppsvc service to run continuously."
+call :dk_color %Gray% "%KS% Host [Not to be confused with %KS% Client] license causes the %_slser% service to run continuously."
 call :dk_color %Blue% "Only use this activation when necessary, you can revert to normal activation from the previous menu."
 
 if %_unattended%==0 (
@@ -1087,6 +1231,8 @@ echo:
 set _arr=
 set tempid=
 set keytype=kmshost
+
+if defined _vis goto :ts_whost_vista
 
 ::  Install current edition csvlk license so that correct edition can reflect for csvlk
 
@@ -1119,12 +1265,65 @@ goto :ts_act
 
 ::========================================================================================================================================
 
+:ts_whost_vista
+
+::  Process Windows K-M-S host for Vista
+
+::  1st column = Activation ID
+::  2nd column = CSVLK key
+::  3rd column = Edition IDs
+::  Separator  = _
+
+set f=
+set key=
+set tempid=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+::  WindowsVista
+212a64dc-43b1-4d3d-a30c-2fc69d2095c6_TWVG3-9Q4P8-W9XJF-Y76FJ-DW%f%Q4R_-Business-BusinessN-Enterprise-EnterpriseN-
+::  WindowsServer2008
+c90d1b4e-8aa8-439e-8b9e-b6d6b6a6d975_BHC4Q-6D7B7-QMVH7-4MKQH-Y9%f%VK7_-ServerComputeCluster-ServerDatacenter-ServerDatacenterV-ServerEnterprise-ServerEnterpriseIA64-ServerEnterpriseV-ServerStandard-ServerStandardV-ServerWeb-
+56df4151-1f9f-41bf-acaa-2941c071872b_PVGKG-2R7XQ-7WTFD-FXTJR-DQ%f%BQ3_-ServerComputeCluster-ServerEnterprise-ServerEnterpriseV-ServerStandard-ServerStandardV-ServerWeb-
+c448fa06-49d1-44ec-82bb-0085545c3b51_KH4PC-KJFX6-XFVHQ-GDK2G-JC%f%JY9_-ServerComputeCluster-ServerWeb-
+) do (
+for /f "tokens=1-3 delims=_" %%A in ("%%#") do if not defined key (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+echo "%%C" | find /i "-%tsedition%-" %nul1% && (
+set key=%%B
+set tempid=%%A
+)
+)
+)
+)
+
+if defined key (
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+) else (
+call :dk_color %Red% "Checking Activation ID                  [Not Found] [%tsedition%] [%osSKU%]"
+call :dk_color %Blue% "%KS% Host license is not found on your system. It is available for the below editions."
+call :dk_color %Blue% "Business, BusinessN, Enterprise, EnterpriseN, and Server editions, etc."
+goto :ts_act
+)
+
+call :dk_inskey "[%key%]"
+if not defined error set tsids=%tsids% %tempid%
+goto :ts_act
+
+::========================================================================================================================================
+
 :ts_ohost
 
 ::  Process Office K-M-S host
 
 echo:
 echo Processing Office %KS% Host...
+
+if defined _vis (
+echo:
+call :dk_color %Blue% "Windows Vista and Server 2008 do not support the installation of Office KMS Host."
+goto :ts_act
+)
 
 set ohostexist=
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
@@ -1151,7 +1350,7 @@ echo Checking Activation ID                  [%%A] [%%B]
 
 if not defined ohostexist (
 call :dk_color %Gray% "Checking Activation ID                  [Not found for Office %KS% Host]"
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%tsforge#office-kms-host"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%tsforge#office-kms-host"
 )
 
 echo:
@@ -1208,7 +1407,11 @@ goto :ts_act
 :ts_resetall
 
 echo:
+if defined _vis (
+echo Processing Reset of Rearm / Timers...
+) else (
 echo Processing Reset of Rearm / Timers / Tamper / Lock...
+)
 echo:
 
 set resetstuff=1
@@ -1217,7 +1420,7 @@ set resetstuff=1
 if %errorlevel%==3 (
 call :dk_color %Red% "Reset Failed."
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 ) else (
 call :dk_color %Green% "Reset process has been successfully done."
 )
@@ -1257,6 +1460,10 @@ goto :dk_done
 
 for /f "delims=" %%a in ('%psc% "$ids = Get-WmiObject -Query 'SELECT ID FROM SoftwareLicensingProduct' | Select-Object -ExpandProperty ID; $ids" %nul6%') do call set "allactids= %%a !allactids! "
 
+if defined _vis (
+echo:
+call :dk_color %Blue% "On Windows Vista and Server 2008, you must manually install the key before activating it."
+)
 echo:
 call :dk_color %Gray% "Enter / Paste the Activation ID shown in first column in the opened text file, or just press Enter to return:"
 echo Add space after each Activation ID if you are adding multiple:
@@ -1381,29 +1588,29 @@ call :dk_color %Gray% "To activate, check your internet connection and ensure th
 call :dk_color %Blue% "This Windows version is known to not activate due to MS Windows/Server issues."
 )
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 )
 
 if defined tsids (
 echo:
-echo Installing Forged Product Key Data...
+if not defined _vis echo Installing Forged Product Key Data...
 echo Depositing Zero Confirmation ID...
 echo:
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':tsforge\:.*';& ([ScriptBlock]::Create($f[1])) %tsids%"
 if !errorlevel!==3 (
 if %_actman%==0 call :dk_color %Blue% "%_fixmsg%"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 ) else (
 echo "%tsids%" | find /i "7e94be23-b161-4956-a682-146ab291774c" %nul1% && (
-call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 year ESU is not officially supported, but you can manually install updates."
+call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 years ESU is not officially supported, but you can manually install updates."
 )
 echo "%tsids%" | findstr /i "4afc620f-12a4-48ad-8015-2aebfbd6e47c 11be7019-a309-4763-9a09-091d1722ffe3" %nul1% && (
 call :dk_color %Gray% "ESU is not officially supported on Windows 8.1, but you can manually install updates until Jan-2024."
 )
 echo "%tsids%" | findstr /i "0b533b5e-08b6-44f9-b885-c2de291ba456 f69e2d51-3bbd-4ddf-8da7-a145e9dca597" %nul1% && (
-call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 year ESU license is added just as a placeholder."
+call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 years ESU is not officially supported, but it might be useful."
 )
 )
 
@@ -1422,7 +1629,7 @@ call :dk_reeval %nul%
 
 if not defined tsids if defined error if not defined showfix (
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 goto :dk_done
@@ -1438,8 +1645,7 @@ mode 100, 30
 title  Remove TSforge Activation %masver%
 
 echo:
-echo TSforge activation doesn't modify any Windows component.
-echo TSforge activation doesn't install any new file in the system.
+echo TSforge activation doesn't modify any Windows components and doesn't install any new files.
 echo:
 echo Instead, it appends data to one of data files used by Software Protection Platform.
 echo:
@@ -1466,7 +1672,7 @@ set _prids=
 set _config=
 set _version=
 set _License=
-set _oBranding=
+set _oMSI=
 exit /b
 
 ::========================================================================================================================================
@@ -1578,11 +1784,24 @@ call :dk_color %Gray% "Skipping Because Project/Visio Mode     [%%#]"
 
 if not defined skipprocess (
 
-echo %%# | findstr /i "O365" %nul% && (
+set no365=
+if "%oVer%"=="15" (echo %%# | findstr /i "O365HomePremRetail" %nul% && set no365=1)
+if "%oVer%"=="16" (echo %%# | findstr /i "O365" %nul% && set no365=1)
+
+if defined no365 (
 set _License=MondoRetail
 set _altoffid=MondoRetail
 call :ks_osppready
 echo Converting Unsupported O365 Office      [%%# To MondoRetail]
+)
+
+if not defined _oMSI (
+echo %%# | findstr /i "ARM" %nul% && (
+set _License=MondoRetail
+set _altoffid=MondoRetail
+call :ks_osppready
+echo Converting Unsupported OEM-ARM Office   [%%# To MondoRetail]
+)
 )
 
 set keytype=zero
@@ -1598,7 +1817,7 @@ call :dk_color %Red% "Checking Activation ID                  [Office %oVer%.0 !
 set error=1
 set showfix=1
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 echo %%# | find /i "2024" %nul% && (
@@ -1614,7 +1833,7 @@ echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
 ::  Add SharedComputerLicensing registry key if Retail Office C2R is installed on Windows Server
 ::  https://learn.microsoft.com/en-us/office/troubleshoot/office-suite-issues/click-to-run-office-on-terminal-server
 
-if defined winserver if defined _config (
+if defined winserver if defined _config if exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" (
 echo %_oIds% | find /i "Retail" %nul1% && (
 set scaIsNeeded=1
 reg add %_config% /v SharedComputerLicensing /t REG_SZ /d "1" /f %nul1%
@@ -1633,6 +1852,7 @@ exit /b
 call :ts_reset
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
 
+set _oMSI=1
 set oVer=%1
 for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\InstallRoot /v Path" %nul6%') do (set "_oRoot=%%b")
 for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\ProductVersion /v LastProduct" %nul6%') do (set "_version=%%b")
@@ -1646,25 +1866,16 @@ set "_common=%CommonProgramFiles%"
 if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
 set "_common2=%CommonProgramFiles(x86)%"
 
-for /r "%_common%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-if not defined _oBranding for /r "%_common2%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-
 if exist "%_common%\Microsoft Shared\OFFICE%oVer%\Office Setup Controller\pkeyconfig-office.xrm-ms" (
 set "pkeypath=%_common%\Microsoft Shared\OFFICE%oVer%\Office Setup Controller\pkeyconfig-office.xrm-ms"
 ) else if exist "%_common2%\Microsoft Shared\OFFICE%oVer%\Office Setup Controller\pkeyconfig-office.xrm-ms" (
 set "pkeypath=%_common2%\Microsoft Shared\OFFICE%oVer%\Office Setup Controller\pkeyconfig-office.xrm-ms"
 )
 
-call :ts_msiofficedata %2
+call :msiofficedata %2
 
 echo:
 echo Processing Office...                    [MSI ^| %_version% ^| %_oArch%]
-
-if not defined _oBranding (
-set error=1
-call :dk_color %Red% "Checking BRANDING.XML                   [Not Found. Aborting activation...]"
-exit /b
-)
 
 if not defined _oIds (
 set error=1
@@ -1931,9 +2142,15 @@ exit /b
 
 :dk_setvar
 
-set psc=powershell.exe
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
@@ -2052,7 +2269,7 @@ if ($r -eq 0) {
 
 :ts_checkwinperm
 
-%psc% "Get-WmiObject -Query 'SELECT Name, Description FROM SoftwareLicensingProduct WHERE LicenseStatus=''1'' AND GracePeriodRemaining=''0'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn IS NULL' | Where-Object { $_.Description -notmatch 'KMS_' } | Select-Object -Property Name" %nul2% | findstr /i "Windows" %nul1% && set _perm=1||set _perm=
+%psc% "Get-WmiObject -Query 'SELECT Name, Description FROM SoftwareLicensingProduct WHERE LicenseStatus=''1'' AND GracePeriodRemaining=''0'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn IS NULL' | Where-Object { $_.Description -notmatch 'KMS' } | Select-Object -Property Name" %nul2% | findstr /i "Windows" %nul1% && set _perm=1||set _perm=
 exit /b
 
 ::  Refresh license status
@@ -2061,6 +2278,33 @@ exit /b
 
 if %_wmic% EQU 1 wmic path %sps% where __CLASS='%sps%' call RefreshLicenseStatus %nul%
 if %_wmic% EQU 0 %psc% "$null=(([WMICLASS]'%sps%').GetInstances()).RefreshLicenseStatus()" %nul%
+exit /b
+
+::  Install Key
+
+:dk_inskey
+
+if %_wmic% EQU 1 wmic path %sps% where __CLASS='%sps%' call InstallProductKey ProductKey="%key%" %nul%
+if %_wmic% EQU 0 %psc% "try { $null=(([WMISEARCHER]'SELECT Version FROM %sps%').Get()).InstallProductKey('%key%'); exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
+set keyerror=%errorlevel%
+cmd /c exit /b %keyerror%
+if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
+
+if defined generickey (set "keyecho=Installing Generic Product Key         ") else (set "keyecho=Installing Product Key                 ")
+if %keyerror% EQU 0 (
+if %sps%==SoftwareLicensingService call :dk_refresh
+echo %keyecho% %~1 [Successful]
+) else (
+call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
+if not defined error (
+if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
+call :dk_color %Blue% "%_fixmsg%"
+set showfix=1
+)
+set error=1
+)
+
+set generickey=
 exit /b
 
 ::  Activation command
@@ -2115,6 +2359,8 @@ exit /b
 
 :dk_reeval
 
+if %winbuild% LSS 7600 exit /b
+
 ::  This key is left by the system in rearm process and sppsvc sometimes fails to delete it, it causes issues in working of the Scheduled Tasks of SPP
 
 set "ruleskey=HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedSystemState"
@@ -2142,13 +2388,13 @@ function InstallLicenseArr($Str) {
     ForEach ($x in $a) {InstallLicenseFile "$x"}
 }
 function InstallLicenseDir($Loc) {
-    dir $Loc *.xrm-ms -af -s | select -expand FullName | % {InstallLicenseFile "$_"}
+	Get-ChildItem $Loc -Recurse -Filter *.xrm-ms | ForEach-Object {InstallLicenseFile $_.FullName}
 }
 function ReinstallLicenses() {
-    $Oem = "$env:SysPath\oem"
-    $Spp = "$env:SysPath\spp\tokens"
-    InstallLicenseDir "$Spp"
-    If (Test-Path $Oem) {InstallLicenseDir "$Oem"}
+	$Paths = @("$env:SysPath\oem", "$env:SysPath\licensing", "$env:SysPath\spp\tokens")
+	foreach ($Path in $Paths) {
+    if (Test-Path $Path) { InstallLicenseDir "$Path" }
+	}
 }
 :xrm:
 
@@ -2156,6 +2402,7 @@ function ReinstallLicenses() {
 
 :dk_ckeckwmic
 
+if %winbuild% LSS 9200 (set _wmic=1&exit /b)
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" %nul2% | find /i "computersystem" %nul1% && set _wmic=1
@@ -2166,16 +2413,16 @@ exit /b
 
 :dk_sppissue
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 set spperror=%errorlevel%
 
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
-echo sc start sppsvc [Error Code: %spperror%]
+echo sc start %_slser% [Error Code: %spperror%]
 )
 
 echo:
-%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host 'sppsvc is not working correctly. Help - %mas%troubleshoot'}"
+%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host '%_slser% is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
 exit /b
 
 ::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
@@ -2183,7 +2430,7 @@ exit /b
 :dk_product
 
 set d1=%ref% $meth = $TypeBuilder.DefinePInvokeMethod('BrandingFormatString', 'winbrand.dll', 'Public, Static', 1, [String], @([String]), 1, 3);
-set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%')
+set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%') -replace [string][char]0xa9, '(C)' -replace [string][char]0xae, '(R)' -replace [string][char]0x2122, '(TM)'
 
 set winos=
 for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set winos=%%s)
@@ -2239,11 +2486,11 @@ for %%# in (avira.com kaspersky.com virustotal.com mcafee.com) do (
 find /i "%%#" %SysPath%\drivers\etc\hosts %nul% && set /a hcount+=1)
 if %hcount%==4 set "results=[Antivirus URLs are blocked in hosts]"
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 echo "%errorlevel%" | findstr "577 225" %nul% && (
 set "results=%results%[Likely File Infector]"
 ) || (
-if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
+if not exist %SysPath%\%_slexe% if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
 )
 
 if not "%results%%pupfound%"=="" (
@@ -2251,7 +2498,7 @@ if defined pupfound call :dk_color %Gray% "Checking PUP Activators              
 if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection..."
 if defined results call :dk_color %Red% "%results%"
 set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
 )
 
@@ -2323,6 +2570,7 @@ for %%# in (%serv_ste%) do (
 if /i %%#==ClipSVC          (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
 if /i %%#==wlidsvc          sc config %%# start= demand %nul%
 if /i %%#==sppsvc           (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
+if /i %%#==SLsvc            sc config %%# start= auto %nul%
 if /i %%#==KeyIso           sc config %%# start= demand %nul%
 if /i %%#==LicenseManager   sc config %%# start= demand %nul%
 if /i %%#==Winmgmt          sc config %%# start= auto %nul%
@@ -2371,7 +2619,7 @@ set showfix=1
 )
 echo %serv_e% | findstr /i "sppsvc-1060" %nul% && (
 set fixes=%fixes% %mas%fix_service
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_service"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_service"
 set showfix=1
 )
 )
@@ -2428,7 +2676,7 @@ if not defined notwinact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Win
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% || (
 call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
 set fixes=%fixes% %mas%evaluation_editions
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%evaluation_editions"
 )
 )
 
@@ -2452,7 +2700,7 @@ if %osedition%==0 (
 call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
 ) else (
 
-if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
+if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" if not exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set skunotfound=1
 call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
 )
@@ -2463,8 +2711,8 @@ call :dk_color %Red% "Checking Package Files                  [Not Found] [%osed
 )
 )
 
-
-%psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
+if %_wmic% EQU 1 wmic path %sps% get Version %nul%
+if %_wmic% EQU 0 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
 set error_code=%errorlevel%
 cmd /c exit /b %error_code%
 if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
@@ -2534,7 +2782,7 @@ call :dk_color2 %Blue% "In case of activation issues, do this - " %_Yellow% " %m
 )
 
 
-for %%# in (SppEx%w%tComObj.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
+for %%# in (SppEx%w%tComObj.exe SLsvc.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (if defined _sppint (set "_sppint=!_sppint!, %%#") else (set "_sppint=%%#"))
 )
 if defined _sppint (
@@ -2548,38 +2796,39 @@ echo Checking SPP In IFEO                    [%_sppint%]
 )
 
 
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
+if %winbuild% GEQ 7600 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
 call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 )
 
 
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
+if %winbuild% GEQ 7600 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
-call :dk_color2 %Blue% "Most likely caused by gaming spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
+call :dk_color2 %Blue% "Most likely caused by gaming spoofers. Check this webpage for help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
 set error=1
 set showfix=1
 )
 
 
 set tokenstore=
+if %winbuild% GEQ 7600 (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore %nul6%') do call set "tokenstore=%%b"
 if %winbuild% LSS 9200 set "tokenstore=%Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform"
-if %winbuild% GEQ 9200 if /i not "%tokenstore%"=="%SysPath%\spp\store" if /i not "%tokenstore%"=="%SysPath%\spp\store\2.0" if /i not "%tokenstore%"=="%SysPath%\spp\store_test\2.0" (
+if %winbuild% GEQ 9200 if /i not "!tokenstore!"=="%SysPath%\spp\store" if /i not "!tokenstore!"=="%SysPath%\spp\store\2.0" if /i not "!tokenstore!"=="%SysPath%\spp\store_test\2.0" (
 set toerr=1
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [%tokenstore%]"
+call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [!tokenstore!]"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
-
+)
 
 ::  This code creates token folder only if it's missing and sets default permission for it
 
-if not defined toerr if not exist "%tokenstore%\" (
+if %winbuild% GEQ 7600 if not defined toerr if not exist "%tokenstore%\" (
 mkdir "%tokenstore%" %nul%
 if %winbuild% LSS 9200 set "d=$sddl = 'O:NSG:NSD:AI(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;NS)';"
 if %winbuild% GEQ 9200 set "d=$sddl = 'O:BAG:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICIIO;GR;;;BU)(A;;FR;;;BU)(A;OICI;FA;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)';"
@@ -2600,7 +2849,7 @@ set showfix=1
 if not defined notwinact (
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
-%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"
@@ -2615,7 +2864,7 @@ call :dk_color %Red% "Checking Activation IDs                 [!_notfoundids!]"
 )
 
 
-if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
+if %winbuild% GEQ 7600 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
 set error=1
 call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
 )
@@ -2698,7 +2947,7 @@ exit /b
 $wpaKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $env:COMPUTERNAME).OpenSubKey("SYSTEM\\WPA")
 $count = 0
 foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
-    if ($subkeyName -match '.*-.*-.*-.*-.*-') {
+    if ($subkeyName -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
         $count++
     }
 }
@@ -2707,7 +2956,7 @@ $minBuildNumber = 14393
 if ($osVersion.Build -ge $minBuildNumber) {
     $subkeyHashTable = @{}
     foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
-        if ($subkeyName -match '.*-.*-.*-.*-.*-') {
+        if ($subkeyName -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
             $keyNumber = $subkeyName -replace '.*-', ''
             $subkeyHashTable[$keyNumber] = $true
         }
@@ -2721,7 +2970,7 @@ if ($osVersion.Build -ge $minBuildNumber) {
     }
 }
 $wpaKey.GetSubKeyNames() | ForEach-Object {
-    if ($_ -match '.*-.*-.*-.*-.*-') {
+    if ($_ -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
         if ($PSVersionTable.PSVersion.Major -lt 3) {
             cmd /c "reg query "HKLM\SYSTEM\WPA\$_" /ve /t REG_BINARY >nul 2>&1"
 			if ($LASTEXITCODE -ne 0) {
@@ -2750,8 +2999,10 @@ $wpaKey.Close()
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
 )
 exit /b
 
@@ -2759,8 +3010,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
 )
 exit /b
 
@@ -2795,23 +3048,16 @@ $src = @'
 // Common.cs
 namespace LibTSforge
 {
-    using Microsoft.Win32;
     using System;
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
-    using System.ServiceProcess;
     using System.Text;
-    using LibTSforge.Crypto;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
-    using LibTSforge.TokenStore;
 
     public enum PSVersion
     {
         Vista,
         Win7,
-        Win8Early,
         Win8,
         WinBlue,
         WinModern
@@ -2882,8 +3128,8 @@ namespace LibTSforge
             0x92, 0xA6, 0x56, 0x96
         };
 
-        // 2^31 - 1 minutes
-        public static ulong TimerMax = (ulong)TimeSpan.FromMinutes(2147483647).Ticks;
+        // 2^31 - 8 minutes
+        public static readonly ulong TimerMax = (ulong)TimeSpan.FromMinutes(2147483640).Ticks;
 
         public static readonly string ZeroCID = new string('0', 48);
     }
@@ -2951,20 +3197,6 @@ namespace LibTSforge
             }
             return result;
         }
-
-        public static T CastToStruct<T>(this byte[] data) where T : struct
-        {
-            GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-            try
-            {
-                IntPtr ptr = handle.AddrOfPinnedObject();
-                return (T)Marshal.PtrToStructure(ptr, typeof(T));
-            }
-            finally
-            {
-                handle.Free();
-            }
-        }
     }
 
     public static class FileStreamExt
@@ -2985,6 +3217,12 @@ namespace LibTSforge
 
     public static class Utils
     {
+        [DllImport("kernel32.dll")]
+        public static extern uint GetSystemDefaultLCID();
+
+        [DllImport("kernel32.dll")]
+        public static extern bool Wow64EnableWow64FsRedirection(bool Wow64FsEnableRedirection);
+
         public static string DecodeString(byte[] data)
         {
             return Encoding.Unicode.GetString(data).Trim('\0');
@@ -2994,9 +3232,6 @@ namespace LibTSforge
         {
             return Encoding.Unicode.GetBytes(str + '\0');
         }
-
-        [DllImport("kernel32.dll")]
-        public static extern uint GetSystemDefaultLCID();
 
         public static uint CRC32(byte[] data)
         {
@@ -3021,157 +3256,6 @@ namespace LibTSforge
             return ~crc;
         }
 
-        public static void KillSPP()
-        {
-            ServiceController sc;
-
-            try
-            {
-                sc = new ServiceController("sppsvc");
-
-                if (sc.Status == ServiceControllerStatus.Stopped)
-                    return;
-            }
-            catch (InvalidOperationException ex)
-            {
-                throw new InvalidOperationException("Unable to access sppsvc: " + ex.Message);
-            }
-
-            Logger.WriteLine("Stopping sppsvc...");
-
-            bool stopped = false;
-
-            for (int i = 0; stopped == false && i < 60; i++)
-            {
-                try
-                {
-                    if (sc.Status != ServiceControllerStatus.StopPending)
-                        sc.Stop();
-
-                    sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromMilliseconds(500));
-                }
-                catch (System.ServiceProcess.TimeoutException)
-                {
-                    continue;
-                }
-                catch (InvalidOperationException)
-                {
-                    System.Threading.Thread.Sleep(500);
-                    continue;
-                }
-
-                stopped = true;
-            }
-
-            if (!stopped)
-                throw new System.TimeoutException("Failed to stop sppsvc");
-
-            Logger.WriteLine("sppsvc stopped successfully.");
-        }
-
-        public static string GetPSPath(PSVersion version)
-        {
-            switch (version)
-            {
-                case PSVersion.Win7:
-                    return Directory.GetFiles(
-                        Environment.GetFolderPath(Environment.SpecialFolder.System),
-                        "7B296FB0-376B-497e-B012-9C450E1B7327-*.C7483456-A289-439d-8115-601632D005A0")
-                    .FirstOrDefault() ?? "";
-                case PSVersion.Win8Early:
-                case PSVersion.WinBlue:
-                case PSVersion.Win8:
-                case PSVersion.WinModern:
-                    return Path.Combine(
-                        Environment.ExpandEnvironmentVariables(
-                            (string)Registry.GetValue(
-                                @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
-                                "TokenStore",
-                                string.Empty
-                                )
-                            ),
-                            "data.dat"
-                        );
-                default:
-                    return "";
-            }
-        }
-
-        public static string GetTokensPath(PSVersion version)
-        {
-            switch (version)
-            {
-                case PSVersion.Win7:
-                    return Path.Combine(
-                        Environment.ExpandEnvironmentVariables("%WINDIR%"),
-                        @"ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\tokens.dat"
-                    );
-                case PSVersion.Win8Early:
-                case PSVersion.WinBlue:
-                case PSVersion.Win8:
-                case PSVersion.WinModern:
-                    return Path.Combine(
-                        Environment.ExpandEnvironmentVariables(
-                            (string)Registry.GetValue(
-                                @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
-                                "TokenStore",
-                                string.Empty
-                                )
-                            ),
-                            "tokens.dat"
-                        );
-                default:
-                    return "";
-            }
-        }
-
-        public static IPhysicalStore GetStore(PSVersion version, bool production)
-        {
-            string psPath;
-
-            try
-            {
-                psPath = GetPSPath(version);
-            }
-            catch
-            {
-                throw new FileNotFoundException("Failed to get path of physical store.");
-            }
-
-            if (string.IsNullOrEmpty(psPath) || !File.Exists(psPath))
-            {
-                throw new FileNotFoundException(string.Format("Physical store not found at expected path {0}.", psPath));
-            }
-
-            if (version == PSVersion.Vista)
-            {
-                throw new NotSupportedException("Physical store editing is not supported for Windows Vista.");
-            }
-
-            return version == PSVersion.Win7 ? new PhysicalStoreWin7(psPath, production) : (IPhysicalStore)new PhysicalStoreModern(psPath, production, version);
-        }
-
-        public static ITokenStore GetTokenStore(PSVersion version)
-        {
-            string tokPath;
-
-            try
-            {
-                tokPath = GetTokensPath(version);
-            }
-            catch
-            {
-                throw new FileNotFoundException("Failed to get path of physical store.");
-            }
-
-            if (string.IsNullOrEmpty(tokPath) || !File.Exists(tokPath))
-            {
-                throw new FileNotFoundException(string.Format("Token store not found at expected path {0}.", tokPath));
-            }
-
-            return new TokenStoreModern(tokPath);
-        }
-
         public static string GetArchitecture()
         {
             string arch = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE", EnvironmentVariableTarget.Machine).ToUpperInvariant();
@@ -3187,65 +3271,7 @@ namespace LibTSforge
             if (build >= 7600 && build <= 7602) return PSVersion.Win7;
             if (build == 9200) return PSVersion.Win8;
 
-            throw new NotSupportedException("Unable to auto-detect version info, please specify one manually using the /ver argument.");
-        }
-
-        public static bool DetectCurrentKey()
-        {
-            SLApi.RefreshLicenseStatus();
-
-            using (RegistryKey wpaKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\WPA"))
-            {
-                foreach (string subKey in wpaKey.GetSubKeyNames())
-                {
-                    if (subKey.StartsWith("8DEC0AF1") && subKey.EndsWith("-1"))
-                    {
-                        return subKey.Contains("P");
-                    }
-                }
-            }
-
-            throw new FileNotFoundException("Failed to autodetect key type, specify physical store key with /prod or /test arguments.");
-        }
-
-        public static void DumpStore(PSVersion version, bool production, string filePath, string encrFilePath)
-        {
-            if (encrFilePath == null)
-            {
-                encrFilePath = GetPSPath(version);
-            }
-
-            if (string.IsNullOrEmpty(encrFilePath) || !File.Exists(encrFilePath))
-            {
-                throw new FileNotFoundException("Store does not exist at expected path '" + encrFilePath + "'.");
-            }
-
-            KillSPP();
-
-            using (FileStream fs = File.Open(encrFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
-            {
-                byte[] encrData = fs.ReadAllBytes();
-                File.WriteAllBytes(filePath, PhysStoreCrypto.DecryptPhysicalStore(encrData, production));
-            }
-
-            Logger.WriteLine("Store dumped successfully to '" + filePath + "'.");
-        }
-
-        public static void LoadStore(PSVersion version, bool production, string filePath)
-        {
-            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-            {
-                throw new FileNotFoundException("Store file '" + filePath + "' does not exist.");
-            }
-
-            KillSPP();
-
-            using (IPhysicalStore store = GetStore(version, production))
-            {
-                store.WriteRaw(File.ReadAllBytes(filePath));
-            }
-
-            Logger.WriteLine("Loaded store file succesfully.");
+            throw new NotSupportedException("Unable to auto-detect version info");
         }
     }
 
@@ -3338,8 +3364,8 @@ namespace LibTSforge.SPP
 
     public class PKeyConfig
     {
-        public Dictionary<Guid, ProductConfig> Products = new Dictionary<Guid, ProductConfig>();
-        private List<Guid> loadedPkeyConfigs = new List<Guid>();
+        public readonly Dictionary<Guid, ProductConfig> Products = new Dictionary<Guid, ProductConfig>();
+        private readonly List<Guid> loadedPkeyConfigs = new List<Guid>();
 
         public void LoadConfig(Guid actId)
         {
@@ -3400,12 +3426,14 @@ namespace LibTSforge.SPP
                         ranges[refActIdStr] = new List<KeyRange>();
                     }
 
-                    KeyRange keyRange = new KeyRange();
-                    keyRange.Start = int.Parse(rangeNode.SelectSingleNode("./p:Start", nsmgr).InnerText);
-                    keyRange.End = int.Parse(rangeNode.SelectSingleNode("./p:End", nsmgr).InnerText);
-                    keyRange.EulaType = rangeNode.SelectSingleNode("./p:EulaType", nsmgr).InnerText;
-                    keyRange.PartNumber = rangeNode.SelectSingleNode("./p:PartNumber", nsmgr).InnerText;
-                    keyRange.Valid = rangeNode.SelectSingleNode("./p:IsValid", nsmgr).InnerText.ToLower() == "true";
+                    KeyRange keyRange = new KeyRange
+                    {
+                        Start = int.Parse(rangeNode.SelectSingleNode("./p:Start", nsmgr).InnerText),
+                        End = int.Parse(rangeNode.SelectSingleNode("./p:End", nsmgr).InnerText),
+                        EulaType = rangeNode.SelectSingleNode("./p:EulaType", nsmgr).InnerText,
+                        PartNumber = rangeNode.SelectSingleNode("./p:PartNumber", nsmgr).InnerText,
+                        Valid = rangeNode.SelectSingleNode("./p:IsValid", nsmgr).InnerText.ToLower() == "true"
+                    };
 
                     ranges[refActIdStr].Add(keyRange);
                 }
@@ -3419,15 +3447,17 @@ namespace LibTSforge.SPP
 
                     if (keyRanges.Count > 0 && !Products.ContainsKey(refActId))
                     {
-                        ProductConfig productConfig = new ProductConfig();
-                        productConfig.GroupId = group;
-                        productConfig.Edition = configNode.SelectSingleNode("./p:EditionId", nsmgr).InnerText;
-                        productConfig.Description = configNode.SelectSingleNode("./p:ProductDescription", nsmgr).InnerText;
-                        productConfig.Channel = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText;
-                        productConfig.Randomized = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText.ToLower() == "true";
-                        productConfig.Algorithm = algorithms[group];
-                        productConfig.Ranges = keyRanges;
-                        productConfig.ActivationId = refActId;
+                        ProductConfig productConfig = new ProductConfig
+                        {
+                            GroupId = group,
+                            Edition = configNode.SelectSingleNode("./p:EditionId", nsmgr).InnerText,
+                            Description = configNode.SelectSingleNode("./p:ProductDescription", nsmgr).InnerText,
+                            Channel = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText,
+                            Randomized = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText.ToLower() == "true",
+                            Algorithm = algorithms[group],
+                            Ranges = keyRanges,
+                            ActivationId = refActId
+                        };
 
                         Products[refActId] = productConfig;
                     }
@@ -3470,11 +3500,6 @@ namespace LibTSforge.SPP
                 }
             }
         }
-
-        public PKeyConfig()
-        {
-
-        }
     }
 }
 
@@ -3485,8 +3510,8 @@ namespace LibTSforge.SPP
     using System;
     using System.IO;
     using System.Linq;
-    using LibTSforge.Crypto;
-    using LibTSforge.PhysicalStore;
+    using Crypto;
+    using PhysicalStore;
 
     public class ProductKey
     {
@@ -3500,11 +3525,11 @@ namespace LibTSforge.SPP
         public ulong Security;
         public bool Upgrade;
         public PKeyAlgorithm Algorithm;
-        public string EulaType;
-        public string PartNumber;
-        public string Edition;
-        public string Channel;
-        public Guid ActivationId;
+        public readonly string EulaType;
+        public readonly string PartNumber;
+        public readonly string Edition;
+        public readonly string Channel;
+        public readonly Guid ActivationId;
 
         private string mpc;
         private string pid2;
@@ -3512,6 +3537,11 @@ namespace LibTSforge.SPP
         public byte[] KeyBytes
         {
             get { return BitConverter.GetBytes(klow).Concat(BitConverter.GetBytes(khigh)).ToArray(); }
+        }
+
+        public ProductKey()
+        {
+
         }
 
         public ProductKey(int serial, ulong security, bool upgrade, PKeyAlgorithm algorithm, ProductConfig config, KeyRange range)
@@ -3542,22 +3572,22 @@ namespace LibTSforge.SPP
 
         public Guid GetPkeyId()
         {
-            VariableBag pkb = new VariableBag();
-            pkb.Blocks.AddRange(new CRCBlock[]
+            VariableBag pkb = new VariableBag(PSVersion.WinModern);
+            pkb.Blocks.AddRange(new[]
             {
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingProductKey",
                     ValueAsStr = ToString()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingMiscData",
                     Value = new byte[] { }
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingAlgorithm",
@@ -3568,16 +3598,6 @@ namespace LibTSforge.SPP
             return new Guid(CryptoUtils.SHA256Hash(pkb.Serialize()).Take(16).ToArray());
         }
 
-        public string GetDefaultMPC()
-        {
-            int build = Environment.OSVersion.Version.Build;
-            string defaultMPC = build >= 10240 ? "03612" :
-                                build >= 9600 ? "06401" :
-                                build >= 9200 ? "05426" :
-                                "55041";
-            return defaultMPC;
-        }
-
         public string GetMPC()
         {
             if (mpc != null)
@@ -3585,10 +3605,15 @@ namespace LibTSforge.SPP
                 return mpc;
             }
 
-            mpc = GetDefaultMPC();
+            int build = Environment.OSVersion.Version.Build;
+
+            mpc = build >= 10240 ? "03612" :
+                    build >= 9600 ? "06401" :
+                    build >= 9200 ? "05426" :
+                    "55041";
 
             // setup.cfg doesn't exist in Windows 8+
-            string setupcfg = string.Format("{0}\\oobe\\{1}", Environment.SystemDirectory, "setup.cfg");
+            string setupcfg = string.Format(@"{0}\oobe\{1}", Environment.SystemDirectory, "setup.cfg");
 
             if (!File.Exists(setupcfg) || Edition.Contains(";"))
             {
@@ -3726,17 +3751,17 @@ namespace LibTSforge.SPP
         {
             if (version == PSVersion.Win7)
             {
-                Random rnd = new Random(Group * 1000000000 + Serial);
-                byte[] data = new byte[8];
-                rnd.NextBytes(data);
-                return data;
+                ulong shortauth = ((ulong)Group << 41) | (Security << 31) | ((ulong)Serial << 1) | (Upgrade ? (ulong)1 : 0);
+                return BitConverter.GetBytes(shortauth);
             }
 
             int serialHigh = Serial / 1000000;
             int serialLow = Serial % 1000000;
 
             BinaryWriter writer = new BinaryWriter(new MemoryStream());
-            writer.Write(new Guid("B8731595-A2F6-430B-A799-FBFFB81A8D73").ToByteArray());
+            string algoId = Algorithm == PKeyAlgorithm.PKEY2005 ? "B8731595-A2F6-430B-A799-FBFFB81A8D73" : "660672EF-7809-4CFD-8D54-41B7FB738988";
+
+            writer.Write(new Guid(algoId).ToByteArray());
             writer.Write(Group);
             writer.Write(serialHigh);
             writer.Write(serialLow);
@@ -3842,40 +3867,40 @@ namespace LibTSforge.SPP
 
         public static readonly Guid WINDOWS_APP_ID = new Guid("55c92734-d682-4d71-983e-d6ec3f16059f");
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
         private static extern void SLOpen(out IntPtr hSLC);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
         private static extern void SLClose(IntPtr hSLC);
 
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetWindowsInformationDWORD(string ValueName, ref int Value);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLInstallProofOfPurchase(IntPtr hSLC, string pwszPKeyAlgorithm, string pwszPKeyString, uint cbPKeySpecificData, byte[] pbPKeySpecificData, ref Guid PKeyId);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLUninstallProofOfPurchase(IntPtr hSLC, ref Guid PKeyId);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetPKeyInformation(IntPtr hSLC, ref Guid pPKeyId, string pwszValueName, out SLDATATYPE peDataType, out uint pcbValue, out IntPtr ppbValue);
 
-        [DllImport("sppcext.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slcext.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLActivateProduct(IntPtr hSLC, ref Guid pProductSkuId, byte[] cbAppSpecificData, byte[] pvAppSpecificData, byte[] pActivationInfo, string pwszProxyServer, ushort wProxyPort);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGenerateOfflineInstallationId(IntPtr hSLC, ref Guid pProductSkuId, ref string ppwszInstallationId);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLDepositOfflineConfirmationId(IntPtr hSLC, ref Guid pProductSkuId, string pwszInstallationId, string pwszConfirmationId);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetSLIDList(IntPtr hSLC, SLIDTYPE eQueryIdType, ref Guid pQueryId, SLIDTYPE eReturnIdType, out uint pnReturnIds, out IntPtr ppReturnIds);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
         private static extern void SLGetLicensingStatusInformation(IntPtr hSLC, ref Guid pAppID, IntPtr pProductSkuId, string pwszRightName, out uint pnStatusCount, out IntPtr ppLicensingStatus);
 
-        [DllImport("sppc.dll", CharSet = CharSet.Unicode)]
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetInstalledProductKeyIds(IntPtr hSLC, ref Guid pProductSkuId, out uint pnProductKeyIds, out IntPtr ppProductKeyIds);
 
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
@@ -3883,9 +3908,6 @@ namespace LibTSforge.SPP
 
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetProductSkuInformation(IntPtr hSLC, ref Guid pProductSkuId, string pwszValueName, out SLDATATYPE peDataType, out uint pcbValue, out IntPtr ppbValue);
-
-        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
-        private static extern uint SLGetProductSkuInformation(IntPtr hSLC, ref Guid pProductSkuId, string pwszValueName, IntPtr peDataType, out uint pcbValue, out IntPtr ppbValue);
 
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLGetLicense(IntPtr hSLC, ref Guid pLicenseFileId, out uint pcbLicenseFile, out IntPtr ppbLicenseFile);
@@ -3896,7 +3918,7 @@ namespace LibTSforge.SPP
         [DllImport("slc.dll", CharSet = CharSet.Unicode)]
         private static extern uint SLFireEvent(IntPtr hSLC, string pwszEventId, ref Guid pApplicationId);
 
-        public class SLContext : IDisposable
+        private class SLContext : IDisposable
         {
             public readonly IntPtr Handle;
 
@@ -3959,11 +3981,10 @@ namespace LibTSforge.SPP
         {
             using (SLContext sl = new SLContext())
             {
-                uint status;
                 uint count;
                 IntPtr pProductKeyIds;
 
-                status = SLGetInstalledProductKeyIds(sl.Handle, ref actId, out count, out pProductKeyIds);
+                uint status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_PRODUCT_SKU, ref actId, SLIDTYPE.SL_ID_PKEY, out count, out pProductKeyIds);
 
                 if (status != 0 || count == 0)
                 {
@@ -3987,7 +4008,7 @@ namespace LibTSforge.SPP
             SLConsumeWindowsRight(0);
         }
 
-        public static bool RefreshTrustedTime(Guid actId)
+        public static void RefreshTrustedTime(Guid actId)
         {
             using (SLContext sl = new SLContext())
             {
@@ -3995,8 +4016,7 @@ namespace LibTSforge.SPP
                 uint count;
                 IntPtr ppbValue;
 
-                uint status = SLGetProductSkuInformation(sl.Handle, ref actId, "TrustedTime", out type, out count, out ppbValue);
-                return (int)status >= 0 && status != 0xC004F012;
+                SLGetProductSkuInformation(sl.Handle, ref actId, "TrustedTime", out type, out count, out ppbValue);
             }
         }
 
@@ -4012,11 +4032,10 @@ namespace LibTSforge.SPP
         {
             using (SLContext sl = new SLContext())
             {
-                uint status;
                 uint count;
                 IntPtr pAppIds;
 
-                status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_PRODUCT_SKU, ref actId, SLIDTYPE.SL_ID_APPLICATION, out count, out pAppIds);
+                uint status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_PRODUCT_SKU, ref actId, SLIDTYPE.SL_ID_APPLICATION, out count, out pAppIds);
 
                 if (status != 0 || count == 0)
                 {
@@ -4044,11 +4063,10 @@ namespace LibTSforge.SPP
         {
             using (SLContext sl = new SLContext())
             {
-                uint status;
                 uint count;
                 IntPtr ppReturnLics;
 
-                status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_LICENSE, ref licId, SLIDTYPE.SL_ID_LICENSE_FILE, out count, out ppReturnLics);
+                uint status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_LICENSE, ref licId, SLIDTYPE.SL_ID_LICENSE_FILE, out count, out ppReturnLics);
 
                 if (status != 0 || count == 0)
                 {
@@ -4110,7 +4128,7 @@ namespace LibTSforge.SPP
                 IntPtr ppbValue;
 
                 uint status = SLGetProductSkuInformation(sl.Handle, ref actId, "msft:sl/EUL/PHONE/PUBLIC", out type, out count, out ppbValue);
-                return status >= 0 && status != 0xC004F012;
+                return status != 0xC004F012;
             }
         }
 
@@ -4193,11 +4211,11 @@ namespace LibTSforge.SPP
             }
         }
 
-        public static uint UninstallProductKey(Guid pkeyId)
+        public static void UninstallProductKey(Guid pkeyId)
         {
             using (SLContext sl = new SLContext())
             {
-                return SLUninstallProofOfPurchase(sl.Handle, ref pkeyId);
+                SLUninstallProofOfPurchase(sl.Handle, ref pkeyId);
             }
         }
 
@@ -4210,6 +4228,390 @@ namespace LibTSforge.SPP
                 if (IsAddon(actId)) continue;
                 UninstallProductKey(pkeyId);
             }
+        }
+    }
+}
+
+
+// SPP/SPPUtils.cs
+namespace LibTSforge.SPP
+{
+    using Microsoft.Win32;
+    using System;
+    using System.IO;
+    using System.Linq;
+    using System.ServiceProcess;
+    using Crypto;
+    using PhysicalStore;
+    using TokenStore;
+
+    public static class SPPUtils
+    {
+        public static void KillSPP(PSVersion version)
+        {
+            ServiceController sc;
+
+            string svcName = version == PSVersion.Vista ? "slsvc" : "sppsvc";
+
+            try
+            {
+                sc = new ServiceController(svcName);
+
+                if (sc.Status == ServiceControllerStatus.Stopped)
+                    return;
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException(string.Format("Unable to access {0}: ", svcName) + ex.Message);
+            }
+
+            Logger.WriteLine(string.Format("Stopping {0}...", svcName));
+
+            bool stopped = false;
+
+            for (int i = 0; stopped == false && i < 1080; i++)
+            {
+                try
+                {
+                    if (sc.Status != ServiceControllerStatus.StopPending)
+                        sc.Stop();
+
+                    sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromMilliseconds(500));
+                }
+                catch (System.ServiceProcess.TimeoutException)
+                {
+                    continue;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Logger.WriteLine("Warning: Stopping sppsvc failed, retrying. Details: " + ex.Message);
+                    System.Threading.Thread.Sleep(500);
+                    continue;
+                }
+
+                stopped = true;
+            }
+
+            if (!stopped)
+                throw new System.TimeoutException(string.Format("Failed to stop {0}", svcName));
+
+            Logger.WriteLine(string.Format("{0} stopped successfully.", svcName));
+
+            if (version == PSVersion.Vista && SPSys.IsSpSysRunning())
+            {
+                Logger.WriteLine("Unloading spsys...");
+
+                int status = SPSys.ControlSpSys(false);
+
+                if (status < 0)
+                {
+                    throw new IOException("Failed to unload spsys");
+                }
+
+                Logger.WriteLine("spsys unloaded successfully.");
+            }
+        }
+
+        public static void RestartSPP(PSVersion version)
+        {
+            if (version == PSVersion.Vista)
+            {
+                ServiceController sc;
+
+                try
+                {
+                    sc = new ServiceController("slsvc");
+
+                    if (sc.Status == ServiceControllerStatus.Running)
+                        return;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    throw new InvalidOperationException("Unable to access slsvc: " + ex.Message);
+                }
+
+                Logger.WriteLine("Starting slsvc...");
+
+                bool started = false;
+
+                for (int i = 0; started == false && i < 360; i++)
+                {
+                    try
+                    {
+                        if (sc.Status != ServiceControllerStatus.StartPending)
+                            sc.Start();
+
+                        sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromMilliseconds(500));
+                    }
+                    catch (System.ServiceProcess.TimeoutException)
+                    {
+                        continue;
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        Logger.WriteLine("Warning: Starting slsvc failed, retrying. Details: " + ex.Message);
+                        System.Threading.Thread.Sleep(500);
+                        continue;
+                    }
+
+                    started = true;
+                }
+
+                if (!started)
+                    throw new System.TimeoutException("Failed to start slsvc");
+
+                Logger.WriteLine("slsvc started successfully.");
+            }
+
+            SLApi.RefreshLicenseStatus();
+        }
+
+        public static bool DetectCurrentKey()
+        {
+            SLApi.RefreshLicenseStatus();
+
+            using (RegistryKey wpaKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\WPA"))
+            {
+                foreach (string subKey in wpaKey.GetSubKeyNames())
+                {
+                    if (subKey.StartsWith("8DEC0AF1"))
+                    {
+                        return subKey.Contains("P");
+                    }
+                }
+            }
+
+            throw new FileNotFoundException("Failed to autodetect key type, specify physical store key with /prod or /test arguments.");
+        }
+
+        public static string GetPSPath(PSVersion version)
+        {
+            switch (version)
+            {
+                case PSVersion.Vista:
+                case PSVersion.Win7:
+                    return Directory.GetFiles(
+                        Environment.GetFolderPath(Environment.SpecialFolder.System),
+                        "7B296FB0-376B-497e-B012-9C450E1B7327-*.C7483456-A289-439d-8115-601632D005A0")
+                    .FirstOrDefault() ?? "";
+                default:
+                    string psDir = Environment.ExpandEnvironmentVariables(
+                        (string)Registry.GetValue(
+                            @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
+                            "TokenStore",
+                            ""
+                        )
+                    );
+                    string psPath = Path.Combine(psDir, "data.dat");
+
+                    if (string.IsNullOrEmpty(psDir) || !File.Exists(psPath))
+                    {
+                        string[] psDirs =
+                        {
+                            @"spp\store",
+                            @"spp\store\2.0",
+                            @"spp\store_test",
+                            @"spp\store_test\2.0"
+                        };
+
+                        foreach (string dir in psDirs)
+                        {
+                            psPath = Path.Combine(
+                                Path.Combine(
+                                    Environment.GetFolderPath(Environment.SpecialFolder.System),
+                                    dir
+                                ),
+                                "data.dat"
+                            );
+
+                            if (File.Exists(psPath)) return psPath;
+                        }
+                    } 
+                    else
+                    {
+                        return psPath;
+                    }
+
+                    throw new FileNotFoundException("Failed to locate physical store.");
+            }
+        }
+
+        public static string GetTokensPath(PSVersion version)
+        {
+            switch (version)
+            {
+                case PSVersion.Vista:
+                    return Path.Combine(
+                        Environment.ExpandEnvironmentVariables("%WINDIR%"),
+                        @"ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareLicensing\tokens.dat"
+                    );
+                case PSVersion.Win7:
+                    return Path.Combine(
+                        Environment.ExpandEnvironmentVariables("%WINDIR%"),
+                        @"ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\tokens.dat"
+                    );
+                default:
+                    string tokDir = Environment.ExpandEnvironmentVariables(
+                        (string)Registry.GetValue(
+                            @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
+                            "TokenStore",
+                            ""
+                        )
+                    );
+                    string tokPath = Path.Combine(tokDir, "tokens.dat");
+
+                    if (string.IsNullOrEmpty(tokDir) || !File.Exists(tokPath))
+                    {
+                        string[] tokDirs =
+                        {
+                            @"spp\store",
+                            @"spp\store\2.0",
+                            @"spp\store_test",
+                            @"spp\store_test\2.0"
+                        };
+
+                        foreach (string dir in tokDirs)
+                        {
+                            tokPath = Path.Combine(
+                                Path.Combine(
+                                    Environment.GetFolderPath(Environment.SpecialFolder.System),
+                                    dir
+                                ),
+                                "tokens.dat"
+                            );
+
+                            if (File.Exists(tokPath)) return tokPath;
+                        }
+                    }
+                    else
+                    {
+                        return tokPath;
+                    }
+
+                    throw new FileNotFoundException("Failed to locate token store.");
+            }
+        }
+
+        public static IPhysicalStore GetStore(PSVersion version, bool production)
+        {
+            string psPath = GetPSPath(version);
+
+            switch (version)
+            {
+                case PSVersion.Vista:
+                    return new PhysicalStoreVista(psPath, production);
+                case PSVersion.Win7:
+                    return new PhysicalStoreWin7(psPath, production);
+                default:
+                    return new PhysicalStoreModern(psPath, production, version);
+            }
+        }
+
+        public static ITokenStore GetTokenStore(PSVersion version)
+        {
+            string tokPath = GetTokensPath(version);
+
+            return new TokenStoreModern(tokPath);
+        }
+
+        public static void DumpStore(PSVersion version, bool production, string filePath, string encrFilePath)
+        {
+            bool manageSpp = false;
+
+            if (encrFilePath == null)
+            {
+                encrFilePath = GetPSPath(version);
+                manageSpp = true;
+                KillSPP(version);
+            }
+
+            if (string.IsNullOrEmpty(encrFilePath) || !File.Exists(encrFilePath))
+            {
+                throw new FileNotFoundException("Store does not exist at expected path '" + encrFilePath + "'.");
+            }
+
+            try
+            {
+                using (FileStream fs = File.Open(encrFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    byte[] encrData = fs.ReadAllBytes();
+                    File.WriteAllBytes(filePath, PhysStoreCrypto.DecryptPhysicalStore(encrData, production, version));
+                }
+                Logger.WriteLine("Store dumped successfully to '" + filePath + "'.");
+            }
+            finally
+            {
+                if (manageSpp)
+                {
+                    RestartSPP(version);
+                }
+            }
+        }
+
+        public static void LoadStore(PSVersion version, bool production, string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                throw new FileNotFoundException("Store file '" + filePath + "' does not exist.");
+            }
+
+            KillSPP(version);
+
+            using (IPhysicalStore store = GetStore(version, production))
+            {
+                store.WriteRaw(File.ReadAllBytes(filePath));
+            }
+
+            RestartSPP(version);
+
+            Logger.WriteLine("Loaded store file successfully.");
+        }
+    }
+}
+
+
+// SPP/SPSys.cs
+namespace LibTSforge.SPP
+{
+    using Microsoft.Win32.SafeHandles;
+    using System;
+    using System.Runtime.InteropServices;
+
+    public class SPSys
+    {
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr CreateFile(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
+        private static SafeFileHandle CreateFileSafe(string device)
+        {
+            return new SafeFileHandle(CreateFile(device, 0xC0000000, 0, IntPtr.Zero, 3, 0, IntPtr.Zero), true);
+        }
+
+        [return: MarshalAs(UnmanagedType.Bool)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool DeviceIoControl([In] SafeFileHandle hDevice, [In] uint dwIoControlCode, [In] IntPtr lpInBuffer, [In] int nInBufferSize, [Out] IntPtr lpOutBuffer, [In] int nOutBufferSize, out int lpBytesReturned, [In] IntPtr lpOverlapped);
+
+        public static bool IsSpSysRunning()
+        {
+            SafeFileHandle file = CreateFileSafe(@"\\.\SpDevice");
+            IntPtr buffer = Marshal.AllocHGlobal(1);
+            int bytesReturned;
+            DeviceIoControl(file, 0x80006008, IntPtr.Zero, 0, buffer, 1, out bytesReturned, IntPtr.Zero);
+            bool running = Marshal.ReadByte(buffer) != 0;
+            Marshal.FreeHGlobal(buffer);
+            file.Close();
+            return running;
+        }
+
+        public static int ControlSpSys(bool start)
+        {
+            SafeFileHandle file = CreateFileSafe(@"\\.\SpDevice");
+            IntPtr buffer = Marshal.AllocHGlobal(4);
+            int bytesReturned;
+            DeviceIoControl(file, start ? 0x8000a000 : 0x8000a004, IntPtr.Zero, 0, buffer, 4, out bytesReturned, IntPtr.Zero);
+            int result = Marshal.ReadInt32(buffer);
+            Marshal.FreeHGlobal(buffer);
+            file.Close();
+            return result;
         }
     }
 }
@@ -4324,8 +4726,19 @@ namespace LibTSforge.Crypto
 
         public static bool HMACVerify(byte[] key, byte[] data, byte[] signature)
         {
-            HMACSHA1 hmac = new HMACSHA1(key);
             return Enumerable.SequenceEqual(signature, HMACSign(key, data));
+        }
+
+        public static byte[] SaltSHASum(byte[] salt, byte[] data)
+        {
+            SHA1 sha1 = SHA1.Create();
+            byte[] sha_data = salt.Concat(data).ToArray();
+            return sha1.ComputeHash(sha_data);
+        }
+
+        public static bool SaltSHAVerify(byte[] salt, byte[] data, byte[] checksum)
+        {
+            return Enumerable.SequenceEqual(checksum, SaltSHASum(salt, data));
         }
 
         public static byte[] SHA256Hash(byte[] data)
@@ -4440,7 +4853,7 @@ namespace LibTSforge.Crypto
 
     public static class PhysStoreCrypto
     {
-        public static byte[] DecryptPhysicalStore(byte[] data, bool production)
+        public static byte[] DecryptPhysicalStore(byte[] data, bool production, PSVersion version)
         {
             byte[] rsaKey = production ? Keys.PRODUCTION : Keys.TEST;
             BinaryReader br = new BinaryReader(new MemoryStream(data));
@@ -4448,29 +4861,40 @@ namespace LibTSforge.Crypto
             byte[] aesKeySig = br.ReadBytes(0x80);
             byte[] encAesKey = br.ReadBytes(0x80);
 
-            if (CryptoUtils.RSAVerifySignature(rsaKey, encAesKey, aesKeySig))
+            if (!CryptoUtils.RSAVerifySignature(rsaKey, encAesKey, aesKeySig))
             {
-                byte[] aesKey = CryptoUtils.RSADecrypt(rsaKey, encAesKey);
-                byte[] decData = CryptoUtils.AESDecrypt(br.ReadBytes((int)br.BaseStream.Length - 0x110), aesKey);
-                byte[] hmacKey = decData.Take(0x10).ToArray();
-                byte[] hmacSig = decData.Skip(0x10).Take(0x14).ToArray();
-                byte[] psData = decData.Skip(0x28).ToArray();
-
-                if (!CryptoUtils.HMACVerify(hmacKey, psData, hmacSig))
-                {
-                    Logger.WriteLine("Warning: Failed to verify HMAC. Physical store is either corrupt or in Vista format.");
-                }
-
-                return psData;
+                throw new Exception("Failed to decrypt physical store.");
             }
 
-            throw new Exception("Failed to decrypt physical store.");
+            byte[] aesKey = CryptoUtils.RSADecrypt(rsaKey, encAesKey);
+            byte[] decData = CryptoUtils.AESDecrypt(br.ReadBytes((int)br.BaseStream.Length - 0x110), aesKey);
+            byte[] hmacKey = decData.Take(0x10).ToArray(); // SHA-1 salt on Vista
+            byte[] hmacSig = decData.Skip(0x10).Take(0x14).ToArray(); // SHA-1 hash on Vista
+            byte[] psData = decData.Skip(0x28).ToArray();
+
+            if (version != PSVersion.Vista)
+            {
+                if (!CryptoUtils.HMACVerify(hmacKey, psData, hmacSig))
+                {
+                    throw new InvalidDataException("Failed to verify HMAC. Physical store is corrupt.");
+                }
+            }
+            else
+            {
+                if (!CryptoUtils.SaltSHAVerify(hmacKey, psData, hmacSig))
+                {
+                    throw new InvalidDataException("Failed to verify checksum. Physical store is corrupt.");
+                }
+            }
+
+            return psData;
         }
 
         public static byte[] EncryptPhysicalStore(byte[] data, bool production, PSVersion version)
         {
             Dictionary<PSVersion, int> versionTable = new Dictionary<PSVersion, int>
             {
+                {PSVersion.Vista, 2},
                 {PSVersion.Win7, 5},
                 {PSVersion.Win8, 1},
                 {PSVersion.WinBlue, 2},
@@ -4484,9 +4908,9 @@ namespace LibTSforge.Crypto
 
             byte[] encAesKey = CryptoUtils.RSAEncrypt(rsaKey, aesKey);
             byte[] aesKeySig = CryptoUtils.RSASign(rsaKey, encAesKey);
-            byte[] hmacSig = CryptoUtils.HMACSign(hmacKey, data);
+            byte[] hmacSig = version != PSVersion.Vista ? CryptoUtils.HMACSign(hmacKey, data) : CryptoUtils.SaltSHASum(hmacKey, data);
 
-            byte[] decData = new byte[] { };
+            byte[] decData = { };
             decData = decData.Concat(hmacKey).Concat(hmacSig).Concat(BitConverter.GetBytes(0)).Concat(data).ToArray();
             byte[] encData = CryptoUtils.AESEncrypt(decData, aesKey);
 
@@ -4509,9 +4933,9 @@ namespace LibTSforge.Modifiers
     using System;
     using System.IO;
     using Microsoft.Win32;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
-    using LibTSforge.TokenStore;
+    using PhysicalStore;
+    using SPP;
+    using TokenStore;
 
     public static class GenPKeyInstall
     {
@@ -4537,6 +4961,7 @@ namespace LibTSforge.Modifiers
 
         public static void InstallGenPKey(PSVersion version, bool production, Guid actId)
         {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
             if (actId == Guid.Empty) throw new ArgumentException("Activation ID must be specified for generated product key install.");
 
             PKeyConfig pkc = new PKeyConfig();
@@ -4563,7 +4988,7 @@ namespace LibTSforge.Modifiers
             if (pkey.Algorithm == PKeyAlgorithm.PKEY2009)
             {
                 uint status = SLApi.InstallProductKey(pkey);
-                Logger.WriteLine(string.Format("Installing generated product key {0} status {1:X}", pkey.ToString(), status));
+                Logger.WriteLine(string.Format("Installing generated product key {0} status {1:X}", pkey, status));
 
                 if ((int)status < 0)
                 {
@@ -4578,57 +5003,57 @@ namespace LibTSforge.Modifiers
 
             if (pkey.Channel == "Volume:GVLK" && version == PSVersion.Win7) throw new NotSupportedException("Fake GVLK generation is not supported on Windows 7.");
 
-            VariableBag pkb = new VariableBag();
-            pkb.Blocks.AddRange(new CRCBlock[]
+            VariableBag pkb = new VariableBag(version);
+            pkb.Blocks.AddRange(new[]
             {
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingProductKey",
                     ValueAsStr = pkey.ToString()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingMPC",
                     ValueAsStr = pkey.GetMPC()
                 },
-                new CRCBlock {
+                new CRCBlockModern {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingPid2",
                     ValueAsStr = pkey.GetPid2()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingPid3",
                     Value = pkey.GetPid3()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingPid4",
                     Value = pkey.GetPid4()
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyChannelId",
                     ValueAsStr = pkey.Channel
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.STRING,
                     KeyAsStr = "SppPkeyBindingEditionId",
                     ValueAsStr = pkey.Edition
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = (version == PSVersion.Win7) ? "SppPkeyShortAuthenticator" : "SppPkeyPhoneActivationData",
                     Value = pkey.GetPhoneData(version)
                 },
-                new CRCBlock
+                new CRCBlockModern
                 {
                     DataType = CRCBlockType.BINARY,
                     KeyAsStr = "SppPkeyBindingMiscData",
@@ -4646,11 +5071,11 @@ namespace LibTSforge.Modifiers
                 SLApi.UninstallAllProductKeys(appId);
             }
 
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
-            using (IPhysicalStore ps = Utils.GetStore(version, production))
+            using (IPhysicalStore ps = SPPUtils.GetStore(version, production))
             {
-                using (ITokenStore tks = Utils.GetTokenStore(version))
+                using (ITokenStore tks = SPPUtils.GetTokenStore(version))
                 {
                     Logger.WriteLine("Writing to physical store and token store...");
 
@@ -4674,7 +5099,7 @@ namespace LibTSforge.Modifiers
                     uriMap.Data[pkeyId] = pkey.GetAlgoUri();
                     tks.SetEntry(uriMapName, "xml", uriMap.Serialize());
 
-                    string skuMetaName = actId.ToString() + metSuffix;
+                    string skuMetaName = actId + metSuffix;
                     TokenMeta skuMeta = tks.GetMetaEntry(skuMetaName);
 
                     foreach (string k in skuMeta.Data.Keys)
@@ -4701,7 +5126,7 @@ namespace LibTSforge.Modifiers
                         Data = pkb.Serialize()
                     });
 
-                    string cachePath = Utils.GetTokensPath(version).Replace("tokens.dat", @"cache\cache.dat");
+                    string cachePath = SPPUtils.GetTokensPath(version).Replace("tokens.dat", @"cache\cache.dat");
                     if (File.Exists(cachePath)) File.Delete(cachePath);
                 }
             }
@@ -4716,19 +5141,19 @@ namespace LibTSforge.Modifiers
 // Modifiers/GracePeriodReset.cs
 namespace LibTSforge.Modifiers
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
-    using LibTSforge.PhysicalStore;
+    using PhysicalStore;
+    using SPP;
 
     public static class GracePeriodReset
     {
         public static void Reset(PSVersion version, bool production)
         {
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 string value = "msft:sl/timer";
                 List<PSBlock> blocks = store.FindBlocks(value).ToList();
@@ -4739,6 +5164,7 @@ namespace LibTSforge.Modifiers
                 }
             }
 
+            SPPUtils.RestartSPP(version);
             Logger.WriteLine("Successfully reset all grace and evaluation period timers.");
         }
     }
@@ -4750,15 +5176,19 @@ namespace LibTSforge.Modifiers
 {
     using System.Collections.Generic;
     using System.Linq;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge;
+    using PhysicalStore;
+    using SPP;
+    using System;
+
     public static class KeyChangeLockDelete
     {
         public static void Delete(PSVersion version, bool production)
         {
-            Utils.KillSPP();
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+
+            SPPUtils.KillSPP(version);
             Logger.WriteLine("Writing TrustedStore data...");
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 List<string> values = new List<string>
                 {
@@ -4786,12 +5216,12 @@ namespace LibTSforge.Modifiers
 {
     using System;
     using System.IO;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
+    using PhysicalStore;
+    using SPP;
 
     public static class KMSHostCharge
     {
-        public static void Charge(PSVersion version, Guid actId, bool production)
+        public static void Charge(PSVersion version, bool production, Guid actId)
         {
             if (actId == Guid.Empty)
             {
@@ -4815,76 +5245,113 @@ namespace LibTSforge.Modifiers
             string key = string.Format("SPPSVC\\{0}", appId);
             long ldapTimestamp = DateTime.Now.ToFileTime();
 
+            byte[] cmidGuids = { };
+            byte[] reqCounts = { };
+            byte[] kmsChargeData = { };
+
             BinaryWriter writer = new BinaryWriter(new MemoryStream());
 
-            for (int i = 0; i < currClients; i++)
+            if (version == PSVersion.Vista)
             {
-                writer.Write(ldapTimestamp - (10 * (i + 1)));
-                writer.Write(Guid.NewGuid().ToByteArray());
+                writer.Write(new byte[44]);
+                writer.Seek(0, SeekOrigin.Begin);
+
+                writer.Write(totalClients);
+                writer.Write(43200);
+                writer.Write(32);
+
+                writer.Seek(20, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                writer.Seek(32, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                writer.Seek(0, SeekOrigin.End);
+
+                for (int i = 0; i < currClients; i++)
+                {
+                    writer.Write(Guid.NewGuid().ToByteArray());
+                    writer.Write(ldapTimestamp - (10 * (i + 1)));
+                }
+
+                kmsChargeData = writer.GetBytes();
+            } 
+            else
+            {
+                for (int i = 0; i < currClients; i++)
+                {
+                    writer.Write(ldapTimestamp - (10 * (i + 1)));
+                    writer.Write(Guid.NewGuid().ToByteArray());
+                }
+
+                cmidGuids = writer.GetBytes();
+
+                writer = new BinaryWriter(new MemoryStream());
+
+                writer.Write(new byte[40]);
+
+                writer.Seek(4, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                writer.Seek(24, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                reqCounts = writer.GetBytes();
             }
 
-            byte[] cmidGuids = writer.GetBytes();
-
-            writer = new BinaryWriter(new MemoryStream());
-
-            writer.Write(new byte[40]);
-
-            writer.Seek(4, SeekOrigin.Begin);
-            writer.Write((byte)currClients);
-
-            writer.Seek(24, SeekOrigin.Begin);
-            writer.Write((byte)currClients);
-            byte[] reqCounts = writer.GetBytes();
-
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
-                VariableBag kmsCountData = new VariableBag();
-                kmsCountData.Blocks.AddRange(new CRCBlock[]
+                if (version != PSVersion.Vista)
                 {
-                    new CRCBlock
+                    VariableBag kmsCountData = new VariableBag(version);
+                    kmsCountData.Blocks.AddRange(new[]
                     {
-                        DataType = CRCBlockType.BINARY,
-                        KeyAsStr = "SppBindingLicenseData",
-                        Value = hwidBlock
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.UINT,
-                        Key = new byte[] { },
-                        ValueAsInt = (uint)totalClients
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.UINT,
-                        Key = new byte[] { },
-                        ValueAsInt = 1051200000
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.UINT,
-                        Key = new byte[] { },
-                        ValueAsInt = (uint)currClients
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.BINARY,
-                        Key = new byte[] { },
-                        Value = cmidGuids
-                    },
-                    new CRCBlock
-                    {
-                        DataType = CRCBlockType.BINARY,
-                        Key = new byte[] { },
-                        Value = reqCounts
-                    }
-                });
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.BINARY,
+                            KeyAsStr = "SppBindingLicenseData",
+                            Value = hwidBlock
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.UINT,
+                            Key = new byte[] { },
+                            ValueAsInt = (uint)totalClients
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.UINT,
+                            Key = new byte[] { },
+                            ValueAsInt = 1051200000
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.UINT,
+                            Key = new byte[] { },
+                            ValueAsInt = (uint)currClients
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.BINARY,
+                            Key = new byte[] { },
+                            Value = cmidGuids
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.BINARY,
+                            Key = new byte[] { },
+                            Value = reqCounts
+                        }
+                    });
 
-                byte[] kmsChargeData = kmsCountData.Serialize();
-                string countVal = string.Format("msft:spp/kms/host/2.0/store/counters/{0}", appId);
+                    kmsChargeData = kmsCountData.Serialize();
+                }
+
+                string countVal = version == PSVersion.Vista ? "C8F6FFF1-79CE-404C-B150-F97991273DF1" : string.Format("msft:spp/kms/host/2.0/store/counters/{0}", appId);
 
                 store.DeleteBlock(key, countVal);
                 store.AddBlock(new PSBlock
@@ -4898,6 +5365,8 @@ namespace LibTSforge.Modifiers
 
                 Logger.WriteLine(string.Format("Set charge count to {0} successfully.", currClients));
             }
+
+            SPPUtils.RestartSPP(version);
         }
     }
 }
@@ -4906,24 +5375,28 @@ namespace LibTSforge.Modifiers
 // Modifiers/RearmReset.cs
 namespace LibTSforge.Modifiers
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
-    using LibTSforge.PhysicalStore;
+    using PhysicalStore;
+    using SPP;
 
     public static class RearmReset
     {
         public static void Reset(PSVersion version, bool production)
         {
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 List<PSBlock> blocks;
 
-                if (version == PSVersion.Win7)
+                if (version == PSVersion.Vista)
+                {
+                    blocks = store.FindBlocks("740D70D8-6448-4b2f-9063-4A7A463600C5").ToList();
+                }
+                else if (version == PSVersion.Win7)
                 {
                     blocks = store.FindBlocks(0xA0000).ToList();
                 }
@@ -4934,7 +5407,11 @@ namespace LibTSforge.Modifiers
 
                 foreach (PSBlock block in blocks)
                 {
-                    if (version == PSVersion.Win7)
+                    if (version == PSVersion.Vista)
+                    {
+                        store.DeleteBlock(block.KeyAsStr, block.ValueAsStr);
+                    }
+                    else if (version == PSVersion.Win7)
                     {
                         store.SetBlock(block.KeyAsStr, block.ValueAsInt, new byte[8]);
                     }
@@ -4951,38 +5428,110 @@ namespace LibTSforge.Modifiers
 }
 
 
+// Modifiers/SetIIDParams.cs
+namespace LibTSforge.Modifiers
+{
+    using PhysicalStore;
+    using SPP;
+    using System.IO;
+    using System;
+
+    public static class SetIIDParams
+    {
+        public static void SetParams(PSVersion version, bool production, Guid actId, PKeyAlgorithm algorithm, int group, int serial, ulong security)
+        {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+
+            Guid appId;
+
+            if (actId == Guid.Empty)
+            {
+                appId = SLApi.WINDOWS_APP_ID;
+                actId = SLApi.GetDefaultActivationID(appId, true);
+
+                if (actId == Guid.Empty)
+                {
+                    throw new Exception("No applicable activation IDs found.");
+                }
+            }
+            else
+            {
+                appId = SLApi.GetAppId(actId);
+            }
+
+            Guid pkeyId = SLApi.GetInstalledPkeyID(actId);
+
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
+                PSBlock keyBlock = store.GetBlock(key, pkeyId.ToString());
+
+                if (keyBlock == null)
+                {
+                    throw new InvalidDataException("Failed to get product key data for activation ID " + actId + ".");
+                }
+
+                VariableBag pkb = new VariableBag(keyBlock.Data, version);
+
+                ProductKey pkey = new ProductKey
+                {
+                    Group = group,
+                    Serial = serial,
+                    Security = security,
+                    Algorithm = algorithm,
+                    Upgrade = false
+                };
+
+                string blockName = version == PSVersion.Win7 ? "SppPkeyShortAuthenticator" : "SppPkeyPhoneActivationData";
+                pkb.SetBlock(blockName, pkey.GetPhoneData(version));
+                store.SetBlock(key, pkeyId.ToString(), pkb.Serialize());
+            }
+
+            Logger.WriteLine("Successfully set IID parameters.");
+        }
+    }
+}
+
+
 // Modifiers/TamperedFlagsDelete.cs
 namespace LibTSforge.Modifiers
 {
-    using System;
     using System.Linq;
-    using LibTSforge.PhysicalStore;
+    using PhysicalStore;
+    using SPP;
 
     public static class TamperedFlagsDelete
     {
         public static void DeleteTamperFlags(PSVersion version, bool production)
         {
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
-                if (version != PSVersion.Win7)
+                if (version == PSVersion.Vista)
                 {
-                    string recreatedFlag = "__##USERSEP-RESERVED##__$$RECREATED-FLAG$$";
-                    string recoveredFlag = "__##USERSEP-RESERVED##__$$RECOVERED-FLAG$$";
-
-                    DeleteFlag(store, recreatedFlag);
-                    DeleteFlag(store, recoveredFlag);
+                    DeleteFlag(store, "6BE8425B-E3CF-4e86-A6AF-5863E3DCB606");
+                }
+                else if (version == PSVersion.Win7)
+                {
+                    SetFlag(store, 0xA0001);
                 }
                 else
                 {
-                    SetFlag(store, 0xA0001);
+                    DeleteFlag(store, "__##USERSEP-RESERVED##__$$RECREATED-FLAG$$");
+                    DeleteFlag(store, "__##USERSEP-RESERVED##__$$RECOVERED-FLAG$$");
                 }
 
                 Logger.WriteLine("Successfully cleared the tamper state.");
             }
+
+            SPPUtils.RestartSPP(version);
         }
 
         private static void DeleteFlag(IPhysicalStore store, string flag)
@@ -5002,13 +5551,15 @@ namespace LibTSforge.Modifiers
 namespace LibTSforge.Modifiers
 {
     using System;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
+    using PhysicalStore;
+    using SPP;
 
     public static class UniqueIdDelete
     {
         public static void DeleteUniqueId(PSVersion version, bool production, Guid actId)
         {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+
             Guid appId;
 
             if (actId == Guid.Empty)
@@ -5026,14 +5577,13 @@ namespace LibTSforge.Modifiers
                 appId = SLApi.GetAppId(actId);
             }
 
-            string instId = SLApi.GetInstallationID(actId);
             Guid pkeyId = SLApi.GetInstalledPkeyID(actId);
 
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
                 PSBlock keyBlock = store.GetBlock(key, pkeyId.ToString());
@@ -5043,7 +5593,7 @@ namespace LibTSforge.Modifiers
                     throw new Exception("No product key found.");
                 }
 
-                VariableBag pkb = new VariableBag(keyBlock.Data);
+                VariableBag pkb = new VariableBag(keyBlock.Data, version);
 
                 pkb.DeleteBlock("SppPkeyUniqueIdToken");
 
@@ -5056,18 +5606,143 @@ namespace LibTSforge.Modifiers
 }
 
 
+// Activators/AVMA4K.cs
+namespace LibTSforge.Activators
+{
+    using System;
+    using PhysicalStore;
+    using SPP;
+
+    public static class AVMA4k
+    {
+        public static void Activate(PSVersion version, bool production, Guid actId)
+        {
+            if (version != PSVersion.WinModern && version != PSVersion.WinBlue)
+            {
+                throw new NotSupportedException("AVMA licenses are not available for this product.");
+            }
+
+            Guid appId;
+            if (actId == Guid.Empty)
+            {
+                appId = SLApi.WINDOWS_APP_ID;
+                actId = SLApi.GetDefaultActivationID(appId, false);
+
+                if (actId == Guid.Empty)
+                {
+                    throw new NotSupportedException("No applicable activation IDs found.");
+                }
+            }
+            else
+            {
+                appId = SLApi.GetAppId(actId);
+            }
+
+            if (SLApi.GetPKeyChannel(SLApi.GetInstalledPkeyID(actId)) != "VT:IA")
+            {
+                throw new NotSupportedException("Non-VT:IA product key installed.");
+            }
+
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
+
+                long creationTime = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-CREATION-TIME$$").Data, 0);
+                long tickCount = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-TICKCOUNT-UPTIME$$").Data, 0);
+                long deltaTime = BitConverter.ToInt64(store.GetBlock(key, "__##USERSEP-RESERVED##__$$UP-TIME-DELTA$$").Data, 0);
+
+                const ulong unknown = 0;
+                ulong time1 = (ulong)(creationTime + tickCount + deltaTime);
+                ulong crcBindTime = (ulong)DateTime.UtcNow.ToFileTime();
+                ulong timerTime = crcBindTime / 10000;
+                ulong expiry = Constants.TimerMax / 10000;
+
+                VariableBag avmaBinding = new VariableBag(version);
+
+                avmaBinding.Blocks.AddRange(new[]
+                {
+                    new CRCBlockModern
+                    {
+                        DataType = CRCBlockType.BINARY,
+                        Key = new byte[] { },
+                        Value = BitConverter.GetBytes(crcBindTime),
+                    },
+                    new CRCBlockModern
+                    {
+                        DataType = CRCBlockType.STRING,
+                        Key = new byte[] { },
+                        ValueAsStr = "AVMA4K",
+                    },
+                    new CRCBlockModern
+                    {
+                        DataType = CRCBlockType.STRING,
+                        Key = new byte[] { },
+                        ValueAsStr = "00491-50000-00001-AA666",
+                    }
+                });
+
+                byte[] avmaBindingData = avmaBinding.Serialize();
+
+                Timer avmaTimer = new Timer
+                {
+                    Unknown = unknown,
+                    Time1 = time1,
+                    Time2 = timerTime,
+                    Expiry = expiry
+                };
+
+                string storeVal = string.Format("msft:spp/ia/bind/1.0/store/{0}/{1}", appId, actId);
+                string timerVal = string.Format("msft:spp/ia/bind/1.0/timer/{0}/{1}", appId, actId);
+
+                store.DeleteBlock(key, storeVal);
+                store.DeleteBlock(key, timerVal);
+
+                store.AddBlocks(new[]
+                {
+                    new PSBlock
+                    {
+                        Type = BlockType.NAMED,
+                        Flags = 0x400,
+                        KeyAsStr = key,
+                        ValueAsStr = storeVal,
+                        Data = avmaBindingData,
+                    },
+                    new PSBlock
+                    {
+                        Type = BlockType.TIMER,
+                        Flags = 0x4,
+                        KeyAsStr = key,
+                        ValueAsStr = timerVal,
+                        Data = avmaTimer.CastToArray()
+                    }
+                });
+            }
+
+            SLApi.RefreshLicenseStatus();
+            SLApi.FireStateChangedEvent(appId);
+            Logger.WriteLine("Activated using AVMA4k successfully.");
+        }
+    }
+}
+
+
 // Activators/ZeroCID.cs
 namespace LibTSforge.Activators
 {
     using System;
     using System.IO;
-    using LibTSforge.Crypto;
-    using LibTSforge.PhysicalStore;
-    using LibTSforge.SPP;
+    using System.Linq;
+    using Crypto;
+    using PhysicalStore;
+    using SPP;
 
     public static class ZeroCID
     {
-        public static void Deposit(Guid actId, string instId)
+        private static void Deposit(Guid actId, string instId)
         {
             uint status = SLApi.DepositConfirmationID(actId, instId, Constants.ZeroCID);
             Logger.WriteLine(string.Format("Depositing fake CID status {0:X}", status));
@@ -5105,16 +5780,16 @@ namespace LibTSforge.Activators
             string instId = SLApi.GetInstallationID(actId);
             Guid pkeyId = SLApi.GetInstalledPkeyID(actId);
 
-            if (version == PSVersion.Win7)
+            if (version == PSVersion.Vista || version == PSVersion.Win7)
             {
                 Deposit(actId, instId);
             }
 
-            Utils.KillSPP();
+            SPPUtils.KillSPP(version);
 
             Logger.WriteLine("Writing TrustedStore data...");
 
-            using (IPhysicalStore store = Utils.GetStore(version, production))
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
             {
                 byte[] hwidBlock = Constants.UniversalHWIDBlock;
 
@@ -5124,7 +5799,11 @@ namespace LibTSforge.Activators
 
                 byte[] iidHash;
 
-                if (version == PSVersion.Win7)
+                if (version == PSVersion.Vista)
+                {
+                    iidHash = CryptoUtils.SHA256Hash(Utils.EncodeString(instId)).Take(0x10).ToArray();
+                }
+                else if (version == PSVersion.Win7)
                 {
                     iidHash = CryptoUtils.SHA256Hash(Utils.EncodeString(instId));
                 }
@@ -5141,11 +5820,39 @@ namespace LibTSforge.Activators
                     throw new InvalidDataException("Failed to get product key data for activation ID " + actId + ".");
                 }
 
-                VariableBag pkb = new VariableBag(keyBlock.Data);
+                VariableBag pkb = new VariableBag(keyBlock.Data, version);
 
                 byte[] pkeyData;
 
-                if (version == PSVersion.Win7)
+                if (version == PSVersion.Vista)
+                {
+                    pkeyData = pkb.GetBlock("PKeyBasicInfo").Value;
+                    string uniqueId = Utils.DecodeString(pkeyData.Skip(0x120).Take(0x80).ToArray());
+                    string extPid = Utils.DecodeString(pkeyData.Skip(0x1A0).Take(0x80).ToArray());
+
+                    uint group;
+                    uint.TryParse(extPid.Split('-')[1], out group);
+
+                    if (group == 0)
+                    {
+                        throw new FormatException("Extended PID has invalid format.");
+                    }
+
+                    ulong shortauth;
+
+                    try
+                    {
+                        shortauth = BitConverter.ToUInt64(Convert.FromBase64String(uniqueId.Split('&')[1]), 0);
+                    } 
+                    catch
+                    {
+                        throw new FormatException("Key Unique ID has invalid format.");
+                    }
+
+                    shortauth |= (ulong)group << 41;
+                    pkeyData = BitConverter.GetBytes(shortauth);
+                }
+                else if (version == PSVersion.Win7)
                 {
                     pkeyData = pkb.GetBlock("SppPkeyShortAuthenticator").Value;
                 }
@@ -5158,26 +5865,34 @@ namespace LibTSforge.Activators
                 store.SetBlock(key, pkeyId.ToString(), pkb.Serialize());
 
                 BinaryWriter writer = new BinaryWriter(new MemoryStream());
-                writer.Write(0x20);
+                writer.Write(iidHash.Length);
                 writer.Write(iidHash);
                 writer.Write(hwidBlock.Length);
                 writer.Write(hwidBlock);
                 byte[] tsHwidData = writer.GetBytes();
 
                 writer = new BinaryWriter(new MemoryStream());
-                writer.Write(0x20);
+                writer.Write(iidHash.Length);
                 writer.Write(iidHash);
                 writer.Write(pkeyData.Length);
                 writer.Write(pkeyData);
                 byte[] tsPkeyInfoData = writer.GetBytes();
 
-                store.AddBlocks(new PSBlock[] {
+                string phoneVersion = version == PSVersion.Vista ? "6.0" : "7.0";
+                Guid indexSlid = version == PSVersion.Vista ? actId : pkeyId;
+                string hwidBlockName = string.Format("msft:Windows/{0}/Phone/Cached/HwidBlock/{1}", phoneVersion, indexSlid);
+                string pkeyInfoName = string.Format("msft:Windows/{0}/Phone/Cached/PKeyInfo/{1}", phoneVersion, indexSlid);
+
+                store.DeleteBlock(key, hwidBlockName);
+                store.DeleteBlock(key, pkeyInfoName);
+
+                store.AddBlocks(new[] {
                     new PSBlock
                     {
                         Type = BlockType.NAMED,
                         Flags = 0,
                         KeyAsStr = key,
-                        ValueAsStr = "msft:Windows/7.0/Phone/Cached/HwidBlock/" + pkeyId,
+                        ValueAsStr = hwidBlockName,
                         Data = tsHwidData
                     }, 
                     new PSBlock
@@ -5185,18 +5900,18 @@ namespace LibTSforge.Activators
                         Type = BlockType.NAMED,
                         Flags = 0,
                         KeyAsStr = key,
-                        ValueAsStr = "msft:Windows/7.0/Phone/Cached/PKeyInfo/" + pkeyId,
+                        ValueAsStr = pkeyInfoName,
                         Data = tsPkeyInfoData
                     }
                 });
             }
 
-            if (version != PSVersion.Win7)
+            if (version != PSVersion.Vista && version != PSVersion.Win7)
             {
                 Deposit(actId, instId);
             }
 
-            SLApi.RefreshLicenseStatus();
+            SPPUtils.RestartSPP(version);
             SLApi.FireStateChangedEvent(appId);
             Logger.WriteLine("Activated using ZeroCID successfully.");
         }
@@ -5221,7 +5936,7 @@ namespace LibTSforge.TokenStore
     public class TokenMeta
     {
         public string Name;
-        public Dictionary<string, string> Data = new Dictionary<string, string>();
+        public readonly Dictionary<string, string> Data = new Dictionary<string, string>();
 
         public byte[] Serialize()
         {
@@ -5244,7 +5959,7 @@ namespace LibTSforge.TokenStore
             return writer.GetBytes();
         }
 
-        public void Deserialize(byte[] data)
+        private void Deserialize(byte[] data)
         {
             BinaryReader reader = new BinaryReader(new MemoryStream(data));
             reader.ReadInt32();
@@ -5301,7 +6016,7 @@ namespace LibTSforge.TokenStore
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using LibTSforge.Crypto;
+    using Crypto;
 
     public class TokenStoreModern : ITokenStore
     {
@@ -5315,29 +6030,29 @@ namespace LibTSforge.TokenStore
         private static readonly byte[] CONTS_FOOTER = Enumerable.Repeat((byte)0xAA, 0x20).ToArray();
 
         private List<TokenEntry> Entries = new List<TokenEntry>();
-        public FileStream TokensFile;
+        private readonly FileStream TokensFile;
 
         public void Deserialize()
         {
             if (TokensFile.Length < BLOCK_SIZE) return;
 
             TokensFile.Seek(0x24, SeekOrigin.Begin);
-            uint nextBlock = 0;
+            uint nextBlock;
 
             BinaryReader reader = new BinaryReader(TokensFile);
             do
             {
-                uint curOffset = reader.ReadUInt32();
+                reader.ReadUInt32();
                 nextBlock = reader.ReadUInt32();
 
                 for (int i = 0; i < ENTRIES_PER_BLOCK; i++)
                 {
-                    curOffset = reader.ReadUInt32();
+                    uint curOffset = reader.ReadUInt32();
                     bool populated = reader.ReadUInt32() == 1;
                     uint contentOffset = reader.ReadUInt32();
                     uint contentLength = reader.ReadUInt32();
                     uint allocLength = reader.ReadUInt32();
-                    byte[] contentData = new byte[] { };
+                    byte[] contentData = { };
 
                     if (populated)
                     {
@@ -5437,11 +6152,10 @@ namespace LibTSforge.TokenStore
                         writer.WritePadding(BLOCK_PAD_SIZE);
 
                         writer.BaseStream.Seek(curBlockOffset, SeekOrigin.Begin);
-                        byte[] blockHash;
                         byte[] blockData = new byte[BLOCK_SIZE - 0x20];
 
                         tokens.Read(blockData, 0, BLOCK_SIZE - 0x20);
-                        blockHash = CryptoUtils.SHA256Hash(blockData);
+                        byte[] blockHash = CryptoUtils.SHA256Hash(blockData);
 
                         writer.BaseStream.Seek(curBlockOffset + BLOCK_SIZE - 0x20, SeekOrigin.Begin);
                         writer.Write(blockHash);
@@ -5572,11 +6286,6 @@ namespace LibTSforge.TokenStore
             Deserialize();
         }
 
-        public TokenStoreModern()
-        {
-
-        }
-
         public void Dispose()
         {
             Serialize();
@@ -5605,6 +6314,13 @@ namespace LibTSforge.PhysicalStore
         public ulong Unknown;
         public ulong Time1;
         public ulong Time2;
+        public ulong Expiry;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct VistaTimer
+    {
+        public ulong Time;
         public ulong Expiry;
     }
 }
@@ -5711,7 +6427,7 @@ namespace LibTSforge.PhysicalStore
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using LibTSforge.Crypto;
+    using Crypto;
 
     public class ModernBlock
     {
@@ -5801,7 +6517,7 @@ namespace LibTSforge.PhysicalStore
 
     public sealed class PhysicalStoreModern : IPhysicalStore
     {
-        private byte[] PreHeaderBytes = new byte[] { };
+        private byte[] PreHeaderBytes = { };
         private readonly Dictionary<string, List<ModernBlock>> Data = new Dictionary<string, List<ModernBlock>>();
         private readonly FileStream TSFile;
         private readonly PSVersion Version;
@@ -5989,46 +6705,50 @@ namespace LibTSforge.PhysicalStore
 
         public void DeleteBlock(string key, string value)
         {
-            if (Data.ContainsKey(key))
+            if (!Data.ContainsKey(key))
             {
-                List<ModernBlock> blocks = Data[key];
-
-                foreach (ModernBlock block in blocks)
-                {
-                    if (block.ValueAsStr == value)
-                    {
-                        blocks.Remove(block);
-                        break;
-                    }
-                }
-
-                Data[key] = blocks;
+                return;
             }
+
+            List<ModernBlock> blocks = Data[key];
+
+            foreach (ModernBlock block in blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    blocks.Remove(block);
+                    break;
+                }
+            }
+
+            Data[key] = blocks;
         }
 
         public void DeleteBlock(string key, uint value)
         {
-            if (Data.ContainsKey(key))
+            if (!Data.ContainsKey(key))
             {
-                List<ModernBlock> blocks = Data[key];
-
-                foreach (ModernBlock block in blocks)
-                {
-                    if (block.ValueAsInt == value)
-                    {
-                        blocks.Remove(block);
-                        break;
-                    }
-                }
-
-                Data[key] = blocks;
+                return;
             }
+
+            List<ModernBlock> blocks = Data[key];
+
+            foreach (ModernBlock block in blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    blocks.Remove(block);
+                    break;
+                }
+            }
+
+            Data[key] = blocks;
         }
 
         public PhysicalStoreModern(string tsPath, bool production, PSVersion version)
         {
             TSFile = File.Open(tsPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), production));
+            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), production, version));
             TSFile.Seek(0, SeekOrigin.Begin);
             Version = version;
             Production = production;
@@ -6048,7 +6768,7 @@ namespace LibTSforge.PhysicalStore
 
         public byte[] ReadRaw()
         {
-            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), Production);
+            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), Production, Version);
             TSFile.Seek(0, SeekOrigin.Begin);
             return data;
         }
@@ -6119,13 +6839,372 @@ namespace LibTSforge.PhysicalStore
 }
 
 
+// PhysicalStore/PhysicalStoreVista.cs
+namespace LibTSforge.PhysicalStore
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using Crypto;
+
+    public class VistaBlock
+    {
+        public BlockType Type;
+        public uint Flags;
+        public byte[] Value;
+        public string ValueAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Value);
+            }
+            set
+            {
+                Value = Utils.EncodeString(value);
+            }
+        }
+        public uint ValueAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Value, 0);
+            }
+            set
+            {
+                Value = BitConverter.GetBytes(value);
+            }
+        }
+        public byte[] Data;
+        public string DataAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Data);
+            }
+            set
+            {
+                Data = Utils.EncodeString(value);
+            }
+        }
+        public uint DataAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Data, 0);
+            }
+            set
+            {
+                Data = BitConverter.GetBytes(value);
+            }
+        }
+
+        internal void Encode(BinaryWriter writer)
+        {
+            writer.Write((uint)Type);
+            writer.Write(Flags);
+            writer.Write(Value.Length);
+            writer.Write(Data.Length);
+            writer.Write(Value);
+            writer.Write(Data);
+        }
+
+        internal static VistaBlock Decode(BinaryReader reader)
+        {
+            uint type = reader.ReadUInt32();
+            uint flags = reader.ReadUInt32();
+
+            int valueLen = reader.ReadInt32();
+            int dataLen = reader.ReadInt32();
+
+            byte[] value = reader.ReadBytes(valueLen);
+            byte[] data = reader.ReadBytes(dataLen);
+            return new VistaBlock
+            {
+                Type = (BlockType)type,
+                Flags = flags,
+                Value = value,
+                Data = data,
+            };
+        }
+    }
+
+    public sealed class PhysicalStoreVista : IPhysicalStore
+    {
+        private byte[] PreHeaderBytes = { };
+        private readonly List<VistaBlock> Blocks = new List<VistaBlock>();
+        private readonly FileStream TSPrimary;
+        private readonly FileStream TSSecondary;
+        private readonly bool Production;
+
+        public byte[] Serialize()
+        {
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+            writer.Write(PreHeaderBytes);
+
+            foreach (VistaBlock block in Blocks)
+            {
+                block.Encode(writer);
+                writer.Align(4);
+            }
+
+            return writer.GetBytes();
+        }
+
+        public void Deserialize(byte[] data)
+        {
+            int len = data.Length;
+
+            BinaryReader reader = new BinaryReader(new MemoryStream(data));
+            PreHeaderBytes = reader.ReadBytes(8);
+
+            while (reader.BaseStream.Position < len - 0x14)
+            {
+                Blocks.Add(VistaBlock.Decode(reader));
+                reader.Align(4);
+            }
+        }
+
+        public void AddBlock(PSBlock block)
+        {
+            Blocks.Add(new VistaBlock
+            {
+                Type = block.Type,
+                Flags = block.Flags,
+                Value = block.Value,
+                Data = block.Data
+            });
+        }
+
+        public void AddBlocks(IEnumerable<PSBlock> blocks)
+        {
+            foreach (PSBlock block in blocks)
+            {
+                AddBlock(block);
+            }
+        }
+
+        public PSBlock GetBlock(string key, string value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public PSBlock GetBlock(string key, uint value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public void SetBlock(string key, string value, byte[] data)
+        {
+            for (int i = 0; i < Blocks.Count; i++)
+            {
+                VistaBlock block = Blocks[i];
+
+                if (block.ValueAsStr == value)
+                {
+                    block.Data = data;
+                    Blocks[i] = block;
+                    break;
+                }
+            }
+        }
+
+        public void SetBlock(string key, uint value, byte[] data)
+        {
+            for (int i = 0; i < Blocks.Count; i++)
+            {
+                VistaBlock block = Blocks[i];
+
+                if (block.ValueAsInt == value)
+                {
+                    block.Data = data;
+                    Blocks[i] = block;
+                    break;
+                }
+            }
+        }
+
+        public void SetBlock(string key, string value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, string value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void SetBlock(string key, uint value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, uint value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void DeleteBlock(string key, string value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    Blocks.Remove(block);
+                    return;
+                }
+            }
+        }
+
+        public void DeleteBlock(string key, uint value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    Blocks.Remove(block);
+                    return;
+                }
+            }
+        }
+
+        public PhysicalStoreVista(string primaryPath, bool production)
+        {
+            TSPrimary = File.Open(primaryPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            TSSecondary = File.Open(primaryPath.Replace("-0.", "-1."), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            Production = production;
+
+            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), production, PSVersion.Vista));
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+        }
+
+        public void Dispose()
+        {
+            if (TSPrimary.CanWrite && TSSecondary.CanWrite)
+            {
+                byte[] data = PhysStoreCrypto.EncryptPhysicalStore(Serialize(), Production, PSVersion.Vista);
+
+                TSPrimary.SetLength(data.LongLength);
+                TSSecondary.SetLength(data.LongLength);
+
+                TSPrimary.Seek(0, SeekOrigin.Begin);
+                TSSecondary.Seek(0, SeekOrigin.Begin);
+
+                TSPrimary.WriteAllBytes(data);
+                TSSecondary.WriteAllBytes(data);
+
+                TSPrimary.Close();
+                TSSecondary.Close();
+            }
+        }
+
+        public byte[] ReadRaw()
+        {
+            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), Production, PSVersion.Vista);
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+            return data;
+        }
+
+        public void WriteRaw(byte[] data)
+        {
+            byte[] encrData = PhysStoreCrypto.EncryptPhysicalStore(data, Production, PSVersion.Vista);
+
+            TSPrimary.SetLength(encrData.LongLength);
+            TSSecondary.SetLength(encrData.LongLength);
+
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+            TSSecondary.Seek(0, SeekOrigin.Begin);
+
+            TSPrimary.WriteAllBytes(encrData);
+            TSSecondary.WriteAllBytes(encrData);
+
+            TSPrimary.Close();
+            TSSecondary.Close();
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(string valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsStr.Contains(valueSearch))
+                {
+                    results.Add(new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(uint valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsInt == valueSearch)
+                {
+                    results.Add(new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    });
+                }
+            }
+
+            return results;
+        }
+    }
+}
+
+
 // PhysicalStore/PhysicalStoreWin7.cs
 namespace LibTSforge.PhysicalStore
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using LibTSforge.Crypto;
+    using Crypto;
 
     public class Win7Block
     {
@@ -6227,7 +7306,7 @@ namespace LibTSforge.PhysicalStore
 
     public sealed class PhysicalStoreWin7 : IPhysicalStore
     {
-        private byte[] PreHeaderBytes = new byte[] { };
+        private byte[] PreHeaderBytes = { };
         private readonly List<Win7Block> Blocks = new List<Win7Block>();
         private readonly FileStream TSPrimary;
         private readonly FileStream TSSecondary;
@@ -6401,7 +7480,7 @@ namespace LibTSforge.PhysicalStore
             TSSecondary = File.Open(primaryPath.Replace("-0.", "-1."), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             Production = production;
 
-            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), production));
+            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), production, PSVersion.Win7));
             TSPrimary.Seek(0, SeekOrigin.Begin);
         }
 
@@ -6427,7 +7506,7 @@ namespace LibTSforge.PhysicalStore
 
         public byte[] ReadRaw()
         {
-            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), Production);
+            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), Production, PSVersion.Win7);
             TSPrimary.Seek(0, SeekOrigin.Begin);
             return data;
         }
@@ -6510,7 +7589,7 @@ namespace LibTSforge.PhysicalStore
         BINARY = 1 << 2
     }
 
-    public class CRCBlock
+    public abstract class CRCBlock
     {
         public CRCBlockType DataType;
         public byte[] Key;
@@ -6549,7 +7628,57 @@ namespace LibTSforge.PhysicalStore
             }
         }
 
-        public void Encode(BinaryWriter writer)
+        public abstract void Encode(BinaryWriter writer);
+        public abstract void Decode(BinaryReader reader);
+        public abstract uint CRC();
+    }
+
+    public class CRCBlockVista : CRCBlock
+    {
+        public override void Encode(BinaryWriter writer)
+        {
+            uint crc = CRC();
+            writer.Write((uint)DataType);
+            writer.Write(0);
+            writer.Write(Key.Length);
+            writer.Write(Value.Length);
+            writer.Write(crc);
+
+            writer.Write(Key);
+
+            writer.Write(Value);
+        }
+
+        public override void Decode(BinaryReader reader)
+        {
+            uint type = reader.ReadUInt32();
+            reader.ReadUInt32();
+            uint lenName = reader.ReadUInt32();
+            uint lenVal = reader.ReadUInt32();
+            uint crc = reader.ReadUInt32();
+
+            byte[] key = reader.ReadBytes((int)lenName);
+            byte[] value = reader.ReadBytes((int)lenVal);
+
+            DataType = (CRCBlockType)type;
+            Key = key;
+            Value = value;
+
+            if (CRC() != crc)
+            {
+                throw new InvalidDataException("Invalid CRC in variable bag.");
+            }
+        }
+
+        public override uint CRC()
+        {
+            return Utils.CRC32(Value);
+        }
+    }
+
+    public class CRCBlockModern : CRCBlock
+    {
+        public override void Encode(BinaryWriter writer)
         {
             uint crc = CRC();
             writer.Write(crc);
@@ -6564,7 +7693,7 @@ namespace LibTSforge.PhysicalStore
             writer.Align(8);
         }
 
-        public static CRCBlock Decode(BinaryReader reader)
+        public override void Decode(BinaryReader reader)
         {
             uint crc = reader.ReadUInt32();
             uint type = reader.ReadUInt32();
@@ -6577,22 +7706,17 @@ namespace LibTSforge.PhysicalStore
             byte[] value = reader.ReadBytes((int)lenVal);
             reader.Align(8);
 
-            CRCBlock block = new CRCBlock
-            {
-                DataType = (CRCBlockType)type,
-                Key = key,
-                Value = value,
-            };
+            DataType = (CRCBlockType)type;
+            Key = key;
+            Value = value;
 
-            if (block.CRC() != crc)
+            if (CRC() != crc)
             {
                 throw new InvalidDataException("Invalid CRC in variable bag.");
             }
-
-            return block;
         }
 
-        public uint CRC()
+        public override uint CRC()
         {
             BinaryWriter wtemp = new BinaryWriter(new MemoryStream());
             wtemp.Write(0);
@@ -6608,8 +7732,9 @@ namespace LibTSforge.PhysicalStore
     public class VariableBag
     {
         public List<CRCBlock> Blocks = new List<CRCBlock>();
+        private readonly PSVersion Version;
 
-        public void Deserialize(byte[] data)
+        private void Deserialize(byte[] data)
         {
             int len = data.Length;
 
@@ -6617,7 +7742,19 @@ namespace LibTSforge.PhysicalStore
 
             while (reader.BaseStream.Position < len - 0x10)
             {
-                Blocks.Add(CRCBlock.Decode(reader));
+                CRCBlock block;
+
+                if (Version == PSVersion.Vista)
+                {
+                    block = new CRCBlockVista();
+                }
+                else
+                {
+                    block = new CRCBlockModern();
+                }
+
+                block.Decode(reader);
+                Blocks.Add(block);
             }
         }
 
@@ -6627,7 +7764,13 @@ namespace LibTSforge.PhysicalStore
 
             foreach (CRCBlock block in Blocks)
             {
-                block.Encode(writer);
+                if (Version == PSVersion.Vista)
+                {
+                    ((CRCBlockVista)block).Encode(writer);
+                } else
+                {
+                    ((CRCBlockModern)block).Encode(writer);
+                }
             }
 
             return writer.GetBytes();
@@ -6673,35 +7816,45 @@ namespace LibTSforge.PhysicalStore
             }
         }
 
-        public VariableBag(byte[] data)
+        public VariableBag(byte[] data, PSVersion version)
         {
+            Version = version;
             Deserialize(data);
         }
 
-        public VariableBag()
+        public VariableBag(PSVersion version)
         {
-
+            Version = version;
         }
     }
 }
 '@
 $ErrorActionPreference = 'Stop'
-$cp = [CodeDom.Compiler.CompilerParameters] [string[]]@("System.dll", "System.Core.dll", "System.ServiceProcess.dll", "System.Xml.dll")
-$cp.CompilerOptions = "/unsafe"
-$lang = If ((Get-Host).Version.Major -gt 2) { "CSharp" } Else { "CSharpVersion3" }
+$binPath = "$env:_work\BIN\LibTSforge.dll"
 
-$ctemp = "$env:SystemRoot\Temp\"
-if (-Not (Test-Path -Path $ctemp)) { New-Item -Path $ctemp -ItemType Directory > $null }
-$env:TMP = $ctemp
-$env:TEMP = $ctemp
+if (Test-Path -LiteralPath $binPath) {
+    Write-Host "LibTSforge.dll found in BIN folder. Loading the DLL..."
+    Add-Type -Path $binPath
+}
+else {
+    $cp = [CodeDom.Compiler.CompilerParameters] [string[]]@("System.dll", "System.Core.dll", "System.ServiceProcess.dll", "System.Xml.dll")
+    $cp.CompilerOptions = "/unsafe"
+    $lang = If ((Get-Host).Version.Major -gt 2) { "CSharp" } Else { "CSharpVersion3" }
 
-$cp.GenerateInMemory = $true
-Add-Type -Language $lang -TypeDefinition $src -CompilerParameters $cp
+    $ctemp = "$env:SystemRoot\Temp\"
+    if (-Not (Test-Path -Path $ctemp)) { New-Item -Path $ctemp -ItemType Directory > $null }
+    $env:TMP = $ctemp
+    $env:TEMP = $ctemp
+
+    $cp.GenerateInMemory = $true
+    Add-Type -Language $lang -TypeDefinition $src -CompilerParameters $cp
+}
+
 if ($env:_debug -eq '0') {
     [LibTSforge.Logger]::HideOutput = $true
 }
 $ver = [LibTSforge.Utils]::DetectVersion()
-$prod = [LibTSforge.Utils]::DetectCurrentKey()
+$prod = [LibTSforge.SPP.SPPUtils]::DetectCurrentKey()
 $tsactids = @($args)
 
 function Get-WmiInfo {
@@ -6714,7 +7867,25 @@ function Get-WmiInfo {
     }
 }
 
-if ($env:resetstuff -eq $null) {
+function slGetSkuInfo($SkuId) {
+    $t = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0)
+    $t.DefinePInvokeMethod('SLOpen', 'slc.dll', 22, 1, [Int32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+    $t.DefinePInvokeMethod('SLClose', 'slc.dll', 22, 1, [IntPtr], @([IntPtr]), 1, 3).SetImplementationFlags(128)
+    $t.DefinePInvokeMethod('SLGetProductSkuInformation', 'slc.dll', 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+    $w = $t.CreateType()
+    $hSLC = 0
+    try {
+        [void]$w::SLOpen([ref]$hSLC)
+        $c = 0; $b = 0
+        $r = $w::SLGetProductSkuInformation($hSLC, [ref][Guid]$SkuId, "msft:sl/EUL/PHONE/PUBLIC", [ref]$null, [ref]$c, [ref]$b)
+        return ($r -eq 0)
+    }
+    finally {
+        [void]$w::SLClose($hSLC)
+    }
+}
+
+if (-not $env:resetstuff) {
     foreach ($tsactid in $tsactids) {
         try {
             $prodDes = Get-WmiInfo -tsactid $tsactid -property "Description"
@@ -6723,12 +7894,21 @@ if ($env:resetstuff -eq $null) {
                 $nameParts = $prodName -split ',', 2
                 $prodName = if ($nameParts.Count -gt 1) { ($nameParts[1].Trim() -split '[ ,]')[0] } else { $null }
             }
+			if (-not $env:_vis) {
             [LibTSforge.Modifiers.GenPKeyInstall]::InstallGenPKey($ver, $prod, $tsactid)
+			}
+            if ($prodName -match 'Office' -and -not (slGetSkuInfo($tsactid))) {
+                $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
+                if ($licenseStatus -eq 1) {
+                    Write-Host "[$prodName] is already permanently activated." -ForegroundColor White -BackgroundColor DarkGreen
+                    continue
+                }
+            }
             [LibTSforge.Activators.ZeroCID]::Activate($ver, $prod, $tsactid)
             $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
             if ($licenseStatus -eq 1) {
                 if ($prodDes -match 'KMS' -and $prodDes -notmatch 'CLIENT') {
-                    [LibTSforge.Modifiers.KMSHostCharge]::Charge($ver, $tsactid, $prod)
+                    [LibTSforge.Modifiers.KMSHostCharge]::Charge($ver, $prod, $tsactid)
                     Write-Host "[$prodName] CSVLK is permanently activated with ZeroCID." -ForegroundColor White -BackgroundColor DarkGreen
                     Write-Host "[$prodName] CSVLK is charged with 25 clients for 30 days." -ForegroundColor White -BackgroundColor DarkGreen
                 }
@@ -6749,13 +7929,13 @@ if ($env:resetstuff -eq $null) {
     }
 }
 
-if ($env:resetstuff -eq '1') {
+if ($env:resetstuff) {
     try {
-        [LibTSforge.Modifiers.TamperedFlagsDelete]::DeleteTamperFlags($ver, $prod)
+        if (-not $env:_vis) {[LibTSforge.Modifiers.TamperedFlagsDelete]::DeleteTamperFlags($ver, $prod)}
         [LibTSforge.SPP.SLApi]::RefreshLicenseStatus()
         [LibTSforge.Modifiers.RearmReset]::Reset($ver, $prod)
         [LibTSforge.Modifiers.GracePeriodReset]::Reset($ver, $prod)
-        [LibTSforge.Modifiers.KeyChangeLockDelete]::Delete($ver, $prod)
+        if (-not $env:_vis) {[LibTSforge.Modifiers.KeyChangeLockDelete]::Delete($ver, $prod)}
     }
     catch {
         $errcode = 3
@@ -7017,135 +8197,174 @@ Office-ActID -pkeypath "$env:pkeypath" -edition "$env:_License" -keytype "$env:k
 
 ::  1st column = Office version number
 ::  2nd column = Activation ID
-::  3rd column = Edition
+::  3rd column = Product ID from branding.xml
+::  4th column = Edition
+::  5th column = Other Edition IDs if they are part of the same primary product (For reference only)
 ::  Separator  = "_"
 
-:ts_msiofficedata
+:msiofficedata
 
 for %%# in (
+14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_0015_AccessR
+14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_001C_AccessRuntimeR
+14_95ab3ec8-4106-4f9d-b632-03c019d1d23f_0015_AccessVL
+14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_0016_ExcelR_[HSExcelR]
+14_71dc86ff-f056-40d0-8ffb-9592705c9b76_0016_ExcelVL
+14_7004b7f0-6407-4f45-8eac-966e5f868bde_00BA_GrooveR
+14_fdad0dfa-417d-4b4f-93e4-64ea8867b7fd_00BA_GrooveVL
+14_7b7d1f17-fdcb-4820-9789-9bec6e377821_0013_HomeBusinessR_[HomeBusinessDemoR]
+14_19316117-30a8-4773-8fd9-7f7231f4e060_011E_HomeBusinessSubR
+14_09e2d37e-474b-4121-8626-58ad9be5776f_002F_HomeStudentR_[HomeStudentDemoR]
+14_ef1da464-01c8-43a6-91af-e4e5713744f9_0044_InfoPathR
+14_85e22450-b741-430c-a172-a37962c938af_0044_InfoPathVL
+14_14f5946a-debc-4716-babc-7e2c240fec08_000F_MondoR
+14_533b656a-4425-480b-8e30-1a2358898350_000F_MondoVL
+14_c1ceda8b-c578-4d5d-a4aa-23626be4e234_003D_ProfessionalR_[OEM-SingleImage]Exception
+14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_00A1_OneNoteR_[HSOneNoteR]
+14_6860b31f-6a67-48b8-84b9-e312b3485c4b_00A1_OneNoteVL
+14_fbf4ac36-31c8-4340-8666-79873129cf40_001A_OutlookR
+14_a9aeabd8-63b8-4079-a28e-f531807fd6b8_001A_OutlookVL
+14_acb51361-c0db-4895-9497-1831c41f31a6_0033_PersonalR_[PersonalDemoR,PersonalPrepaidR]
+14_133c8359-4e93-4241-8118-30bb18737ea0_0018_PowerPointR_[HSPowerPointR]
+14_38252940-718c-4aa6-81a4-135398e53851_0018_PowerPointVL
+14_8b559c37-0117-413e-921b-b853aeb6e210_0014_ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR]
+14_725714d7-d58f-4d12-9fa8-35873c6f7215_003B_ProjectProR_[ProjectProMSDNR]
+14_4d06f72e-fd50-4bc2-a24b-d448d7f17ef2_011F_ProjectProSubR
+14_1cf57a59-c532-4e56-9a7d-ffa2fe94b474_003B_ProjectProVL
+14_688f6589-2bd9-424e-a152-b13f36aa6de1_003A_ProjectStdR
+14_11b39439-6b93-4642-9570-f2eb81be2238_003A_ProjectStdVL
+14_71af7e84-93e6-4363-9b69-699e04e74071_0011_ProPlusR_[ProPlusAcadR,ProPlusMSDNR,Sub4R]
+14_e98ef0c0-71c4-42ce-8305-287d8721e26c_011D_ProPlusSubR
+14_fdf3ecb9-b56f-43b2-a9b8-1b48b6bae1a7_0011_ProPlusVL_[ProPlusAcadVL]
+14_98677603-a668-4fa4-9980-3f1f05f78f69_0019_PublisherR
+14_3d014759-b128-4466-9018-e80f6320d9d0_0019_PublisherVL
+14_dbe3aee0-5183-4ff7-8142-66050173cb01_008B_SmallBusBasicsR_[SmallBusBasicsMSDNR]
+14_8090771e-d41a-4482-929e-de87f1f47e46_008B_SmallBusBasicsVL
+14_b78df69e-0966-40b1-ae85-30a5134dedd0_0017_SPDR
+14_d3422cfb-8d8b-4ead-99f9-eab0ccd990d7_0012_StandardR
+14_1f76e346-e0be-49bc-9954-70ec53a4fcfe_0012_StandardVL_[StandardAcadVL]
+14_2745e581-565a-4670-ae90-6bf7c57ffe43_0066_StarterR
+14_66cad568-c2dc-459d-93ec-2f3cb967ee34_0057_VisioSIR_Prem[Pro,Std]Exception
+14_36756cb8-8e69-4d11-9522-68899507cd6a_0057_VisioSIVL_Prem[Pro,Std]Exception
+14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_001B_WordR_[HSWordR]
+14_98d4050e-9c98-49bf-9be1-85e12eb3ab13_001B_WordVL
 :: Office 2013
-15_ab4d047b-97cf-4126-a69f-34df08e2f254_AccessRetail
-15_259de5be-492b-44b3-9d78-9645f848f7b0_AccessRuntimeRetail
-15_4374022d-56b8-48c1-9bb7-d8f2fc726343_AccessVolume
-15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_ExcelRetail
-15_ac1ae7fd-b949-4e04-a330-849bc40638cf_ExcelVolume
-15_cfaf5356-49e3-48a8-ab3c-e729ab791250_GrooveRetail
-15_4825ac28-ce41-45a7-9e6e-1fed74057601_GrooveVolume
-15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_HomeBusinessPipcRetail
-15_a2b90e7a-a797-4713-af90-f0becf52a1dd_HomeBusinessRetail
-15_1fdfb4e4-f9c9-41c4-b055-c80daf00697d_HomeStudentARMRetail
-15_ebef9f05-5273-404a-9253-c5e252f50555_HomeStudentPlusARMRetail
-15_f2de350d-3028-410a-bfae-283e00b44d0e_HomeStudentRetail
-15_44984381-406e-4a35-b1c3-e54f499556e2_InfoPathRetail
-15_9e016989-4007-42a6-8051-64eb97110cf2_InfoPathVolume
-15_9103f3ce-1084-447a-827e-d6097f68c895_LyncAcademicRetail
-15_ff693bf4-0276-4ddb-bb42-74ef1a0c9f4d_LyncEntryRetail
-15_fada6658-bfc6-4c4e-825a-59a89822cda8_LyncRetail
-15_e1264e10-afaf-4439-a98b-256df8bb156f_LyncVolume
-15_69ec9152-153b-471a-bf35-77ec88683eae_MondoRetail
-15_f33485a0-310b-4b72-9a0e-b1d605510dbd_MondoVolume
-15_3391e125-f6e4-4b1e-899c-a25e6092d40d_OneNoteFreeRetail
-15_8b524bcc-67ea-4876-a509-45e46f6347e8_OneNoteRetail
-15_b067e965-7521-455b-b9f7-c740204578a2_OneNoteVolume
-15_12004b48-e6c8-4ffa-ad5a-ac8d4467765a_OutlookRetail
-15_8d577c50-ae5e-47fd-a240-24986f73d503_OutlookVolume
-15_5aab8561-1686-43f7-9ff5-2c861da58d17_PersonalPipcRetail
-15_17e9df2d-ed91-4382-904b-4fed6a12caf0_PersonalRetail
-15_31743b82-bfbc-44b6-aa12-85d42e644d5b_PowerPointRetail
-15_e40dcb44-1d5c-4085-8e8f-943f33c4f004_PowerPointVolume
-15_064383fa-1538-491c-859b-0ecab169a0ab_ProPlusRetail
-15_2b88c4f2-ea8f-43cd-805e-4d41346e18a7_ProPlusVolume
-15_4e26cac1-e15a-4467-9069-cb47b67fe191_ProfessionalPipcRetail
-15_44bc70e2-fb83-4b09-9082-e5557e0c2ede_ProfessionalRetail
-15_2f72340c-b555-418d-8b46-355944fe66b8_ProjectProRetail
-15_ed34dc89-1c27-4ecd-8b2f-63d0f4cedc32_ProjectProVolume
-15_58d95b09-6af6-453d-a976-8ef0ae0316b1_ProjectStdRetail
-15_2b9e4a37-6230-4b42-bee2-e25ce86c8c7a_ProjectStdVolume
-15_c3a0814a-70a4-471f-af37-2313a6331111_PublisherRetail
-15_38ea49f6-ad1d-43f1-9888-99a35d7c9409_PublisherVolume
-15_ba3e3833-6a7e-445a-89d0-7802a9a68588_SPDRetail
-15_32255c0a-16b4-4ce2-b388-8a4267e219eb_StandardRetail
-15_a24cca51-3d54-4c41-8a76-4031f5338cb2_StandardVolume
-15_a56a3b37-3a35-4bbb-a036-eee5f1898eee_VisioProRetail
-15_3e4294dd-a765-49bc-8dbd-cf8b62a4bd3d_VisioProVolume
-15_980f9e3e-f5a8-41c8-8596-61404addf677_VisioStdRetail
-15_44a1f6ff-0876-4edb-9169-dbb43101ee89_VisioStdVolume
-15_191509f2-6977-456f-ab30-cf0492b1e93a_WordRetail
-15_9cedef15-be37-4ff0-a08a-13a045540641_WordVolume
+15_ab4d047b-97cf-4126-a69f-34df08e2f254_0015_AccessRetail
+15_259de5be-492b-44b3-9d78-9645f848f7b0_001C_AccessRuntimeRetail
+15_4374022d-56b8-48c1-9bb7-d8f2fc726343_0015_AccessVolume
+15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_0016_ExcelRetail
+15_ac1ae7fd-b949-4e04-a330-849bc40638cf_0016_ExcelVolume
+15_cfaf5356-49e3-48a8-ab3c-e729ab791250_00BA_GrooveRetail
+15_4825ac28-ce41-45a7-9e6e-1fed74057601_00BA_GrooveVolume
+15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_00E7_HomeBusinessPipcRetail
+15_cd256150-a898-441f-aac0-9f8f33390e45_0013_HomeBusinessRetail
+15_1fdfb4e4-f9c9-41c4-b055-c80daf00697d_00CE_HomeStudentARMRetail
+15_ebef9f05-5273-404a-9253-c5e252f50555_00DA_HomeStudentPlusARMRetail
+15_98685d21-78bd-4c62-bc4f-653344a63035_002F_HomeStudentRetail
+15_44984381-406e-4a35-b1c3-e54f499556e2_0044_InfoPathRetail
+15_9e016989-4007-42a6-8051-64eb97110cf2_0044_InfoPathVolume
+15_9103f3ce-1084-447a-827e-d6097f68c895_00EA_LyncAcademicRetail
+15_ff693bf4-0276-4ddb-bb42-74ef1a0c9f4d_012D_LyncEntryRetail
+15_fada6658-bfc6-4c4e-825a-59a89822cda8_012C_LyncRetail
+15_e1264e10-afaf-4439-a98b-256df8bb156f_012C_LyncVolume
+15_3169c8df-f659-4f95-9cc6-3115e6596e83_000F_MondoRetail
+15_f33485a0-310b-4b72-9a0e-b1d605510dbd_000F_MondoVolume
+15_3391e125-f6e4-4b1e-899c-a25e6092d40d_00A1_OneNoteFreeRetail
+15_8b524bcc-67ea-4876-a509-45e46f6347e8_00A1_OneNoteRetail
+15_b067e965-7521-455b-b9f7-c740204578a2_00A1_OneNoteVolume
+15_12004b48-e6c8-4ffa-ad5a-ac8d4467765a_001A_OutlookRetail
+15_8d577c50-ae5e-47fd-a240-24986f73d503_001A_OutlookVolume
+15_5aab8561-1686-43f7-9ff5-2c861da58d17_00E6_PersonalPipcRetail
+15_17e9df2d-ed91-4382-904b-4fed6a12caf0_0033_PersonalRetail
+15_31743b82-bfbc-44b6-aa12-85d42e644d5b_0018_PowerPointRetail
+15_e40dcb44-1d5c-4085-8e8f-943f33c4f004_0018_PowerPointVolume
+15_4e26cac1-e15a-4467-9069-cb47b67fe191_00E8_ProfessionalPipcRetail
+15_44bc70e2-fb83-4b09-9082-e5557e0c2ede_0014_ProfessionalRetail
+15_f2435de4-5fc0-4e5b-ac97-34f515ec5ee7_003B_ProjectProRetail
+15_ed34dc89-1c27-4ecd-8b2f-63d0f4cedc32_003B_ProjectProVolume
+15_5517e6a2-739b-4822-946f-7f0f1c5934b1_003A_ProjectStdRetail
+15_2b9e4a37-6230-4b42-bee2-e25ce86c8c7a_003A_ProjectStdVolume
+15_064383fa-1538-491c-859b-0ecab169a0ab_0011_ProPlusRetail
+15_2b88c4f2-ea8f-43cd-805e-4d41346e18a7_0011_ProPlusVolume
+15_c3a0814a-70a4-471f-af37-2313a6331111_0019_PublisherRetail
+15_38ea49f6-ad1d-43f1-9888-99a35d7c9409_0019_PublisherVolume
+15_ba3e3833-6a7e-445a-89d0-7802a9a68588_0017_SPDRetail
+15_32255c0a-16b4-4ce2-b388-8a4267e219eb_0012_StandardRetail
+15_a24cca51-3d54-4c41-8a76-4031f5338cb2_0012_StandardVolume
+15_15d12ad4-622d-4257-976c-5eb3282fb93d_0051_VisioProRetail
+15_3e4294dd-a765-49bc-8dbd-cf8b62a4bd3d_0051_VisioProVolume
+15_dae597ce-5823-4c77-9580-7268b93a4b23_0053_VisioStdRetail
+15_44a1f6ff-0876-4edb-9169-dbb43101ee89_0053_VisioStdVolume
+15_191509f2-6977-456f-ab30-cf0492b1e93a_001B_WordRetail
+15_9cedef15-be37-4ff0-a08a-13a045540641_001B_WordVolume
 :: Office 365 - 15.0 version
-15_742178ed-6b28-42dd-b3d7-b7c0ea78741b_O365BusinessRetail
-15_a96f8dae-da54-4fad-bdc6-108da592707a_O365HomePremRetail
-15_e3dacc06-3bc2-4e13-8e59-8e05f3232325_O365ProPlusRetail
-15_0bc1dae4-6158-4a1c-a893-807665b934b2_O365SmallBusPremRetail
+15_befee371-a2f5-4648-85db-a2c55fdf324c_00E9_O365BusinessRetail
+15_537ea5b5-7d50-4876-bd38-a53a77caca32_00D6_O365HomePremRetail
+15_149dbce7-a48e-44db-8364-a53386cd4580_00D4_O365ProPlusRetail
+15_bacd4614-5bef-4a5e-bafc-de4c788037a2_00D5_O365SmallBusPremRetail
 :: Office 365 - 16.0 version
-16_742178ed-6b28-42dd-b3d7-b7c0ea78741b_O365BusinessRetail
-16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_O365EduCloudRetail
-16_a96f8dae-da54-4fad-bdc6-108da592707a_O365HomePremRetail
-16_e3dacc06-3bc2-4e13-8e59-8e05f3232325_O365ProPlusRetail
-16_0bc1dae4-6158-4a1c-a893-807665b934b2_O365SmallBusPremRetail
+16_6337137e-7c07-4197-8986-bece6a76fc33_00E9_O365BusinessRetail
+16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_00D6_O365EduCloudRetail
+16_537ea5b5-7d50-4876-bd38-a53a77caca32_00D6_O365HomePremRetail
+16_149dbce7-a48e-44db-8364-a53386cd4580_00D4_O365ProPlusRetail
+16_bacd4614-5bef-4a5e-bafc-de4c788037a2_00D5_O365SmallBusPremRetail
 :: Office 2016
-16_bfa358b0-98f1-4125-842e-585fa13032e6_AccessRetail
-16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_AccessRuntimeRetail
-16_3b2fa33f-cd5a-43a5-bd95-f49f3f546b0b_AccessVolume
-16_424d52ff-7ad2-4bc7-8ac6-748d767b455d_ExcelRetail
-16_685062a7-6024-42e7-8c5f-6bb9e63e697f_ExcelVolume
-16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_HomeBusinessPipcRetail
-16_86834d00-7896-4a38-8fae-32f20b86fa2b_HomeBusinessRetail
-16_090896a0-ea98-48ac-b545-ba5da0eb0c9c_HomeStudentARMRetail
-16_6bbe2077-01a4-4269-bf15-5bf4d8efc0b2_HomeStudentPlusARMRetail
-16_c28acdb8-d8b3-4199-baa4-024d09e97c99_HomeStudentRetail
-16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_HomeStudentVNextRetail
-16_69ec9152-153b-471a-bf35-77ec88683eae_MondoRetail
-16_2cd0ea7e-749f-4288-a05e-567c573b2a6c_MondoVolume
-16_436366de-5579-4f24-96db-3893e4400030_OneNoteFreeRetail
-16_83ac4dd9-1b93-40ed-aa55-ede25bb6af38_OneNoteRetail
-16_23b672da-a456-4860-a8f3-e062a501d7e8_OneNoteVolume
-16_5a670809-0983-4c2d-8aad-d3c2c5b7d5d1_OutlookRetail
-16_50059979-ac6f-4458-9e79-710bcb41721a_OutlookVolume
-16_5aab8561-1686-43f7-9ff5-2c861da58d17_PersonalPipcRetail
-16_a9f645a1-0d6a-4978-926a-abcb363b72a6_PersonalRetail
-16_f32d1284-0792-49da-9ac6-deb2bc9c80b6_PowerPointRetail
-16_9b4060c9-a7f5-4a66-b732-faf248b7240f_PowerPointVolume
-16_de52bd50-9564-4adc-8fcb-a345c17f84f9_ProPlusRetail
-16_c47456e3-265d-47b6-8ca0-c30abbd0ca36_ProPlusVolume
-16_4e26cac1-e15a-4467-9069-cb47b67fe191_ProfessionalPipcRetail
-16_d64edc00-7453-4301-8428-197343fafb16_ProfessionalRetail
-16_2f72340c-b555-418d-8b46-355944fe66b8_ProjectProRetail
-16_82f502b5-b0b0-4349-bd2c-c560df85b248_ProjectProVolume
-16_16728639-a9ab-4994-b6d8-f81051e69833_ProjectProXVolume
-16_58d95b09-6af6-453d-a976-8ef0ae0316b1_ProjectStdRetail
-16_82e6b314-2a62-4e51-9220-61358dd230e6_ProjectStdVolume
-16_431058f0-c059-44c5-b9e7-ed2dd46b6789_ProjectStdXVolume
-16_6e0c1d99-c72e-4968-bcb7-ab79e03e201e_PublisherRetail
-16_fcc1757b-5d5f-486a-87cf-c4d6dedb6032_PublisherVolume
-16_9103f3ce-1084-447a-827e-d6097f68c895_SkypeServiceBypassRetail
-16_971cd368-f2e1-49c1-aedd-330909ce18b6_SkypeforBusinessEntryRetail
-16_418d2b9f-b491-4d7f-84f1-49e27cc66597_SkypeforBusinessRetail
-16_03ca3b9a-0869-4749-8988-3cbc9d9f51bb_SkypeforBusinessVolume
-16_4a31c291-3a12-4c64-b8ab-cd79212be45e_StandardRetail
-16_0ed94aac-2234-4309-ba29-74bdbb887083_StandardVolume
-16_a56a3b37-3a35-4bbb-a036-eee5f1898eee_VisioProRetail
-16_295b2c03-4b1c-4221-b292-1411f468bd02_VisioProVolume
-16_0594dc12-8444-4912-936a-747ca742dbdb_VisioProXVolume
-16_980f9e3e-f5a8-41c8-8596-61404addf677_VisioStdRetail
-16_44151c2d-c398-471f-946f-7660542e3369_VisioStdVolume
-16_1d1c6879-39a3-47a5-9a6d-aceefa6a289d_VisioStdXVolume
-16_cacaa1bf-da53-4c3b-9700-11738ef1c2a5_WordRetail
-16_c3000759-551f-4f4a-bcac-a4b42cbf1de2_WordVolume
+16_bfa358b0-98f1-4125-842e-585fa13032e6_0015_AccessRetail
+16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_001C_AccessRuntimeRetail
+16_3b2fa33f-cd5a-43a5-bd95-f49f3f546b0b_0015_AccessVolume
+16_424d52ff-7ad2-4bc7-8ac6-748d767b455d_0016_ExcelRetail
+16_685062a7-6024-42e7-8c5f-6bb9e63e697f_0016_ExcelVolume
+16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_00E7_HomeBusinessPipcRetail
+16_86834d00-7896-4a38-8fae-32f20b86fa2b_0013_HomeBusinessRetail
+16_090896a0-ea98-48ac-b545-ba5da0eb0c9c_00CE_HomeStudentARMRetail
+16_6bbe2077-01a4-4269-bf15-5bf4d8efc0b2_00DA_HomeStudentPlusARMRetail
+16_c28acdb8-d8b3-4199-baa4-024d09e97c99_002F_HomeStudentRetail
+16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_002F_HomeStudentVNextRetail
+16_b21367df-9545-4f02-9f24-240691da0e58_000F_MondoRetail
+16_2cd0ea7e-749f-4288-a05e-567c573b2a6c_000F_MondoVolume
+16_436366de-5579-4f24-96db-3893e4400030_00A3_OneNoteFreeRetail
+16_83ac4dd9-1b93-40ed-aa55-ede25bb6af38_00A1_OneNoteRetail
+16_23b672da-a456-4860-a8f3-e062a501d7e8_00A1_OneNoteVolume
+16_5a670809-0983-4c2d-8aad-d3c2c5b7d5d1_001A_OutlookRetail
+16_50059979-ac6f-4458-9e79-710bcb41721a_001A_OutlookVolume
+16_5aab8561-1686-43f7-9ff5-2c861da58d17_00E6_PersonalPipcRetail
+16_a9f645a1-0d6a-4978-926a-abcb363b72a6_0033_PersonalRetail
+16_f32d1284-0792-49da-9ac6-deb2bc9c80b6_0018_PowerPointRetail
+16_9b4060c9-a7f5-4a66-b732-faf248b7240f_0018_PowerPointVolume
+16_4e26cac1-e15a-4467-9069-cb47b67fe191_00E8_ProfessionalPipcRetail
+16_d64edc00-7453-4301-8428-197343fafb16_0014_ProfessionalRetail
+16_0f42f316-00b1-48c5-ada4-2f52b5720ad0_003B_ProjectProRetail
+16_82f502b5-b0b0-4349-bd2c-c560df85b248_003B_ProjectProVolume
+16_16728639-a9ab-4994-b6d8-f81051e69833_003B_ProjectProXVolume
+16_e9f0b3fc-962f-4944-ad06-05c10b6bcd5e_003A_ProjectStdRetail
+16_82e6b314-2a62-4e51-9220-61358dd230e6_003A_ProjectStdVolume
+16_431058f0-c059-44c5-b9e7-ed2dd46b6789_003A_ProjectStdXVolume
+16_de52bd50-9564-4adc-8fcb-a345c17f84f9_0011_ProPlusRetail
+16_c47456e3-265d-47b6-8ca0-c30abbd0ca36_0011_ProPlusVolume
+16_6e0c1d99-c72e-4968-bcb7-ab79e03e201e_0019_PublisherRetail
+16_fcc1757b-5d5f-486a-87cf-c4d6dedb6032_0019_PublisherVolume
+16_971cd368-f2e1-49c1-aedd-330909ce18b6_012D_SkypeforBusinessEntryRetail
+16_418d2b9f-b491-4d7f-84f1-49e27cc66597_012C_SkypeforBusinessRetail
+16_03ca3b9a-0869-4749-8988-3cbc9d9f51bb_012C_SkypeforBusinessVolume
+16_9103f3ce-1084-447a-827e-d6097f68c895_012C_SkypeServiceBypassRetail
+16_4a31c291-3a12-4c64-b8ab-cd79212be45e_0012_StandardRetail
+16_0ed94aac-2234-4309-ba29-74bdbb887083_0012_StandardVolume
+16_2dfe2075-2d04-4e43-816a-eb60bbb77574_0051_VisioProRetail
+16_295b2c03-4b1c-4221-b292-1411f468bd02_0051_VisioProVolume
+16_0594dc12-8444-4912-936a-747ca742dbdb_0051_VisioProXVolume
+16_c76dbcbc-d71b-4f45-b5b3-b7494cb4e23e_0053_VisioStdRetail
+16_44151c2d-c398-471f-946f-7660542e3369_0053_VisioStdVolume
+16_1d1c6879-39a3-47a5-9a6d-aceefa6a289d_0053_VisioStdXVolume
+16_cacaa1bf-da53-4c3b-9700-11738ef1c2a5_001B_WordRetail
+16_c3000759-551f-4f4a-bcac-a4b42cbf1de2_001B_WordVolume
 ) do (
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do (
 
 if "%oVer%"=="%%A" (
-for /f "tokens=*" %%x in ('findstr /i /c:"%%B" "%_oBranding%"') do set "prodId=%%x"
-set prodId=!prodId:"/>=!
-set prodId=!prodId:~-4!
-if "%oVer%"=="14" (
-REM Exception case for Visio because wrong primary product ID is mentioned in Branding.xml
-echo %%C | find /i "Visio" %nul% && set prodId=0057
-)
-reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-!prodId!-" %nul% && (
-reg query "%1\Common\InstalledPackages" %nul2% | find /i "-!prodId!-" %nul% && (
-if defined _oIds (set _oIds=!_oIds! %%C) else (set _oIds=%%C)
+reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-%%C-" %nul% && (
+reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
+if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
+if /i 003D==%%C set SingleImage=1
 )
 )
 )

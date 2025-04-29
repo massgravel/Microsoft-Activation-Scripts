@@ -1,4 +1,4 @@
-@set masver=3.0
+@set masver=3.1
 @echo off
 
 
@@ -112,7 +112,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%fix_service
+echo Check this webpage for help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -127,7 +127,7 @@ echo:
 echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Check this webpage for help - %mas%troubleshoot
 echo:
 echo:
 ping 127.0.0.1 -n 20 >nul
@@ -173,7 +173,7 @@ echo Failed to detect Windows build number.
 echo:
 setlocal EnableDelayedExpansion
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -222,33 +222,6 @@ goto dk_done
 
 ::========================================================================================================================================
 
-::  Check PowerShell
-
-REM :PStest: $ExecutionContext.SessionState.LanguageMode :PStest:
-
-cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PStest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
-%eline%
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
-echo:
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | find /i "FullLanguage" %nul1% && (
-echo Failed to run Powershell command but Powershell is working.
-echo:
-cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { if ($i.displayName -notlike '*windows*') { $n += $i.displayName } }; if ($n) { Write-Host ('Installed 3rd party Antivirus might be blocking the script - ' + ($n -join ', ')) -ForegroundColor White -BackgroundColor Blue }"""
-echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
-) || (
-echo PowerShell is not working. Aborting...
-echo If you have applied restrictions on Powershell then undo those changes.
-echo:
-set fixes=%fixes% %mas%fix_powershell
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_powershell"
-)
-goto dk_done
-)
-
-::========================================================================================================================================
-
 ::  Elevate script as admin and pass arguments and preventing loop
 
 %nul1% fltmc || (
@@ -256,6 +229,58 @@ if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" &&
 %eline%
 echo This script needs admin rights.
 echo Right click on this script and select 'Run as administrator'.
+goto dk_done
+)
+
+::========================================================================================================================================
+
+::  Check PowerShell
+
+::pstst $ExecutionContext.SessionState.LanguageMode :pstst
+
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}" %nul6%') do (set tstresult=%%a)
+
+if /i not "%tstresult%"=="FullLanguage" (
+%eline%
+echo: %tstresult%
+cmd /c "%psc% $ExecutionContext.SessionState.LanguageMode"
+
+REM check LanguageMode
+
+cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | findstr /i "ConstrainedLanguage RestrictedLanguage NoLanguage" %nul1% && (
+echo FullLanguage mode not found in PowerShell. Aborting...
+echo If you have applied restrictions on Powershell then undo those changes.
+echo:
+set fixes=%fixes% %mas%fix_powershell
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_powershell"
+goto dk_done
+)
+
+REM check Powershell core version
+
+cmd /c "%psc% "$PSVersionTable.PSEdition"" | find /i "Core" %nul1% && (
+echo Windows Powershell is needed for MAS but it seems to be replaced with Powershell core. Aborting...
+goto dk_done
+)
+
+REM check for Mal-ware that may cause issues with Powershell
+
+for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
+echo "%%f"
+echo Mal%blank%ware found, PowerShell is not working properly.
+echo:
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+goto dk_done
+)
+
+REM check antivirus and other errors
+
+echo PowerShell is not working properly. Aborting...
+cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { if ($i.displayName -notlike '*windows*') { $n += $i.displayName } }; if ($n) { Write-Host ('Installed 3rd party Antivirus might be blocking the script - ' + ($n -join ', ')) -ForegroundColor White -BackgroundColor Blue }"""
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -271,34 +296,33 @@ set terminal=
 
 ::  Check if script is running in Terminal app
 
-set r1=$TB = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);
-set r2=%r1% [void]$TB.DefinePInvokeMethod('GetConsoleWindow', 'kernel32.dll', 22, 1, [IntPtr], @(), 1, 3).SetImplementationFlags(128);
-set r3=%r2% [void]$TB.DefinePInvokeMethod('SendMessageW', 'user32.dll', 22, 1, [IntPtr], @([IntPtr], [UInt32], [IntPtr], [IntPtr]), 1, 3).SetImplementationFlags(128);
-set d1=%r3% $hIcon = $TB.CreateType(); $hWnd = $hIcon::GetConsoleWindow();
-set d2=%d1% echo $($hIcon::SendMessageW($hWnd, 127, 0, 0) -ne [IntPtr]::Zero);
-
 if defined terminal (
-%psc% "%d2%" %nul2% | find /i "True" %nul1% && set terminal=
+set lines=0
+for /f "skip=2 tokens=2 delims=: " %%A in ('mode con') do if "!lines!"=="0" set lines=%%A
+if !lines! GEQ 100 set terminal=
 )
 
-if defined ps32onArm goto :skipQE
 if %_unattended%==1 goto :skipQE
 for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
 
+::  Relaunch to disable QuickEdit in the current session and use conhost.exe instead of the Terminal app
+::  This code disables QuickEdit for the current cmd.exe session without making permanent registry changes
+::  It is included because clicking on the script window can pause execution, causing confusion that the script has stopped due to an error
+
+set resetQE=1
+reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% && set resetQE=0
+reg add HKCU\Console /v QuickEdit /t REG_DWORD /d 0 /f %nul1%
+
 if defined terminal (
-set "launchcmd=start conhost.exe %psc%"
-) else (
-set "launchcmd=%psc%"
+start conhost.exe "!_batf!" %_args% -qedit
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
+) else if %resetQE% EQU 1 (
+start cmd.exe /c ""!_batf!" %_args% -qedit"
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
 )
 
-::  Disable QuickEdit in current session
-
-set "d1=$t=[AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);"
-set "d2=$t.DefinePInvokeMethod('GetStdHandle', 'kernel32.dll', 22, 1, [IntPtr], @([Int32]), 1, 3).SetImplementationFlags(128);"
-set "d3=$t.DefinePInvokeMethod('SetConsoleMode', 'kernel32.dll', 22, 1, [Boolean], @([IntPtr], [Int32]), 1, 3).SetImplementationFlags(128);"
-set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080);"
-
-%launchcmd% "%d1% %d2% %d3% %d4% & cmd.exe '/c' '!_PSarg! -qedit'" && (exit /b) || (set terminal=1)
 :skipQE
 
 ::========================================================================================================================================
@@ -307,12 +331,18 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set pingp=
 set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 activ%-%ated.win') do (
-if not "%%#"=="" set old=1
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck%upver%.activ%-%ated.win') do (
-if not "%%#"=="" set old=
+for %%A in (
+activ%-%ated.win
+mass%-%grave.dev
+) do if not defined pingp (
+for /f "delims=[] tokens=2" %%B in ('ping -n 1 %%A') do (
+if not "%%B"=="" (set old=1& set pingp=1)
+for /f "delims=[] tokens=2" %%C in ('ping -n 1 updatecheck%upver%.%%A') do (
+if not "%%C"=="" set old=
+)
 )
 )
 
@@ -391,8 +421,11 @@ if defined _fmiss (
 %eline%
 echo [%_fmiss%] file is missing, aborting...
 echo:
+call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
+call :dk_color %Blue% "After that, restart system and try activation again."
+echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -449,7 +482,7 @@ echo Evaluation editions cannot be activated outside of their evaluation period.
 call :dk_color %Blue% "Use TSforge activation option from the main menu to reset evaluation period."
 echo:
 set fixes=%fixes% %mas%evaluation_editions
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%evaluation_editions"
 )
 goto dk_done
 )
@@ -465,7 +498,7 @@ if not exist "!_work!\clipup.exe" (
 echo clipup.exe doesn't exist in Server Cor/Acor [No GUI] versions.
 echo The file is required for KMS38 activation.
 echo Check the below page for instructions on how to activate it.
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%kms38"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%kms38"
 goto dk_done
 )
 )
@@ -477,7 +510,7 @@ if defined a_cor (
 if !errorlevel!==3 (
 %eline%
 echo Valid digital signature not found in clipup.exe file.
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 )
@@ -545,13 +578,13 @@ if exist "%SysPath%\spp\tokens\skus\%osedition%\*GVLK*.xrm-ms" set sppks=1
 if defined skunotfound (
 call :dk_color %Red% "Required license files not found in %SysPath%\spp\tokens\skus\"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 if defined sppks (
 call :dk_color %Red% "KMS38 activation is supported but failed to find the key."
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 if not defined skunotfound if not defined sppks (
@@ -587,6 +620,7 @@ call echo Checking Installed Product Key          [Partial Key - %%_partial%%] [
 )
 
 if defined key (
+set generickey=1
 call :dk_inskey "[%key%]"
 )
 
@@ -601,7 +635,7 @@ if %_wmic% EQU 0 for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELE
 if not defined app (
 call :dk_color %Red% "Checking Installed GVLK Activation ID   [Not Found] Aborting..."
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto :dk_done
 )
 
@@ -685,12 +719,6 @@ set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 
-sc query sppsvc | find /i "STOPPED" %nul% && (
-echo Stopping sppsvc Service                 [Successful]
-) || (
-call :dk_color %Gray% "Stopping sppsvc Service                 [Failed]"
-)
-
 %_xmlexist% (
 %psc% "Start-Job { Restart-Service ClipSVC } | Wait-Job -Timeout 20 | Out-Null"
 %_xmlexist% timeout /t 2 %nul%
@@ -769,7 +797,7 @@ goto :k_final
 call :dk_color %Red% "Activation Failed"
 if not defined error call :dk_color %Blue% "%_fixmsg%"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 
 ::========================================================================================================================================
 
@@ -884,9 +912,15 @@ $key.SetAccessControl($acl)
 
 :dk_setvar
 
-set psc=powershell.exe
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
@@ -1046,11 +1080,12 @@ set keyerror=%errorlevel%
 cmd /c exit /b %keyerror%
 if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
 
+if defined generickey (set "keyecho=Installing Generic Product Key         ") else (set "keyecho=Installing Product Key                 ")
 if %keyerror% EQU 0 (
 if %sps%==SoftwareLicensingService call :dk_refresh
-echo Installing Generic Product Key          %~1 [Successful]
+echo %keyecho% %~1 [Successful]
 ) else (
-call :dk_color %Red% "Installing Generic Product Key          %~1 [Failed] %keyerror%"
+call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
 if not defined error (
 if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
 call :dk_color %Blue% "%_fixmsg%"
@@ -1059,6 +1094,7 @@ set showfix=1
 set error=1
 )
 
+set generickey=
 exit /b
 
 ::  Get Windows installed key channel
@@ -1094,6 +1130,8 @@ exit /b
 
 :dk_reeval
 
+if %winbuild% LSS 7600 exit /b
+
 ::  This key is left by the system in rearm process and sppsvc sometimes fails to delete it, it causes issues in working of the Scheduled Tasks of SPP
 
 set "ruleskey=HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedSystemState"
@@ -1121,13 +1159,13 @@ function InstallLicenseArr($Str) {
     ForEach ($x in $a) {InstallLicenseFile "$x"}
 }
 function InstallLicenseDir($Loc) {
-    dir $Loc *.xrm-ms -af -s | select -expand FullName | % {InstallLicenseFile "$_"}
+	Get-ChildItem $Loc -Recurse -Filter *.xrm-ms | ForEach-Object {InstallLicenseFile $_.FullName}
 }
 function ReinstallLicenses() {
-    $Oem = "$env:SysPath\oem"
-    $Spp = "$env:SysPath\spp\tokens"
-    InstallLicenseDir "$Spp"
-    If (Test-Path $Oem) {InstallLicenseDir "$Oem"}
+	$Paths = @("$env:SysPath\oem", "$env:SysPath\licensing", "$env:SysPath\spp\tokens")
+	foreach ($Path in $Paths) {
+    if (Test-Path $Path) { InstallLicenseDir "$Path" }
+	}
 }
 :xrm:
 
@@ -1135,6 +1173,7 @@ function ReinstallLicenses() {
 
 :dk_ckeckwmic
 
+if %winbuild% LSS 9200 (set _wmic=1&exit /b)
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" %nul2% | find /i "computersystem" %nul1% && set _wmic=1
@@ -1145,16 +1184,16 @@ exit /b
 
 :dk_sppissue
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 set spperror=%errorlevel%
 
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
-echo sc start sppsvc [Error Code: %spperror%]
+echo sc start %_slser% [Error Code: %spperror%]
 )
 
 echo:
-%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host 'sppsvc is not working correctly. Help - %mas%troubleshoot'}"
+%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host '%_slser% is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
 exit /b
 
 ::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
@@ -1162,7 +1201,7 @@ exit /b
 :dk_product
 
 set d1=%ref% $meth = $TypeBuilder.DefinePInvokeMethod('BrandingFormatString', 'winbrand.dll', 'Public, Static', 1, [String], @([String]), 1, 3);
-set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%')
+set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%') -replace [string][char]0xa9, '(C)' -replace [string][char]0xae, '(R)' -replace [string][char]0x2122, '(TM)'
 
 set winos=
 for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set winos=%%s)
@@ -1263,11 +1302,11 @@ for %%# in (avira.com kaspersky.com virustotal.com mcafee.com) do (
 find /i "%%#" %SysPath%\drivers\etc\hosts %nul% && set /a hcount+=1)
 if %hcount%==4 set "results=[Antivirus URLs are blocked in hosts]"
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 echo "%errorlevel%" | findstr "577 225" %nul% && (
 set "results=%results%[Likely File Infector]"
 ) || (
-if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
+if not exist %SysPath%\%_slexe% if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
 )
 
 if not "%results%%pupfound%"=="" (
@@ -1275,7 +1314,7 @@ if defined pupfound call :dk_color %Gray% "Checking PUP Activators              
 if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection..."
 if defined results call :dk_color %Red% "%results%"
 set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
 )
 
@@ -1347,6 +1386,7 @@ for %%# in (%serv_ste%) do (
 if /i %%#==ClipSVC          (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
 if /i %%#==wlidsvc          sc config %%# start= demand %nul%
 if /i %%#==sppsvc           (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
+if /i %%#==SLsvc            sc config %%# start= auto %nul%
 if /i %%#==KeyIso           sc config %%# start= demand %nul%
 if /i %%#==LicenseManager   sc config %%# start= demand %nul%
 if /i %%#==Winmgmt          sc config %%# start= auto %nul%
@@ -1395,7 +1435,7 @@ set showfix=1
 )
 echo %serv_e% | findstr /i "sppsvc-1060" %nul% && (
 set fixes=%fixes% %mas%fix_service
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_service"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_service"
 set showfix=1
 )
 )
@@ -1452,7 +1492,7 @@ if not defined notwinact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Win
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% || (
 call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
 set fixes=%fixes% %mas%evaluation_editions
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%evaluation_editions"
 )
 )
 
@@ -1476,7 +1516,7 @@ if %osedition%==0 (
 call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
 ) else (
 
-if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
+if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" if not exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set skunotfound=1
 call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
 )
@@ -1488,7 +1528,8 @@ call :dk_color %Red% "Checking Package Files                  [Not Found] [%osed
 )
 
 
-%psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
+if %_wmic% EQU 1 wmic path %sps% get Version %nul%
+if %_wmic% EQU 0 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
 set error_code=%errorlevel%
 cmd /c exit /b %error_code%
 if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
@@ -1558,7 +1599,7 @@ call :dk_color2 %Blue% "In case of activation issues, do this - " %_Yellow% " %m
 )
 
 
-for %%# in (SppEx%w%tComObj.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
+for %%# in (SppEx%w%tComObj.exe SLsvc.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (if defined _sppint (set "_sppint=!_sppint!, %%#") else (set "_sppint=%%#"))
 )
 if defined _sppint (
@@ -1572,38 +1613,39 @@ echo Checking SPP In IFEO                    [%_sppint%]
 )
 
 
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
+if %winbuild% GEQ 7600 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
 call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 )
 
 
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
+if %winbuild% GEQ 7600 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
-call :dk_color2 %Blue% "Most likely caused by gaming spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
+call :dk_color2 %Blue% "Most likely caused by gaming spoofers. Check this webpage for help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
 set error=1
 set showfix=1
 )
 
 
 set tokenstore=
+if %winbuild% GEQ 7600 (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore %nul6%') do call set "tokenstore=%%b"
 if %winbuild% LSS 9200 set "tokenstore=%Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform"
-if %winbuild% GEQ 9200 if /i not "%tokenstore%"=="%SysPath%\spp\store" if /i not "%tokenstore%"=="%SysPath%\spp\store\2.0" if /i not "%tokenstore%"=="%SysPath%\spp\store_test\2.0" (
+if %winbuild% GEQ 9200 if /i not "!tokenstore!"=="%SysPath%\spp\store" if /i not "!tokenstore!"=="%SysPath%\spp\store\2.0" if /i not "!tokenstore!"=="%SysPath%\spp\store_test\2.0" (
 set toerr=1
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [%tokenstore%]"
+call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [!tokenstore!]"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
-
+)
 
 ::  This code creates token folder only if it's missing and sets default permission for it
 
-if not defined toerr if not exist "%tokenstore%\" (
+if %winbuild% GEQ 7600 if not defined toerr if not exist "%tokenstore%\" (
 mkdir "%tokenstore%" %nul%
 if %winbuild% LSS 9200 set "d=$sddl = 'O:NSG:NSD:AI(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;NS)';"
 if %winbuild% GEQ 9200 set "d=$sddl = 'O:BAG:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICIIO;GR;;;BU)(A;;FR;;;BU)(A;OICI;FA;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)';"
@@ -1624,7 +1666,7 @@ set showfix=1
 if not defined notwinact (
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
-%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"
@@ -1639,7 +1681,7 @@ call :dk_color %Red% "Checking Activation IDs                 [!_notfoundids!]"
 )
 
 
-if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
+if %winbuild% GEQ 7600 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
 set error=1
 call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
 )
@@ -1722,7 +1764,7 @@ exit /b
 $wpaKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $env:COMPUTERNAME).OpenSubKey("SYSTEM\\WPA")
 $count = 0
 foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
-    if ($subkeyName -match '.*-.*-.*-.*-.*-') {
+    if ($subkeyName -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
         $count++
     }
 }
@@ -1731,7 +1773,7 @@ $minBuildNumber = 14393
 if ($osVersion.Build -ge $minBuildNumber) {
     $subkeyHashTable = @{}
     foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
-        if ($subkeyName -match '.*-.*-.*-.*-.*-') {
+        if ($subkeyName -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
             $keyNumber = $subkeyName -replace '.*-', ''
             $subkeyHashTable[$keyNumber] = $true
         }
@@ -1745,7 +1787,7 @@ if ($osVersion.Build -ge $minBuildNumber) {
     }
 }
 $wpaKey.GetSubKeyNames() | ForEach-Object {
-    if ($_ -match '.*-.*-.*-.*-.*-') {
+    if ($_ -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
         if ($PSVersionTable.PSVersion.Major -lt 3) {
             cmd /c "reg query "HKLM\SYSTEM\WPA\$_" /ve /t REG_BINARY >nul 2>&1"
 			if ($LASTEXITCODE -ne 0) {
@@ -1774,8 +1816,10 @@ $wpaKey.Close()
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
 )
 exit /b
 
@@ -1783,8 +1827,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
 )
 exit /b
 

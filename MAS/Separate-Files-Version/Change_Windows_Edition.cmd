@@ -1,4 +1,4 @@
-@set masver=3.0
+@set masver=3.1
 @echo off
 
 
@@ -74,7 +74,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%fix_service
+echo Check this webpage for help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -89,7 +89,7 @@ echo:
 echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Check this webpage for help - %mas%troubleshoot
 echo:
 echo:
 ping 127.0.0.1 -n 20 >nul
@@ -134,14 +134,14 @@ echo Failed to detect Windows build number.
 echo:
 setlocal EnableDelayedExpansion
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
 if %winbuild% LSS 7600 (
-%nceline%
+%eline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+echo This option is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
 goto dk_done
 )
 
@@ -177,33 +177,6 @@ goto dk_done
 
 ::========================================================================================================================================
 
-::  Check PowerShell
-
-REM :PStest: $ExecutionContext.SessionState.LanguageMode :PStest:
-
-cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PStest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
-%eline%
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
-echo:
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | find /i "FullLanguage" %nul1% && (
-echo Failed to run Powershell command but Powershell is working.
-echo:
-cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { if ($i.displayName -notlike '*windows*') { $n += $i.displayName } }; if ($n) { Write-Host ('Installed 3rd party Antivirus might be blocking the script - ' + ($n -join ', ')) -ForegroundColor White -BackgroundColor Blue }"""
-echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
-) || (
-echo PowerShell is not working. Aborting...
-echo If you have applied restrictions on Powershell then undo those changes.
-echo:
-set fixes=%fixes% %mas%fix_powershell
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_powershell"
-)
-goto dk_done
-)
-
-::========================================================================================================================================
-
 ::  Elevate script as admin and pass arguments and preventing loop
 
 %nul1% fltmc || (
@@ -211,6 +184,58 @@ if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" &&
 %eline%
 echo This script needs admin rights.
 echo Right click on this script and select 'Run as administrator'.
+goto dk_done
+)
+
+::========================================================================================================================================
+
+::  Check PowerShell
+
+::pstst $ExecutionContext.SessionState.LanguageMode :pstst
+
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}" %nul6%') do (set tstresult=%%a)
+
+if /i not "%tstresult%"=="FullLanguage" (
+%eline%
+echo: %tstresult%
+cmd /c "%psc% $ExecutionContext.SessionState.LanguageMode"
+
+REM check LanguageMode
+
+cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | findstr /i "ConstrainedLanguage RestrictedLanguage NoLanguage" %nul1% && (
+echo FullLanguage mode not found in PowerShell. Aborting...
+echo If you have applied restrictions on Powershell then undo those changes.
+echo:
+set fixes=%fixes% %mas%fix_powershell
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_powershell"
+goto dk_done
+)
+
+REM check Powershell core version
+
+cmd /c "%psc% "$PSVersionTable.PSEdition"" | find /i "Core" %nul1% && (
+echo Windows Powershell is needed for MAS but it seems to be replaced with Powershell core. Aborting...
+goto dk_done
+)
+
+REM check for Mal-ware that may cause issues with Powershell
+
+for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
+echo "%%f"
+echo Mal%blank%ware found, PowerShell is not working properly.
+echo:
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+goto dk_done
+)
+
+REM check antivirus and other errors
+
+echo PowerShell is not working properly. Aborting...
+cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { if ($i.displayName -notlike '*windows*') { $n += $i.displayName } }; if ($n) { Write-Host ('Installed 3rd party Antivirus might be blocking the script - ' + ($n -join ', ')) -ForegroundColor White -BackgroundColor Blue }"""
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -226,34 +251,33 @@ set terminal=
 
 ::  Check if script is running in Terminal app
 
-set r1=$TB = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);
-set r2=%r1% [void]$TB.DefinePInvokeMethod('GetConsoleWindow', 'kernel32.dll', 22, 1, [IntPtr], @(), 1, 3).SetImplementationFlags(128);
-set r3=%r2% [void]$TB.DefinePInvokeMethod('SendMessageW', 'user32.dll', 22, 1, [IntPtr], @([IntPtr], [UInt32], [IntPtr], [IntPtr]), 1, 3).SetImplementationFlags(128);
-set d1=%r3% $hIcon = $TB.CreateType(); $hWnd = $hIcon::GetConsoleWindow();
-set d2=%d1% echo $($hIcon::SendMessageW($hWnd, 127, 0, 0) -ne [IntPtr]::Zero);
-
 if defined terminal (
-%psc% "%d2%" %nul2% | find /i "True" %nul1% && set terminal=
+set lines=0
+for /f "skip=2 tokens=2 delims=: " %%A in ('mode con') do if "!lines!"=="0" set lines=%%A
+if !lines! GEQ 100 set terminal=
 )
 
-if defined ps32onArm goto :skipQE
 if %_unattended%==1 goto :skipQE
 for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
 
+::  Relaunch to disable QuickEdit in the current session and use conhost.exe instead of the Terminal app
+::  This code disables QuickEdit for the current cmd.exe session without making permanent registry changes
+::  It is included because clicking on the script window can pause execution, causing confusion that the script has stopped due to an error
+
+set resetQE=1
+reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% && set resetQE=0
+reg add HKCU\Console /v QuickEdit /t REG_DWORD /d 0 /f %nul1%
+
 if defined terminal (
-set "launchcmd=start conhost.exe %psc%"
-) else (
-set "launchcmd=%psc%"
+start conhost.exe "!_batf!" %_args% -qedit
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
+) else if %resetQE% EQU 1 (
+start cmd.exe /c ""!_batf!" %_args% -qedit"
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
 )
 
-::  Disable QuickEdit in current session
-
-set "d1=$t=[AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);"
-set "d2=$t.DefinePInvokeMethod('GetStdHandle', 'kernel32.dll', 22, 1, [IntPtr], @([Int32]), 1, 3).SetImplementationFlags(128);"
-set "d3=$t.DefinePInvokeMethod('SetConsoleMode', 'kernel32.dll', 22, 1, [Boolean], @([IntPtr], [Int32]), 1, 3).SetImplementationFlags(128);"
-set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080);"
-
-%launchcmd% "%d1% %d2% %d3% %d4% & cmd.exe '/c' '!_PSarg! -qedit'" && (exit /b) || (set terminal=1)
 :skipQE
 
 ::========================================================================================================================================
@@ -262,12 +286,18 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set pingp=
 set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 activ%-%ated.win') do (
-if not "%%#"=="" set old=1
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck%upver%.activ%-%ated.win') do (
-if not "%%#"=="" set old=
+for %%A in (
+activ%-%ated.win
+mass%-%grave.dev
+) do if not defined pingp (
+for /f "delims=[] tokens=2" %%B in ('ping -n 1 %%A') do (
+if not "%%B"=="" (set old=1& set pingp=1)
+for /f "delims=[] tokens=2" %%C in ('ping -n 1 updatecheck%upver%.%%A') do (
+if not "%%C"=="" set old=
+)
 )
 )
 
@@ -324,8 +354,11 @@ if not exist %SysPath%\%%# (
 %eline%
 echo [%SysPath%\%%#] file is missing, aborting...
 echo:
+call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
+call :dk_color %Blue% "After that, restart system and try activation again."
+echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 )
@@ -358,7 +391,7 @@ if not defined allapps (
 echo Failed to find activation IDs. Aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -381,7 +414,7 @@ if not defined osedition (
 echo Failed to detect OS edition, aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -543,7 +576,7 @@ echo [%targetedition% ^| %winbuild%]
 echo Failed to get product key from pkeyhelper.dll.
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -598,7 +631,7 @@ call :dk_color %Gray% "Reboot is required to fully change the edition."
 call :dk_color %Red% "[Unsuccessful] [Error Code: !keyerror!]"
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 )
 
@@ -679,7 +712,7 @@ echo [%targetedition% ^| %winbuild%]
 echo Failed to get product key from pkeyhelper.dll.
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -755,7 +788,7 @@ echo:
 call :dk_color %Blue% "In case there are errors, you should restart the system before trying again."
 echo:
 set fixes=%fixes% %mas%change_edition_issues
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%change_edition_issues"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%change_edition_issues"
 exit /b
 
 :compresslog
@@ -794,9 +827,15 @@ exit /b
 
 :dk_setvar
 
-set psc=powershell.exe
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
@@ -871,6 +910,7 @@ exit /b
 
 :dk_ckeckwmic
 
+if %winbuild% LSS 9200 (set _wmic=1&exit /b)
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" %nul2% | find /i "computersystem" %nul1% && set _wmic=1
@@ -881,16 +921,16 @@ exit /b
 
 :dk_sppissue
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 set spperror=%errorlevel%
 
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
-echo sc start sppsvc [Error Code: %spperror%]
+echo sc start %_slser% [Error Code: %spperror%]
 )
 
 echo:
-%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host 'sppsvc is not working correctly. Help - %mas%troubleshoot'}"
+%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host '%_slser% is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
 exit /b
 
 ::  Common lines used in PowerShell reflection code
@@ -988,8 +1028,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
 )
 exit /b
 
@@ -997,8 +1039,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
 )
 exit /b
 
