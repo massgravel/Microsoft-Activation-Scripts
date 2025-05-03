@@ -2398,7 +2398,6 @@ exit /b
 14_7004b7f0-6407-4f45-8eac-966e5f868bde_Retail________GrooveR
 14_fbf4ac36-31c8-4340-8666-79873129cf40_Retail________OutlookR
 14_133c8359-4e93-4241-8118-30bb18737ea0_Retail________PowerPointR_[HSPowerPointR]
-14_98677603-a668-4fa4-9980-3f1f05f78f69_Retail________PublisherR
 14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_Retail________WordR_[HSWordR]
 14_dbe3aee0-5183-4ff7-8142-66050173cb01_Retail________SmallBusBasicsR_[SmallBusBasicsMSDNR]
 
@@ -2436,6 +2435,7 @@ for %%# in (
 14_11b39439-6b93-4642-9570-f2eb81be2238_4DTT4-D4MKX-23KFH-JKR6T-YK%f%G2J_MAK___________ProjectStdVL
 14_71af7e84-93e6-4363-9b69-699e04e74071_2J9H6-H4D3G-PCXD2-96XVM-TR%f%R73_Retail________ProPlusR_[ProPlusAcadR,ProPlusMSDNR,Sub4R]
 14_fdf3ecb9-b56f-43b2-a9b8-1b48b6bae1a7_6CD6C-9R8PB-T2D9Y-8RKKX-W7%f%DFK_MAK___________ProPlusVL_[ProPlusAcadVL]
+14_98677603-a668-4fa4-9980-3f1f05f78f69_CTRJP-P72VV-JBF8Y-4W6WW-HX%f%HVG_Retail________PublisherR
 14_3d014759-b128-4466-9018-e80f6320d9d0_32YG9-3VX77-YXJVV-PRVFW-TT%f%8BV_MAK___________PublisherVL
 14_8090771e-d41a-4482-929e-de87f1f47e46_7VKXH-9BWCG-RPTBB-JBRV3-GR%f%HYC_MAK___________SmallBusBasicsVL
 14_b78df69e-0966-40b1-ae85-30a5134dedd0_H48K6-FB4Y6-P83GH-9J7XG-HD%f%KKX_ByPass________SPDR
