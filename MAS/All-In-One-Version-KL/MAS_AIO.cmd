@@ -1,5 +1,5 @@
 @::de62hd8-random
-@set masver=3.1
+@set masver=3.1.lk14
 @setlocal DisableDelayedExpansion
 @echo off
 
@@ -141,29 +141,294 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%trouble
 goto dk_done
 )
 
-if %winbuild% LSS 6001 (
+if %winbuild% EQU 6000 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
-if %winbuild% EQU 6000 (
 echo:
 echo Windows Vista RTM is not supported because Powershell cannot be installed.
 echo Upgrade to Windows Vista SP1 or SP2.
-)
 goto dk_done
 )
 
-if not exist %ps% (
+if %winbuild% LSS 2600 (
 %nceline%
-echo PowerShell is not installed in your system.
-if %winbuild% LSS 7600 (
-echo Install PowerShell using the following URL.
-echo:
-echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
-if %_unattended%==0 start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
-)
+echo Unsupported OS version detected [%winbuild%].
+echo MAS only supports Windows XP/Vista/7/8/8.1/10/11 and their Server equivalents.
 goto dk_done
 )
+
+if exist "%SystemRoot%\System32\choice.exe" set "_choice=%SystemRoot%\System32\choice.exe"
+if exist "%~DP0\choice.exe" set "_choice=%~DP0\choice.exe"
+
+if not defined _choice (
+%nceline%
+echo choice.exe is required, but Windows XP does not include it.
+echo Please download choice.exe first and place it in the same folder.
+echo:
+if %_unattended%==0 (
+echo Press any key to exit.
+pause %nul1%
+)
+exit /b
+)
+
+set badps=0
+if not exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" set badps=1
+if %badps%==0 cmd /c "%psc% "$PSVersionTable -eq $null"" | find /i "True" %nul1% && set badps=2
+if not %badps%==0 (
+if %winbuild% LSS 7600 (
+setlocal EnableDelayedExpansion
+if %_unattended%==0 (
+%nceline%
+if %badps%==1 (
+echo PowerShell is required, but Windows XP and Vista do not have it by default.
+echo Please download and install Powershell first.
+echo:
+echo [1] Install PowerShell
+echo [0] Exit
+) else if %badps%==2 (
+echo PowerShell 2.0 is required, but Windows Server 2008
+echo only includes PowerShell 1.0. Please upgrade Powershell first.
+echo:
+echo [1] Upgrade PowerShell
+echo [0] Exit
+)
+echo:
+echo Choose a menu option using your keyboard [1,0] :
+"%_choice%" /C:10 /N
+if !errorlevel!==2 (exit /b)
+)
+cls
+echo:
+echo ===============================
+echo:
+if defined PROCESSOR_ARCHITEW6432 (
+  if not "%PROCESSOR_ARCHITEW6432%"=="AMD64" (
+    echo Invalid WOW archetecture %PROCESSOR_ARCHITEW6432%
+    echo:
+    echo Help - %mas%troubleshoot
+    echo:
+    if %_unattended%==0 (
+      echo Press any key to exit...
+      pause %nul1%
+    )
+    exit /b
+  )
+  if %winbuild% LSS 6000 (
+    set "__ps_dl_type=EXE"
+    set "__ps_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/B/D/9/BD9BB1FF-6609-4B10-9334-6D0C58066AA7/WindowsServer2003-KB968930-x64-ENG.exe"
+    set "__net20_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/c/6/e/c6e88215-0178-4c6c-b5f3-158ff77b1f38/NetFx20SP2_x64.exe"
+  ) else (
+    set "__ps_dl_type=MSU"
+    set "__ps_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/3/C/8/3C8CF51E-1D9D-4DAA-AAEA-5C48D1CD055C/Windows6.0-KB968930-x64.msu"
+  )
+) else (
+  if "%PROCESSOR_ARCHITECTURE%"=="x86" (
+    if %winbuild% EQU 2600 (
+      set "__ps_dl_type=EXE"
+      set "__ps_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/E/C/E/ECE99583-2003-455D-B681-68DB610B44A4/WindowsXP-KB968930-x86-ENG.exe"
+      set "__net20_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/c/6/e/c6e88215-0178-4c6c-b5f3-158ff77b1f38/NetFx20SP2_x86.exe"
+    ) else if %winbuild% LSS 6000 (
+      set "__ps_dl_type=EXE"
+      set "__ps_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/1/1/7/117FB25C-BB2D-41E1-B01E-0FEB0BC72C30/WindowsServer2003-KB968930-x86-ENG.exe"
+      set "__net20_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/c/6/e/c6e88215-0178-4c6c-b5f3-158ff77b1f38/NetFx20SP2_x86.exe"
+    ) else (
+      set "__ps_dl_type=MSU"
+      set "__ps_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/A/7/5/A75BC017-63CE-47D6-8FA4-AFB5C21BAC54/Windows6.0-KB968930-x86.msu"
+    )
+  ) else if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
+    if %winbuild% LSS 6000 (
+      set "__ps_dl_type=EXE"
+      set "__ps_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/B/D/9/BD9BB1FF-6609-4B10-9334-6D0C58066AA7/WindowsServer2003-KB968930-x64-ENG.exe"
+      set "__net20_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/c/6/e/c6e88215-0178-4c6c-b5f3-158ff77b1f38/NetFx20SP2_x64.exe"
+    ) else (
+      set "__ps_dl_type=MSU"
+      set "__ps_dl_url=http://web.archive.org/web/20200801000000id_/download.microsoft.com/download/3/C/8/3C8CF51E-1D9D-4DAA-AAEA-5C48D1CD055C/Windows6.0-KB968930-x64.msu"
+    )
+  ) else ( 
+    echo Invalid archetecture %PROCESSOR_ARCHITECTURE%
+    echo:
+    echo Help - %mas%troubleshoot
+    echo:
+    if %_unattended%==0 (
+      echo Press any key to exit...
+      pause %nul1%
+    )
+    exit /b
+  )
+)
+if "!__ps_dl_type!"=="EXE" (
+  set "_net20sp="
+  set "_net20fail=0"
+  for /f "tokens=2*" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" /v SP /t REG_DWORD 2^>nul^|findstr REG_DWORD 2^>nul') do set "_net20sp=%%~B"
+  if not "!_net20sp!"=="0x1" if not "!_net20sp!"=="0x2" (
+    set "_net20fail=1"
+    echo Downloading .NET Framework 2.0 SP2...
+    echo strFileURL = "!__net20_dl_url!"                                              > "%temp%\dlNetFx20SP2.vbs"
+    echo strHDLocation = "%temp%\NetFx20SP2.exe"                                     >> "%temp%\dlNetFx20SP2.vbs"
+    echo:                                                                            >> "%temp%\dlNetFx20SP2.vbs"
+    echo Set objXMLHTTP = CreateObject^("MSXML2.XMLHTTP"^)                           >> "%temp%\dlNetFx20SP2.vbs"
+    echo objXMLHTTP.open "GET", strFileURL, false                                    >> "%temp%\dlNetFx20SP2.vbs"
+    echo objXMLHTTP.send^(^)                                                         >> "%temp%\dlNetFx20SP2.vbs"
+    echo:                                                                            >> "%temp%\dlNetFx20SP2.vbs"
+    echo If objXMLHTTP.Status = 200 Then                                             >> "%temp%\dlNetFx20SP2.vbs"
+    echo Set objADOStream = CreateObject^("ADODB.Stream"^)                           >> "%temp%\dlNetFx20SP2.vbs"
+    echo objADOStream.Open                                                           >> "%temp%\dlNetFx20SP2.vbs"
+    echo objADOStream.Type = 1                                                       >> "%temp%\dlNetFx20SP2.vbs"
+    echo:                                                                            >> "%temp%\dlNetFx20SP2.vbs"
+    echo objADOStream.Write objXMLHTTP.ResponseBody                                  >> "%temp%\dlNetFx20SP2.vbs"
+    echo objADOStream.Position = 0                                                   >> "%temp%\dlNetFx20SP2.vbs"
+    echo:                                                                            >> "%temp%\dlNetFx20SP2.vbs"
+    echo Set objFSO = CreateObject^("Scripting.FileSystemObject"^)                   >> "%temp%\dlNetFx20SP2.vbs"
+    echo If objFSO.Fileexists^(strHDLocation^) Then objFSO.DeleteFile strHDLocation  >> "%temp%\dlNetFx20SP2.vbs"
+    echo Set objFSO = Nothing                                                        >> "%temp%\dlNetFx20SP2.vbs"
+    echo:                                                                            >> "%temp%\dlNetFx20SP2.vbs"
+    echo objADOStream.SaveToFile strHDLocation                                       >> "%temp%\dlNetFx20SP2.vbs"
+    echo objADOStream.Close                                                          >> "%temp%\dlNetFx20SP2.vbs"
+    echo Set objADOStream = Nothing                                                  >> "%temp%\dlNetFx20SP2.vbs"
+    echo End if                                                                      >> "%temp%\dlNetFx20SP2.vbs"
+    echo:                                                                            >> "%temp%\dlNetFx20SP2.vbs"
+    echo Set objXMLHTTP = Nothing                                                    >> "%temp%\dlNetFx20SP2.vbs"
+    cscript "%temp%\dlNetFx20SP2.vbs" %nul%
+    del /f /q "%temp%\dlNetFx20SP2.vbs"
+    if not exist "%temp%\NetFx20SP2.exe" (
+      echo Download failed
+      echo:
+      echo Help - %mas%troubleshoot
+    ) else (
+      echo Installing...
+      start /wait "" "%temp%\NetFx20SP2.exe" /quiet /norestart
+      set "_netfxerr=%errorlevel%"
+      del /f /q "%temp%\NetFx20SP2.exe"
+      if "!_netfxerr!"=="0" (
+        echo Installation complete.
+        set "_net20fail=0"
+      ) else if "!_netfxerr!"=="3010" (
+        echo A reboot is required to complete the installation of .NET Framework 2.0 SP2.
+        echo Please rerun this script after rebooting to install PowerShell 2.0.
+      ) else (
+        echo Installation error %_wuerr%
+        echo:
+        echo Help - %mas%troubleshoot
+      )
+    )
+  )
+  if "!_net20fail!"=="0" (
+    echo Downloading PowerShell 2.0...
+    echo strFileURL = "!__ps_dl_url!"                                                 > "%temp%\dlKB968930.vbs"
+    echo strHDLocation = "%temp%\KB968930.exe"                                       >> "%temp%\dlKB968930.vbs"
+    echo:                                                                            >> "%temp%\dlKB968930.vbs"
+    echo Set objXMLHTTP = CreateObject^("MSXML2.XMLHTTP"^)                           >> "%temp%\dlKB968930.vbs"
+    echo objXMLHTTP.open "GET", strFileURL, false                                    >> "%temp%\dlKB968930.vbs"
+    echo objXMLHTTP.send^(^)                                                         >> "%temp%\dlKB968930.vbs"
+    echo:                                                                            >> "%temp%\dlKB968930.vbs"
+    echo If objXMLHTTP.Status = 200 Then                                             >> "%temp%\dlKB968930.vbs"
+    echo Set objADOStream = CreateObject^("ADODB.Stream"^)                           >> "%temp%\dlKB968930.vbs"
+    echo objADOStream.Open                                                           >> "%temp%\dlKB968930.vbs"
+    echo objADOStream.Type = 1                                                       >> "%temp%\dlKB968930.vbs"
+    echo:                                                                            >> "%temp%\dlKB968930.vbs"
+    echo objADOStream.Write objXMLHTTP.ResponseBody                                  >> "%temp%\dlKB968930.vbs"
+    echo objADOStream.Position = 0                                                   >> "%temp%\dlKB968930.vbs"
+    echo:                                                                            >> "%temp%\dlKB968930.vbs"
+    echo Set objFSO = CreateObject^("Scripting.FileSystemObject"^)                   >> "%temp%\dlKB968930.vbs"
+    echo If objFSO.Fileexists^(strHDLocation^) Then objFSO.DeleteFile strHDLocation  >> "%temp%\dlKB968930.vbs"
+    echo Set objFSO = Nothing                                                        >> "%temp%\dlKB968930.vbs"
+    echo:                                                                            >> "%temp%\dlKB968930.vbs"
+    echo objADOStream.SaveToFile strHDLocation                                       >> "%temp%\dlKB968930.vbs"
+    echo objADOStream.Close                                                          >> "%temp%\dlKB968930.vbs"
+    echo Set objADOStream = Nothing                                                  >> "%temp%\dlKB968930.vbs"
+    echo End if                                                                      >> "%temp%\dlKB968930.vbs"
+    echo:                                                                            >> "%temp%\dlKB968930.vbs"
+    echo Set objXMLHTTP = Nothing                                                    >> "%temp%\dlKB968930.vbs"
+    cscript "%temp%\dlKB968930.vbs" %nul%
+    del /f /q "%temp%\dlKB968930.vbs"
+    if not exist "%temp%\KB968930.exe" (
+      echo Download failed
+      echo:
+      echo Help - %mas%troubleshoot
+    ) else (
+      echo Installing...
+      start /wait "" "%temp%\KB968930.exe" /quiet /norestart
+      set "_wuerr=%errorlevel%"
+      if "!_wuerr!"=="0" (
+        del /f /q "%temp%\KB968930.exe"
+        if not exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" (
+          echo Installation completed, but powershell is still missing.
+          echo:
+          echo Help - %mas%troubleshoot
+        ) else (
+          echo Installation complete.
+          echo:
+          echo Press any key to go back...
+          pause %nul1%
+          goto :ps_install_done
+        )
+      ) else if "!_wuerr!"=="3010" (
+        del /f /q "%temp%\KB968930.exe"
+        echo A reboot is required to complete the installation.
+      ) else (
+        del /f /q "%temp%\KB968930.exe"
+        echo Installation error %_wuerr%
+        echo:
+        echo Help - %mas%troubleshoot
+      )
+    )
+  )
+) else (
+  echo Downloading PowerShell 2.0...
+  certutil -urlcache -split -f "!__ps_dl_url!" "%temp%\KB968930.msu" %nul%
+  if not exist "%temp%\KB968930.msu" (
+    echo Download failed
+    echo:
+    echo Help - %mas%troubleshoot
+  ) else (
+    echo Installing...
+    start /wait wusa "%temp%\KB968930.msu" /quiet /norestart
+    set "_wuerr=%errorlevel%"
+    del /f /q "%temp%\KB968930.msu"
+    if "!_wuerr!"=="0" (
+      if !badps!==2 (
+        echo A reboot is required to complete the installation.
+      ) else if not exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" (
+        echo Installation completed, but powershell is still missing.
+        echo:
+        echo Help - %mas%troubleshoot
+      ) else (
+        echo Installation complete.
+        echo:
+        echo Press any key to go back...
+        pause %nul1%
+        goto :ps_install_done
+      )
+    ) else if "!_wuerr!"=="3010" (
+      echo A reboot is required to complete the installation.
+    ) else (
+      echo Installation error %_wuerr%
+      echo:
+      echo Help - %mas%troubleshoot
+    )
+  )
+)
+echo:
+if %_unattended%==0 (
+echo Press any key to exit...
+pause %nul1%
+)
+exit /b
+) else (
+%nceline%
+echo Powershell is missing, damaged, or uninstalled.
+echo:
+echo Help - %mas%troubleshoot
+echo:
+if %_unattended%==0 (
+echo Press any key to exit...
+pause %nul1%
+)
+exit /b
+)
+)
+:ps_install_done
 
 ::========================================================================================================================================
 
@@ -307,7 +572,7 @@ exit /b
 set -=
 set old=
 set pingp=
-set upver=%masver:.=%
+for /f "tokens=1,2 delims=." %%a in ("%masver%") do set upver=%%a%%b
 
 for %%A in (
 activ%-%ated.win
@@ -332,7 +597,7 @@ echo [1] Get Latest MAS
 echo [0] Continue Anyway
 echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
-choice /C:10 /N
+"%_choice%" /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start %mas% & exit /b)
 )
@@ -352,6 +617,7 @@ echo "%_args%" | find /i "/KMS38"  %nul% && (setlocal & cls & (call :KMS38Activa
 echo "%_args%" | find /i "/Z-"     %nul% && (setlocal & cls & (call :TSforgeActivation %_args% %_silent%) & endlocal)
 echo "%_args%" | find /i "/K-"     %nul% && (setlocal & cls & (call :KMSActivation     %_args% %_silent%) & endlocal)
 echo "%_args%" | find /i "/Ohook"  %nul% && (setlocal & cls & (call :OhookActivation   %_args% %_silent%) & endlocal)
+echo "%_args%" | find /i "/C-"     %nul% && (setlocal & cls & (call :CIDGenActivation  %_args% %_silent%) & endlocal)
 exit /b
 )
 
@@ -362,7 +628,7 @@ setlocal DisableDelayedExpansion
 ::  Check desktop location
 
 set desktop=
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" /v Desktop') do call set "desktop=%%b"
+if %winbuild% GEQ 6000 for /f "skip=2 tokens=2*" %%a in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" /v Desktop') do call set "desktop=%%b"
 if not defined desktop for /f "delims=" %%a in ('%psc% "& {write-host $([Environment]::GetFolderPath('Desktop'))}"') do call set "desktop=%%a"
 set "_pdesk=%desktop:'=''%"
 
@@ -385,8 +651,9 @@ if not defined terminal mode 76, 34
 
 if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" set _hwidgo=1
 if %winbuild% GTR 14393 if exist "%SysPath%\spp\tokens\skus\EnterpriseSN\" set _hwidgo=
-if not defined _hwidgo set _tsforgego=1
+if not defined _hwidgo if %winbuild% GEQ 6000 set _tsforgego=1
 set _ohookgo=1
+if %winbuild% LSS 6000 set _cidgengo=1
 
 echo:
 echo:
@@ -413,30 +680,36 @@ echo:             [3] TSforge             - Windows / Office / ESU
 )
 echo:             [4] KMS38               - Windows
 echo:             [5] Online KMS          - Windows / Office
+if defined _cidgengo (
+call :dk_color3 %_White% "             [6] " %_Green% "CIDGen" %_White% "              - Windows / Office / Plus DME"
+) else (
+echo:             [6] CIDGen              - Windows / Office / Plus DME
+)
 echo:             __________________________________________________ 
 echo:
-echo:             [6] Check Activation Status
-echo:             [7] Change Windows Edition
-echo:             [8] Change Office Edition
+echo:             [7] Check Activation Status
+echo:             [8] Change Windows Edition
+echo:             [9] Change Office Edition
 echo:             __________________________________________________      
 echo:
-echo:             [9] Troubleshoot
+echo:             [T] Troubleshoot
 echo:             [E] Extras
 echo:             [H] Help
 echo:             [0] Exit
 echo:       ______________________________________________________________
 echo:
-call :dk_color2 %_White% "         " %_Green% "Choose a menu option using your keyboard [1,2,3...E,H,0] :"
-choice /C:123456789EH0 /N
+call :dk_color2 %_White% "         " %_Green% "Choose a menu option using your keyboard [1,2,3...T,E,H,0] :"
+"%_choice%" /C:123456789TEH0 /N
 set _erl=%errorlevel%
 
-if %_erl%==12 exit /b
-if %_erl%==11 start %mas%troubleshoot & goto :MainMenu
-if %_erl%==10 goto :Extras
-if %_erl%==9 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
-if %_erl%==8 setlocal & call :change_offedition & cls & endlocal & goto :MainMenu
-if %_erl%==7 setlocal & call :change_winedition & cls & endlocal & goto :MainMenu
-if %_erl%==6 setlocal & call :check_actstatus   & cls & endlocal & goto :MainMenu
+if %_erl%==13 exit /b
+if %_erl%==12 start %mas%troubleshoot & goto :MainMenu
+if %_erl%==11 goto :Extras
+if %_erl%==10 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
+if %_erl%==9 setlocal & call :change_offedition & cls & endlocal & goto :MainMenu
+if %_erl%==8 setlocal & call :change_winedition & cls & endlocal & goto :MainMenu
+if %_erl%==7 setlocal & call :check_actstatus   & cls & endlocal & goto :MainMenu
+if %_erl%==6 setlocal & call :CidGenActivation  & cls & endlocal & goto :MainMenu
 if %_erl%==5 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
 if %_erl%==4 setlocal & call :KMS38Activation   & cls & endlocal & goto :MainMenu
 if %_erl%==3 setlocal & call :TSforgeActivation & cls & endlocal & goto :MainMenu
@@ -476,7 +749,7 @@ echo:                [0] Go to Main Menu
 echo:           ______________________________________________________
 echo:
 call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard [1,2,0] :"
-choice /C:120 /N
+"%_choice%" /C:120 /N
 set _erl=%errorlevel%
 
 if %_erl%==3 goto :MainMenu
@@ -498,7 +771,7 @@ echo $OEM$ folder already exists on the Desktop.
 echo _____________________________________________________
 echo:
 call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
-choice /c 0 /n
+"%_choice%" /c 0 /n
 goto :Extras
 )
 
@@ -529,7 +802,7 @@ echo:            [0] Go Back
 echo:         ____________________________________________________________
 echo:  
 call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard :"
-choice /C:12345678R0 /N
+"%_choice%" /C:12345678R0 /N
 set _erl=%errorlevel%
 
 if %_erl%==10 goto:Extras
@@ -584,7 +857,7 @@ echo Check this page %mas%oem-folder
 echo ___________________________________________________________________
 echo:
 call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
-choice /c 0 /n
+"%_choice%" /c 0 /n
 goto Extras
 
 :+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -694,7 +967,7 @@ call :dk_color2 %_White% "     " %Green% "%winos% is already permanently activat
 echo ___________________________________________________________________________________________
 if %_unattended%==1 goto dk_done
 echo:
-choice /C:10 /N /M ">    [1] Activate Anyway [0] %_exitmsg% : "
+"%_choice%" /C:10 /N /M ">    [1] Activate Anyway [0] %_exitmsg% : "
 if errorlevel 2 exit /b
 )
 cls
@@ -1097,10 +1370,13 @@ set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
 set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+:: XP specifies "Microsoft Windows XP" rather than "Microsoft Windows", breaking the above test
+ver|findstr "5.1.2600" %nul%&&set winbuild=2600
 
 set _slexe=sppsvc.exe& set _slser=sppsvc
 if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
 if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 6000 (set "_slexe=nul"& set "_slser=nul")
 if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
@@ -1153,10 +1429,13 @@ for /f "tokens=6-7 delims=[]. " %%i in ('ver') do if not "%%j"=="" (
 set fullbuild=%%i.%%j
 ) else (
 for /f "tokens=3" %%G in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR" %nul6%') do if not errorlevel 1 set /a "UBR=%%G"
-for /f "skip=2 tokens=3,4 delims=. " %%G in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v BuildLabEx') do (
+for /f "skip=2 tokens=3,4 delims=. " %%G in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v BuildLabEx 2^>nul') do (
 if defined UBR (set "fullbuild=%%G.!UBR!") else (set "fullbuild=%%G.%%H")
 )
 )
+
+if not defined fullbuild set fullbuild=%winbuild%
+if %winbuild% leq 2600 set fullbuild=%winbuild%
 
 echo Checking OS Info                        [%winos% ^| %fullbuild% ^| %osarch%]
 exit /b
@@ -1372,6 +1651,8 @@ function ReinstallLicenses() {
 
 :dk_ckeckwmic
 
+:: WMIC is unreliable on XP and often hangs or gives no output
+if %winbuild% LSS 6000 (set _wmic=0&exit /b)
 if %winbuild% LSS 9200 (set _wmic=1&exit /b)
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
@@ -1382,6 +1663,8 @@ exit /b
 ::  Show info for potential script stuck scenario
 
 :dk_sppissue
+
+if %winbuild% LSS 6000 (exit /b)
 
 sc start %_slser% %nul%
 set spperror=%errorlevel%
@@ -1447,7 +1730,7 @@ exit /b
 set w=
 set results=
 if exist "%ProgramFiles%\KM%w%Spico" set pupfound= KM%w%Spico 
-if not defined pupfound (
+if %winbuild% GEQ 6000 if not defined pupfound (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "AutoPico" %nul% && set pupfound= KM%w%Spico 
 )
 
@@ -1607,18 +1890,20 @@ call :dk_color2 %Red% "Checking Boot Mode                      [%safeboot_option
 
 ::  https://learn.microsoft.com/windows-hardware/manufacture/desktop/windows-setup-states
 
+if %winbuild% GEQ 6000 (
 for /f "skip=2 tokens=2*" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" /v ImageState') do (set imagestate=%%B)
 
-if /i not "%imagestate%"=="IMAGE_STATE_COMPLETE" (
-call :dk_color %Gray% "Checking Windows Setup State            [%imagestate%]"
-echo "%imagestate%" | find /i "RESEAL" %nul% && (
+if /i not "!imagestate!"=="IMAGE_STATE_COMPLETE" (
+call :dk_color %Gray% "Checking Windows Setup State            [!imagestate!]"
+echo "!imagestate!" | find /i "RESEAL" %nul% && (
 set error=1
 set showfix=1
 call :dk_color %Blue% "You need to run it in normal mode in case you are running it in Audit Mode."
 )
-echo "%imagestate%" | find /i "UNDEPLOYABLE" %nul% && (
+echo "!imagestate!" | find /i "UNDEPLOYABLE" %nul% && (
 set fixes=%fixes% %mas%in-place_repair_upgrade
 call :dk_color2 %Blue% "If the activation fails, do this - " %_Yellow% " %mas%in-place_repair_upgrade"
+)
 )
 )
 
@@ -1998,13 +2283,13 @@ if %_unattended%==1 timeout /t 2 & exit /b
 if defined fixes (
 call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
-choice /C:10 /N
+"%_choice%" /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
 call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
-choice /c 0 /n
+"%_choice%" /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
 pause %nul1%
@@ -2164,15 +2449,19 @@ for %%A in (%_act% %_rem%) do (if "%%A"=="1" set _unattended=1)
 
 ::========================================================================================================================================
 
-if %winbuild% LSS 6001 (
+if %winbuild% LSS 2600 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
+echo MAS only supports Windows XP/Vista/7/8/8.1/10/11 and their Server equivalents.
+goto dk_done
+)
+
 if %winbuild% EQU 6000 (
+%nceline%
+echo Unsupported OS version detected [%winbuild%].
 echo:
 echo Windows Vista RTM is not supported because Powershell cannot be installed.
 echo Upgrade to Windows Vista SP1 or SP2.
-)
 goto dk_done
 )
 
@@ -2217,7 +2506,7 @@ echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
 echo: 
 call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard [1,2,3,0]"
-choice /C:1230 /N
+"%_choice%" /C:1230 /N
 set _el=!errorlevel!
 if !_el!==4  exit /b
 if !_el!==3  start %mas%genuine-installation-media &goto :oh_menu
@@ -2277,6 +2566,7 @@ call :dk_showosinfo
 echo Initiating Diagnostic Tests...
 
 set "_serv=%_slser% Winmgmt"
+if %winbuild% LSS 6000 set "_serv=Winmgmt"
 
 ::  Software Protection
 ::  Windows Management Instrumentation
@@ -2973,9 +3263,12 @@ set "ierror=Rename OSPPC.DLL"
 goto :oh_hookinstall_error
 )
 
-if defined _osppPath68 if defined _osppPath86     (mklink "%_hookPath%\sppcs.dll" "%_osppPath86%\sppcs.dll" %nul%)
-if defined _osppPath68 if not defined _osppPath86 (mklink "%_hookPath%\sppcs.dll" "%_osppPath68%\sppcs.dll" %nul%)
-if defined _osppPath86 if not defined _osppPath68 (mklink "%_hookPath%\sppcs.dll" "%_osppPath86%\sppcs.dll" %nul%)
+if %winbuild% GEQ 6000 if defined _osppPath68 if defined _osppPath86     (mklink  "%_hookPath%\sppcs.dll" "%_osppPath86%\sppcs.dll" %nul%)
+if %winbuild% GEQ 6000 if defined _osppPath68 if not defined _osppPath86 (mklink  "%_hookPath%\sppcs.dll" "%_osppPath68%\sppcs.dll" %nul%)
+if %winbuild% GEQ 6000 if defined _osppPath86 if not defined _osppPath68 (mklink  "%_hookPath%\sppcs.dll" "%_osppPath86%\sppcs.dll" %nul%)
+if %winbuild% LSS 6000 if defined _osppPath68 if defined _osppPath86     (copy /y "%_osppPath86%\sppcs.dll" "%_hookPath%\sppcs.dll" %nul%)
+if %winbuild% LSS 6000 if defined _osppPath68 if not defined _osppPath86 (copy /y "%_osppPath68%\sppcs.dll" "%_hookPath%\sppcs.dll" %nul%)
+if %winbuild% LSS 6000 if defined _osppPath86 if not defined _osppPath68 (copy /y "%_osppPath86%\sppcs.dll" "%_hookPath%\sppcs.dll" %nul%)
 
 if not exist "%_hookPath%\sppcs.dll" (
 set ierror=mklink sppcs.dll
@@ -3375,6 +3668,8 @@ exit /b
 ::  Check running office apps and notify user
 
 :oh_checkapps
+
+if %winbuild% LEQ 2600 exit /b
 
 set checkapps=
 set checknames=
@@ -4014,6 +4309,15 @@ if /i "%%A"=="/Z-Reset"                (set _resall=1)
 if not defined tsids set _actman=0
 for %%A in (%_actwin% %_actesu% %_actoff% %_actprojvis% %_actwinesuoff% %_actwinhost% %_actoffhost% %_actappx% %_actman% %_resall%) do (if "%%A"=="1" set _unattended=1)
 
+if %winbuild% LSS 6000 (
+%eline%
+echo Unsupported OS version detected [%winbuild%].
+echo TSForge Activation is only supported on Windows Vista/7/8/10/11 and their Server equivalents.
+echo:
+call :dk_color %Blue% "Use Ohook activation option from the main menu."
+goto dk_done
+)
+
 if %winbuild% LSS 7600 (
 reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" /v Install %nul2% | find /i "0x1" %nul1% || (
 %eline%
@@ -4066,7 +4370,7 @@ echo               [0] %_exitmsg%
 echo        ______________________________________________________________
 echo:
 call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard..."
-choice /C:12345ABCDE670 /N
+"%_choice%" /C:12345ABCDE670 /N
 set _el=!errorlevel!
 
 if !_el!==13 exit /b
@@ -4832,7 +5136,7 @@ call :dk_color %Blue% "Only use this activation when necessary, you can revert t
 
 if %_unattended%==0 (
 echo:
-choice /C:0F /N /M "> [0] Go back  [F] Continue : "
+"%_choice%" /C:0F /N /M "> [0] Go back  [F] Continue : "
 if !errorlevel!==1 exit /b
 echo:
 )
@@ -5055,7 +5359,7 @@ goto :ts_act
 
 call :dk_color %Blue% "Although the script will try to remove those IDs from the list, it is not fully guaranteed."
 echo:
-choice /C:0F /N /M "> [0] Go back  [F] Continue : "
+"%_choice%" /C:0F /N /M "> [0] Go back  [F] Continue : "
 if %errorlevel%==1 exit /b
 
 echo:
@@ -10929,7 +11233,7 @@ echo                 [0] %_exitmsg%
 echo:           ______________________________________________________
 echo: 
 call :dk_color2 %_White% "              " %_Green% "Choose a menu option using your keyboard [1,2,0]"
-choice /C:120 /N
+"%_choice%" /C:120 /N
 set _el=!errorlevel!
 if !_el!==3  exit /b
 if !_el!==2  goto :k_uninstall
@@ -10992,7 +11296,7 @@ call :dk_color2 %_White% "     " %Gray% "Activation is not required."
 echo ___________________________________________________________________________________________
 if %_unattended%==1 goto dk_done
 echo:
-choice /C:10 /N /M ">    [1] Activate Anyway [0] %_exitmsg% : "
+"%_choice%" /C:10 /N /M ">    [1] Activate Anyway [0] %_exitmsg% : "
 if errorlevel 2 exit /b
 )
 cls
@@ -11700,6 +12004,15 @@ echo "%%A" | find /i "/K-Server-" >nul && (set "_server=%%A" & call set "_server
 
 for %%A in (%_actwin% %_actoff% %_actprojvis% %_actwinoff% %_uni%) do (if "%%A"=="1" set _unattended=1)
 
+if %winbuild% LSS 6000 (
+%eline%
+echo Unsupported OS version detected [%winbuild%].
+echo Online %KS% Activation is only supported on Windows Vista/7/8/10/11 and their Server equivalents.
+echo:
+call :dk_color %Blue% "Use Ohook activation option from the main menu."
+goto dk_done
+)
+
 ::========================================================================================================================================
 
 if %_uni%==1 goto :ks_uninstall
@@ -11754,7 +12067,7 @@ echo               [0] %_exitmsg%
 echo        ______________________________________________________________
 echo:
 call :dk_color2 %_White% "       " %_Green% "Choose a menu option using your keyboard [1,2,3,4,5,6,7,8,9,0]"
-choice /C:1234567890 /N
+"%_choice%" /C:1234567890 /N
 set _el=!errorlevel!
 
 if !_el!==10 exit /b
@@ -12283,7 +12596,7 @@ call :ks_clearstuff %nul%
 if not defined _server (
 if %winbuild% GEQ 9200 (
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
-for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath /reg:32" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
+if %winbuild% GTR 2600 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath /reg:32" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
 if defined _C16R (
 REM  mass grave[.]dev/office-license-is-not-genuine
 set _server=10.0.0.10
@@ -12527,7 +12840,7 @@ set "uline=_____________________________________________________________________
 
 set "_C16R="
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath" 2^>nul') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
-for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath /reg:32" 2^>nul') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
+if %winbuild% GTR 2600 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath /reg:32" 2^>nul') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
 if %winbuild% GEQ 9200 if defined _C16R (
 echo:
 call :dk_color %Gray% "Notice-"
@@ -15429,6 +15742,34 @@ elseif ($NT6)
 	echoWindows
 	CONOUT "Error: product key not found.`n"
 }
+if (-Not $NT6) {
+	try {
+		$xpwpa = Get-WmiObject win32_WindowsProductActivation
+	} catch {
+		$xpwpa = $null
+	}
+	if ($xpwpa -ne $null) {
+		$xpeval  = $xpwpa.RemainingEvaluationPeriod
+		$xpgrace = $xpwpa.RemainingGracePeriod
+		$xpact   = $xpwpa.ActivationRequired
+		echoWindows
+		if ($xpeval -eq 2147483647) {
+			CONOUT "Evaluation:          No"
+		} else {
+			CONOUT "Evaluation:          $xpeval days remaining"
+		}
+		if ($xpgrace -eq 2147483647) {
+			CONOUT "Grace period:        No"
+		} else {
+			CONOUT "Grace period:        $xpgrace days remaining"
+		}
+		if ($xpact -eq 0) {
+			CONOUT "Activation required: No`n"
+		} else {
+			CONOUT "Activation required: Yes`n"
+		}
+	}
+}
 
 if ($NT6 -And -Not $NT8) {
 	ClcRun
@@ -15526,7 +15867,7 @@ echo:             [0] %_exitmsg%
 echo:       _______________________________________________________________
 echo:          
 call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard :"
-choice /C:1234560 /N
+"%_choice%" /C:1234560 /N
 set _erl=%errorlevel%
 
 if %_erl%==7 exit /b
@@ -15578,7 +15919,7 @@ call :dk_color2 %_White% "     - " %Gray% "Make sure that Windows update is prop
 echo:
 echo %line%
 echo:
-choice /C:09 /N /M ">    [9] Continue [0] Go back : "
+"%_choice%" /C:09 /N /M ">    [9] Continue [0] Go back : "
 if %errorlevel%==1 goto at_menu
 
 cls
@@ -15639,7 +15980,7 @@ echo      restarting the PC after each time to completely fix everything that it
 echo:   
 echo %line%
 echo:
-choice /C:09 /N /M ">    [9] Continue [0] Go back : "
+"%_choice%" /C:09 /N /M ">    [9] Continue [0] Go back : "
 if %errorlevel%==1 goto at_menu
 
 cls
@@ -15707,7 +16048,7 @@ call :dk_color2 %_White% "      - " %Blue% "Apply this option only when it is ne
 echo:
 echo %line%
 echo:
-choice /C:09 /N /M ">    [9] Continue [0] Go back : "
+"%_choice%" /C:09 /N /M ">    [9] Continue [0] Go back : "
 if %errorlevel%==1 goto at_menu
 
 ::========================================================================================================================================
@@ -15829,6 +16170,12 @@ echo:
 call :dk_color %Blue% "Rebuilding SPP licensing tokens..."
 echo:
 
+if %winbuild% LSS 6000 (
+echo SPP license rebuilding is supported only on Windows Vista/7/8/10/11 and their Server equivalents.
+echo Skipping...
+goto :rebuildosppsvc
+)
+
 call :scandat check
 
 if not defined token (
@@ -15949,6 +16296,8 @@ sc config sppuinotify start= demand
 
 ::  Rebuild OSPP Tokens
 
+:rebuildosppsvc
+
 echo:
 echo %line%
 echo:
@@ -15956,6 +16305,12 @@ call :dk_color %Blue% "Rebuilding OSPP licensing tokens..."
 echo:
 
 sc qc osppsvc %nul% || (
+echo OSPP-based Office is not installed.
+echo Skipping rebuilding OSPP tokens...
+goto :repairoffice
+)
+
+if %winbuild% lss 6000 sc qc osppsvc %nul% | find "SERVICE_NAME: osppsvc" || (
 echo OSPP-based Office is not installed.
 echo Skipping rebuilding OSPP tokens...
 goto :repairoffice
@@ -16084,7 +16439,7 @@ echo:
 call :dk_color %_Yellow% "A new window will appear, in that window you need to select [Quick Repair] option."
 if defined terminal (
 call :dk_color %_Yellow% "Press [0] to continue..."
-choice /c 0 /n
+"%_choice%" /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to continue..."
 pause %nul1%
@@ -16217,7 +16572,7 @@ echo:
 call :dk_color %Blue% "Its recommended to select [Restart] option and then apply Fix WMI option again."
 echo %line%
 echo:
-choice /C:21 /N /M "> [1] Restart  [2] Revert Back Changes :"
+"%_choice%" /C:21 /N /M "> [1] Restart  [2] Revert Back Changes :"
 if !errorlevel!==1 (sc config Winmgmt start= auto %nul%&goto :at_back)
 echo:
 echo Restarting...
@@ -16313,7 +16668,7 @@ echo %line%
 echo:
 if defined terminal (
 call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
-choice /c 0 /n
+"%_choice%" /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
 pause %nul1%
@@ -16628,7 +16983,7 @@ for /f "tokens=6-7 delims=[]. " %%i in ('ver') do if not "%%j"=="" (
 set fullbuild=%%i.%%j
 ) else (
 for /f "tokens=3" %%G in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR" %nul6%') do if not errorlevel 1 set /a "UBR=%%G"
-for /f "skip=2 tokens=3,4 delims=. " %%G in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v BuildLabEx') do (
+for /f "skip=2 tokens=3,4 delims=. " %%G in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v BuildLabEx 2^>nul') do (
 if defined UBR (set "fullbuild=%%G.!UBR!") else (set "fullbuild=%%G.%%H")
 )
 )
@@ -16710,7 +17065,7 @@ echo:
 echo Changing this edition may not remove "%osedition%"-specific features.
 echo:
 call :dk_color %_Yellow% "Press [7] to continue anyway..."
-choice /c 7 /n
+"%_choice%" /c 7 /n
 cls
 )
 
@@ -16793,7 +17148,7 @@ echo [1] Continue Anyway
 echo [0] Go Back
 echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
-choice /C:10 /N
+"%_choice%" /C:10 /N
 if !errorlevel!==2 goto cedmenu2
 if !errorlevel!==1 rem
 )
@@ -16859,7 +17214,7 @@ echo:
 echo  - You will need to activate with HWID option once the edition is changed.
 %line%
 echo:
-choice /C:21 /N /M "[1] Continue [2] %_exitmsg% : "
+"%_choice%" /C:21 /N /M "[1] Continue [2] %_exitmsg% : "
 if !errorlevel!==1 exit /b
 )
 
@@ -16922,7 +17277,7 @@ echo Changing the current edition [%osedition%] %fullbuild% to [%targetedition%]
 echo:
 call :dk_color %Blue% "Important - Save your work before continuing, the system will auto-restart."
 echo:
-choice /C:01 /N /M "[1] Continue [0] %_exitmsg% : "
+"%_choice%" /C:01 /N /M "[1] Continue [0] %_exitmsg% : "
 if %errorlevel%==1 exit /b
 
 echo:
@@ -17487,7 +17842,7 @@ for /f "tokens=6-7 delims=[]. " %%i in ('ver') do if not "%%j"=="" (
 set fullbuild=%%i.%%j
 ) else (
 for /f "tokens=3" %%G in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR" %nul6%') do if not errorlevel 1 set /a "UBR=%%G"
-for /f "skip=2 tokens=3,4 delims=. " %%G in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v BuildLabEx') do (
+for /f "skip=2 tokens=3,4 delims=. " %%G in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v BuildLabEx 2^>nul') do (
 if defined UBR (set "fullbuild=%%G.!UBR!") else (set "fullbuild=%%G.%%H")
 )
 )
@@ -17625,7 +17980,7 @@ echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
 echo: 
 call :dk_color2 %_White% "           " %_Green% "Choose a menu option using your keyboard [1,2,3,4,5,0]"
-choice /C:123450 /N
+"%_choice%" /C:123450 /N
 set _el=!errorlevel!
 if !_el!==6  exit /b
 if !_el!==5  goto :oe_changeupdchnl
@@ -17670,7 +18025,7 @@ echo                 [0] Go Back
 echo         ____________________________________________________________
 echo: 
 call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard [1,2,3,4,0]"
-choice /C:12340 /N
+"%_choice%" /C:12340 /N
 set _el=!errorlevel!
 if !_el!==5  goto :oemenu
 if !_el!==4  set list=SingleApps_Volume&goto :oe_editionchangepre
@@ -17825,7 +18180,7 @@ echo [0] Go Back
 %line%
 echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard:"
-choice /C:AENOPJRVWLDT10 /N
+"%_choice%" /C:AENOPJRVWLDT10 /N
 set _el=!errorlevel!
 if !_el!==14 goto :oemenu
 if !_el!==13 call :excludelist & goto :oe_editionchangefinal
@@ -18252,13 +18607,13 @@ echo:
 if defined fixes (
 call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
-choice /C:10 /N
+"%_choice%" /C:10 /N
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
 call :dk_color %_Yellow% "Press [0] key to go back..."
-choice /c 0 /n
+"%_choice%" /c 0 /n
 ) else (
 call :dk_color %_Yellow% "Press any key to go back..."
 pause %nul1%
@@ -18487,6 +18842,455 @@ if ($appIdsList.Count -gt 0) {
     $appIdsList | Out-File -FilePath $outputFile -Encoding ASCII
 }
 :getappnames:
+
+:+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+:CIDGenActivation
+
+::  To activate Windows, run the script with "/C-Windows" parameter or change 0 to 1 in below line
+set _actwin=0
+
+::  To activate Office XP, run the script with "/C-OfficeXP" parameter or change 0 to 1 in below line
+set _actoffxp=0
+
+::  To activate Office 2003, run the script with "/C-Office03" parameter or change 0 to 1 in below line
+set _actoff03=0
+
+::  To activate Office 2007, run the script with "/C-Office07" parameter or change 0 to 1 in below line
+set _actoff07=0
+
+::  To activate Plus! DME, run the script with "/C-PlusDME" parameter or change 0 to 1 in below line
+set _actplusdme=0
+
+::  If value is changed in above lines or parameter is used then script will run in unattended mode
+
+::========================================================================================================================================
+
+cls
+color 07
+title  CIDGen Activation %masver%
+
+set _args=
+set _elev=
+set _unattended=0
+
+set _args=%*
+if defined _args set _args=%_args:"=%
+if defined _args (
+for %%A in (%_args%) do (
+if /i "%%A"=="-el"                    set _elev=1
+if /i "%%A"=="/C-Windows"             set _actwin=1
+if /i "%%A"=="/C-OfficeXP"            set _actoffxp=1
+if /i "%%A"=="/C-Office03"            set _actoff03=1
+if /i "%%A"=="/C-Office07"            set _actoff07=1
+if /i "%%A"=="/C-PlusDME"             set _actplusdme=1
+)
+)
+
+for %%A in (%_actwin% %_actoffxp% %_actoff03% %_actoff07% %_actplusdme%) do (if "%%A"=="1" set _unattended=1)
+
+set _actmanual=0
+
+::========================================================================================================================================
+
+:cidgen_menu
+
+if %_unattended%==0 (
+cls
+if not defined terminal mode 76, 33
+title  CIDGen Activation %masver%
+
+echo:
+echo:
+echo:
+echo        ______________________________________________________________
+echo: 
+echo               [1] Activate - Windows
+echo               [2] Activate - Office XP
+echo               [3] Activate - Office 2003
+echo               [4] Activate - Office 2007
+echo               [5] Activate - Plus DME
+echo               _______________________________________________  
+echo: 
+echo               [6] Activate - Manually enter installation ID     
+echo               _______________________________________________  
+echo:  
+echo               [7] Remove CIDGen Activation
+echo               [8] Download Office
+echo               [0] %_exitmsg%
+echo        ______________________________________________________________
+echo:
+call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard..."
+"%_choice%" /C:123456780 /N
+set _el=!errorlevel!
+
+if !_el!==9 exit /b
+if !_el!==8 start %mas%genuine-installation-media & goto :ts_menu
+if !_el!==7 call :cidgen_remove & cls & goto :cidgen_menu
+if !_el!==6  cls & setlocal & set "_actmanual=1"    & call :cidgen_start & endlocal & cls & goto :cidgen_menu
+if !_el!==5  cls & setlocal & set "_actplusdme=1"   & call :cidgen_start & endlocal & cls & goto :cidgen_menu
+if !_el!==4  cls & setlocal & set "_actoff07=1"     & call :cidgen_start & endlocal & cls & goto :cidgen_menu
+if !_el!==3  cls & setlocal & set "_actoff03=1"     & call :cidgen_start & endlocal & cls & goto :cidgen_menu
+if !_el!==2  cls & setlocal & set "_actoffxp=1"     & call :cidgen_start & endlocal & cls & goto :cidgen_menu
+if !_el!==1  cls & setlocal & set "_actwin=1"       & call :cidgen_start & endlocal & cls & goto :cidgen_menu
+goto :ts_menu
+)
+
+::========================================================================================================================================
+
+:cidgen_start
+
+cls
+
+if not defined terminal (
+mode 125, 32
+if exist "%SysPath%\spp\store_test\" mode 134, 32
+%psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=32;$B.Height=300;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}" %nul%
+)
+title  CIDGen Activation %masver%
+setlocal EnableDelayedExpansion
+
+echo:
+echo Initializing...
+call :dk_chkmal
+
+set spp=SoftwareLicensingProduct
+set sps=SoftwareLicensingService
+
+call :dk_ckeckwmic
+call :dk_checksku
+call :dk_product
+call :dk_sppissue
+
+::========================================================================================================================================
+
+set error=
+
+cls
+echo:
+call :dk_showosinfo
+
+echo Initiating Diagnostic Tests...
+
+set "_serv=Winmgmt"
+::  Windows Management Instrumentation
+
+set notwinact=1
+call :dk_errorcheck
+
+::========================================================================================================================================
+
+if "%_actwin%"=="0" goto cidgen_offxp
+echo:
+echo Processing Windows...
+
+if %winbuild% GEQ 6000 (
+%eline%
+echo Unsupported OS version detected [%winbuild%].
+echo CIDGen Activation is only supported on Windows XP and Server 2003.
+echo:
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
+goto cidgen_offxp
+)
+
+::  Check if system is permanently activated or not
+
+for /f "delims=" %%a in ('%psc% "(Get-WmiObject win32_WindowsProductActivation).RemainingEvaluationPeriod"') do set evalremaining=%%a
+for /f "delims=" %%a in ('%psc% "(Get-WmiObject win32_WindowsProductActivation).RemainingGracePeriod"') do set graceremaining=%%a
+for /f "delims=" %%a in ('%psc% "(Get-WmiObject win32_WindowsProductActivation).ActivationRequired"') do set activationrequired=%%a
+if "%evalremaining%"=="2147483647" if "%graceremaining%"=="2147483647" if "%activationrequired%"=="0" (
+echo:
+call :dk_color2 %_White% "     " %Green% "%winos% is already permanently activated."
+goto cidgen_offxp
+)
+
+if not "%evalremaining%"=="2147483647" (
+  call :dk_color %Red% "Checking Evaluation Edition             [%evalremaining% days remaining]"
+  set fixes=%fixes% %mas%evaluation_editions
+  call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
+  set _error=1
+  goto cidgen_offxp
+)
+
+for /f "delims=" %%a in ('%psc% "((Get-WmiObject win32_WindowsProductActivation).GetInstallationID()).InstallationID"') do set iid=%%a
+if "%iid%"=="" (
+  call :dk_color %Red% "Getting Installation ID                 [Not Found]"
+  set _error=1
+  goto cidgen_offxp
+)
+echo Requesting Installation ID              [%iid%]
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':cidgen32.exe\:.*';$encoded = ($f[1]) -replace '-', 'A' -replace '_', 'a';$bytes = [Con%b%vert]::FromBas%b%e64String($encoded); [IO.File]::WriteAllBytes('%temp%\cidgen32.exe', $bytes)
+for /f "delims=" %%a in ('"%temp%\cidgen32.exe" %iid% 0') do set cid=%%a
+set ciderr=%errorlevel%
+del /f /q "%temp%\cidgen32.exe" %nul%
+if "%cid%"=="" (
+  call :dk_color %Red% "Generating Confirmation ID              [Error %ciderr%]"
+  set _error=1
+  goto cidgen_offxp
+)
+echo Generating Confirmation ID              [%cid%]
+for /f "delims=" %%a in ('%psc% "try{((Get-WmiObject win32_WindowsProductActivation).ActivateOffline('%cid%')).ReturnValue}catch{'1'}"') do set "ret=%%a"
+if not "%ret%"=="0" (
+  call :dk_color %Red% "Depositing Confirmation ID              [Failed]"
+  set _error=1
+  goto cidgen_offxp
+)
+echo Depositing Confirmation ID              [Succeeded]
+for /f "delims=" %%a in ('%psc% "(Get-WmiObject win32_WindowsProductActivation).RemainingGracePeriod"') do set graceremaining=%%a
+for /f "delims=" %%a in ('%psc% "(Get-WmiObject win32_WindowsProductActivation).ActivationRequired"') do set activationrequired=%%a
+if "%graceremaining%"=="2147483647" if "%activationrequired%"=="0" (
+echo:
+call :dk_color2 %_White% "     " %Green% "%winos% is permanently activated."
+goto cidgen_offxp
+)
+call :dk_color %Red% "The confirmation ID was accepted, but activation did not succeed."
+echo %graceremaining% days grace period remaining.
+goto cidgen_offxp
+
+::========================================================================================================================================
+
+:cidgen_offxp
+if "%_actoffxp%"=="0" goto cidgen_off03
+echo:
+echo Processing Office XP...
+%eline%
+echo Automatic CIDGen Activation is not currently available for Office XP.
+echo:
+call :dk_color %Blue% "Manually enter installation ID from the CIDGen menu."
+goto cidgen_off03
+
+::========================================================================================================================================
+
+:cidgen_off03
+if "%_actoff03%"=="0" goto cidgen_off07
+echo:
+echo Processing Office 2003...
+%eline%
+echo Automatic CIDGen Activation is not currently available for Office 2003.
+echo:
+call :dk_color %Blue% "Manually enter installation ID from the CIDGen menu."
+goto cidgen_off07
+
+::========================================================================================================================================
+
+:cidgen_off07
+if "%_actoff07%"=="0" goto cidgen_plusdme
+echo:
+echo Processing Office 2007...
+%eline%
+echo Automatic CIDGen Activation is not currently available for Office 2007.
+echo:
+call :dk_color %Blue% "Manually enter installation ID from the CIDGen menu."
+goto cidgen_plusdme
+
+::========================================================================================================================================
+
+:cidgen_plusdme
+if "%_actplusdme%"=="0" goto cidgen_manual
+echo:
+echo Processing Plus DME...
+%eline%
+echo Automatic CIDGen Activation is not currently available for Plus DME.
+echo:
+call :dk_color %Blue% "Manually enter installation ID from the CIDGen menu."
+goto cidgen_manual
+
+::========================================================================================================================================
+
+:cidgen_manual
+if "%_actmanual%"=="0" goto dk_done
+echo:
+echo Processing Manual Activation...
+echo:
+
+call :dk_color %Gray% "Specify version: 1 = Windows XP / Server 2003, 2 = Office XP,"
+call :dk_color %Gray% "                 3 = Office 2003, 4 = Office 2007, 5 = Plus! DME"
+"%_choice%" /C:12345 /N
+set iidtype=!errorlevel!
+if not !iidtype!==1 if not !iidtype!==2 if not !iidtype!==5 (
+call :dk_color %Gray% "Enter / Paste the Product ID, or just press Enter to return:"
+set /p pid=
+if "!pid!"=="" goto dk_done
+) else (
+set pid=00000-000-0000000-00000
+)
+call :dk_color %Gray% "Enter / Paste the Installation ID, or just press Enter to return:"
+set /p iid=
+if "%iid%"=="" goto dk_done
+call :dk_color %Gray% "Generating Confirmation ID"
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':cidgen32.exe\:.*';$encoded = ($f[1]) -replace '-', 'A' -replace '_', 'a';$bytes = [Con%b%vert]::FromBas%b%e64String($encoded); [IO.File]::WriteAllBytes('%temp%\cidgen32.exe', $bytes)
+set /a iidtype-=1
+for /f "delims=" %%a in ('"%temp%\cidgen32.exe" !iid! !iidtype! !pid!') do set cid=%%a
+set ciderr=%errorlevel%
+del /f /q "%temp%\cidgen32.exe" %nul%
+if "%cid%"=="" (
+  call :dk_color %Red% "Error %ciderr%"
+  set _error=1
+  goto dk_done
+)
+call :dk_color %Green% "%cid%"
+goto dk_done
+
+::========================================================================================================================================
+
+:cidgen_remove
+
+cls
+if not defined terminal (
+mode 100, 30
+)
+title  Remove CIDGen Activation %masver%
+
+echo:
+echo CIDGen activation doesn't modify any Windows components and doesn't install any new files.
+echo:
+echo Instead, it requests an installation ID (typically used for activation over the telephone),
+echo and then generates the confirmation ID (normally generated by Microsoft)
+echo:
+call :dk_color %Gray% "If you want to reset the activation status,"
+call :dk_color %Blue% "%_fixmsg%"
+echo:
+
+goto :dk_done
+
+::========================================================================================================================================
+::
+::  This below block of text is encoded in base64 format
+::  The block in labels "cidgen32.exe" contains below file
+::
+::  4aa7dd08b60ab24ac5c95ba6dc75c0d81e96d4faf591496d30622c3eef26e390 *cidgen32.exe
+::
+::  The files are encoded in base64 to make AIO version.
+::
+::  stackoverflow.com/a/35335273
+::  Here you can check how to extract cidgen32.exe files from base64
+::
+::  For any further question, feel free to contact us on mass grave[.]dev/contactus
+::
+::========================================================================================================================================
+::
+::  Replace "-" with "A" and "_" with "a" before base64 conversion
+::  It was changed to prevent antiviruses from detecting and flagging base64 encoding
+
+:cidgen32.exe:
+TVqQ--M----E----//8--Lg---------Q-----------------------------------------------4-----4fug4-t-nNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4g_W4gRE9TIG1vZGUuDQ0KJ---------BlpMjrIcWmuCHFprghx__4hbujuSPF
+prgovSK4IMWmuCi9M7gix__4KL01uCPFprhqv_e5JMWmuCHFp7gwx__4BbqjuSDFprgFuqS5IMWmuFJpY2ghx__4----------BQRQ--T-ED-Cj6FWg----------O---wEL-Q4k-DY----K--------r0I----Q----U-----B----Q-----g--BQ-B-------F--E-
+------Bw----B---------M--IU--B---B------E---E--------B---------------NxU--BQ----------------------------------------------------------------------------------------------------------------U---U-------
+-----------------------------C50ZXh0----4DU----Q----Ng----Q------------------C---G-ucmRhdGE--IIG----U-----g----6------------------B---B-LmRhdGE----8-Q---G-----C----Qg------------------Q---w-----------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------ItEJ-iLTCQQC8iLTCQMdQmLRCQE9+HCE-BT
+9+GL2ItEJ-j3ZCQU-9iLRCQI9+ED01vCE-DMzMzMzMzMzMzMzMxWi0QkF-v-dSiLTCQQi0QkDDPS9/GL2ItEJ-j38Yvwi8P3ZCQQi8iLxvdkJB-D0etHi8iLXCQQi1QkDItEJ-jR6dHb0erR2-vJdfT384vw92QkFIvIi0QkEPfm-9FyDjtUJ-x3CHIPO0QkCHYJTitE
+JB-bVCQUM9srRCQIG1QkDPf_99iD2gCLyovTi9mLyIvGXsIQ-MzMzMzMzMzMzMzMgPl-cxW-+SBzBg+t0NPqw4vCM9K-4R/T6MMzwDPSw4v/VYvsVovx/xV-UE--9kUI-XQHVugXMw--WYvGXl3CB-CLRCQEPQ-Q--ByCFDoEQ---FnDhcB0CFDopDI--FnDM8DDi0Qk
+BI1IIzvID4ZZEw--UeiKMg--WYvIhcl0Co1BI4Pg4IlI/MPpNjE--FOLXCQMuP///39Vi+k72Hdb_g9ZiU0Ug/sQcxdT/3QkEIldEFXomRQ--IPEDMYEKwDrNFZXUFFT6N-S--CL8I1O-VHo_////1P/dCQoi/iJXRBXiX0-iXUU6GUU--CDxBzGBB8-X15dW8II-OgP
+Ew--zFWL7ItFDD0-E---chKNRQxQjUUIUOhfEg--i0UMWVlQ/3UI6Moz--BZWV3DU4tcJ-hXi/m5////fzvZd1WLRxRVVlFQU4lEJCDoTRI--IvwjU4BUejo/v//U/90JDCL6IlfEFWJdxTo5RM--ItEJDCDxBzGBCs-g/gQcgt-UP836Hv///9ZWV6JL4vHXV9bwgw-
+6HcS--DMUVOL2br///9/i0wkDIvCVYtrECvFO8FybItDFFZXUo08KYlEJBxQV+jWEQ--i/CNTgFR6HH+//+DxBCJexCLfCQYjUwkHIlEJBCJcxT/dCQgVYP/EHIXizNWUOgk-Q--jUcBUFbo/v7//1lZ6wdTUOgP-Q--i0QkEF9eiQOLw11bWcIM-OjsEQ--zItUJ-gz
+wFZXi/GLTCQMi/6rq6urg2YQ-INmF-CLQR-7wnInK8I7RCQUcgSLRCQUg3kUEHICiwlQjQQRi85Q6Cj+//9fi8Zewh--6KcR--DMVlf/dCQMi/EzwIv+q6urq4NmE-CDZhQ-6Jww--BZUP90JBCLzujx/f//X4vGXsIE-Fb/dCQIi/HoP----McGeFB--IvGXsIE-Fb/
+dCQIi/HoJ----McGhFB--IvGXsIE-INhB-CLwYNhC-DHQQSMUE--xwGEUE--w1_L8Y1GBMcGWFB--IMg-INgB-BQi0QkDIP-BFDooS4--FlZi8ZewgQ-xwFYUE--w1_LdCQIV4t8JBRX/3QkFFboIBI--IpEJCSDx-yIBD7GRD4B-F9ewh--9kQkB-FWi/HHBlhQQ-B0
+CmoMVuiVMQ--WVmLxl7CB-CB7Mg---BTVV_LtCTg----M9tX_gJYi86JNThhQ-CJXCRw_gFfK8sPhP8----rzw+Emg---CvPD4SS----K88PhIo----rzw+FYwE--McF6GB--INZYKDHBexgQ-CrXWoBo/BgQ-DHBfhgQ--Oqlz3xwX8YE--JE8z-McF-GF--Hu9iSjH
+BQRhQ-D2LzkBxwUIYU--uC26Y8cFDGF--BgTNQHHBRBhQ--QY-B4xwUUYU--jiBT-ccFGGF--NtWYPLHBRxhQ-CUNhY-6c8---C50o9c2ccF6GB--OkfRRi47PXl-McF7GB--N1IbgHHBfBgQ--D----iQ0-YU--owRhQ-DHBQhhQ-BhH/F2xwUMYU--gvIP-McFEGF-
+-OYnJhPHBRRhQ-DZK/s-61u5BDsrMscF6GB--Hkqf224BgZ--ccF7GB---Nr_gHHBfBgQ--r----xwU-YU--gVPINscFBGF---GEIQDHBQhhQ-DQKomDxwUMYU--exlE-IkNEGF--KMUYU--oxxhQ-CJDRhhQ-CJHfxgQ-CJHfhgQ-CJHfRgQ-CJPSBhQ-CJHSRhQ-CL
+jCTc----i9OLw4lUJBSJRCQciVwkIIoJiVwkGITJD4RDCw--_gVdx0Qk_-c---C-+S-PhNc---C-+S0PhM4----PvsmD6TCJTCQkD4hx-g--g/kJD49o-g--O8UPhI0---CLtCTc----OF4Bi7Qk5----HRyq-F0CY0UCYlUJBzrBIlMJByLVCQc-VQkGED/RCQgg3wk
+IC2LVCQUiUQkH-+H9wE--IXSdC6L8w+2RDR4_8gKi0QkJ-+2w-PIiEw0eMHpCE_JTCQkO/Jy34u0JOQ---CLRCQchMl0M4hMFHhCiVQkFOsohc-PhLIB--CLRCQYM9L3dCRoO8oPhb-B--CLVCQUi8OJXCQYiUQkHIuMJNw---BBiYwk3----IoJhMkPhQf///+LTCQg
+g/kpd-mD+S0Pgi0K--CD+hNzGmoTWCvCjUwkeF-DylNR6Lgs--CLTCQsg8QMiVwkJCvzdCCD7gEPhG-B--CD7gEPhFcB--CD7gEPhE4B--CD7gF1CMdEJCRqyF7U_gSNRCQoUDP-g/kpD5X-jQRFEQ---FCNhCSE----UOhLCw--g8QQgLwkig---BByDTicJ--B---P
+hKQJ--ChOGF--GoKXivDdCCD6-F0G4Po-Q+E9g---IPo-Q+E7Q---IPo-Q+Fv-M--GoTjUQkfFCNhCS0----UOj3Kw--i5Qkw----IPEDIu0JLg---CLwiX//wE-i8qjKGF--IvGD6zBEYvGgeH/-w--D6zCGw+2hCS8----iQ0sYU--geL///8-i87B4-nB6RPB7heD
+4Q8L8IkVMGF--Ik1NGF--DicJ--B---PhToD--ChOGF--CvDD4QY-w--g+gBD4QG-w--SIPo-Q+FGgM--IP5BOn2-g--_gLrIzP-g3wkIC0PlMB-6bgI---5bCQcG8CD4P2Dw-Tppwg--GoDWOmfC---x0QkJFowufPpsv7//41EJBhQjYQkx----FCNhCS-----UOhj
+DQ--g8QMOJwk--E--HUnoThhQ-BIg+gBdBGD6-F1F4N8JBgEdBDpUgg--IN8JBgDD4VHC---_giNhCTE----UI2EJLQ---BQ6MMq--CDx-yNRCQTjYwkl----FBVU42EJPQ---BQ6LT5//9WjYQkm----FNQ6B-m--CDx-yjKGF--I2MJJQ---DoVgs--I1EJBNQ_gNq
+Bo2EJPQ---BQjUwkOOh3+f//i1QkPI10JCiLTCQog/oQcgKL8YoGhMB0Gw+2wFDodio--IgGRlmKBoT-de2LVCQ8i0wkKI1EJCiD+hBy-ovB_OhQQ-BQ6D-q--BZhcCNRCQXWVBq-42EJP-----PhfQ---BqDFCNjCSk----6-b5//9qClhQjYQkm----FNQ6F8l--CD
+x-yjLGF--I2MJJQ---DopQo--I1EJBNQV2oPjYQk9----FCNTCRU6Mf4//+NRCQTUFVqEo2EJPQ---BQjYwkp----Oir+P//_gpfV41EJEhTUOgHJQ--V2nwoIYB-I2EJKQ---BTUOjyJ---g8QYjYwkl-----PGozBhQ-DoNgo--I1MJEToLQo--P81MGF--OhdCw--
+W_MwYU--jUwkRI1EJBNQ_gJXjYQk9----FDoPvj//1eNRCRIU1DonSQ--Gn-6-M---EFNGF--OmO----_gZQjUwkVOgV+P//_gpeVo1EJEhTUOhxJ---g8QMoyxhQ-CNTCRE6LoJ--CNRCQTUP90JGyNhCTw----VlCNTCRU6Nr3//9WjUQkSFNQ6Dkk--CDx-yjMGF-
+-I1MJEToggk--I1EJBNQVWoSjYQk9----FCNTCRU6KT3//9WjUQkSFNQ6-Mk--CjNGF--IPEDI1MJEToT-k--I1MJCjoQwk--OseO890GunRBQ--M8CDfCQgKQ+VwIP-CTvID4W8BQ--_giNhCSw----UI2EJN----BQ6Dgo--ChLGF--JmLyIvyoShhQ--PpM4RmcHh
+EQvyC8ihMGF---+kzhiZweEYC/ILyKE0YU--D6TOEZnB4REL8gvIibQkn----GoIjYQkn----ImMJJw---BQjYQk5----FDo1ic--IrLg8QYiEwkE+sCM9uhOGF--IlcJCiJXCQsiVwkMIlcJDQrw3Qcg+gBdBeD6-EPhOE---CD6-EPhNg---CD6-F1BIhMJC9qEI2E
+JMw---BQjUQkMGoOUOgIBQ--/3QkRItsJED/dCREi1wkQFVT6Nsj--CDxCCL8ov4/zXsYE--/zXoYE--VlfoVfP//yvYG+qDxwGD1gBWV1ZX6FId--BSUP819GB--P818GB--Og/HQ--g8QgUlBVU1VT6DEd--CDxBBSUOjnHw--VVNVU4lEJGSJVCRo6Mwc--CJRCRs
+jUQkZFCJVCR06J0R--CKTCQ3g8QkhcB1D/7BiEwkE4D5g-+G-////4D5gHYR_gZY6T-E--CITCQu6Sj///+hOGF--DPbK8N0SoPo-XQqg+gBdCWD6-F0IIPo-XVcjUQkRFBoEsYB-GgQ5uwS_MRUQnxogRFdOus0jUQkRFBojPsB-GjfcIr0_Cow4O9oQVN6H+sZjUQk
+RFBo2k---GhM1DZ8_J0b4gRowSfxEI1EJFhQ6N-P--CDxBiLRCREI0QkSIs17GB--Ist6GB--IP4/3UpjUQkMFBWVYPF-hPzVlXoIQc--It0JEiDxBSLbCQwi/iJVCQY6W8C--CLTCRMi8GLVCRQI8KD+P91Uo1EJDCLzVD/dCRMg8EBi8b/dCRME8NQUejdBg--g8QU
+i8gDzYlMJBQT1olUJBg71ncLcgQ7zXMFM8B-6wKLw4tsJDCLy4t0JDQD6BPx6QgC---z/4vBRyPHC8N0B-PNE9b/dCRID6zR-f90JEjR6lJRUlGJTCQsiVQkMOiGGw--g8QQUlDoPB4--IvKiUQkLFFQiUwkWOhhH---i8iJhCSE----I8qJlCSM----g8QYg/n/dWv/
+NfRgQ-D/NfBgQ-DoIxs--FJQ/3QkUP90JDDoMRs--FJQ6C-c---DxY1MJFBRE9YD71JQE/NWVegIBg--i0wkTIvoi0QkSIPEN-PoiWwkFBPRiVQkGDvRD4c3-Q--D4Iz-Q--O+jpK-E--FJQ/3QkIP90JCDolx0--IvKiUQkMFFQ/3QkeIlMJDj/dCR46L4_--BSUP+0
+JI----D/tCS-----6Gkd--D/tCSk----iUQkdP+0JK----D/dCRQ/3QkUOh-Gg--g8R-iUQkFIvKiUwkGFFQ/3Qk_P90JGjobho--FJQ/3QkcP90JHDoHx0--ItMJDyDxC-7TCQYi1QkFItMJCCJRCRscip3BDvKdiSLwYlUJCCLTCQci1QkGIlUJByL0ItEJGyJTCQY
+i0wkIIlUJBQzRCR-I8cLw3QYiUwkFItMJByJVCQgi1QkGIlUJByJTCQYi1QkII1EJDBQ/3QkI-PvUhPzVlXo1QQ--It0JCiLyIPEFIvCi1QkG-POiUwkFBPCiUQkGDvCdwZyBjvOcgKL+4tsJDCLw4t0JDQD7xPwi3wkFI1EJGbHRCQcIw---IlEJBTr-jPb_gpZM9KL
+xvfx_gqLyovGXjPSC8v39lNqClqL8DP-UgvFUVDonO///4voM9ILVCQYM8BQ_goLyFhQUVLohO///zPSiUQkGFJqCgvKM8B_UgvHUVDobO///4v4i0QkFIgISINsJBwBiUQkFHWSi7Qk4----I18JEYz7YXtd-TGBi1Gikf+il//BDCKTwGKVwKIBo1DMIhG-YoHBDCI
+RgKNQTCIRgONQjCIRgQPtskPtsMDy-+2R/6NBEgPtsoDwTPSD7YPg8cF-8H3dCRogMIwiFYFg8YGRTtsJGhyncYG-OsKi8eL6IvFiUQkcI2MJOg---DoVQM--ItEJHBfXl1bgcTI----w4PsWFOLXCRkVYtsJGRWV9Hri/NqBIPm/F+JdCQQiXwkcGp-jUQkLGo-UOhP
+Ig--oThhQ-CDx-yD6-B0HIPo-XQXg+gBD4TO----g+gBD4TF----g+gBdVBTjQQrUI1EJDBQ6-si--D/tCSE----jUQkOP+0JIQ----Dw1Do8SE--IuEJJ----CND-MCw8Dg-8ZEDEC-iEQkf4vBwe-Dg8QYwegIiEQkZo1EJBRQjUQkLFDoyBo--IvWWVk703Mbi8uL
+woPh-yvBjUwkG-PIigGIRBQUQkE703L0hdt0JY10JBSL1Sv1i/uKBBYy-ooMGogEGogKQoPv-XXti3QkEIt8JHCD7wGJfCRwD4UR////X15dW4PEWMNTjQQrxkQkLHlQjUQkMVDoRiE--P+0JIQ---CNRCQ5/7Qkh-----PDUOgsIQ--i4Qkk----I0M-/7--sPGR-xB
+gMDg-4hEJH+NBM0I----6TL///+D7FhTi1wkZFVWV9Hri+tqBIPl/F6JbCQQiXQkcGp-jUQkLGo-UOjnI---oThhQ-CDx-yD6-B0HIPo-XQXg+gBD4TR----g+gBD4TI----g+gBdVBT/3QkcI1EJDBQ6KMg--D/tCSE----jUQkOP+0JIQ----Dw1DoiS---IuEJJ--
+--CND-MCw8Dg-8ZEDEC-iEQkf4vBwe-Dg8QYwegIiEQkZo1EJBRQjUQkLFDoYBk--IvVWVk703Mbi8uLwoPh-yvBjUwkG-PIigGIRBQUQkE703L0hdt0KIt0JGyNfCQUK/6L64oEN40MHjIBih_IBk_IEYPt-XXsi2wkEIt0JHCD7gGJdCRwD4UO////X15dW4PEWMNT
+/3QkcI1EJDHGRCQweVDo2x8--P+0JIQ---CNRCQ5/7Qkh-----PDUOjBHw--i4Qkk----I0M-/7--sPGR-xBgMDg-4hEJH+NBM0I----6S////+LRCQIi0wkBIM-I4sBi1D8K8KDwPyD+B93-4kRw+kpHg--VYvsi00Ig8kPVjtNEHcbi3UMi9_LRRDR6ivCO/B3C40E
+MjvIcgeLwesDi0UQXl3DVYvsg+wMjU306Pvu//9omFN--I1F9FDoYx8--MxWi/GLRhSD+BByC0BQ/zboBO3//1lZg2YQ-MdGF-8---DGBgBew2ikUE--6Jog--DM_-RRQ-Dory---MyD7-xTVVZXM/9X/3QkKFf/dCQ06OTq//9X/3QkJIvoi/JX/3QkNIlsJCDozer/
+/1f/dCQki9iJVCQcV/90JDjouOr//4v4i8ID/RPGM+1FiUQkGDvGdw5yBjt8JBBzBolsJBDrBYNkJB--M/YD8xN8JBQ7fCQUdwZyBjvzcgIz7TPbU/90JChT/3QkOOhr6v//-0QkGItMJD-T0wPFE9MDw4kBi8YTVCQQiVEEi9dfXl1bg8QMw1WL7F_L8VeLfQw7fhR3
+JIN+FBBTi95y-oseV/91CIl+EFPoU-w--IPEDMYEOwCLxlvrEP91CMZFD-D/dQxX6-/s//9fXl3CC-CLTCQEi8FWM/_FyXQPV2oKM9Jf9/cD8oX-dfNfi8Yz0moHXvf2_8EKK8IDxl7D/3QkDP90J-z/dCQM6LId--CLRCQQg8QMw4PsKFNVVleLfCQ8jXQkEGoFW2oE
+V1bojx0--IPEDIPHBIPGCIPr-XXpi1QkKDPti0QkLIvyi0wkIIPi+g+k8B2LRCQkg8oCweYdi/sPrMEDC/EL8wvqi8_L1YvP6DXq//+LTCR-g8cIi-QLQ4P/QHzli0QkRItMJBBfXl2D4QdbiQiDxCjDgeyU-Q--U1VWV41EJDBQjYQkY-E--FD/tCSw-Q--6NoY--CL
+2I1EJExQjYQkh-E--IlcJDxQ/7Qkw-E--Oi7G---jYwk/----ImEJJ----BRjUwkQFGNjCRU-Q--UY1MJExRjYwkt-E--FGNTCREUY2MJKQB--BRUI2EJJQB--BQU+jJD---g8R-/3QkRP90JET/dCQ8/3QkPOhXEg--/3QkXIvwi/r/dCRciXQk_P90JFSJfCRw/3Qk
+VOg2Eg--g8QgiUQkWDPbiVQkX-vCiVwkYIlcJGRq/111D-v3dQSLxesHi8Pr-zP-QI2MJOQ---BRjUwkJFGNjCTU----UY1MJDBRjYwkj----FGNTCQkUY1MJGhRUI2EJKwB--BQ/3QkPOgnD---i3QkOP+09Kg---D/tPSo----6OMR--CDxDCJRCQUiVQkHIv7hfZ+
+MYvoi9pTVf+0/Ig---D/tPyI----6NYR--CDxBCJRPx8iZT8g----Ec7/nzYM9uDzf+DfCQk-MdE/HwB----iZz8g----Iv7fDyLdCQUi2wkHFVW/7T82----P+0/Ng---DoiRE--IPEEImE/Mw---CJlPzQ----Rzt8JCR+04t0JBCDzf+DfCQg-Iv7fDuLdCQUi1wk
+HFNW/7T88----P+0/P----DoRBE--IPEEImE/OQ---CJlPzo----Rzt8JCB+04t0JB-z241EJFBQVY2EJHwB--BQ/7Qkh----I2EJGwB--BQ/3QkQOgrCg--/3QkTIv4/3QkTIl8JDT/dCRk/3QkZOilEw--/3QkZImEJM----D/dCRkiZQky----P90JHz/dCR86IIT
+--CJhCTU----jYQkN-E--FBVjYQk1----ImUJO----BQ_gGNhCR8-Q--UP90JHTouwk--IPEUI2MJJQ---BRVY2MJ-QB--BRUI2EJGwB--BQ/3QkQOiVCQ--jYwkr----FFQjUQkUFBq-Y2EJLQB--BQ/3QkROh0CQ--g8QwiUQkGIX-eEOL84v4/7Qk0----P+0JN--
+--D/tPSg----/7T0o----OgZE---g8QQiYT0l----ImU9Jg---BGO/d+yYt8JBSLdCQQ_jCNhCQ--Q--_PhgQ-BQ6MsZ--CNhCQI-Q--UGoFjUQkVFBq-Y1EJExQ_gHo9Qg--I2MJLg---BR/3QkQI2MJCgB--BRUI2EJBgB--BQ/3QkWOjPC---g8Q8iUQkEIX2D46Y
+----jYQkN-E--FCNhCS-----UF_NRCRcUFfoswc--I1EJGQr/lCNhCSU----UF_NhCRU-Q--UFfolQc--ItEJDgr/oPEKIl8JBSFwHhNjYwkN-E--FGNjCS-----UV_NjCSg----UVDoZQc--ItEJCQrxolEJCSNBMUI----UI2EJEwB--BQjYQks----FDo6Bg--ItE
+JDCDxCBTjUwkVFFXjYwko----FFQ6CIH--CDxBSL8Il0JBiD/wIPjpgB--CNhCT8----UFWNhCSc----UFZQVujoBw--i/CDxBiL64X2eG6D/QV/YP+07--B--D/tOw--Q--/zTt/GB--P807fhgQ-DoTBE--IPEEImE7Pw---CJlOw--Q--RTvufsTrJ/+07--B--D/
+tOw--Q--U1PoHxE--IPEEImE7Pw---CJlOw--Q--RTvuftWD/QV/J2oGWSvNjbwk/-----PJjTzvjTTt+GB--IHh/v//P/Oli3wkFGoGXY2EJDQB--BQjUQkVFBXjYQkC-E--FCNdf9W6DgG---r94v+iXwkKP+0/EwB--D/tPxM-Q--6MYN--CDxByJVCQoi+iL84X/
+fimL2lNV/7T0Q-E--P+09E-B--DovQ0--IPEEIlE9FCJVPRURjv3fNsz28dE9F-B----i+uJXPRUi3QkGIX2eCv/tOyY----/7Tsm----FNT6E-Q--CDxBCJhOyU----iZTsm----EU77n7VU41EJFRQV42EJK----BQVuiPBQ--g8QUiUQkGIvw_v9dg/8CD49q/v//
+C+2LlCSw-Q--g/8CdVKLRCRQi0wkVIkCi0QkWIlKBItMJFyJQgiJSgyF9ngQi4Qkl----IuMJJg---DrBIvDi8uJQhCJShSD/gF8EIucJJw---CLrCSg----60eL6+tDiWoIiWoMg/8BdSuLRCRQi0wkVIkCiUoEhfZ4EIucJJQ---CLhCSY----6wKLw4l_EIlCFOsL
+iSqJ_gSJ_hCJ_hSL3V+JWhheiWocXVuBxJQB--DDg+wki1QkOFOLXCQwi8NVi2wkO-vFi0QkPIlUJDSJRCQIdSgLwnUki0QkRIPJ/4kIiUgEiUgIiUgMiUgQiUgUiUgYiUgcXVuDxCTDVot0JDSLw1dqCFmNfCQUg+-B86Uz9us/jUQkFFBQUOjd+P//i0wkHIPED-+s
+6wGLwYPg-dHtC8Z0BoHN----gItUJDyLww+s0QHR6oPg-YlMJBCJVCQ8C8Z0vYt8JEyNdCQU_ghZ86VfXotMJ-iLwQ+s6wGD4-HR7YPI-HQGgc0---C-D6zR-YvD0eoLxYlMJ-iJVCQ0dQqLwQvCD4RY////jUQkDFBQUOhT+P//i1QkQIvDg+-Bg8QMg8g-dKv/dCRE
+jUQkEFD/dCRM6DD4//+LVCR-g8QM65CD7EBTVVZX_gxZvvhgQ-CNfCQg86WLfCRU_gRei18Ii28M/3T0LE7/dPQ0/3cE/zfoMgs--FJQ/3T0PP909Dzo4w0--P909FSJRPRE/3T0VIlU9ExVU+gMCw--UlD/dPRk/3T0ZOi9DQ--g2T0c-CDxECDZPQ0-IlE9CiJVPQs
+hfZ1n/93BP83/3cE/zfoiwo--FJQUlDoggo--IPEIFJQVVNVU+i+Cg--g8QQUlDod-0--It0JDxVU1b/dCREiUQkMIlUJHTon-o--IPEIFJQ/3QkLP90JCz/dCQ0/3QkNOg4Cg--g8QQUlDoO-0--ItMJCCDxB-LTCRUi9qL6IlcJBx1UovNC8sPhKsB--BTVVNV6-YK
+--BSUOgsCg--g8QYUlBW/3QkNFb/dCQ86DUK--CDxBBSUOgrCg--UlDoGgs--Ivwi9qLzoPEGCPLg/n/6QkB--D/dwz/dwj/dCQs/3QkLOj+CQ--g8QQUlD/dwT/N1b/dCQ86OoJ--CDxBBSUOigD---UlBW/3QkROjUCQ--g8QgUlD/dCQs/3QkLP90JDT/dCQ06LoJ
+--CDxBBSUOhmCQ--UlDonwo--IvIg8QYI8qD+f8PhOs---BSUFJQ6EYJ--D/dCRki/CJVCQo/3QkJIl0JDDoX-k--IPEGIlEJBCLyolMJFRRUP90JBxWU1XoF-k--IPEEFJQ6FQJ--BSUOhDCg--i9qL8CPDg8QYg/j/dTn/dCRU/3QkFP90JBz/dCQk/3QkLFXo5Qs-
+-IPEEFJQ6BsJ--BSUOgKCg--i9qL8CPDg8QYg/j/dFhTVlNW6LMI--BSUOjZC---g8QYUlBTVlNW6OgI--BSUP93DP93COjbC---UlD/dCRc/3QkXOiCC---g8QwUlDowgg--IlHEIPEEDP-iVcUiXcYQIlfHOsCM8BfXl1bg8R-w4PsHItMJCgzwItUJCx-U1Uz24lM
+JBwhXCQQIVwkFF_LdCQsV4t8JDSJXCQUiVQkKIX/dQQ78HZ7i+hXVlJR6JHe//+JTCQ4i0wkFFFVUol0JDyL9Yl8JByL+VCJXCQw6DDe//+LbCQYi1wkHCvoi0wkMBv_iXwkHIt8JCCLVCQQiXQkGIt0JDiJXCQUhf93qnIFg/4Bd6OJbCQQi2wkJItEJBCF238Mf-SF
+wHMGi0wkKOsEM+0zyV8DxV4Ty12L0VuDxBzD/3QkDP90J-z/dCQM6LgR--CLRCQQg8QMw4PsFItEJBhTi1wkJF_L8CvzV4t8JCiJdCQsD4i2----i0wkNI0Ex1WNLPeJRCQQK8+JbCQUiUwkIIN8JDg-ixCLQ-SJVCQYiUQkHHQHiRQpiUQpBDP-hdt+UYv1i/iLbCQY
+i0QkNP90+-T/NPj/dCQkVehPBw--UlD/dgT/NugDCg--g8QgiQZHiVYEjXYIO/t8z4t0JDCLbCQUi0wkIIl8JCiLfCQsi0QkK-PGg+0IiWwkFIMkxwCDZMcE-E6LRCQQg+gIiXQkMIlEJBCF9g+JZP///10D83gOiwz3C0z3BHUFg+4BefJfi8ZeW4PEFMNRUYtUJ-xW
+hdIPiM4---CLdCQYhfYPiMI---CLRCQgU4tcJCh-VY0sMlc7xX8lK+iNPMODJwCL94NnB-CDxwiNDO0D----wekC-+jzpYt0JCTr-41o/ylcJCCL+4tcJCBCiWwkHIlUJBQzwIvviUQkEItMJCj/dMEE/zTB/3Q7BP80O+hNBg--UlD/dQT/dQDo9gU--IlF-IPEIItE
+JBCNbQh-iVX8iUQkEDvGfsOLbCQcg8cIg2wkF-GLxYlsJBx1p4tcJDCFwHgOiwzDC0zDBHUFg+gBefJfXVvrBItEJCBeWVnDgey0----U1VWV4usJOw---CDyf8z9olMJBiLxol0JBSJRCRMM9KJhCSQ----QolEJCyL2YmEJJQ---CJRCRQiYQkm----IlEJFSJhCSc
+----iUQkWImEJK----CJRCRciYQkp----IuEJOQ---CJVCRgiZQkq----Il0JByJEIlwBIlwCIlwDIlwEIlwFIvGiXU-iXUEiXUIiXUMiXUQiXUUi7Qk3----IlEJGSJhCSs----iUQk_ImEJL----CJRCRsiYQkt----IlEJHCJhCS4----iUQkdImEJLw---CLhCTU
+----i7wky----IlcJBCLU-SLCIlMJDSJVCQ4iUwkeItICIlUJHyLU-yJTCQ8iVQkQImMJI----CLSBCLQBSJlCSE----i5Qkz----IlMJESJRCRIiYwki----ItKBImEJIw---CL-okGiU4Ei0IIi0oMiUYIiU4Mi0IQi0oUiUYQiU4U6cQD---7zw+OtwE--IsWi8GL
+TCQUibwk0----Iv4i0QkGIlEJBSLRCQciUQkEItEJDSJBotEJDyJXCQci14EiUwkGItMJDiJTgSLTCR-iVQkNIlUJHiLVgiJRgiLRCREiVwkOIlcJHyLXgyJTgyLTCRIiVQkPImUJI----CLVhCJRhCLRCRMiVwkQImcJIQ---CLXhSJThSLTCQsiVQkRImUJIg---CL
+lCTk----iVwkSImcJIw---CJvCTI----ixqL_gSJXCRMiZwkk----IvdiUoEi0wkVIlsJCyL_gyJSgyLTCRciQKLRCRQiWwkVImsJJw---CL_hSJnCSU----i1oIiUIIi0QkWIlsJFyJrCSk----i6wk7----IlcJFCJnCSY----i1oQiUIQi0QkYIlKFItV-ItMJGSJ
+XCRYiZwko----ItdBIlUJGCJXCRkiZQkq----ItVCImcJKw---CLXQyJTQSLTCRsiUU-i0Qk_IlcJGyJnCS0----i10UiU0Mi0wkdIlUJGiJlCSw----i1UQiUUIi0QkcIlcJHSJnCS8----i1wkEIlUJHCJlCS4----iUUQiU0U6QUC--D/dMx8i8f/dMx8K8GJRCQo
+6JIC--BSUP90/gT/NP7ooQI--INkJDw-g8QYg7wk0-----CJRCQwiVQkKHJni0QkIIusJN----CLfCQki1wkMI0MxomMJM----CL8f90/Hz/dPx8UlPoWQI--FJQ/3YE/zboDQU--IPEIIlWBItUJChHiQ_Ndgg7/X7Ri7Qk3----Iu8JMg---CLXCQQi6wk7----IX/
+eBWLBP4LRP4EdQWD7wF58om8JMg---CDZCQk-IN8JBg-fGqLhCTk----i0wkIIt0JCSLfCQYi1wkMI0syP+09JQ---D/tPSU----UlPoz-E--FJQ/3UE/3U-6H8E--CDxCCJVQSLVCQoRolF-I1tCDv3fsmLtCTc----i7wky----ItcJBCLrCTs----i0wkGItEJC-D
+yItUJBQ70X0Gi9GJVCQUhdJ4HYuMJOQ---CLBNELRNEEdQWD6gF58otEJCCJVCQUg2QkJ-CLTCQchcl4ZYt8JDCNNMU-----i1wkK-P1i2wkJP+07Kw---D/tOys----U1foIQE--FJQ/3YE/zbo1QM--IPEIIkGRYlWBI12CDtsJBx+zYu0JNw---CLvCTI----i1wk
+EIusJOw---CLTCQci0QkI-PBO9h9BovYiVwkEIXbeBOLRN0-C0TdBHUFg+sBefGJXCQQi4wk0----IXJD4kt/P//i4Qk2----ItMJBSJOIuEJO----BfXl2JCIuEJNw---CJGFuBxLQ---DDVYvsUYtREDtRFHMbg3kUEI1C-YlBEHICiwmKRQiIBBHGRBEB-OsR/3UI
+xkX8-P91/GoB6LbY///JwgQ-i0QkB-NEJ-yLVCQIE1QkEDsV7GB--HIUiw3oYE--dwQ7wXIIK8EbFexgQ-DD/zXsYE--/zXoYE--/3QkEP90JBDoYPf//4PEEMNVi+xRUVZXjUX4UP91FP91EP91DP91COjY6v///3X8i/qL8P91+FdW6C8G--CDxCT/NexgQ-D/Nehg
+Q-BSUOit1f//K/CLxhv6i9dfXsnDUV_LdCQYV4t8JBiLxwvGdQh-M9Lpig---IvHU4tcJBSD4-GDy-BVi2wkHHUgVVNVU+h7////D6z3-YPEEIvYi8/R7oPh-Yvqg8k-dOCLy4vV6y5VU1VT6FX///+L2IPEEIvHi+qD4-GDy-B0HlVT/3QkGP90JCzoNf///4PEEIvI
+iUwkIIlUJBDrCItMJCCLVCQQD6z3-YvH0e4LxnW0XYvBW19eWcOD7CRTi1wkMFWLbCQwi8ULw3UHM9LpqgE--F_LNexgQ--zyVeLPehgQ--z0oPH/4lMJBCLx4lUJBSD1v+D4-ELwnUeg8EBg9I-D6z3-YvH0e6D4-GDy-B06olUJBSJTCQQVlf/NfRgQ-D/NfBgQ-Do
+5f7//4PH/4lEJCyJVCQog9b/D6z3-dHuVldTVejI/v//g8Qgi/KL+FZXVldTVehn/v//g8QQUlDoXf7//1ZXU1WJRCR-iVQkWOhM/v//i0wkWIvwi0QkQIv6g8QgiXQkJIl8JCjptw---DP2i9Ez/1JQUoPG-VCD1wDoG/7//4PEEIP4-XXphdJ15YtMJBCJfCQwiXQk
+LDvxdQo7fCQUD4Sn----M8-rzkBJ0+CZUlD/dCQg/3QkKOgs/v//i/KL+FZXVlfo0P3//4tMJExWV/90JFCJRCRIi0QkXP90JFCJVCRIiUwkQIlEJEToqf3///90JEiL+ovw/3QkUItUJHCLRCRYUlCJdCRkiXwk_OiG/f//i8qJRCRgg8R-iUwkOIP4-Q+FQP///4XJ
+D4U4////V1ZXVuhf/f//g8QQO8V1CjvTdQ_LxovX6w_DyP+Dyv9fXl1bg8Qkw1WL7ItNCItFDIvQVot1ECvOG1UUO0UUdxNyBTl1CHMM-w3oYE--ExXsYE--i8FeXcOB7F-B--CLlCRU-Q--U1VWM9vHRCQM8OHSw1e9-SNFZ4lcJBy+i_vN7792VDIQg8ICD7ZK/g+2
+Qv/B4QgLy-+2-sHhCI1SB-vID7ZC/cHhC-vIiUycIEOD+xBy1Wp-jUwkLLv+3LqYWotBLDNBGDNB+DMBjUkE0cCJQTSD6gF16OsEi3QkGIvOi8P30SPGI8+L1QvIwcIFi0QkE-PRi0wkHIl8JBCL+4vewcsC-1SMI-PCi9VqFEGJVCQcXolMJByNqJl5glo7znK4x0Qk
+FCg---CLx4vNM8PBwQUzwgPIi0QkE-NMtCCJfCQQi/uL2ovVj_ih69luwcsC-+lGg/4octCJVCQYx0QkHDw---CLdCQYi8sLzovDI8YjzwvIi9WLRCQUwcIF-0yEIItEJB-F3Lwbj4l8JB-Dwov7-8GL1YvoiVQkGItEJBSL3sHL-kCJRCQUg/g8crWLdCQQi8eJfCQU
+i3wkHDPDM8KLzcHBBQXWwWLK-86LdCQU-0S8I-PIi8OL2olMJBiL1cHL-ovpiUQkFIvPQYlMJByD+VBywwV2VDIQgep3VDIQiUQkFIvNgcEBI0VniVQkGIuUJGgB--CLwcHoGIHr-iNFZ4HuEB4tPF+I-ovBwegQiEIBi8HB6-iIQgKISgOLTCQUi8HB6BiIQgSLwcHo
+EIhCBYvBwegIiEIGi8PB6BiIQgiLw8HoEIhCCYvDwegIiEIKiEoHi0wkEIvBwegYiEIMi8HB6BCIQg2LwcHoCIhCDohKD4vOi8GJdCQMwegYiEIQi8HB6BCIQhGLwV7B6-hdiFoLiEISiEoTW4HEU-E--MNVi+xRVlfodQQ--It1CIv4g34UEHICizb/dRCDJwCNRfxQ
+VuiIB---i038g8QMi9-78XQWgz8idBuLRQyFwHQEK86JCF+Lwl7Jw2i0UE--6L-F--BozFB--OjmBQ--zFWL7FNWi3UQV4t9CItHCCNHDIsPi18Eg/j/dDuLVQxq-okKiVoEi0cIi08Mg2IU-IlCCIlKDMdCE-E---CLRxCLTxSJBolOBItHGItPHIlGCIlODFjrQ4vB
+I8OD+P+LRQx0HYlYBDPbQ4kIiVgIM9KJU-yLRxCLTxSJBolOBOsSM9LH--E---CJU-SL2okWiVYEiVYIi8OJVgxfXltdw4PsGFOLXCQgVot0JChXiz04YU--i8eD6-B0NoPo-XQgg+gBdBuD6-F0FoPo-XU7jUQkDFBoNk1cLGjwlKVU6yCNRCQMUGik5KhP_Erk2gzr
+D41EJ-xQ_KGmT2Boh2o0xlZT6DHk//+DxBSLx1WD6-B0QIPo-XQqg+gBdCWD6-F0IIPo-XURjUQkIFBobNMC-GilThpp6yqLbCQki1wkIOsujUQkIFBor8sC-Gi+m6US6w+NRCQgUGhR0wI-_ItP0MZWU+jQ4///g8QUi9iL6ovHg+g-dECD6-F0KoPo-XQlg+gBdCCD
+6-F1EY1EJBhQ_DZNXCxo8JSlVOsqi1QkJItEJCDrMI1EJBhQ_KTkqE9oSuT_DOsPjUQkGFBoo_ZPYGiH_jTG/3QkRP90JEToZuP//4PEF-PDE9Uz9kY71XcKcgQ7w3MEi97r-jPbM+0DRCQQE1QkFDtUJBR3DHIGO0QkEHMEi8br-jP-M8kD2BPp-1wkGBNsJBwDXCQg
+E2wkJCv5dECD7wF0KoPv-XQlg+8BdCCD7wF1EY1EJCBQ_GzT-gBopU4__esqi1QkJItEJCDrMI1EJCBQ_K/L-gBovpulEusPjUQkIFBoUdMC-GiLT9DG/3QkRP90JETouOL//4PEF-PDE9U71V13BnIGO8Ny-jP2M8kDdCQcXxNMJBwPpPEWweoKweYWC/KL0YvGXluD
+xBjDi0EEhcB1BbhgUE--w2oE/3QkCP90JBDoVwE--IPEDMPC--BoFwQ-wOhq-Q--zIPs_FNVVleNRCQQUP8V-FB--FD/FQhQQ-CLTCQQi/CD+QN0DIP5BHQH_v/oOQE--DP-jXwkLKsz22oPX_urq4lcJDyL+4lsJECIXCQsi1YEZjk_dCGLww+2BBCNTCQsUOh29v//
+i1YER40EP2Y5HBB15YtMJB-zwI18JBSrq6uriVwkJIlsJCiIXCQUg/kEdSmLRgyL+2Y5GHQ2i8sPtgQBjUwkFFDoMPb//4tGDEeNDD9mORwBdeXrF7/sUE--V+iY----WVBXjUwkHOg64v//g3wkKBCNRCQUcgSLRCQUg3wkQBCNfCQscgSLfCQsU4PsGIvMUOipz///
+_gpT/3YI6F0---CDx-xQjUQkZFBX6IHQ//+DxCiFwHQGUOkJ////jUQkRFDoDQ---FlT6fj+////JURQQ-D/JShQQ-D/JRBQQ-D/JRRQQ-D/JRhQQ-D/JRxQQ-D/JSBQQ-D/JSRQQ-D/JUhQQ-D/JSxQQ-D/JTBQQ-D/JTRQQ-D/JThQQ-D/JTxQQ-BVi+xRUYtFCF_L
+8YlF+I1F+MZF/-GNVgTHBlhQQ-CDIgCDYgQ-UlDoLP7//1lZi8ZeycIE-FWL7Fb/dQiL8ehTz///xwYwUU--i8ZeXcIE-FWL7FFW/3UIi/GJdfzonv///8cGMFF--IvGXsnCB-BVi+xW/3UIi/HoGc///8cGPFF--IvGXl3CB-BVi+xRVv91CIvxiXX86GT////HBjxR
+Q-CLxl7JwgQ-VYvsVv91CIvx6N/O///HBiRRQ-CLxl5dwgQ-VYvsVv91CIvx6MTO///HBkhRQ-CLxl5dwgQ-VYvsUVb/dQiL8Yl1/OgP////xwZIUU--i8ZeycIE-I1BBMcBWFB--FDoXv3//1nDVYvsVovxjUYExwZYUE--UOhH/f//9kUI-Vl0CmoMVuhp----WVmL
+xl5dwgQ-VYvsg+wMjU30/3UI6-P///9oDFR--I1F9FDomf7//8xVi+yD7-yNTfT/dQjoHf///2hkVE--jUX0UOh5/v//zFWL7IPsDI1N9P91COhS////_KBUQ-CNRfRQ6Fn+///MVYvs/3UI6FP+//9ZXcM------------------------------------------HxV
+--------YFY-------C0VQ--vlU--MhV--DSVQ--3FU--OZV--CsVQ--+lU---JW---MVg--FlY--DhW--BIVg--nFU--PBV-------------FBRQ--lFE--gUJ--FVu_25vd24gZXhjZXB0_W9u----mFF--CUUQ-CBQk--5FF--CUUQ-CBQk--YmFkIGFycmF5IG5l
+dyBsZW5ndGg-----c3Ry_W5nIHRvbyBsb25n-GludmFs_WQgc3Rv_SBhcmd1bWVud----HN0b2kgYXJndW1lbnQgb3V0IG9mIHJhbmdl--BPRU0-MD-wMD-tMD-wLT-wMD-wMD-tMD-wMD--_W52YWxpZCBzdHJpbmcgcG9z_XRpb24-/xB--DRSQ-BFRU--gUJ--IBS
+Q-BFRU--gUJ--NBSQ-BFRU--gUJ--CBTQ-BFRU--gUJ------------------ERgQ-BkUU-------------B----dFF--HxRQ-------RGB-------------/////w----B-----ZFF------------------ChgQ-CsUU-------------C----vFF--MhRQ-B8UU--
+-----ChgQ--B---------P////8-----Q----KxRQ-------------------YE--+FF--------------w----hSQ--YUk--yFF--HxRQ--------GB---I---------/////w----B-----+FF------------------IRgQ-BIUk-------------C----WFJ--GRS
+Q-B8UU-------IRgQ--B---------P////8-----Q----EhSQ-----------------BgYE--lFJ--------------w---KRSQ-C0Uk--ZFJ--HxRQ-------YGB---I---------/////w----B-----lFJ------------------KRgQ-DkUk-------------D----
+9FJ---RTQ-BkUk--fFF-------CkYE---g--------D/////-----E----DkUk------------------xGB--DRTQ-------------M---BEU0--VFN--GRSQ-B8UU-------MRgQ--C---------P////8-----Q----DRTQ--Y-----o-Cg-----------iFM--B--
+---hEQ--wTI--DZE--Cq-Q-------PUTQ-------qFN---M---C4U0--1FN--PBTQ--------GB-------D/////------w---CcE0--E----ChgQ-------/////w-----M----hBN-------BEYE-------P////8-----D----MwTQ-------NEV--------cVE--
+-w---CxUQ-BIVE--8FN-------BgYE-------P////8-----D----GtEQ-------hGB-------D/////------w---DfRE-------DRFQ-------dFR---M---CEVE--SFR--PBTQ-------pGB-------D/////------w---ClRE-------DRFQ-------sFR---M-
+--D-VE--SFR--PBTQ-------xGB-------D/////------w---D6RE--LFU-------------jlU---BQ---8VQ-------------sVg--EF---DRV-------------HZW---IU-----------------------------B8VQ-------GBW--------tFU--L5V--DIVQ--
+0lU--NxV--DmVQ--rFU--PpV---CVg--DFY--BZW---4Vg--SFY--JxV--DwVQ-------OsBR2V0Q29tbWFuZExpbmVX-EtFUk5FTDMyLmRsb---Eg-/PzJ-WUFQQVhJQFo--PcEcHV0cw--VgFfZXJybm8--OoEbWVtY3B5--DsBG1lbW1vdmU-7gRtZW1zZXQ--BQF
+c3RyY21w---cBXN0cmxlbg--_-V3Y3N0b2w--I8EZXhpd---KgVzdHJ0b2w--DoFdG91cHBlcgBj-F9DeHhU_HJvd0V4Y2VwdGlvbg--bXN2Y3J0LmRsb---F--/PzN-WUFYUEFYQFo--BE-Pz8xdHlwZV9pbmZvQEBVQUV-WFo---k-Q29tbWFuZExpbmVUb0FyZ3ZX
+--BTSEVMTDMyLmRsb---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------HFF--------uP0FWYmFkX2FycmF5X25ld19sZW5ndGh-c3RkQE---BxRQ-------Lj9BVmJh
+ZF9hbGxvY0BzdGR-Q--cUU-------C4/QVZleGNlcHRpb25-c3RkQE--HFF--------uP0FW_W52YWxpZF9hcmd1bWVudEBzdGR-Q---HFF--------uP0FWbG9n_WNfZXJyb3J-c3RkQE-----cUU-------C4/QVZsZW5ndGhfZXJyb3J-c3RkQE---BxRQ-------
+Lj9BVm91dF9vZl9yYW5nZUBzdGR-Q---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------=
+:cidgen32.exe:
 
 ::========================================================================================================================================
 ::
