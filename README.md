@@ -30,7 +30,7 @@ irm https://massgrave.dev/get | iex
 
 ---
 
-### Method 2 - Traditional (Windows Vista and later)
+### Method 2 - Traditional (Windows XP and later)
 
 <details>
   <summary>Click here to view</summary>
