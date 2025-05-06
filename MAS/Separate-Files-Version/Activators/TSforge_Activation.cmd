@@ -902,7 +902,8 @@ goto :ts_off
 if defined esuexistsup (
 echo "%tsids%" | find /i "4220f546-f522-46df-8202-4d07afd26454" %nul1% && (
 echo "%tsids%" | find /i "7e94be23-b161-4956-a682-146ab291774c" %nul1% || (
-call :dk_color %Gray% "Now update Windows to get Client-ESU-Year6[4-6y] license and activate that using this script."
+call :dk_color %Gray% "To get Client-ESU-Year6[4-6y] license, install updates from the below URL."
+call :dk_color %Blue% "%mas%tsforge#windows-esu"
 )
 )
 goto :ts_off
