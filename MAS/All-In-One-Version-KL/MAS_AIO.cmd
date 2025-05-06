@@ -12471,7 +12471,7 @@ call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !
 call :dk_color %Blue% "Make sure you are using Latest MAS script."
 ) else (
 call :dk_color %Red% "Checking Product In Script              [!_prod! MSI Retail is not supported]"
-call :dk_color %Blue% "Use Ohook option to activate it."
+call :dk_color %Blue% "Use Ohook option to activate it. To activate with %KS%, you need to install Volume version of Office."
 )
 set fixes=%fixes% %mas%genuine-installation-media
 call :dk_color %_Yellow% "%mas%genuine-installation-media"
