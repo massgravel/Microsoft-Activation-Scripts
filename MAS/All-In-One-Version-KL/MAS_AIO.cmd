@@ -2003,6 +2003,7 @@ if defined fixes (
 call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
+if !errorlevel!==2 exit /b
 if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
 )
 
