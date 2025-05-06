@@ -1,5 +1,5 @@
-@::de62hd8-random
-@set masver=3.1
+@::7f8jhe-random
+@set masver=3.2
 @setlocal DisableDelayedExpansion
 @echo off
 
