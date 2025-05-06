@@ -145,15 +145,15 @@ echo Upgrade to Windows Vista SP1 or SP2.
 goto dk_done
 )
 
-if not exist %ps% (
+if %winbuild% LSS 7600 if not exist "%SysPath%\WindowsPowerShell\v1.0\Modules" (
 %nceline%
+if not exist %ps% (
 echo PowerShell is not installed in your system.
-if %winbuild% LSS 7600 (
-echo Install PowerShell using the following URL.
+)
+echo Install PowerShell 2.0 using the following URL.
 echo:
 echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
 if %_unattended%==0 start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
-)
 goto dk_done
 )
 
