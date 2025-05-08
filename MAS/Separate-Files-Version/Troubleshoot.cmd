@@ -733,7 +733,7 @@ for %%# in (SppE%w%xtComObj.exe %_slexe%) do (reg delete "HKLM\SOFTWARE\Microsof
 
 if %winbuild% LSS 9200 if not defined _vis (
 REM Fix issues caused by Update KB971033 in Windows 7
-REM https://support.microsoft.com/help/4487266
+REM https://support.microsoft.com/en-us/help/4487266
 echo:
 echo Checking Update KB971033...
 %psc% "if (Get-Hotfix -Id KB971033 -ErrorAction SilentlyContinue) {Exit 3}" %nul%
@@ -1230,7 +1230,7 @@ set "permerror=Error Found In SPP Registries"
 )
 )
 
-REM  https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
+REM  https://learn.microsoft.com/en-us/office/troubleshoot/activation/license-issue-when-start-office-application
 
 if not defined permerror (
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% && (
@@ -1276,7 +1276,7 @@ if ($env:permerror -eq 'Error Found In SPP Registries') {
 }
 
 # Fix perms for SPP in HKU\S-1-5-20
-# https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
+# https://learn.microsoft.com/en-us/office/troubleshoot/activation/license-issue-when-start-office-application
 
 if ($env:permerror -ne 'Error Found In S-1-5-20 SPP') {
     exit

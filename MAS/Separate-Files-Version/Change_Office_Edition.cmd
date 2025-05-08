@@ -1044,7 +1044,7 @@ call :dk_color %_Green% "Enter an option number using your keyboard and press En
 set /p inpt=
 if "%inpt%"=="" goto :oe_changeupdchnl
 if "%inpt%"=="0" goto :oemenu
-if /i "%inpt%"=="R" start https://learn.microsoft.com/microsoft-365-apps/updates/overview-update-channels & goto :oe_changeupdchnl
+if /i "%inpt%"=="R" start https://learn.microsoft.com/en-us/microsoft-365-apps/updates/overview-update-channels & goto :oe_changeupdchnl
 for /l %%i in (1,1,%counter%) do (if "%inpt%"=="%%i" set verified=1)
 set targetFFN=!targetFFN%inpt%!
 set targetchannel=!targetchannel%inpt%!
