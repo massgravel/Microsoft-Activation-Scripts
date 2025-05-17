@@ -4293,7 +4293,7 @@ echo Checking Activation ID                  [%tempid%] [%tsedition%]
 
 set generickey=1
 call :dk_inskey "[%key%]"
-if not defined error set tsids=%tsids% %tempid%
+set tsids=%tsids% %tempid%
 goto :ts_esu
 
 ::========================================================================================================================================
@@ -4901,7 +4901,7 @@ goto :ts_act
 )
 
 call :dk_inskey "[%key%]"
-if not defined error set tsids=%tsids% %tempid%
+set tsids=%tsids% %tempid%
 goto :ts_act
 
 ::========================================================================================================================================
