@@ -309,7 +309,7 @@ echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
-if !errorlevel!==1 (start %mas% & exit /b)
+if !errorlevel!==1 (start https://git.activated.win/massg%-%rave/Micr%-%osoft-Act%-%ivation-Scripts & start https://github.com/massgra%-%vel/Micro%-%soft-Acti%-%vation-Scripts & start %mas% & exit /b)
 )
 )
 
@@ -1112,7 +1112,7 @@ call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==2 goto :oemenu
-if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
+if !errorlevel!==1 (start https://git.activated.win/massg%-%rave/Micr%-%osoft-Act%-%ivation-Scripts & start https://github.com/massgra%-%vel/Micro%-%soft-Acti%-%vation-Scripts & for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
@@ -1477,7 +1477,7 @@ call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==2 exit /b
-if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
+if !errorlevel!==1 (start https://git.activated.win/massg%-%rave/Micr%-%osoft-Act%-%ivation-Scripts & start https://github.com/massgra%-%vel/Micro%-%soft-Acti%-%vation-Scripts & for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
