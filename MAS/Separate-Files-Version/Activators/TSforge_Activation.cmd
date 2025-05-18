@@ -8189,7 +8189,7 @@ function Office-ActID {
         }
     }
 
-    $filterPreview = $filteredConfigs | Where-Object { $_.ProductDescription -notmatch 'preview' }
+    $filterPreview = $filteredConfigs | Where-Object { $_.ProductDescription -notmatch 'preview|c2r' }
 
     if ($filterPreview.Count -ne 0) {
         $filteredConfigs = $filterPreview
