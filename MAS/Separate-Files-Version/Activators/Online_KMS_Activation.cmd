@@ -1212,6 +1212,10 @@ call :ksdata getinfo !_prod!
 if defined _altoffid (
 set _License=!_altoffid!
 echo Converting Retail To Volume             [!_prod! To !_altoffid!]
+echo %%# | find /i "O365" %nul% && (
+if "%oVer%"=="15" (call :dk_color %Gray% "Mondo 2013 is equivalent to O365 [15.0 version] in terms of the latest features.")
+if "%oVer%"=="16" (call :dk_color %Gray% "Mondo 2016 is equivalent to O365 in terms of the latest features.")
+)
 set _prod=!_altoffid!
 call :ks_osppready
 )

@@ -1797,10 +1797,7 @@ set _altoffid=MondoRetail
 call :ks_osppready
 echo Converting Unsupported O365 Office      [%%# To MondoRetail]
 if "%oVer%"=="15" (call :dk_color %Gray% "Mondo 2013 is equivalent to O365 [15.0 version] in terms of the latest features.")
-if "%oVer%"=="16" (
-call :dk_color %Gray% "Mondo 2016 is equivalent to O365 in terms of the latest features."
-call :dk_color %Gray% "To enhance stability, select the Change Office Edition option in the Main Menu to fully switch to Mondo."
-)
+if "%oVer%"=="16" (call :dk_color %Gray% "Mondo 2016 is equivalent to O365 in terms of the latest features.")
 )
 
 if not defined _oMSI (
