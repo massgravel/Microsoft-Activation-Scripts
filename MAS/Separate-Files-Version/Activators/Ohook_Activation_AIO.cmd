@@ -671,12 +671,12 @@ call :oh_hookinstall
 
 ::========================================================================================================================================
 
-::  Old version (16.0.9xxxx and below) of Office with subscription license key may show a banner to sign in to fix license issue.
+::  Old version of Office with subscription license key may show a banner to sign in to fix license issue.
 ::  Although script applies a Resiliency registry entry to fix that but it doesn't work on old office versions.
 ::  Below code checks that condition and informs the user to update the Office.
 
 if defined _sublic (
-if not exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" (
+if not exist "%_oLPath%\Word2021VL_KMS_Client_AE*.xrm-ms" (
 call :dk_color %Gray% "Checking Old Office With Sub License    [Found. Update Office, otherwise, it may show a licensing issue-related banner.]"
 )
 )
