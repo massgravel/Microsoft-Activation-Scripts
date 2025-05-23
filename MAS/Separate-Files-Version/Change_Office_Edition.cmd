@@ -415,6 +415,7 @@ _updch
 _lang
 _clversion
 _version
+_AudienceData
 _oIds
 _c2rXml
 _c2rExe
@@ -802,8 +803,39 @@ set errorcode=%errorlevel%
 timeout /t 10 %nul%
 
 echo:
+set suggestchannel=
+
 if %errorcode% EQU 0 (
-call :dk_color %Gray% "Now run the Office activation option from the main menu."
+echo %targetedition% | find /i "2019Volume" %nul% && (
+if not defined ltsc19 set suggestchannel=Production::LTSC
+if /i not %_AudienceData%==Production::LTSC set suggestchannel=Production::LTSC
+if /i not %_updch%==F2E724C1-748F-4B47-8FB8-8E0D210E9208 set suggestchannel=Production::LTSC
+)
+
+echo %targetedition% | find /i "2021Volume" %nul% && (
+if not defined ltsc21 set suggestchannel=Production::LTSC2021
+if /i not %_AudienceData%==Production::LTSC2021 set suggestchannel=Production::LTSC2021
+if /i not %_updch%==5030841D-C919-4594-8D2D-84AE4F96E58E set suggestchannel=Production::LTSC2021
+)
+
+echo %targetedition% | find /i "2024Volume" %nul% && (
+if not defined ltsc24 set suggestchannel=Production::LTSC2024
+if /i not %_AudienceData%==Production::LTSC2024 set suggestchannel=Production::LTSC2024
+if /i not %_updch%==7983BAC0-E531-40CF-BE00-FD24FE66619C set suggestchannel=Production::LTSC2024
+)
+
+echo %targetedition% | findstr /R "20.*Volume" %nul% || (
+if defined ltscfound set suggestchannel=Production::CC
+echo %_AudienceData% | find /i "LTSC" %nul% && set suggestchannel=Production::CC
+)
+
+if defined suggestchannel (
+call :dk_color %Gray% "Mismatch found in update channel and installed product."
+call :dk_color %Blue% "It is recommended to change the update channel to [!suggestchannel!] from the previous menu."
+)
+
+echo:
+call :dk_color %Gray% "To activate Office, run the activation option from the main menu."
 ) else (
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
@@ -980,6 +1012,12 @@ echo Installed Office editions: %_oIds%
 echo Unsupported Office edition is installed on your Windows build version %winbuild%.
 goto :oe_goback
 )
+if defined ltscfound (
+%eline%
+echo Installed Office update channel: %ltsc19%%ltsc21%%ltsc24%
+echo Unsupported Office update channel is installed on your Windows build version %winbuild%.
+goto :oe_goback
+)
 )
 
 ::===============
@@ -988,49 +1026,52 @@ set inpt=
 set counter=0
 set verified=0
 set targetFFN=
+set bypassFFN=
 set targetchannel=
 
 %line%
 echo:
 call :dk_color %Gray% "Installed update channel: %_AudienceData%, %_version%, Client: %_clversion%"
-call :dk_color %Gray% "Unsupported update channels are excluded from this list."
+call :dk_color %Gray% "Installed Office editions: %_oIds%"
 %line%
 echo:
 
 for %%# in (
-"5440FD1F-7ECB-4221-8110-145EFAA6372F_Insider Fast [Beta]  -    Insiders::DevMain"
-"64256AFE-F5D9-4F86-8936-8840A6A4F5BE_Monthly Preview      -    Insiders::CC"
-"492350F6-3A01-4F97-B9C0-C7C6DDF67D60_Monthly [Current]    -  Production::CC"
-"55336B82-A18D-4DD6-B5F6-9E5095C314A6_Monthly Enterprise   -  Production::MEC"
-"B8F9B850-328D-4355-9145-C59439A0C4CF_Semi Annual Preview  -    Insiders::FRDC"
-"7FFBC6BF-BC32-4F92-8982-F9DD17FD3114_Semi Annual          -  Production::DC"
-"EA4A4090-DE26-49D7-93C1-91BFF9E53FC3_DevMain Channel      -     Dogfood::DevMain"
-"B61285DD-D9F7-41F2-9757-8F61CBA4E9C8_Microsoft Elite      -   Microsoft::DevMain"
-"F2E724C1-748F-4B47-8FB8-8E0D210E9208_Perpetual2019 VL     -  Production::LTSC"
-"1D2D2EA6-1680-4C56-AC58-A441C8C24FF9_Microsoft2019 VL     -   Microsoft::LTSC"
-"5030841D-C919-4594-8D2D-84AE4F96E58E_Perpetual2021 VL     -  Production::LTSC2021"
-"86752282-5841-4120-AC80-DB03AE6B5FDB_Microsoft2021 VL     -   Microsoft::LTSC2021"
-"7983BAC0-E531-40CF-BE00-FD24FE66619C_Perpetual2024 VL     -  Production::LTSC2024"
-"C02D8FE6-5242-4DA8-972F-82EE55E00671_Microsoft2024 VL     -   Microsoft::LTSC2024"
+"5440fd1f-7ecb-4221-8110-145efaa6372f_Insider Fast [Beta]  -    Insiders::DevMain   -"
+"64256afe-f5d9-4f86-8936-8840a6a4f5be_Monthly Preview      -    Insiders::CC        -"
+"492350f6-3a01-4f97-b9c0-c7c6ddf67d60_Monthly [Current]    -  Production::CC        -"
+"55336b82-a18d-4dd6-b5f6-9e5095c314a6_Monthly Enterprise   -  Production::MEC       -"
+"b8f9b850-328d-4355-9145-c59439a0c4cf_Semi Annual Preview  -    Insiders::FRDC      -"
+"7ffbc6bf-bc32-4f92-8982-f9dd17fd3114_Semi Annual          -  Production::DC        -"
+"ea4a4090-de26-49d7-93c1-91bff9e53fc3_DevMain Channel      -     Dogfood::DevMain   -"
+"b61285dd-d9f7-41f2-9757-8f61cba4e9c8_Microsoft Elite      -   Microsoft::DevMain   -"
+"f2e724c1-748f-4b47-8fb8-8e0d210e9208_Perpetual2019 VL     -  Production::LTSC      -"
+"1d2d2ea6-1680-4c56-ac58-a441c8c24ff9_Microsoft2019 VL     -   Microsoft::LTSC      -"
+"5030841d-c919-4594-8d2d-84ae4f96e58e_Perpetual2021 VL     -  Production::LTSC2021  -"
+"86752282-5841-4120-ac80-db03ae6b5fdb_Microsoft2021 VL     -   Microsoft::LTSC2021  -"
+"7983bac0-e531-40cf-be00-fd24fe66619c_Perpetual2024 VL     -  Production::LTSC2024  -"
+"c02d8fe6-5242-4da8-972f-82ee55e00671_Microsoft2024 VL     -   Microsoft::LTSC2024  -"
 ) do (
 for /f "tokens=1-2 delims=_" %%A in ("%%~#") do (
+set bypass=
 set supported=
 if %winbuild% LSS 10240 (echo %%B | findstr /i "LTSC DevMain" %nul% || set supported=1) else (set supported=1)
 if %winbuild% GEQ 10240 (
-if defined ltsc19 echo %%B | find /i "2019 VL" %nul% || set supported=
-if defined ltsc21 echo %%B | find /i "2021 VL" %nul% || set supported=
-if defined ltsc24 echo %%B | find /i "2024 VL" %nul% || set supported=
-if not defined ltscfound echo %%B | find /i "LTSC" %nul% && set supported=
+if defined ltsc19 echo %%B | find /i "2019 VL" %nul% || set bypass=1
+if defined ltsc21 echo %%B | find /i "2021 VL" %nul% || set bypass=1
+if defined ltsc24 echo %%B | find /i "2024 VL" %nul% || set bypass=1
+if not defined ltscfound echo %%B | find /i "LTSC" %nul% && set bypass=1
 )
 if defined supported (
 set /a counter+=1
 if !counter! LSS 10 (
-echo [!counter!]  %%B
+if defined bypass (echo [!counter!]  %%B  Unofficial change method will be used) else (echo [!counter!]  %%B)
 ) else (
-echo [!counter!] %%B
+if defined bypass (echo [!counter!] %%B  Unofficial change method will be used) else (echo [!counter!] %%B)
 )
 set targetFFN!counter!=%%A
 set targetchannel!counter!=%%B
+if defined bypass set bypassFFN=!bypassFFN!%%A
 )
 )
 )
@@ -1061,30 +1102,12 @@ set build=
 for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':getbuild\:.*';iex ($f[1])" %nul6%') do (set build=%%a)
 echo "%build%" | find /i "16." %nul% || set build=
 
-::  Cleanup Office update related registries, thanks to @abbodi1406
-::  https://techcommunity.microsoft.com/t5/office-365-blog/how-to-manage-office-365-proplus-channels-for-it-pros/ba-p/795813
-::  https://learn.microsoft.com/en-us/microsoft-365-apps/updates/change-update-channels#considerations-when-changing-channels
-
 echo:
 for /f "tokens=1 delims=-" %%A in ("%targetchannel%") do (echo Target update channel: %%A)
-echo:
-echo Cleaning Office update registry keys...
-echo Adding new update channel to registry keys...
+echo Target build number: %build%
+echo: %bypassFFN% | find /i "%targetFFN%" %nul% && goto :oe_changeunoff
 
-%nul% reg add %o16c2r_reg%\Configuration /v CDNBaseUrl /t REG_SZ /d "https://officecdn.microsoft.com/pr/%targetFFN%" /f
-%nul% reg add %o16c2r_reg%\Configuration /v UpdateChannel /t REG_SZ /d "https://officecdn.microsoft.com/pr/%targetFFN%" /f
-%nul% reg add %o16c2r_reg%\Configuration /v UpdateChannelChanged /t REG_SZ /d "True" /f
-%nul% reg delete %o16c2r_reg%\Configuration /v UnmanagedUpdateURL /f
-%nul% reg delete %o16c2r_reg%\Configuration /v UpdateUrl /f
-%nul% reg delete %o16c2r_reg%\Configuration /v UpdatePath /f
-%nul% reg delete %o16c2r_reg%\Configuration /v UpdateToVersion /f
-%nul% reg delete %o16c2r_reg%\Updates /v UpdateToVersion /f
-%nul% reg delete HKLM\SOFTWARE\Policies\Microsoft\office\16.0\common\officeupdate /f
-%nul% reg delete HKLM\SOFTWARE\Policies\Microsoft\office\16.0\common\officeupdate /f /reg:32
-%nul% reg delete HKCU\SOFTWARE\Policies\Microsoft\office\16.0\common\officeupdate /f
-%nul% reg delete HKLM\SOFTWARE\Policies\Microsoft\cloud\office\16.0\Common\officeupdate /f
-%nul% reg delete HKLM\SOFTWARE\Policies\Microsoft\cloud\office\16.0\Common\officeupdate /f /reg:32
-%nul% reg delete HKCU\Software\Policies\Microsoft\cloud\office\16.0\Common\officeupdate /f
+call :oe_cleanupreg
 
 if not defined build (
 if %winbuild% GEQ 9200 call :dk_color %Gray% "Failed to detect build number for the target FFN."
@@ -1099,6 +1122,76 @@ echo %updcommand%
 echo:
 echo Check this webpage for help - %mas%troubleshoot
 goto :oe_goback
+
+::=======================
+
+::  Unofficial method to change channel
+
+:oe_changeunoff
+
+set abortchange=
+echo %targetchannel% | find /i "2019 VL" %nul% && (for %%A in (%_oIds%) do (echo %%A | find /i "2019Volume" %nul% || set abortchange=1))
+echo %targetchannel% | find /i "2021 VL" %nul% && (for %%A in (%_oIds%) do (echo %%A | find /i "2021Volume" %nul% || set abortchange=1))
+echo %targetchannel% | find /i "2024 VL" %nul% && (for %%A in (%_oIds%) do (echo %%A | find /i "2024Volume" %nul% || set abortchange=1))
+
+if defined abortchange (
+%eline%
+echo Mismatch found in installed Office products and target update channel. Aborting...
+echo Non-perpetual Office products are not suppported with Perpetual VL update channels.
+goto :oe_goback
+)
+
+if not defined build (
+%eline%
+call :dk_color %Red% "Failed to detect build number for the target FFN."
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto :oe_goback
+)
+
+set buildchk=0
+for /f "tokens=3 delims=." %%a in ("%build%") do set "buildchk=%%a"
+
+set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%_firstoId%.16_%_lang%_x-none cdnbaseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% baseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% version.16=%build% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%targetFFN% %_firstoId%.excludedapps.16=%_firstoIdExcludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
+set "c2rclientupdate=!c2rcommand! scenario=CLIENTUPDATE"
+
+if %clverchk% LSS %buildchk% (
+echo:
+call :dk_color %Blue% "Do not break the operation in the middle..."
+echo:
+echo Updating Office C2R client with the command below, please wait...
+echo:
+echo %c2rclientupdate%
+%c2rclientupdate%
+for /l %%i in (1,1,30) do (if !clverchk! LSS %buildchk% (call :ch_getinfo&timeout /t 10 %nul%))
+)
+
+if %clverchk% LSS %buildchk% (
+echo:
+call :dk_color %Red% "Failed to update Office C2R client. Aborting..."
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto :oe_goback
+)
+
+call :oe_cleanupreg
+
+echo Running the below command to change update channel, please wait...
+echo:
+echo %c2rcommand%
+%c2rcommand%
+set errorcode=%errorlevel%
+timeout /t 10 %nul%
+
+echo:
+if %errorcode% EQU 0 (
+call :dk_color %Gray% "Now run the Office activation option from the main menu."
+) else (
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
 
 ::========================================================================================================================================
 
@@ -1126,6 +1219,36 @@ goto :oemenu
 
 ::========================================================================================================================================
 
+:oe_cleanupreg
+
+::  Cleanup Office update related registries, thanks to @abbodi1406
+::  https://techcommunity.microsoft.com/t5/office-365-blog/how-to-manage-office-365-proplus-channels-for-it-pros/ba-p/795813
+::  https://learn.microsoft.com/en-us/microsoft-365-apps/updates/change-update-channels#considerations-when-changing-channels
+
+echo:
+echo Cleaning Office update registry keys...
+echo Adding new update channel to registry keys...
+echo:
+
+%nul% reg add %o16c2r_reg%\Configuration /v CDNBaseUrl /t REG_SZ /d "https://officecdn.microsoft.com/pr/%targetFFN%" /f
+%nul% reg add %o16c2r_reg%\Configuration /v UpdateChannel /t REG_SZ /d "https://officecdn.microsoft.com/pr/%targetFFN%" /f
+%nul% reg add %o16c2r_reg%\Configuration /v UpdateChannelChanged /t REG_SZ /d "True" /f
+%nul% reg delete %o16c2r_reg%\Configuration /v UnmanagedUpdateURL /f
+%nul% reg delete %o16c2r_reg%\Configuration /v UpdateUrl /f
+%nul% reg delete %o16c2r_reg%\Configuration /v UpdatePath /f
+%nul% reg delete %o16c2r_reg%\Configuration /v UpdateToVersion /f
+%nul% reg delete %o16c2r_reg%\Updates /v UpdateToVersion /f
+%nul% reg delete HKLM\SOFTWARE\Policies\Microsoft\office\16.0\common\officeupdate /f
+%nul% reg delete HKLM\SOFTWARE\Policies\Microsoft\office\16.0\common\officeupdate /f /reg:32
+%nul% reg delete HKCU\SOFTWARE\Policies\Microsoft\office\16.0\common\officeupdate /f
+%nul% reg delete HKLM\SOFTWARE\Policies\Microsoft\cloud\office\16.0\Common\officeupdate /f
+%nul% reg delete HKLM\SOFTWARE\Policies\Microsoft\cloud\office\16.0\Common\officeupdate /f /reg:32
+%nul% reg delete HKCU\Software\Policies\Microsoft\cloud\office\16.0\Common\officeupdate /f
+
+exit /b
+
+::========================================================================================================================================
+
 :oe_tempcleanup
 
 del /f /q %SystemRoot%\Temp\SingleApps_Volume.txt %nul%
@@ -1145,6 +1268,7 @@ set _oRoot=
 set _oArch=
 set _updch=
 set _oIds=
+set _firstoId=
 set _lang=
 set _cfolder=
 set _version=
@@ -1175,9 +1299,13 @@ for /f "tokens=%_tok% delims=\" %%a in ('reg query "%o16c2r_reg%\ProductReleaseI
 if defined _oIds (set "_oIds=!_oIds! %%a") else (set "_oIds=%%a")
 )
 set _oIds=%_oIds:.16=%
+for /f "tokens=1" %%A in ("%_oIds%") do set _firstoId=%%A
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\Configuration /v %_firstoId%.ExcludedApps" %nul6%') do (set "_firstoIdExcludelist=%%b")
 
 set verchk=0
+set clverchk=0
 for /f "tokens=3 delims=." %%a in ("%_version%") do set "verchk=%%a"
+for /f "tokens=3 delims=." %%a in ("%_clversion%") do set "clverchk=%%a"
 
 if exist "%_oRoot%\Licenses16\c2rpridslicensefiles_auto.xml" set "_c2rXml=%_oRoot%\Licenses16\c2rpridslicensefiles_auto.xml"
 
@@ -1193,16 +1321,13 @@ if exist "%_cfolder%\OfficeC2RClient.exe" (
 set "_c2rCexe=%_cfolder%\OfficeC2RClient.exe"
 )
 
-set "audidata4=%_AudienceData:~-4%"
+::  Check LTSC version files
 
-if /i "%audidata4%"=="LTSC" set ltsc19=LTSC
-echo %_clversion% %_version% | findstr "16.0.103 16.0.104 16.0.105" %nul% && set ltsc19=LTSC
-
-if /i "%audidata4%"=="2021" set ltsc21=LTSC2021
-echo %_clversion% %_version% | findstr "16.0.14332" %nul% && set ltsc21=LTSC2021
-
-if /i "%audidata4%"=="2024" set ltsc24=LTSC2024
-::  LTSC 2024 build is not fixed yet
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\ProductReleaseIDs\%_actconfig%" /s %nul6%') do (
+echo "%%b" %nul2% | findstr "16.0.103 16.0.104 16.0.105" %nul% && set ltsc19=LTSC
+echo "%%b" %nul2% | findstr "16.0.14332" %nul% && set ltsc21=LTSC2021
+echo "%%b" %nul2% | findstr "16.0.17932" %nul% && set ltsc24=LTSC2024
+)
 
 if not "%ltsc19%%ltsc21%%ltsc24%"=="" set ltscfound=1
 
