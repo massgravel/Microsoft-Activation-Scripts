@@ -806,6 +806,7 @@ echo:
 set suggestchannel=
 
 if %errorcode% EQU 0 (
+if %change%==1 (
 echo %targetedition% | find /i "2019Volume" %nul% && (
 if not defined ltsc19 set suggestchannel=Production::LTSC
 if /i not %_AudienceData%==Production::LTSC set suggestchannel=Production::LTSC
@@ -833,8 +834,8 @@ if defined suggestchannel (
 call :dk_color %Gray% "Mismatch found in update channel and installed product."
 call :dk_color %Blue% "It is recommended to change the update channel to [!suggestchannel!] from the previous menu."
 )
-
 echo:
+)
 call :dk_color %Gray% "To activate Office, run the activation option from the main menu."
 ) else (
 set fixes=%fixes% %mas%troubleshoot
