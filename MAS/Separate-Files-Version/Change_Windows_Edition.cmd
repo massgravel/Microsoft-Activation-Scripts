@@ -390,8 +390,7 @@ if not defined allapps (
 %eline%
 echo Failed to find activation IDs. Aborting...
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Blue% "To fix this issue, activate Windows from the main menu."
 goto dk_done
 )
 
@@ -413,8 +412,7 @@ if not defined osedition (
 %eline%
 echo Failed to detect OS edition, aborting...
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Blue% "To fix this issue, activate Windows from the main menu."
 goto dk_done
 )
 

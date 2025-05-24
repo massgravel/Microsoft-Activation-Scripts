@@ -16637,8 +16637,7 @@ if not defined allapps (
 %eline%
 echo Failed to find activation IDs. Aborting...
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Blue% "To fix this issue, activate Windows from the main menu."
 goto dk_done
 )
 
@@ -16660,8 +16659,7 @@ if not defined osedition (
 %eline%
 echo Failed to detect OS edition, aborting...
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Blue% "To fix this issue, activate Windows from the main menu."
 goto dk_done
 )
 
@@ -17460,15 +17458,6 @@ echo:
 echo Initializing...
 echo:
 
-if not exist %SysPath%\sppsvc.exe (
-%eline%
-echo [%SysPath%\sppsvc.exe] file is missing. Aborting...
-echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
-goto dk_done
-)
-
 ::========================================================================================================================================
 
 set spp=SoftwareLicensingProduct
@@ -17502,8 +17491,7 @@ if %osedition%==0 (
 %eline%
 echo Failed to detect OS Edition. Aborting...
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Blue% "To fix this issue, activate Windows from the main menu."
 goto dk_done
 )
 
@@ -18296,7 +18284,7 @@ set "c2rclientupdate=!c2rcommand! scenario=CLIENTUPDATE"
 
 if %clverchk% LSS %buildchk% (
 echo:
-call :dk_color %Blue% "Do not break the operation in the middle..."
+call :dk_color %Blue% "Do not terminate the operation before it completes..."
 echo:
 echo Updating Office C2R client with the command below, please wait...
 echo:
