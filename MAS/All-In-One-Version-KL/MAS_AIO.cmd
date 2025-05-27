@@ -67,6 +67,8 @@ exit /b
 
 set "blank="
 set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
+set "github=ht%blank%tps%blank%://github.com/massgra%blank%vel/Micro%blank%soft-Acti%blank%vation-Scripts"
+set "selfgit=ht%blank%tps%blank%://git.acti%blank%vated.win/massg%blank%rave/Micr%blank%osoft-Act%blank%ivation-Scripts"
 
 ::  Check if Null service is working, it's important for the batch script
 
@@ -334,7 +336,7 @@ echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
-if !errorlevel!==1 (start https://git.activated.win/massg%-%rave/Micr%-%osoft-Act%-%ivation-Scripts & start https://github.com/massgra%-%vel/Micro%-%soft-Acti%-%vation-Scripts & start %mas% & exit /b)
+if !errorlevel!==1 (start %selfgit% & start %github% & start %mas% & exit /b)
 )
 )
 
@@ -431,7 +433,7 @@ choice /C:123456789EH0 /N
 set _erl=%errorlevel%
 
 if %_erl%==12 exit /b
-if %_erl%==11 start %mas%troubleshoot & goto :MainMenu
+if %_erl%==11 (start %selfgit% & start %github% & start %mas%troubleshoot & goto :MainMenu)
 if %_erl%==10 goto :Extras
 if %_erl%==9 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
 if %_erl%==8 setlocal & call :change_offedition & cls & endlocal & goto :MainMenu
@@ -2004,7 +2006,7 @@ call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==2 exit /b
-if !errorlevel!==1 (start https://git.activated.win/massg%-%rave/Micr%-%osoft-Act%-%ivation-Scripts & start https://github.com/massgra%-%vel/Micro%-%soft-Acti%-%vation-Scripts & for %%# in (%fixes%) do (start %%#))
+if !errorlevel!==1 (start %selfgit% & start %github% & for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
@@ -15530,7 +15532,7 @@ if %_erl%==5 goto:retokens
 if %_erl%==4 goto:fixwmi
 if %_erl%==3 goto:sfcscan
 if %_erl%==2 goto:dism_rest
-if %_erl%==1 start %mas%troubleshoot.html &goto at_menu
+if %_erl%==1 (start %selfgit% & start %github% & start %mas%troubleshoot & goto at_menu)
 goto :at_menu
 
 ::========================================================================================================================================
@@ -18331,7 +18333,7 @@ call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
 if !errorlevel!==2 goto :oemenu
-if !errorlevel!==1 (start https://git.activated.win/massg%-%rave/Micr%-%osoft-Act%-%ivation-Scripts & start https://github.com/massgra%-%vel/Micro%-%soft-Acti%-%vation-Scripts & for %%# in (%fixes%) do (start %%#))
+if !errorlevel!==1 (start %selfgit% & start %github% & for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
