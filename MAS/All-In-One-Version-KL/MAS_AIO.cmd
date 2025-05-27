@@ -396,7 +396,16 @@ if not defined terminal mode 76, 34
 if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" set _hwidgo=1
 if %winbuild% GTR 14393 if exist "%SysPath%\spp\tokens\skus\EnterpriseSN\" set _hwidgo=
 if not defined _hwidgo set _tsforgego=1
+
 set _ohookgo=1
+if %winbuild% GEQ 9200 (
+if %winbuild% LSS 10240 set _ohookgo=
+if %winbuild% GEQ 19041 if %winbuild% LEQ 19045 set _ohookgo=
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" set _ohookgo=
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" set _ohookgo=
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-EnterpriseS*dition~*.mum" set _ohookgo=
+)
+if not defined _ohookgo set _tsforgego=1
 
 echo:
 echo:
