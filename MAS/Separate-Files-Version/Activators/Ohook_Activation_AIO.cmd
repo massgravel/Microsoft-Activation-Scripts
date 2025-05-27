@@ -539,7 +539,7 @@ call :dk_color %Red% "Checking Installed Office               [Not Found]"
 
 if defined ohub (
 echo:
-echo You only have the Office dashboard app installed, you need to install the full version of Office.
+echo You only have the Office Dashboard app installed. You need to install the full version of Office.
 )
 echo:
 call :dk_color %Blue% "Download and install Office from the below URL and then try again."
