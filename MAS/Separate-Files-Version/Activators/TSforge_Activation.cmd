@@ -45,6 +45,11 @@ set tsids=
 ::  To reset rearm counter, evaluation period and clear the tamper state, key lock, run the script with "/Z-Reset" parameter or change 0 to 1 in below line
 set _resall=0
 
+::  Choose activation method:
+::  In builds 19041 and later, the script will auto select StaticCID (requires internet). If no internet is detected, it will then auto select the KMS4k method. For builds lower than 19041, the script will auto select ZeroCID.
+::  To change the activation method, run the script with the parameters "/Z-SCID", "/Z-ZCID", or "/Z-KMS4k", or modify the option from Auto to SCID, ZCID, or KMS4k in the line below.
+set _actmethod=Auto
+
 ::  Debug Mode:
 ::  To run the script in debug mode, change 0 to any parameter above that you want to run, in below line
 set "_debug=0"
@@ -191,10 +196,14 @@ if /i "%%A"=="/Z-OffHost"              (set _actoffhost=1)
 if /i "%%A"=="/Z-APPX"                 (set _actappx=1)
 echo "%%A" | find /i "/Z-ID-"  >nul && (set _actman=1& set "filtsids=%%A" & call set "filtsids=%%filtsids:~6%%" & if defined filtsids call set tsids=%%filtsids%% %%tsids%%)
 if /i "%%A"=="/Z-Reset"                (set _resall=1)
+if /i "%%A"=="/Z-SCID"                 (set _actmethod=SCID)
+if /i "%%A"=="/Z-ZCID"                 (set _actmethod=ZCID)
+if /i "%%A"=="/Z-KMS4k"                (set _actmethod=KMS4k)
 )
 
 if not defined tsids set _actman=0
 for %%A in (%_actwin% %_actesu% %_actoff% %_actprojvis% %_actwinesuoff% %_actwinhost% %_actoffhost% %_actappx% %_actman% %_resall%) do (if "%%A"=="1" set _unattended=1)
+if /i not %_actmethod%==Auto set _unattended=1
 
 ::========================================================================================================================================
 
@@ -459,6 +468,7 @@ echo               [E] Reset    - Rearm/Timers
 ) else (
 echo               [E] Reset    - Rearm/Timers/Tamper/Lock
 )
+echo               [F] Change   - Activation Method [%_actmethod%]
 echo               _______________________________________________       
 echo:
 echo               [6] Remove TSforge Activation
@@ -467,12 +477,13 @@ echo               [0] %_exitmsg%
 echo        ______________________________________________________________
 echo:
 call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard..."
-choice /C:12345ABCDE670 /N
+choice /C:12345ABCDEF670 /N
 set _el=!errorlevel!
 
-if !_el!==13 exit /b
-if !_el!==12 start %mas%genuine-installation-media & goto :ts_menu
-if !_el!==11 call :ts_remove & cls & goto :ts_menu
+if !_el!==14 exit /b
+if !_el!==13 start %mas%genuine-installation-media & goto :ts_menu
+if !_el!==12 call :ts_remove & cls & goto :ts_menu
+if !_el!==11 goto :ts_changemethod
 if !_el!==10 cls & setlocal & set "_resall=1"       & call :ts_start & endlocal & cls & goto :ts_menu
 if !_el!==9  cls & setlocal & set "_actman=1"       & call :ts_start & endlocal & cls & goto :ts_menu
 if !_el!==8  cls & setlocal & set "_actappx=1"      & call :ts_start & endlocal & cls & goto :ts_menu
@@ -485,6 +496,54 @@ if !_el!==2  cls & setlocal & set "_actesu=1"       & call :ts_start & endlocal 
 if !_el!==1  cls & setlocal & set "_actwin=1"       & call :ts_start & endlocal & cls & goto :ts_menu
 goto :ts_menu
 )
+
+::========================================================================================================================================
+
+:ts_changemethod
+
+cls
+if not defined terminal mode 76, 36
+
+echo:
+echo:
+echo:
+echo        ______________________________________________________________
+echo: 
+call :dk_color2 %_White% "             [1] " %_Green% " Auto"
+echo                   Build 19041 and later:
+echo                   Uses StaticCID, or KMS4k if offline.
+echo                   Older builds: Uses ZeroCID.
+echo               _______________________________________________  
+echo: 
+echo               [2] StaticCID
+echo                   Needs Internet.
+echo                   Not for Windows 7 or older.
+echo               _______________________________________________  
+echo:
+echo               [3] ZeroCID
+echo                   Works only on builds below 19041.
+echo               _______________________________________________  
+echo:
+echo               [4] KMS4k
+echo                   This applies only to volume products.
+echo                   Activates for 4000+ years using KMS.
+echo               _______________________________________________      
+echo:
+echo               [5] Learn More
+echo               [0] %_exitmsg%
+echo        ______________________________________________________________
+echo:
+call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard..."
+choice /C:123450 /N
+set _el=!errorlevel!
+
+if !_el!==6 goto :ts_menu
+if !_el!==5  cls & start %mas%tsforge &goto :ts_menu
+if !_el!==4  cls & set "_actmethod=KMS4k" & goto :ts_menu
+if !_el!==3  cls & set "_actmethod=ZCID"  & goto :ts_menu
+if !_el!==2  cls & set "_actmethod=SCID"  & goto :ts_menu
+if !_el!==1  cls & set "_actmethod=Auto"  & goto :ts_menu
+goto :ts_changemethod
 
 ::========================================================================================================================================
 
@@ -568,6 +627,57 @@ cls
 echo:
 call :dk_showosinfo
 
+if /i %_actmethod%==SCID set tsmethod=StaticCID
+if /i %_actmethod%==ZCID set tsmethod=ZeroCID
+if /i %_actmethod%==KMS4k set tsmethod=KMS4k
+
+if /i %_actmethod%==Auto (
+if %winbuild% GEQ 19041 (
+set tsmethod=StaticCID
+) else (
+set tsmethod=ZeroCID
+)
+)
+
+if %winbuild% LSS 9200 if /i %tsmethod%==StaticCID (
+%eline%
+echo StaticCID method is supported only on Windows 8 and later.
+goto dk_done
+)
+
+::========================================================================================================================================
+
+::  Check Internet connection
+
+if /i %tsmethod%==StaticCID (
+set _int=
+for %%a in (l.root-servers.net resolver1.opendns.com download.windowsupdate.com google.com) do if not defined _int (
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not "%%#"=="" set _int=1)
+)
+
+if not defined _int (
+%psc% "If([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]'{DCB00C01-570F-4A9B-8D69-199FDBA5723B}')).IsConnectedToInternet){Exit 0}Else{Exit 1}"
+if !errorlevel!==0 (set _int=1&set ping_f= But Ping Failed)
+)
+
+if defined _int (
+echo Checking Internet Connection            [Connected!ping_f!]
+) else (
+if /i %_actmethod%==Auto if not %_actman%==1 set tsmethod=KMS4k
+if /i !tsmethod!==KMS4k (
+call :dk_color %Gray% "Checking Internet Connection            [Not Connected]"
+call :dk_color %Blue% "Switching To KMS4k Activation Method because Internet is needed for StaticCID method."
+) else (
+set error=1
+call :dk_color %Red% "Checking Internet Connection            [Not Connected]"
+call :dk_color %Blue% "Internet is required for TSforge StaticCID option."
+)
+echo:
+)
+)
+
+::========================================================================================================================================
+
 echo Initiating Diagnostic Tests...
 
 set "_serv=%_slser% Winmgmt"
@@ -583,6 +693,11 @@ call :dk_color %Red% "Checking Windows Edition ID             [Not found in inst
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto :dk_done
+)
+
+if /i !tsmethod!==KMS4k (
+call :_taskclear-cache
+echo Clearing %KS% Cache                      [Successful]
 )
 
 ::========================================================================================================================================
@@ -606,16 +721,23 @@ echo %tsedition% | find /i "Eval" %nul1% && (
 goto :ts_wineval
 )
 
-call :ts_checkwinperm
+set /a UBR=0
+if %winbuild% EQU 26100 (
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
+if !UBR! LSS 4188 (set dontcheckact=1)
+)
+
+if not defined dontcheckact call :ts_checkwinperm
 if defined _perm (
 call :dk_color %Gray% "Checking OS Activation                  [Windows is already permanently activated]"
 goto :ts_esu
 )
 
+if %winbuild% LSS 9200 if /i %tsmethod%==KMS4k goto :ts_oldks
 if defined _vis goto :ts_winvista
 
 set tempid=
-set keytype=zero
+if /i %tsmethod%==KMS4k (set keytype=ks) else (set keytype=zero)
 for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wintsid\:.*';iex ($f[1])" %nul6%') do (
 echo "%%a" | findstr /r ".*-.*-.*-.*-.*" %nul1% && (set tsids=!tsids! %%a& set tempid=%%a)
 )
@@ -625,6 +747,13 @@ echo Checking Activation ID                  [%tempid%] [%tsedition%]
 ) else (
 call :dk_color %Red% "Checking Activation ID                  [Not Found] [%tsedition%] [%osSKU%]"
 set error=1
+if /i %tsmethod%==KMS4k (
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+)
 goto :ts_esu
 )
 
@@ -632,6 +761,83 @@ if defined winsub (
 call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. Script will activate base edition [SKU ID-%regSKU%]."
 echo:
 )
+
+goto :ts_esu
+
+::========================================================================================================================================
+
+:ts_oldks
+
+::  KMS keys for KMS4k method because TSforge cannot install KMS key on Windows Vista and 7
+
+::  1st column = Activation ID
+::  2nd column = Generic key
+::  3rd column = Edition ID
+::  Separator  = _
+
+set f=
+set key=
+set tempid=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+:: Windows 7
+ae2ee509-1b34-41c0-acb7-6d4650168915_33PXH-7Y6KF-2VJC9-XBBR8-HV%f%THH_Enterprise
+1cb6d605-11b3-4e14-bb30-da91c8e3983a_YDRBP-3D83W-TY26F-D46B2-XC%f%KRJ_EnterpriseN
+b92e9980-b9d5-4821-9c94-140f632f6312_FJ82H-XT6CR-J8D7P-XQJJ2-GP%f%DD4_Professional
+54a09a0d-d57b-4c10-8b69-a842d6590ad5_MRPKT-YTG23-K7D7T-X2JMM-QY%f%7MG_ProfessionalN
+db537896-376f-48ae-a492-53d0547773d0_YBYF6-BHCR3-JPKRB-CDW7B-F9%f%BK4_Embedded_POSReady
+aa6dd3aa-c2b4-40e2-a544-a6bbb3f5c395_73KQT-CD9G6-K7TQG-66MRP-CQ%f%22C_Embedded_ThinPC
+5a041529-fef8-4d07-b06f-b59b573b32d2_W82YF-2Q76Y-63HXB-FGJG9-GF%f%7QX_ProfessionalE
+46bbed08-9c7b-48fc-a614-95250573f4ea_C29WB-22CC8-VJ326-GHFJW-H9%f%DH4_EnterpriseE
+:: Windows Server 2008 R2
+68531fb9-5511-4989-97be-d11a0f55633f_YC6KT-GKW9T-YTKYR-T4X34-R7%f%VHC_ServerStandard
+7482e61b-c589-4b7f-8ecc-46d455ac3b87_74YFP-3QFB3-KQT8W-PMXWJ-7M%f%648_ServerDatacenter
+620e2b3d-09e7-42fd-802a-17a13652fe7a_489J6-VHDMP-X63PK-3K798-CP%f%X3Y_ServerEnterprise
+7482e61b-c589-4b7f-8ecc-46d455ac3b87_74YFP-3QFB3-KQT8W-PMXWJ-7M%f%648_ServerDatacenterCore
+68531fb9-5511-4989-97be-d11a0f55633f_YC6KT-GKW9T-YTKYR-T4X34-R7%f%VHC_ServerStandardCore
+620e2b3d-09e7-42fd-802a-17a13652fe7a_489J6-VHDMP-X63PK-3K798-CP%f%X3Y_ServerEnterpriseCore
+8a26851c-1c7e-48d3-a687-fbca9b9ac16b_GT63C-RJFQ3-4GMB6-BRFB9-CB%f%83V_ServerEnterpriseIA64
+a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4_ServerWeb
+cda18cf3-c196-46ad-b289-60c072869994_TT8MH-CG224-D3D7Q-498W2-9Q%f%CTX_ServerHPC
+a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4_ServerWebCore
+f772515c-0e87-48d5-a676-e6962c3e1195_736RG-XDKJK-V34PF-BHK87-J6%f%X3K_ServerEmbeddedSolution
+:: Windows Vista
+cfd8ff08-c0d7-452b-9f60-ef5c70c32094_VKK3X-68KWM-X2YGT-QR4M6-4B%f%WMV_Enterprise
+4f3d1606-3fea-4c01-be3c-8d671c401e3b_YFKBB-PQJJV-G996G-VWGXY-2V%f%3X8_Business
+2c682dc2-8b68-4f63-a165-ae291d4cf138_HMBQG-8H2RH-C77VX-27R82-VM%f%QBT_BusinessN
+d4f54950-26f2-4fb4-ba21-ffab16afcade_VTC42-BM838-43QHV-84HX6-XJ%f%XKV_EnterpriseN
+:: Windows Server 2008
+ad2542d4-9154-4c6d-8a44-30f11ee96989_TM24T-X9RMF-VWXK6-X8JC9-BF%f%GM2_ServerStandard
+68b6e220-cf09-466b-92d3-45cd964b9509_7M67G-PC374-GR742-YH8V4-TC%f%BY3_ServerDatacenter
+c1af4d90-d1bc-44ca-85d4-003ba33db3b9_YQGMW-MPWTJ-34KDK-48M3W-X4%f%Q6V_ServerEnterprise
+01ef176b-3e0d-422a-b4f8-4ea880035e8f_4DWFP-JF3DJ-B7DTH-78FJB-PD%f%RHK_ServerEnterpriseIA64
+ddfa9f7c-f09e-40b9-8c1a-be877a9a7f4b_WYR28-R7TFJ-3X2YQ-YCY4H-M2%f%49D_ServerWeb
+7afb1156-2c1d-40fc-b260-aab7442b62fe_RCTX3-KWVHP-BR6TB-RB6DM-6X%f%7HP_ServerComputeCluster
+2401e3d0-c50a-4b58-87b2-7e794b7d2607_W7VD6-7JFBR-RX26B-YKQ3Y-6F%f%FFJ_ServerStandardV
+fd09ef77-5647-4eff-809c-af2b64659a45_22XQ2-VRXRG-P8D42-K34TD-G3%f%QQC_ServerDatacenterV
+8198490a-add0-47b2-b3ba-316b12d647b4_39BXF-X8Q23-P2WWT-38T2F-G3%f%FPG_ServerEnterpriseV
+) do (
+for /f "tokens=1-3 delims=_" %%A in ("%%#") do if %tsedition%==%%C if not defined key (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+set key=%%B
+set tempid=%%A
+)
+)
+)
+
+if not defined key (
+call :dk_color %Red% "Checking Activation ID                  [%tsedition% SKU-%osSKU% %KS% key is not available]"
+call :dk_color %Blue% "Use ZeroCID activation method from the previous menu."
+goto :ts_esu
+)
+
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+
+set oldks=1
+set generickey=1
+call :dk_inskey "[%key%]"
+set tsids=%tsids% %tempid%
 goto :ts_esu
 
 ::========================================================================================================================================
@@ -841,6 +1047,15 @@ call :dk_inskey "[%key%]"
 :ts_esu
 
 if not %_actesu%==1 goto :ts_off
+if /i %tsmethod%==KMS4k (
+call :dk_color %Red% "Skipping Windows ESU                    [KMS4k method is not supported with Windows ESU]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+goto :ts_off
+)
 
 ::  Process Windows ESU
 
@@ -928,8 +1143,12 @@ goto :ts_off
 
 if defined esuexistbutnosup (
 call :dk_color %Red% "Checking Activation ID                  [Commercial ESU is not supported for %tsedition%]"
+echo %esueditionlist% | find /i "Professional" %nul1% && (
+call :dk_color %Blue% "Go back to Main Menu, select Change Windows Edition option, and change it to [Professional] or any non-Home edition."
+) || (
 call :dk_color %Blue% "Go back to Main Menu, select Change Windows Edition option and change to any of the below listed editions."
 echo [%esueditionlist%]
+)
 goto :ts_off
 )
 
@@ -1204,6 +1423,24 @@ call :ts_process
 
 ::========================================================================================================================================
 
+::  mass grave[.]dev/office-license-is-not-genuine
+::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
+
+set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
+if /i %tsmethod%==KMS4k (
+if %winbuild% GEQ 9200 (
+if not "%osarch%"=="x86" (
+reg delete "%kmskey%" /f /reg:32 %nul%
+reg add "%kmskey%" /f /v KeyManagementServiceName /t REG_SZ /d "10.0.0.10" /reg:32 %nul%
+)
+reg delete "%kmskey%" /f %nul%
+reg add "%kmskey%" /f /v KeyManagementServiceName /t REG_SZ /d "10.0.0.10" %nul%
+echo Adding a Registry to Prevent Banner     [Successful]
+)
+)
+
+::========================================================================================================================================
+
 :ts_startmsi
 
 if defined o15msi call :ts_processmsi 15 %o15msi_reg%
@@ -1226,6 +1463,17 @@ goto :ts_act
 
 echo:
 echo Processing Windows %KS% Host...
+
+if /i %tsmethod%==KMS4k (
+echo:
+call :dk_color %Red% "Skipping Windows %KS% Host               [KMS4k method is not supported with Windows %KS% Host]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+goto :ts_act
+)
 
 echo:
 if %winbuild% GEQ 10586 (
@@ -1338,6 +1586,17 @@ call :dk_color %Blue% "Windows Vista and Server 2008 do not support the installa
 goto :ts_act
 )
 
+if /i %tsmethod%==KMS4k (
+echo:
+call :dk_color %Red% "Skipping Office %KS% Host                [KMS4k method is not supported with Office %KS% Host]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+goto :ts_act
+)
+
 set ohostexist=
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
 set ohostids=%allapps%
@@ -1387,6 +1646,17 @@ if %winbuild% GTR 9600 set noappx=1
 echo:
 if defined noappx (
 call :dk_color %Gray% "Checking Activation ID                  [APPX Sideloading feature is available only on Windows 8/8.1]"
+goto :dk_done
+)
+
+if /i %tsmethod%==KMS4k (
+echo:
+call :dk_color %Red% "Skipping Windows 8/8.1 APPX             [KMS4k method is not supported with Windows 8/8.1 APPX]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
 goto :dk_done
 )
 
@@ -1447,6 +1717,17 @@ goto :dk_done
 echo:
 echo Processing Manual Activation...
 echo:
+
+if /i %tsmethod%==KMS4k (
+echo:
+call :dk_color %Red% "Skipping Manual Activation              [KMS4k method is not supported with it]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+goto :dk_done
+)
 
 call :dk_color %Gray% "This option is for advanced users, those who already know what they are doing."
 call :dk_color %Blue% "Some activation IDs may cause system crash [MUI mismatch], or irreversible changes [CloudEdition etc]."
@@ -1607,12 +1888,16 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%trouble
 
 if defined tsids (
 echo:
-if not defined _vis echo Installing Forged Product Key Data...
-echo Depositing Zero Confirmation ID...
+if not defined _vis if not defined oldks echo Installing Forged Product Key Data...
+if /i %tsmethod%==KMS4k (
+echo Writing TrustedStore data...
+) else (
+if /i %tsmethod%==StaticCID (echo Depositing Static Confirmation ID...) else (echo Depositing Zero Confirmation ID...)
+)
 echo:
 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':tsforge\:.*';& ([ScriptBlock]::Create($f[1])) %tsids%"
 if !errorlevel!==3 (
-if %_actman%==0 call :dk_color %Blue% "%_fixmsg%"
+if %_actman%==0 (if not defined error call :dk_color %Blue% "%_fixmsg%")
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 ) else (
@@ -1788,6 +2073,19 @@ set _preview=
 set _License=%%#
 
 set skipprocess=
+
+set foundprod=
+call :tsksdata chkprod %%#
+if defined _oMSI if not defined foundprod if /i %tsmethod%==KMS4k (
+set skipprocess=1
+call :dk_color %Red% "Checking Product In Script              [%%# MSI Retail is not supported with KMS4k]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+)
+
 if "%_actprojvis%"=="1" (
 echo %%# | findstr /i "Project Visio" %nul% || (
 set skipprocess=1
@@ -1795,8 +2093,17 @@ call :dk_color %Gray% "Skipping Because Project/Visio Mode     [%%#]"
 )
 )
 
+if "%_actprojvis%"=="0" if /i %tsmethod%==KMS4k echo %_oIds% | findstr /i "O365" %nul% && (
+echo %%# | findstr /i "Project Visio" %nul% && (
+set skipprocess=1
+echo Skipping Because Mondo Is Available     [%%#]
+)
+)
+
+
 if not defined skipprocess (
 
+if /i not %tsmethod%==KMS4k (
 set no365=
 if "%oVer%"=="15" (echo %%# | findstr /i "O365HomePremRetail" %nul% && set no365=1)
 if "%oVer%"=="16" (echo %%# | findstr /i "O365" %nul% && set no365=1)
@@ -1818,8 +2125,30 @@ call :ks_osppready
 echo Converting Unsupported OEM-ARM Office   [%%# To MondoRetail]
 )
 )
+)
 
+if not defined _oMSI if /i %tsmethod%==KMS4k if not defined foundprod (
+call :tsksdata getinfo %%#
+if defined _altoffid (
+echo Converting Retail To Volume             [%%# To !_altoffid!]
+) else (
+set _License=MondoVolume
+set _altoffid=MondoVolume
+echo Converting Retail To Volume             [%%# To !_altoffid!] [Using Mondo because %%# is not found in the script]
+)
+echo %%# | find /i "O365" %nul% && (
+if "%oVer%"=="15" (call :dk_color %Gray% "Mondo 2013 is equivalent to O365 [15.0 version] in terms of the latest features.")
+if "%oVer%"=="16" (call :dk_color %Gray% "Mondo 2016 is equivalent to O365 in terms of the latest features.")
+)
+call :ks_osppready
+)
+
+if /i %tsmethod%==KMS4k (
+echo !_License! | find /i "Retail" %nul% && (set keytype=zero) || (set keytype=ks)
+) else (
 set keytype=zero
+)
+
 for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':offtsid\:.*';iex ($f[1])" %nul6%') do (
 echo "%%a" | findstr /r ".*-.*-.*-.*-.*" %nul1% && (set tsids=!tsids! %%a& set _actid=%%a)
 )
@@ -1848,7 +2177,7 @@ echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
 ::  Add SharedComputerLicensing registry key if Retail Office C2R is installed on Windows Server
 ::  https://learn.microsoft.com/en-us/office/troubleshoot/office-suite-issues/click-to-run-office-on-terminal-server
 
-if defined winserver if defined _config if exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" (
+if /i not %tsmethod%==KMS4k if defined winserver if defined _config if exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" (
 echo %_oIds% | find /i "Retail" %nul1% && (
 set scaIsNeeded=1
 reg add %_config% /v SharedComputerLicensing /t REG_SZ /d "1" /f %nul1%
@@ -2149,6 +2478,59 @@ if exist "%SysPath%\spp\store_test\2.0\tokens.dat" (
 %psc% "Stop-Service sppsvc -force; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if !errorlevel! NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 )
+exit /b
+
+::========================================================================================================================================
+
+::  Clean existing K-M-S cache from the registry
+
+:_taskclear-cache
+
+set w=
+for %%# in (SppE%w%xtComObj.exe sppsvc.exe SLsvc.exe) do (
+reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%
+)
+
+set "OPPk=SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform"
+
+if %winbuild% LSS 7600 (
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL" %nul% && (
+set "SPPk=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL"
+)
+)
+if not defined SPPk (
+set "SPPk=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
+)
+
+set "slp=SoftwareLicensingProduct"
+set "ospp=OfficeSoftwareProtectionProduct"
+
+set "_wApp=55c92734-d682-4d71-983e-d6ec3f16059f"
+set "_oApp=0ff1ce15-a989-479d-af46-f275c6370663"
+set "_oA14=59a52881-a989-479d-af46-f275c6370663"
+
+%nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServiceName
+%nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServiceName /reg:32
+%nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServicePort
+%nul% reg delete "HKLM\%SPPk%" /f /v KeyManagementServicePort /reg:32
+%nul% reg delete "HKLM\%SPPk%" /f /v DisableDnsPublishing
+%nul% reg delete "HKLM\%SPPk%" /f /v DisableKeyManagementServiceHostCaching
+%nul% reg delete "HKLM\%SPPk%\%_wApp%" /f
+if %winbuild% GEQ 9200 (
+%nul% reg delete "HKLM\%SPPk%\%_oApp%" /f
+%nul% reg delete "HKLM\%SPPk%\%_oApp%" /f /reg:32
+)
+if %winbuild% GEQ 9600 (
+%nul% reg delete "HKU\S-1-5-20\%SPPk%\%_wApp%" /f
+%nul% reg delete "HKU\S-1-5-20\%SPPk%\%_oApp%" /f
+)
+%nul% reg delete "HKLM\%OPPk%" /f /v KeyManagementServiceName
+%nul% reg delete "HKLM\%OPPk%" /f /v KeyManagementServicePort
+%nul% reg delete "HKLM\%OPPk%" /f /v DisableDnsPublishing
+%nul% reg delete "HKLM\%OPPk%" /f /v DisableKeyManagementServiceHostCaching
+%nul% reg delete "HKLM\%OPPk%\%_oA14%" /f
+%nul% reg delete "HKLM\%OPPk%\%_oApp%" /f
+
 exit /b
 
 ::========================================================================================================================================
@@ -3064,6 +3446,220 @@ exit /b
 
 :tsforge:
 $src = @'
+#if !POWERSHELL2
+namespace ActivationWs
+{
+
+/*
+
+This code is adapted from ActivationWs.
+Original Repository: https://github.com/dadorner-msft/activationws
+
+MIT License
+
+Copyright (c) Daniel Dorner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+using System;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Linq;
+
+    public static class ActivationHelper {
+        // Key for HMAC/SHA256 signature.
+        private static readonly byte[] MacKey = new byte[64] {
+            254,  49, 152, 117, 251,  72, 132, 134,
+            156, 243, 241, 206, 153, 168, 144, 100,
+            171,  87,  31, 202,  71,   4,  80,  88,
+            48,   36, 226,  20,  98, 135, 121, 160,
+            0,     0,   0,   0,   0,   0,   0,   0,
+            0,     0,   0,   0,   0,   0,   0,   0,
+            0,     0,   0,   0,   0,   0,   0,   0,
+            0,     0,   0,   0,   0,   0,   0,   0
+        };
+
+        private const string Action = "http://www.microsoft.com/BatchActivationService/BatchActivate";
+
+        private static readonly Uri Uri = new Uri("https://activation.sls.microsoft.com/BatchActivation/BatchActivation.asmx");
+
+        private static readonly XNamespace SoapSchemaNs = "http://schemas.xmlsoap.org/soap/envelope/";
+        private static readonly XNamespace XmlSchemaInstanceNs = "http://www.w3.org/2001/XMLSchema-instance";
+        private static readonly XNamespace XmlSchemaNs = "http://www.w3.org/2001/XMLSchema";
+        private static readonly XNamespace BatchActivationServiceNs = "http://www.microsoft.com/BatchActivationService";
+        private static readonly XNamespace BatchActivationRequestNs = "http://www.microsoft.com/DRM/SL/BatchActivationRequest/1.0";
+        private static readonly XNamespace BatchActivationResponseNs = "http://www.microsoft.com/DRM/SL/BatchActivationResponse/1.0";
+
+        public static string CallWebService(int requestType, string installationId, string extendedProductId) {
+            XDocument soapRequest = CreateSoapRequest(requestType, installationId, extendedProductId);
+            HttpWebRequest webRequest = CreateWebRequest(soapRequest);
+            XDocument soapResponse = new XDocument();
+
+            try {
+                IAsyncResult asyncResult = webRequest.BeginGetResponse(null, null);
+                asyncResult.AsyncWaitHandle.WaitOne();
+
+                // Read data from the response stream.
+                using (WebResponse webResponse = webRequest.EndGetResponse(asyncResult))
+                using (StreamReader streamReader = new StreamReader(webResponse.GetResponseStream())) {
+                    soapResponse = XDocument.Parse(streamReader.ReadToEnd());
+                }
+
+                return ParseSoapResponse(soapResponse);
+
+            } catch {
+                throw;
+            }
+        }
+
+        private static XDocument CreateSoapRequest(int requestType, string installationId, string extendedProductId) {
+            // Create an activation request.           
+            XElement activationRequest = new XElement(BatchActivationRequestNs + "ActivationRequest",
+                new XElement(BatchActivationRequestNs + "VersionNumber", "2.0"),
+                new XElement(BatchActivationRequestNs + "RequestType", requestType),
+                new XElement(BatchActivationRequestNs + "Requests",
+                    new XElement(BatchActivationRequestNs + "Request",
+                        new XElement(BatchActivationRequestNs + "PID", extendedProductId),
+                        requestType == 1 ? new XElement(BatchActivationRequestNs + "IID", installationId) : null)
+                )
+            );
+
+            // Get the unicode byte array of activationRequest and convert it to Base64.
+            byte[] bytes = Encoding.Unicode.GetBytes(activationRequest.ToString());
+            string requestXml = Convert.ToBase64String(bytes);
+
+            XDocument soapRequest = new XDocument();
+
+            using (HMACSHA256 hMACSHA = new HMACSHA256(MacKey)) {
+                // Convert the HMAC hashed data to Base64.
+                string digest = Convert.ToBase64String(hMACSHA.ComputeHash(bytes));
+
+                soapRequest = new XDocument(
+                new XDeclaration("1.0", "UTF-8", "no"),
+                new XElement(SoapSchemaNs + "Envelope",
+                    new XAttribute(XNamespace.Xmlns + "soap", SoapSchemaNs),
+                    new XAttribute(XNamespace.Xmlns + "xsi", XmlSchemaInstanceNs),
+                    new XAttribute(XNamespace.Xmlns + "xsd", XmlSchemaNs),
+                    new XElement(SoapSchemaNs + "Body",
+                        new XElement(BatchActivationServiceNs + "BatchActivate",
+                            new XElement(BatchActivationServiceNs + "request",
+                                new XElement(BatchActivationServiceNs + "Digest", digest),
+                                new XElement(BatchActivationServiceNs + "RequestXml", requestXml)
+                            )
+                        )
+                    )
+                ));
+
+            }
+
+            return soapRequest;
+        }
+
+        private static HttpWebRequest CreateWebRequest(XDocument soapRequest) {
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(Uri);
+            webRequest.Accept = "text/xml";
+            webRequest.ContentType = "text/xml; charset=\"utf-8\"";
+            webRequest.Headers.Add("SOAPAction", Action);
+            webRequest.Host = "activation.sls.microsoft.com";
+            webRequest.Method = "POST";
+
+            try {
+                // Insert SOAP envelope
+                using (Stream stream = webRequest.GetRequestStream()) {
+                    soapRequest.Save(stream);
+                }
+
+                return webRequest;
+
+            } catch {
+                throw;
+            }
+        }
+
+        private static string ParseSoapResponse(XDocument soapResponse) {
+            if (soapResponse == null) {
+                throw new ArgumentNullException("soapResponse", "The remote server returned an unexpected response.");
+            }
+
+            if (!soapResponse.Descendants(BatchActivationServiceNs + "ResponseXml").Any()) {
+                throw new Exception("The remote server returned an unexpected response");
+            }
+
+            try {
+                XDocument responseXml = XDocument.Parse(soapResponse.Descendants(BatchActivationServiceNs + "ResponseXml").First().Value);
+
+                if (responseXml.Descendants(BatchActivationResponseNs + "ErrorCode").Any()) {
+                    string errorCode = responseXml.Descendants(BatchActivationResponseNs + "ErrorCode").First().Value;
+
+                    switch (errorCode) {
+                        case "0x7F":
+                            throw new Exception("The Multiple Activation Key has exceeded its limit");
+
+                        case "0x67":
+                            throw new Exception("The product key has been blocked");
+
+                        case "0x68":
+                            throw new Exception("Invalid product key");
+
+                        case "0x86":
+                            throw new Exception("Invalid key type");
+
+                        case "0x90":
+                            throw new Exception("Please check the Installation ID and try again");
+
+                        default:
+                            throw new Exception(string.Format("The remote server reported an error ({0})", errorCode));
+                    }
+
+                } else if (responseXml.Descendants(BatchActivationResponseNs + "ResponseType").Any()) {
+                    string responseType = responseXml.Descendants(BatchActivationResponseNs + "ResponseType").First().Value;
+
+                    switch (responseType) {
+                        case "1":
+                            string confirmationId = responseXml.Descendants(BatchActivationResponseNs + "CID").First().Value;
+                            return confirmationId;
+
+                        case "2":
+                            string activationsRemaining = responseXml.Descendants(BatchActivationResponseNs + "ActivationRemaining").First().Value;
+                            return activationsRemaining;
+
+                        default:
+                            throw new Exception("The remote server returned an unrecognized response");
+                    }
+
+                } else {
+                    throw new Exception("The remote server returned an unrecognized response");
+                }
+
+            } catch {
+                throw;
+            }
+        }
+    }
+}
+#endif
+
 // Common.cs
 namespace LibTSforge
 {
@@ -5625,27 +6221,23 @@ namespace LibTSforge.Modifiers
 }
 
 
-// Activators/AVMA4K.cs
+// Activators/KMS4K.cs
 namespace LibTSforge.Activators
 {
     using System;
+    using System.IO;
     using PhysicalStore;
     using SPP;
 
-    public static class AVMA4k
+    public class KMS4k
     {
         public static void Activate(PSVersion version, bool production, Guid actId)
         {
-            if (version != PSVersion.WinModern && version != PSVersion.WinBlue)
-            {
-                throw new NotSupportedException("AVMA licenses are not available for this product.");
-            }
-
             Guid appId;
             if (actId == Guid.Empty)
             {
                 appId = SLApi.WINDOWS_APP_ID;
-                actId = SLApi.GetDefaultActivationID(appId, false);
+                actId = SLApi.GetDefaultActivationID(appId, true);
 
                 if (actId == Guid.Empty)
                 {
@@ -5657,9 +6249,9 @@ namespace LibTSforge.Activators
                 appId = SLApi.GetAppId(actId);
             }
 
-            if (SLApi.GetPKeyChannel(SLApi.GetInstalledPkeyID(actId)) != "VT:IA")
+            if (SLApi.GetPKeyChannel(SLApi.GetInstalledPkeyID(actId)) != "Volume:GVLK")
             {
-                throw new NotSupportedException("Non-VT:IA product key installed.");
+                throw new NotSupportedException("Non-Volume:GVLK product key installed.");
             }
 
             SPPUtils.KillSPP(version);
@@ -5670,80 +6262,171 @@ namespace LibTSforge.Activators
             {
                 string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
 
-                long creationTime = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-CREATION-TIME$$").Data, 0);
-                long tickCount = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-TICKCOUNT-UPTIME$$").Data, 0);
-                long deltaTime = BitConverter.ToInt64(store.GetBlock(key, "__##USERSEP-RESERVED##__$$UP-TIME-DELTA$$").Data, 0);
+                ulong unknown = 0;
+                ulong time1;
+                ulong time2 = (ulong)DateTime.UtcNow.ToFileTime();
+                ulong expiry = Constants.TimerMax;
 
-                const ulong unknown = 0;
-                ulong time1 = (ulong)(creationTime + tickCount + deltaTime);
-                ulong crcBindTime = (ulong)DateTime.UtcNow.ToFileTime();
-                ulong timerTime = crcBindTime / 10000;
-                ulong expiry = Constants.TimerMax / 10000;
-
-                VariableBag avmaBinding = new VariableBag(version);
-
-                avmaBinding.Blocks.AddRange(new[]
+                if (version == PSVersion.Vista || version == PSVersion.Win7)
                 {
+                    unknown = 0x800000000;
+                    time1 = 0;
+                }
+                else
+                {
+                    long creationTime = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-CREATION-TIME$$").Data, 0);
+                    long tickCount = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-TICKCOUNT-UPTIME$$").Data, 0);
+                    long deltaTime = BitConverter.ToInt64(store.GetBlock(key, "__##USERSEP-RESERVED##__$$UP-TIME-DELTA$$").Data, 0);
+
+                    time1 = (ulong)(creationTime + tickCount + deltaTime);
+                    time2 /= 10000;
+                    expiry /= 10000;
+                }
+
+                if (version == PSVersion.Vista)
+                {
+                    VistaTimer vistaTimer = new VistaTimer
+                    {
+                        Time = time2,
+                        Expiry = Constants.TimerMax
+                    };
+
+                    string vistaTimerName = string.Format("msft:sl/timer/VLExpiration/VOLUME/{0}/{1}", appId, actId);
+
+                    store.DeleteBlock(key, vistaTimerName);
+                    store.DeleteBlock(key, actId.ToString());
+
+                    BinaryWriter writer = new BinaryWriter(new MemoryStream());
+                    writer.Write(Constants.KMSv4Response.Length);
+                    writer.Write(Constants.KMSv4Response);
+                    writer.Write(Constants.UniversalHWIDBlock);
+                    byte[] kmsData = writer.GetBytes();
+
+                    store.AddBlocks(new[]
+                    {
+                        new PSBlock
+                        {
+                            Type = BlockType.TIMER,
+                            Flags = 0,
+                            KeyAsStr = key,
+                            ValueAsStr = vistaTimerName,
+                            Data = vistaTimer.CastToArray()
+                        },
+                        new PSBlock
+                        {
+                            Type = BlockType.NAMED,
+                            Flags = 0,
+                            KeyAsStr = key,
+                            ValueAsStr = actId.ToString(),
+                            Data = kmsData
+                        }
+                    });
+                }
+                else
+                {
+                    byte[] hwidBlock = Constants.UniversalHWIDBlock;
+                    byte[] kmsResp;
+
+                    switch (version)
+                    {
+                        case PSVersion.Win7:
+                            kmsResp = Constants.KMSv4Response;
+                            break;
+                        case PSVersion.Win8:
+                            kmsResp = Constants.KMSv5Response;
+                            break;
+                        case PSVersion.WinBlue:
+                        case PSVersion.WinModern:
+                            kmsResp = Constants.KMSv6Response;
+                            break;
+                        default:
+                            throw new NotSupportedException("Unsupported PSVersion.");
+                    }
+
+                    VariableBag kmsBinding = new VariableBag(version);
+
+                    kmsBinding.Blocks.AddRange(new[]
+                    {
                     new CRCBlockModern
                     {
                         DataType = CRCBlockType.BINARY,
                         Key = new byte[] { },
-                        Value = BitConverter.GetBytes(crcBindTime),
+                        Value = kmsResp
                     },
                     new CRCBlockModern
                     {
                         DataType = CRCBlockType.STRING,
                         Key = new byte[] { },
-                        ValueAsStr = "AVMA4K",
+                        ValueAsStr = "msft:rm/algorithm/hwid/4.0"
                     },
                     new CRCBlockModern
                     {
-                        DataType = CRCBlockType.STRING,
-                        Key = new byte[] { },
-                        ValueAsStr = "00491-50000-00001-AA666",
+                        DataType = CRCBlockType.BINARY,
+                        KeyAsStr = "SppBindingLicenseData",
+                        Value = hwidBlock
                     }
-                });
+                    });
 
-                byte[] avmaBindingData = avmaBinding.Serialize();
+                    if (version == PSVersion.WinModern)
+                    {
+                        kmsBinding.Blocks.AddRange(new[]
+                        {
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.STRING,
+                            Key = new byte[] { },
+                            ValueAsStr = "massgrave.dev"
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.STRING,
+                            Key = new byte[] { },
+                            ValueAsStr = "6969"
+                        }
+                        });
+                    }
 
-                Timer avmaTimer = new Timer
-                {
-                    Unknown = unknown,
-                    Time1 = time1,
-                    Time2 = timerTime,
-                    Expiry = expiry
-                };
+                    byte[] kmsBindingData = kmsBinding.Serialize();
 
-                string storeVal = string.Format("msft:spp/ia/bind/1.0/store/{0}/{1}", appId, actId);
-                string timerVal = string.Format("msft:spp/ia/bind/1.0/timer/{0}/{1}", appId, actId);
+                    Timer kmsTimer = new Timer
+                    {
+                        Unknown = unknown,
+                        Time1 = time1,
+                        Time2 = time2,
+                        Expiry = expiry
+                    };
 
-                store.DeleteBlock(key, storeVal);
-                store.DeleteBlock(key, timerVal);
+                    string storeVal = string.Format("msft:spp/kms/bind/2.0/store/{0}/{1}", appId, actId);
+                    string timerVal = string.Format("msft:spp/kms/bind/2.0/timer/{0}/{1}", appId, actId);
 
-                store.AddBlocks(new[]
-                {
+                    store.DeleteBlock(key, storeVal);
+                    store.DeleteBlock(key, timerVal);
+
+                    store.AddBlocks(new[]
+                    {
                     new PSBlock
                     {
                         Type = BlockType.NAMED,
-                        Flags = 0x400,
+                        Flags = (version == PSVersion.WinModern) ? (uint)0x400 : 0,
                         KeyAsStr = key,
                         ValueAsStr = storeVal,
-                        Data = avmaBindingData,
+                        Data = kmsBindingData
                     },
                     new PSBlock
                     {
                         Type = BlockType.TIMER,
-                        Flags = 0x4,
+                        Flags = (version == PSVersion.Win7) ? (uint)0 : 0x4,
                         KeyAsStr = key,
                         ValueAsStr = timerVal,
-                        Data = avmaTimer.CastToArray()
+                        Data = kmsTimer.CastToArray()
                     }
-                });
+                    });
+                }
             }
 
-            SLApi.RefreshLicenseStatus();
+            SPPUtils.RestartSPP(version);
             SLApi.FireStateChangedEvent(appId);
-            Logger.WriteLine("Activated using AVMA4k successfully.");
+            Logger.WriteLine("Activated using KMS4k successfully.");
         }
     }
 }
@@ -7850,15 +8533,16 @@ namespace LibTSforge.PhysicalStore
 '@
 $ErrorActionPreference = 'Stop'
 $binPath = "$env:_work\BIN\LibTSforge.dll"
+$psMajorVer = (Get-Host).Version.Major
 
 if (Test-Path -LiteralPath $binPath) {
     Write-Host "LibTSforge.dll found in BIN folder. Loading the DLL..."
     Add-Type -Path $binPath
 }
 else {
-    $cp = [CodeDom.Compiler.CompilerParameters] [string[]]@("System.dll", "System.Core.dll", "System.ServiceProcess.dll", "System.Xml.dll")
-    $cp.CompilerOptions = "/unsafe"
-    $lang = If ((Get-Host).Version.Major -gt 2) { "CSharp" } Else { "CSharpVersion3" }
+    $cp = [CodeDom.Compiler.CompilerParameters] [string[]]@("System.dll", "System.Core.dll", "System.ServiceProcess.dll", "System.Xml.dll", "System.Xml.Linq.dll")
+    if ($psMajorVer -le 2) { $cp.CompilerOptions = "/define:POWERSHELL2 /unsafe" } else { $cp.CompilerOptions = "/unsafe" }
+    $lang = if ($psMajorVer -gt 2) { "CSharp" } else { "CSharpVersion3" }
 
     $ctemp = "$env:SystemRoot\Temp\"
     if (-Not (Test-Path -Path $ctemp)) { New-Item -Path $ctemp -ItemType Directory > $null }
@@ -7907,32 +8591,65 @@ function slGetSkuInfo($SkuId) {
 if (-not $env:resetstuff) {
     foreach ($tsactid in $tsactids) {
         try {
+            $activated = $null
             $prodDes = Get-WmiInfo -tsactid $tsactid -property "Description"
             $prodName = Get-WmiInfo -tsactid $tsactid -property "Name"
             if ($prodName) {
                 $nameParts = $prodName -split ',', 2
                 $prodName = if ($nameParts.Count -gt 1) { ($nameParts[1].Trim() -split '[ ,]')[0] } else { $null }
             }
-			if (-not $env:_vis) {
-            [LibTSforge.Modifiers.GenPKeyInstall]::InstallGenPKey($ver, $prod, $tsactid)
-			}
-            if ($prodName -match 'Office' -and -not (slGetSkuInfo($tsactid))) {
+            if (-not $env:_vis -and -not $env:oldks) {
+                [LibTSforge.Modifiers.GenPKeyInstall]::InstallGenPKey($ver, $prod, $tsactid)
+            }
+            if ($prodName -match 'Office' -and $prodDes -notmatch 'KMS' -and -not (slGetSkuInfo($tsactid))) {
                 $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
                 if ($licenseStatus -eq 1) {
                     Write-Host "[$prodName] is already permanently activated." -ForegroundColor White -BackgroundColor DarkGreen
                     continue
                 }
             }
-            [LibTSforge.Activators.ZeroCID]::Activate($ver, $prod, $tsactid)
-            $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
-            if ($licenseStatus -eq 1) {
+            if ($env:tsmethod -eq "StaticCID") {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $attempts = @(
+                    @(100055, 1000043, 1338662172562478),
+                    @(1345, 1003020, 6311608238084405)
+                )
+                foreach ($params in $attempts) {
+                    [LibTSforge.Modifiers.SetIIDParams]::SetParams($ver, $prod, $tsactid, [LibTSforge.SPP.PKeyAlgorithm]::PKEY2009, $params[0], $params[1], $params[2])
+                    $instId = [LibTSforge.SPP.SLApi]::GetInstallationID($tsactid)
+                    $confId = [ActivationWs.ActivationHelper]::CallWebService(1, $instId, "31337-42069-123-456789-04-1337-2600.0000-2542001")
+                    $result = [LibTSforge.SPP.SLApi]::DepositConfirmationID($tsactid, $instId, $confId)
+                    if ($result -eq 0) { break }
+                }
+                [LibTSforge.SPP.SPPUtils]::RestartSPP($ver)
+            }
+            elseif ($env:tsmethod -eq "KMS4k") {
+                [LibTSforge.Activators.KMS4k]::Activate($ver, $prod, $tsactid)
+            }
+            else {
+                [LibTSforge.Activators.ZeroCID]::Activate($ver, $prod, $tsactid)
+            }
+            if ($env:tsmethod -eq "KMS4k") {
+                $GracePeriodStatus = Get-WmiInfo -tsactid $tsactid -property "GracePeriodRemaining"
+                if ($GracePeriodStatus -gt 259200) { $activated = 1 }
+            }
+            else {
+                $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
+                if ($licenseStatus -eq 1) { $activated = 1 }
+            }
+            if ($activated) {
                 if ($prodDes -match 'KMS' -and $prodDes -notmatch 'CLIENT') {
                     [LibTSforge.Modifiers.KMSHostCharge]::Charge($ver, $prod, $tsactid)
-                    Write-Host "[$prodName] CSVLK is permanently activated with ZeroCID." -ForegroundColor White -BackgroundColor DarkGreen
+                    Write-Host "[$prodName] CSVLK is permanently activated with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
                     Write-Host "[$prodName] CSVLK is charged with 25 clients for 30 days." -ForegroundColor White -BackgroundColor DarkGreen
                 }
                 else {
-                    Write-Host "[$prodName] is permanently activated with ZeroCID." -ForegroundColor White -BackgroundColor DarkGreen
+                    if ($env:tsmethod -eq "KMS4k") {
+                        Write-Host "[$prodName] is activated till $([DateTime]::Now.AddMinutes($GracePeriodStatus).ToString('yyyy-MM-dd HH:mm:ss')) with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
+                    }
+                    else {
+                        Write-Host "[$prodName] is permanently activated with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
+                    }
                 }
             }
             else {
@@ -7950,11 +8667,11 @@ if (-not $env:resetstuff) {
 
 if ($env:resetstuff) {
     try {
-        if (-not $env:_vis) {[LibTSforge.Modifiers.TamperedFlagsDelete]::DeleteTamperFlags($ver, $prod)}
+        if (-not $env:_vis) { [LibTSforge.Modifiers.TamperedFlagsDelete]::DeleteTamperFlags($ver, $prod) }
         [LibTSforge.SPP.SLApi]::RefreshLicenseStatus()
         [LibTSforge.Modifiers.RearmReset]::Reset($ver, $prod)
         [LibTSforge.Modifiers.GracePeriodReset]::Reset($ver, $prod)
-        if (-not $env:_vis) {[LibTSforge.Modifiers.KeyChangeLockDelete]::Delete($ver, $prod)}
+        if (-not $env:_vis) { [LibTSforge.Modifiers.KeyChangeLockDelete]::Delete($ver, $prod) }
     }
     catch {
         $errcode = 3
@@ -8385,6 +9102,130 @@ reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
 if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
 if /i 003D==%%C set SingleImage=1
 )
+)
+)
+
+)
+)
+exit /b
+
+::========================================================================================================================================
+
+::  1st column = Office version
+::  2nd column = Volume or free retail product
+::  3rd column = Retail product names that needs to be converted to the Volume product mentioned in 2nd column
+::  Separator  = "_"
+
+:tsksdata
+
+set f=
+for %%# in (
+:: Office 2013
+15_AccessVolume_-AccessRetail-
+15_AccessRuntimeRetail
+15_ExcelVolume_-ExcelRetail-
+15_GrooveVolume_-GrooveRetail-
+15_InfoPathVolume_-InfoPathRetail-
+15_LyncAcademicRetail
+15_LyncEntryRetail
+15_LyncVolume_-LyncRetail-
+15_MondoRetail
+15_MondoVolume_-O365BusinessRetail-O365HomePremRetail-O365ProPlusRetail-O365SmallBusPremRetail-
+15_OneNoteFreeRetail
+15_OneNoteVolume_-OneNoteRetail-
+15_OutlookVolume_-OutlookRetail-
+15_PowerPointVolume_-PowerPointRetail-
+15_ProjectProVolume_-ProjectProRetail-
+15_ProjectStdVolume_-ProjectStdRetail-
+15_ProPlusVolume_-ProPlusRetail-ProfessionalPipcRetail-ProfessionalRetail-
+15_PublisherVolume_-PublisherRetail-
+15_SPDRetail
+15_StandardVolume_-StandardRetail-HomeBusinessPipcRetail-HomeBusinessRetail-HomeStudentARMRetail-HomeStudentPlusARMRetail-HomeStudentRetail-PersonalPipcRetail-PersonalRetail-
+15_VisioProVolume_-VisioProRetail-
+15_VisioStdVolume_-VisioStdRetail-
+15_WordVolume_-WordRetail-
+:: Office 2016
+16_AccessRuntimeRetail
+16_AccessVolume_-AccessRetail-
+16_ExcelVolume_-ExcelRetail-
+16_MondoRetail
+16_MondoVolume_-O365AppsBasicRetail-O365BusinessRetail-O365EduCloudRetail-O365HomePremRetail-O365ProPlusRetail-O365SmallBusPremRetail-
+16_OneNoteFreeRetail
+16_OneNoteVolume_-OneNoteRetail-OneNote2021Retail-
+16_OutlookVolume_-OutlookRetail-
+16_PowerPointVolume_-PowerPointRetail-
+16_ProjectProVolume_-ProjectProRetail-
+16_ProjectProXVolume
+16_ProjectStdVolume_-ProjectStdRetail-
+16_ProjectStdXVolume
+16_ProPlusVolume_-ProPlusRetail-ProfessionalPipcRetail-ProfessionalRetail-
+16_PublisherVolume_-PublisherRetail-
+16_SkypeServiceBypassRetail
+16_SkypeforBusinessEntryRetail
+16_SkypeforBusinessVolume_-SkypeforBusinessRetail-
+16_StandardVolume_-StandardRetail-HomeBusinessPipcRetail-HomeBusinessRetail-HomeStudentARMRetail-HomeStudentPlusARMRetail-HomeStudentRetail-HomeStudentVNextRetail-PersonalPipcRetail-PersonalRetail-
+16_VisioProVolume_-VisioProRetail-
+16_VisioProXVolume
+16_VisioStdVolume_-VisioStdRetail-
+16_VisioStdXVolume
+16_WordVolume_-WordRetail-
+:: Office 2019
+16_AccessRuntime2019Retail
+16_Access2019Volume_-Access2019Retail-
+16_Excel2019Volume_-Excel2019Retail-
+16_Outlook2019Volume_-Outlook2019Retail-
+16_PowerPoint2019Volume_-PowerPoint2019Retail-
+16_ProjectPro2019Volume_-ProjectPro2019Retail-
+16_ProjectStd2019Volume_-ProjectStd2019Retail-
+16_ProPlus2019Volume_-ProPlus2019Retail-Professional2019Retail-
+16_Publisher2019Volume_-Publisher2019Retail-
+16_SkypeforBusiness2019Volume_-SkypeforBusiness2019Retail-
+16_SkypeforBusinessEntry2019Retail
+16_Standard2019Volume_-Standard2019Retail-HomeBusiness2019Retail-HomeStudentARM2019Retail-HomeStudentPlusARM2019Retail-HomeStudent2019Retail-Personal2019Retail-
+16_VisioPro2019Volume_-VisioPro2019Retail-
+16_VisioStd2019Volume_-VisioStd2019Retail-
+16_Word2019Volume_-Word2019Retail-
+:: Office 2021
+:: OneNote2021Volume KMS license is not available
+16_AccessRuntime2021Retail
+16_Access2021Volume_-Access2021Retail-
+16_Excel2021Volume_-Excel2021Retail-
+16_Outlook2021Volume_-Outlook2021Retail-
+16_OneNoteFree2021Retail
+16_PowerPoint2021Volume_-PowerPoint2021Retail-
+16_ProjectPro2021Volume_-ProjectPro2021Retail-
+16_ProjectStd2021Volume_-ProjectStd2021Retail-
+16_ProPlus2021Volume_-ProPlus2021Retail-Professional2021Retail-
+16_Publisher2021Volume_-Publisher2021Retail-
+16_SkypeforBusiness2021Volume_-SkypeforBusiness2021Retail-
+16_Standard2021Volume_-Standard2021Retail-HomeBusiness2021Retail-HomeStudent2021Retail-Personal2021Retail-
+16_VisioPro2021Volume_-VisioPro2021Retail-
+16_VisioStd2021Volume_-VisioStd2021Retail-
+16_Word2021Volume_-Word2021Retail-
+:: Office 2024
+16_Access2024Volume_-Access2024Retail-
+16_Excel2024Volume_-Excel2024Retail-
+16_Outlook2024Volume_-Outlook2024Retail-
+16_PowerPoint2024Volume_-PowerPoint2024Retail-
+16_ProjectPro2024Volume_-ProjectPro2024Retail-
+16_ProjectStd2024Volume_-ProjectStd2024Retail-
+16_ProPlus2024Volume_-ProPlus2024Retail-
+16_SkypeforBusiness2024Volume
+16_Standard2024Volume_-Home2024Retail-HomeBusiness2024Retail-
+16_VisioPro2024Volume_-VisioPro2024Retail-
+16_VisioStd2024Volume_-VisioStd2024Retail-
+16_Word2024Volume_-Word2024Retail-
+) do (
+for /f "tokens=1-3 delims=_" %%A in ("%%#") do (
+
+if %1==chkprod if "%oVer%"=="%%A" if not defined foundprod (
+if /i "%%B"=="%2" set foundprod=1
+)
+
+if %1==getinfo if "%oVer%"=="%%A" (
+echo: %%C | find /i "-%2-" %nul% && (
+set _License=%%B
+set _altoffid=%%B
 )
 )
 
