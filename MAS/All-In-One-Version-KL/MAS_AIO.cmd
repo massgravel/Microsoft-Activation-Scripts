@@ -1,5 +1,5 @@
 @::fh36d7f-random
-@set masver=3.2
+@set masver=3.3
 @setlocal DisableDelayedExpansion
 @echo off
 
