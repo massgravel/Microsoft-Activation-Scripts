@@ -22,9 +22,7 @@ Alternatively, you can use the following (this will be deprecated in the future)
 irm https://massgrave.dev/get | iex
 ```
 
-3.   You will see the activation options.  
-	   Press 1 HWID for Windows activation.  
-     Press 2 Ohook for Office activation.
+3.   You will see the activation options. Choose the activation options highlighted in green. 
 
 4.   That's all
 
@@ -49,7 +47,7 @@ or
 
 ---
 
-- **[Office for macOS](https://massgrave.dev/office_for_mac)**
+- To activate additional products such as **Office for macOS, Visual Studio, RDS CALs, and Windows XP**, check [here](https://massgrave.dev/unsupported_products_activation).
 - To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches).
 
 ---
@@ -71,8 +69,8 @@ or
 ---
 
 ```
-Latest Version: 3.2
-Release date: 6-May-2025
+Latest Version: 3.3
+Release date: 1-June-2025
 ```
 
 ### [Troubleshooting / Help](https://massgrave.dev/troubleshoot)
