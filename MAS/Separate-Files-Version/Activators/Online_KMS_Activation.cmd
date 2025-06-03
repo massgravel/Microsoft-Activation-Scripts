@@ -876,6 +876,7 @@ set error=1
 goto :ks_starto16c2r
 )
 
+call :oh_expiredpreview 2013
 if "%_actprojvis%"=="0" call :oh_fixprids
 call :ks_process
 
@@ -916,6 +917,7 @@ set error=1
 goto :ks_startmsi
 )
 
+call :oh_expiredpreview 2016 2019 2021 2024
 if "%_actprojvis%"=="0" call :oh_fixprids
 call :ks_process
 
@@ -1091,6 +1093,21 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v P
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o15msi=1&set o15msi_reg=%_68%\15.0)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=1&set o14msi_reg=%_86%\14.0)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=1&set o14msi_reg=%_68%\14.0)
+
+exit /b
+
+::========================================================================================================================================
+
+:oh_expiredpreview
+
+for %%# in (%*) do (
+if exist "!_oLPath!\ProPlus%%#PreviewVL_*.xrm-ms" if not exist "!_oLPath!\ProPlus%%#VL_*.xrm-ms" (
+set error=1
+set showfix=1
+call :dk_color %Red% "Checking Expired Preview Products       [Office %%# Preview Found]"
+call :dk_color %Blue% "Please run the Office updates first, and then attempt to activate it again."
+)
+)
 
 exit /b
 

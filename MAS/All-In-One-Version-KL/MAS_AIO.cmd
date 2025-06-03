@@ -2423,6 +2423,7 @@ set error=1
 goto :starto16c2r
 )
 
+call :oh_expiredpreview 2013
 call :oh_fixprids
 call :oh_process
 if defined isOspp (
@@ -2480,6 +2481,7 @@ set error=1
 goto :startmsi
 )
 
+call :oh_expiredpreview 2016 2019 2021 2024
 call :oh_fixprids
 call :oh_process
 if defined isOspp (
@@ -2734,6 +2736,21 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v P
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o15msi=1&set o15msi_reg=%_68%\15.0)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=1&set o14msi_reg=%_86%\14.0)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=1&set o14msi_reg=%_68%\14.0)
+
+exit /b
+
+::========================================================================================================================================
+
+:oh_expiredpreview
+
+for %%# in (%*) do (
+if exist "!_oLPath!\ProPlus%%#PreviewVL_*.xrm-ms" if not exist "!_oLPath!\ProPlus%%#VL_*.xrm-ms" (
+set error=1
+set showfix=1
+call :dk_color %Red% "Checking Expired Preview Products       [Office %%# Preview Found]"
+call :dk_color %Blue% "Please run the Office updates first, and then attempt to activate it again."
+)
+)
 
 exit /b
 
@@ -4111,29 +4128,29 @@ echo:
 echo:
 echo        ______________________________________________________________
 echo: 
-call :dk_color2 %_White% "              [1] " %_Green% "Auto"
-echo                   Builds ^> 19041 -StaticCID (KMS4k if offline)
-echo                   Builds ^< 19041 -ZeroCID
-echo               ________________________________________________
+call :dk_color2 %_White% "             [1] " %_Green% "Auto"
+echo                  Builds ^>= 19041 - StaticCID (KMS4k if offline)
+echo                  Builds ^<  19041 - ZeroCID
+echo              __________________________________________________
 echo: 
-echo               [2] StaticCID
-echo                   Needs Internet
-echo                   Not for Windows 7 or older
-echo               ________________________________________________
+echo              [2] StaticCID
+echo                  Needs Internet
+echo                  Not for Windows 7 or older
+echo              __________________________________________________
 echo:
-echo               [3] ZeroCID
-echo                   Works reliably on builds below 19041
-echo                   May break on builds between 19041-26100
-echo                   Does not work on builds above 26100.4188
-echo               ________________________________________________
+echo              [3] ZeroCID
+echo                  Works reliably on builds below 19041
+echo                  May break on builds between 19041-26100
+echo                  Does not work on builds above 26100.4188
+echo              __________________________________________________
 echo:
-echo               [4] KMS4k
-echo                   Volume licenses only
-echo                   Activates for 4000+ years
-echo               ________________________________________________
+echo              [4] KMS4k
+echo                  Volume licenses only
+echo                  Activates for 4000+ years
+echo              __________________________________________________
 echo:
-echo               [5] Learn More
-echo               [0] %_exitmsg%
+echo              [5] Learn More
+echo              [0] %_exitmsg%
 echo        ______________________________________________________________
 echo:
 call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard..."
@@ -4980,6 +4997,7 @@ set error=1
 goto :ts_starto16c2r
 )
 
+call :oh_expiredpreview 2013
 if "%_actprojvis%"=="0" call :oh_fixprids
 call :ts_process
 
@@ -5021,6 +5039,7 @@ set error=1
 goto :ts_startmsi
 )
 
+call :oh_expiredpreview 2016 2019 2021 2024
 if "%_actprojvis%"=="0" call :oh_fixprids
 call :ts_process
 
@@ -12966,6 +12985,7 @@ set error=1
 goto :ks_starto16c2r
 )
 
+call :oh_expiredpreview 2013
 if "%_actprojvis%"=="0" call :oh_fixprids
 call :ks_process
 
@@ -13006,6 +13026,7 @@ set error=1
 goto :ks_startmsi
 )
 
+call :oh_expiredpreview 2016 2019 2021 2024
 if "%_actprojvis%"=="0" call :oh_fixprids
 call :ks_process
 
