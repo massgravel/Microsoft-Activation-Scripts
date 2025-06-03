@@ -69,8 +69,8 @@ or
 ---
 
 ```
-Latest Version: 3.3
-Release date: 1-June-2025
+Latest Version: 3.4
+Release date: 3-June-2025
 ```
 
 ### [Troubleshooting / Help](https://massgrave.dev/troubleshoot)
