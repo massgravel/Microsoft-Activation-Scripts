@@ -511,25 +511,26 @@ echo:
 echo:
 echo        ______________________________________________________________
 echo: 
-call :dk_color2 %_White% "             [1] " %_Green% " Auto"
-echo                   Build 19041 and later:
-echo                   Uses StaticCID, or KMS4k if offline.
-echo                   Older builds: Uses ZeroCID.
-echo               _______________________________________________  
+call :dk_color2 %_White% "              [1] " %_Green% "Auto"
+echo                   Builds ^> 19041 -StaticCID (KMS4k if offline)
+echo                   Builds ^< 19041 -ZeroCID
+echo               ________________________________________________
 echo: 
 echo               [2] StaticCID
-echo                   Needs Internet.
-echo                   Not for Windows 7 or older.
-echo               _______________________________________________  
+echo                   Needs Internet
+echo                   Not for Windows 7 or older
+echo               ________________________________________________
 echo:
 echo               [3] ZeroCID
-echo                   Works only on builds below 19041.
-echo               _______________________________________________  
+echo                   Works reliably on builds below 19041
+echo                   May break on builds between 19041-26100
+echo                   Does not work on builds above 26100.4188
+echo               ________________________________________________
 echo:
 echo               [4] KMS4k
-echo                   This applies only to volume products.
-echo                   Activates for 4000+ years using KMS.
-echo               _______________________________________________      
+echo                   Volume licenses only
+echo                   Activates for 4000+ years
+echo               ________________________________________________
 echo:
 echo               [5] Learn More
 echo               [0] %_exitmsg%
