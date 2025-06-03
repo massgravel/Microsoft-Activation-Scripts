@@ -497,6 +497,8 @@ if !_el!==1  cls & setlocal & set "_actwin=1"       & call :ts_start & endlocal 
 goto :ts_menu
 )
 
+goto :ts_start
+
 ::========================================================================================================================================
 
 :ts_changemethod
