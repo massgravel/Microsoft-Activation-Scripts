@@ -13939,8 +13939,8 @@ set srvlist=
 set -=
 
 set "srvlist=kms.03%-%k.org kms-default.cangs%-%hui.net kms.six%-%yin.com kms.moe%-%club.org kms.cgt%-%soft.com"
-set "srvlist=%srvlist% kms.id%-%ina.cn kms.moe%-%yuuko.com xinch%-%eng213618.cn kms.lol%-%i.best kms.my%-%ds.cloud"
-set "srvlist=%srvlist% kms.0%-%t.net.cn win.k%-%ms.pub kms.wx%-%lost.com kms.moe%-%yuuko.top kms.gh%-%pym.com"
+set "srvlist=%srvlist% kms.id%-%ina.cn kms.moe%-%yuuko.com xinch%-%eng213618.cn kms.lol%-%i.best kms.mc%-%06.net"
+set "srvlist=%srvlist% kms.0%-%t.net.cn win.k%-%ms.pub kms.wx%-%lost.com kms.moe%-%yuuko.top kms.gh%-%xi.com"
 
 set n=1
 for %%a in (%srvlist%) do (set %%a=&set server!n!=%%a&set /a n+=1)
