@@ -1,18 +1,18 @@
-@::b879-random
-@set masver=2.9
+@::yfh37fow-random
+@set masver=3.4
 @setlocal DisableDelayedExpansion
 @echo off
 
 
 
-::  For command line switches, check mass grave[.]dev/command_line_switches
+::  For command line switches, check mass<>grave<.>dev/command_line_switches
 ::  If you want to better understand script, read from MAS separate files version. 
 
 
 
 ::============================================================================
 ::
-::   Homepage: mass grave[.]dev
+::   Homepage: mass<>grave<.>dev
 ::      Email: mas.help@outlook.com
 ::
 ::============================================================================
@@ -67,6 +67,8 @@ exit /b
 
 set "blank="
 set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
+set "github=ht%blank%tps%blank%://github.com/massgra%blank%vel/Micro%blank%soft-Acti%blank%vation-Scripts"
+set "selfgit=ht%blank%tps%blank%://git.acti%blank%vated.win/massg%blank%rave/Micr%blank%osoft-Act%blank%ivation-Scripts"
 
 ::  Check if Null service is working, it's important for the batch script
 
@@ -76,7 +78,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%fix_service
+echo Check this webpage for help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -91,7 +93,7 @@ echo:
 echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Check this webpage for help - %mas%troubleshoot
 echo:
 echo:
 ping 127.0.0.1 -n 20 >nul
@@ -131,10 +133,37 @@ set "nul=>nul 2>&1"
 
 call :dk_setvar
 
-if %winbuild% LSS 7600 (
+if %winbuild% EQU 1 (
+%eline%
+echo Failed to detect Windows build number.
+echo:
+setlocal EnableDelayedExpansion
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto dk_done
+)
+
+if %winbuild% LSS 6001 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
+if %winbuild% EQU 6000 (
+echo:
+echo Windows Vista RTM is not supported because Powershell cannot be installed.
+echo Upgrade to Windows Vista SP1 or SP2.
+)
+goto dk_done
+)
+
+if %winbuild% LSS 7600 if not exist "%SysPath%\WindowsPowerShell\v1.0\Modules" (
+%nceline%
+if not exist %ps% (
+echo PowerShell is not installed in your system.
+)
+echo Install PowerShell 2.0 using the following URL.
+echo:
+echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+if %_unattended%==0 start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
 goto dk_done
 )
 
@@ -170,33 +199,6 @@ goto dk_done
 
 ::========================================================================================================================================
 
-::  Check PowerShell
-
-REM :PStest: $ExecutionContext.SessionState.LanguageMode :PStest:
-
-cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PStest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
-%eline%
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
-echo:
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | find /i "FullLanguage" %nul1% && (
-echo Failed to run Powershell command but Powershell is working.
-echo:
-cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { if ($i.displayName -notlike '*windows*') { $n += $i.displayName } }; if ($n) { Write-Host ('Installed 3rd party Antivirus might be blocking the script - ' + ($n -join ', ')) -ForegroundColor White -BackgroundColor Blue }"""
-echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
-) || (
-echo PowerShell is not working. Aborting...
-echo If you have applied restrictions on Powershell then undo those changes.
-echo:
-set fixes=%fixes% %mas%fix_powershell
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_powershell"
-)
-goto dk_done
-)
-
-::========================================================================================================================================
-
 ::  Elevate script as admin and pass arguments and preventing loop
 
 %nul1% fltmc || (
@@ -204,6 +206,66 @@ if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" &&
 %eline%
 echo This script needs admin rights.
 echo Right click on this script and select 'Run as administrator'.
+goto dk_done
+)
+
+::========================================================================================================================================
+
+::  Check PowerShell
+
+::pstst $ExecutionContext.SessionState.LanguageMode :pstst
+
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}" %nul6%') do (set tstresult=%%a)
+
+if /i not "%tstresult%"=="FullLanguage" (
+%eline%
+for /f "delims=" %%a in ('%psc% "$ExecutionContext.SessionState.LanguageMode" %nul6%') do (set tstresult2=%%a)
+echo Test 1 - %tstresult%
+echo Test 2 - !tstresult2!
+echo:
+
+REM check LanguageMode
+
+echo: !tstresult2! | findstr /i "ConstrainedLanguage RestrictedLanguage NoLanguage" %nul1% && (
+echo FullLanguage mode not found in PowerShell. Aborting...
+echo If you have applied restrictions on Powershell then undo those changes.
+echo:
+set fixes=%fixes% %mas%fix_powershell
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_powershell"
+goto dk_done
+)
+
+REM check Powershell core version
+
+cmd /c "%psc% "$PSVersionTable.PSEdition"" | find /i "Core" %nul1% && (
+echo Windows Powershell is needed for MAS but it seems to be replaced with Powershell core. Aborting...
+goto dk_done
+)
+
+REM check for Mal-ware that may cause issues with Powershell
+
+for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
+echo "%%f"
+echo Mal%blank%ware found, PowerShell is not working properly.
+echo:
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+goto dk_done
+)
+
+REM check antivirus and other errors
+
+echo PowerShell is not working properly. Aborting...
+
+if /i "!tstresult2!"=="FullLanguage" (
+echo:
+echo Your antivirus software might be blocking the script, or PowerShell on your system might be corrupted.
+cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { $n += $i.displayName }; if ($n) { Write-Host ('Installed Antivirus - ' + ($n -join ', '))}"""
+)
+
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -219,34 +281,33 @@ set terminal=
 
 ::  Check if script is running in Terminal app
 
-set r1=$TB = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);
-set r2=%r1% [void]$TB.DefinePInvokeMethod('GetConsoleWindow', 'kernel32.dll', 22, 1, [IntPtr], @(), 1, 3).SetImplementationFlags(128);
-set r3=%r2% [void]$TB.DefinePInvokeMethod('SendMessageW', 'user32.dll', 22, 1, [IntPtr], @([IntPtr], [UInt32], [IntPtr], [IntPtr]), 1, 3).SetImplementationFlags(128);
-set d1=%r3% $hIcon = $TB.CreateType(); $hWnd = $hIcon::GetConsoleWindow();
-set d2=%d1% echo $($hIcon::SendMessageW($hWnd, 127, 0, 0) -ne [IntPtr]::Zero);
-
 if defined terminal (
-%psc% "%d2%" %nul2% | find /i "True" %nul1% && set terminal=
+set lines=0
+for /f "skip=2 tokens=2 delims=: " %%A in ('mode con') do if "!lines!"=="0" set lines=%%A
+if !lines! GEQ 100 set terminal=
 )
 
-if defined ps32onArm goto :skipQE
 if %_unattended%==1 goto :skipQE
 for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
 
+::  Relaunch to disable QuickEdit in the current session and use conhost.exe instead of the Terminal app
+::  This code disables QuickEdit for the current cmd.exe session without making permanent registry changes
+::  It is included because clicking on the script window can pause execution, causing confusion that the script has stopped due to an error
+
+set resetQE=1
+reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% && set resetQE=0
+reg add HKCU\Console /v QuickEdit /t REG_DWORD /d 0 /f %nul1%
+
 if defined terminal (
-set "launchcmd=start conhost.exe %psc%"
-) else (
-set "launchcmd=%psc%"
+start conhost.exe "!_batf!" %_args% -qedit
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
+) else if %resetQE% EQU 1 (
+start cmd.exe /c ""!_batf!" %_args% -qedit"
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
 )
 
-::  Disable QuickEdit in current session
-
-set "d1=$t=[AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);"
-set "d2=$t.DefinePInvokeMethod('GetStdHandle', 'kernel32.dll', 22, 1, [IntPtr], @([Int32]), 1, 3).SetImplementationFlags(128);"
-set "d3=$t.DefinePInvokeMethod('SetConsoleMode', 'kernel32.dll', 22, 1, [Boolean], @([IntPtr], [Int32]), 1, 3).SetImplementationFlags(128);"
-set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080);"
-
-%launchcmd% "%d1% %d2% %d3% %d4% & cmd.exe '/c' '!_PSarg! -qedit'" && (exit /b) || (set terminal=1)
 :skipQE
 
 ::========================================================================================================================================
@@ -255,9 +316,19 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set pingp=
+set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+for %%A in (
+activ%-%ated.win
+mass%-%grave.dev
+) do if not defined pingp (
+for /f "delims=[] tokens=2" %%B in ('ping -n 1 %%A') do (
+if not "%%B"=="" (set old=1& set pingp=1)
+for /f "delims=[] tokens=2" %%C in ('ping -n 1 updatecheck%upver%.%%A') do (
+if not "%%C"=="" set old=
+)
+)
 )
 
 if defined old (
@@ -273,7 +344,7 @@ echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
-if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+if !errorlevel!==1 (start %selfgit% & start %github% & start %mas% & exit /b)
 )
 )
 
@@ -286,10 +357,11 @@ if not exist "%SystemRoot%\Temp\" mkdir "%SystemRoot%\Temp" %nul%
 set _elev=
 if defined _args echo "%_args%" | find /i "/S" %nul% && (set "_silent=%nul%") || (set _silent=)
 if defined _args echo "%_args%" | find /i "/" %nul% && (
-echo "%_args%" | find /i "/HWID"   %nul% && (setlocal & cls & (call :HWIDActivation   %_args% %_silent%) & endlocal)
-echo "%_args%" | find /i "/KMS38"  %nul% && (setlocal & cls & (call :KMS38Activation  %_args% %_silent%) & endlocal)
-echo "%_args%" | find /i "/K-"     %nul% && (setlocal & cls & (call :KMSActivation    %_args% %_silent%) & endlocal)
-echo "%_args%" | find /i "/Ohook"  %nul% && (setlocal & cls & (call :OhookActivation  %_args% %_silent%) & endlocal)
+echo "%_args%" | find /i "/HWID"   %nul% && (setlocal & cls & (call :HWIDActivation    %_args% %_silent%) & endlocal)
+echo "%_args%" | find /i "/KMS38"  %nul% && (setlocal & cls & (call :KMS38Activation   %_args% %_silent%) & endlocal)
+echo "%_args%" | find /i "/Z-"     %nul% && (setlocal & cls & (call :TSforgeActivation %_args% %_silent%) & endlocal)
+echo "%_args%" | find /i "/K-"     %nul% && (setlocal & cls & (call :KMSActivation     %_args% %_silent%) & endlocal)
+echo "%_args%" | find /i "/Ohook"  %nul% && (setlocal & cls & (call :OhookActivation   %_args% %_silent%) & endlocal)
 exit /b
 )
 
@@ -319,7 +391,21 @@ goto dk_done
 cls
 color 07
 title  Microsoft %blank%Activation %blank%Scripts %masver%
-if not defined terminal mode 76, 33
+if not defined terminal mode 76, 34
+
+if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" set _hwidgo=1
+if %winbuild% GTR 14393 if exist "%SysPath%\spp\tokens\skus\EnterpriseSN\" set _hwidgo=
+if not defined _hwidgo set _tsforgego=1
+
+set _ohookgo=1
+if %winbuild% GEQ 9200 (
+if %winbuild% LSS 10240 set _ohookgo=
+if %winbuild% GEQ 19041 if %winbuild% LEQ 19045 set _ohookgo=
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" set _ohookgo=
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" set _ohookgo=
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-EnterpriseS*dition~*.mum" set _ohookgo=
+)
+if not defined _ohookgo set _tsforgego=1
 
 echo:
 echo:
@@ -329,39 +415,62 @@ echo:       ______________________________________________________________
 echo:
 echo:                 Activation Methods:
 echo:
-echo:             [1] HWID        ^|  Windows           ^|   Permanent
-echo:             [2] Ohook       ^|  Office            ^|   Permanent
-echo:             [3] KMS38       ^|  Windows           ^|   Year 2038
-echo:             [4] Online KMS  ^|  Windows / Office  ^|    180 Days
+if defined _hwidgo (
+call :dk_color3 %_White% "             [1] " %_Green% "HWID" %_White% "                - Windows"
+) else (
+echo:             [1] HWID                - Windows
+)
+if defined _ohookgo (
+call :dk_color3 %_White% "             [2] " %_Green% "Ohook" %_White% "               - Office"
+) else (
+echo:             [2] Ohook               - Office
+)
+if defined _tsforgego (
+call :dk_color3 %_White% "             [3] " %_Green% "TSforge" %_White% "             - Windows / Office / ESU"
+) else (
+echo:             [3] TSforge             - Windows / Office / ESU
+)
+echo:             [4] KMS38               - Windows
+echo:             [5] Online KMS          - Windows / Office
+echo:             __________________________________________________ 
+echo:
+echo:             [6] Check Activation Status
+echo:             [7] Change Windows Edition
+echo:             [8] Change Office Edition
 echo:             __________________________________________________      
 echo:
-echo:             [5] Check Activation Status
-echo:             [6] Change Windows Edition
-echo:             [7] Change Office Edition
-echo:             __________________________________________________      
-echo:
-echo:             [8] Troubleshoot
-echo:             [9] Extras
+echo:             [9] Troubleshoot
+echo:             [E] Extras
 echo:             [H] Help
 echo:             [0] Exit
 echo:       ______________________________________________________________
 echo:
-call :dk_color2 %_White% "      " %_Green% "Choose a menu option using your keyboard [1,2,3,4,5,6,7,8,9,H,0] :"
-choice /C:123456789H0 /N
+call :dk_color2 %_White% "         " %_Green% "Choose a menu option using your keyboard [1,2,3...E,H,0] :"
+choice /C:123456789EH0 /N
 set _erl=%errorlevel%
 
-if %_erl%==11 exit /b
-if %_erl%==10 start %mas%troubleshoot & goto :MainMenu
-if %_erl%==9 goto :Extras
-if %_erl%==8 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
-if %_erl%==7 setlocal & call :change_offedition & cls & endlocal & goto :MainMenu
-if %_erl%==6 setlocal & call :change_winedition & cls & endlocal & goto :MainMenu
-if %_erl%==5 setlocal & call :check_actstatus   & cls & endlocal & goto :MainMenu
-if %_erl%==4 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
-if %_erl%==3 setlocal & call :KMS38Activation   & cls & endlocal & goto :MainMenu
+if %_erl%==12 exit /b
+if %_erl%==11 (start %selfgit% & start %github% & start %mas%troubleshoot & goto :MainMenu)
+if %_erl%==10 goto :Extras
+if %_erl%==9 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
+if %_erl%==8 setlocal & call :change_offedition & cls & endlocal & goto :MainMenu
+if %_erl%==7 setlocal & call :change_winedition & cls & endlocal & goto :MainMenu
+if %_erl%==6 setlocal & call :check_actstatus   & cls & endlocal & goto :MainMenu
+if %_erl%==5 setlocal & call :KMSActivation     & cls & endlocal & goto :MainMenu
+if %_erl%==4 setlocal & call :KMS38Activation   & cls & endlocal & goto :MainMenu
+if %_erl%==3 setlocal & call :TSforgeActivation & cls & endlocal & goto :MainMenu
 if %_erl%==2 setlocal & call :OhookActivation   & cls & endlocal & goto :MainMenu
 if %_erl%==1 setlocal & call :HWIDActivation    & cls & endlocal & goto :MainMenu
 goto :MainMenu
+
+:dk_color3
+
+if %_NCS% EQU 1 (
+echo %esc%[%~1%~2%esc%[%~3%~4%esc%[%~5%~6%esc%[0m
+) else (
+%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'-NoNewline; write-host -back '%7' -fore '%8' '%9'
+)
+exit /b
 
 ::========================================================================================================================================
 
@@ -422,36 +531,34 @@ echo:
 echo:
 echo:
 echo:                     Extract $OEM$ folder on the desktop           
-echo:           ________________________________________________________
+echo:         ____________________________________________________________
 echo:
-echo:              [1] HWID
-echo:              [2] Ohook
-echo:              [3] KMS38
-echo:              [4] Online KMS
+echo:            [1] HWID             [Windows]
+echo:            [2] Ohook            [Office]
+echo:            [3] TSforge          [Windows / ESU / Office]
+echo:            [4] KMS38            [Windows]
+echo:            [5] Online KMS       [Windows / Office]
 echo:
-echo:              [5] HWID       ^(Windows^) ^+ Ohook      ^(Office^)
-echo:              [6] HWID       ^(Windows^) ^+ Online KMS ^(Office^)
-echo:              [7] KMS38      ^(Windows^) ^+ Ohook      ^(Office^)
-echo:              [8] KMS38      ^(Windows^) ^+ Online KMS ^(Office^)
-echo:              [9] Online KMS ^(Windows^) ^+ Ohook      ^(Office^)
+echo:            [6] HWID    [Windows] ^+ Ohook [Office]
+echo:            [7] HWID    [Windows] ^+ Ohook [Office] ^+ TSforge [ESU]
+echo:            [8] TSforge [Windows] ^+ Online KMS [Office]
 echo:
-call :dk_color2 %_White% "              [R] " %_Green% "ReadMe"
-echo:              [0] Go Back
-echo:           ________________________________________________________
+call :dk_color2 %_White% "            [R] " %_Green% "ReadMe"
+echo:            [0] Go Back
+echo:         ____________________________________________________________
 echo:  
-call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard:"
-choice /C:123456789R0 /N
+call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard :"
+choice /C:12345678R0 /N
 set _erl=%errorlevel%
 
-if %_erl%==11 goto:Extras
-if %_erl%==10 start %mas%oem-folder &goto:Extract$OEM$2
-if %_erl%==9 (set "_oem=Online KMS [Windows] + Ohook [Office]" & set "para=/K-Windows /Ohook" &goto:Extract$OEM$3)
-if %_erl%==8 (set "_oem=KMS38 [Windows] + Online KMS [Office]" & set "para=/KMS38 /K-Office" &goto:Extract$OEM$3)
-if %_erl%==7 (set "_oem=KMS38 [Windows] + Ohook [Office]" & set "para=/KMS38 /Ohook" &goto:Extract$OEM$3)
-if %_erl%==6 (set "_oem=HWID [Windows] + Online KMS [Office]" & set "para=/HWID /K-Office" &goto:Extract$OEM$3)
-if %_erl%==5 (set "_oem=HWID [Windows] + Ohook [Office]" & set "para=/HWID /Ohook" &goto:Extract$OEM$3)
-if %_erl%==4 (set "_oem=Online KMS" & set "para=/K-WindowsOffice" &goto:Extract$OEM$3)
-if %_erl%==3 (set "_oem=KMS38" & set "para=/KMS38" &goto:Extract$OEM$3)
+if %_erl%==10 goto:Extras
+if %_erl%==9 start %mas%oem-folder &goto:Extract$OEM$2
+if %_erl%==8 (set "_oem=TSforge [Windows] + Online KMS [Office]" & set "para=/Z-Windows /K-Office" &goto:Extract$OEM$3)
+if %_erl%==7 (set "_oem=HWID [Windows] + Ohook [Office] + TSforge [ESU]" & set "para=/HWID /Ohook /Z-ESU" &goto:Extract$OEM$3)
+if %_erl%==6 (set "_oem=HWID [Windows] + Ohook [Office]" & set "para=/HWID /Ohook" &goto:Extract$OEM$3)
+if %_erl%==5 (set "_oem=Online KMS" & set "para=/K-WindowsOffice" &goto:Extract$OEM$3)
+if %_erl%==4 (set "_oem=KMS38" & set "para=/KMS38" &goto:Extract$OEM$3)
+if %_erl%==3 (set "_oem=TSforge" & set "para=/Z-WindowsESUOffice" &goto:Extract$OEM$3)
 if %_erl%==2 (set "_oem=Ohook" & set "para=/Ohook" &goto:Extract$OEM$3)
 if %_erl%==1 (set "_oem=HWID" & set "para=/HWID" &goto:Extract$OEM$3)
 goto :Extract$OEM$2
@@ -540,14 +647,14 @@ if %winbuild% LSS 10240 (
 echo Unsupported OS version detected [%winbuild%].
 echo HWID Activation is only supported on Windows 10/11.
 echo:
-call :dk_color %Blue% "Use Online KMS activation option."
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 goto dk_done
 )
 
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 %eline%
 echo HWID Activation is not supported on Windows Server.
-call :dk_color %Blue% "Use KMS38 or Online KMS activation option."
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 goto dk_done
 )
 
@@ -574,8 +681,13 @@ if not exist %SysPath%\%%# (
 %eline%
 echo [%SysPath%\%%#] file is missing, aborting...
 echo:
+if not defined results (
+call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
+call :dk_color %Blue% "After that, restart system and try activation again."
+echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
 goto dk_done
 )
 )
@@ -600,7 +712,6 @@ cls
 echo ___________________________________________________________________________________________
 echo:
 call :dk_color2 %_White% "     " %Green% "%winos% is already permanently activated."
-call :dk_color2 %_White% "     " %Gray% "Activation is not required."
 echo ___________________________________________________________________________________________
 if %_unattended%==1 goto dk_done
 echo:
@@ -618,10 +729,11 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2
 %eline%
 echo [%winos% ^| %winbuild%]
 echo:
-echo Evaluation editions cannot be activated outside of their evaluation period. 
+echo Evaluation editions cannot be activated outside of their evaluation period.
+call :dk_color %Blue% "Use TSforge activation option from the main menu to reset evaluation period."
 echo:
 set fixes=%fixes% %mas%evaluation_editions
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%evaluation_editions"
 goto dk_done
 )
 )
@@ -702,13 +814,13 @@ echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 if not defined skunotfound (
 echo This product does not support HWID activation.
 echo Make sure you are using the latest version of the script.
-echo If you are, then try KMS38 activation option.
+echo If you are, then try TSforge activation option from the main menu.
 set fixes=%fixes% %mas%
 echo %mas%
 ) else (
 echo Required license files not found in %SysPath%\spp\tokens\skus\
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 echo:
 goto dk_done
@@ -731,6 +843,7 @@ call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] detected. Script w
 echo:
 )
 
+set generickey=1
 call :dk_inskey "[%key%]"
 
 ::========================================================================================================================================
@@ -842,17 +955,18 @@ goto :dl_final
 
 set "_ident=HKU\S-1-5-19\SOFTWARE\Microsoft\IdentityCRL"
 
-if defined _int (
+if %keyerror% EQU 0 if defined _int (
 reg delete "%_ident%" /f %nul%
-reg query "%_ident%" %nul% && (
-echo:
-set error=1
-call :dk_color %Red% "Deleting IdentityCRL Registry           [Failed] [%_ident%]"
-)
 for %%# in (wlidsvc LicenseManager sppsvc) do (%psc% "Start-Job { Restart-Service %%# } | Wait-Job -Timeout 20 | Out-Null")
 call :dk_refresh
 call :dk_act
 call :dk_checkperm
+
+reg query "%_ident%" %nul% || (
+set error=1
+echo:
+call :dk_color %Red% "Generating New IdentityCRL Registry     [Failed] [%_ident%]"
+)
 )
 
 ::==========================================================================================================================================
@@ -860,43 +974,40 @@ call :dk_checkperm
 ::  Extended licensing servers tests incase error not found and activation failed
 
 if %keyerror% EQU 0 if not defined _perm if defined _int (
-set resfail=
 ipconfig /flushdns %nul%
 set "tls=[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;"
 
 for %%# in (
+licensing.mp.microsoft.com/v7.0/licenses/content
 login.live.com/ppsecure/deviceaddcredential.srf
 purchase.mp.microsoft.com/v7.0/users/me/orders
 ) do if not defined resfail (
-set "d1=Add-Type -AssemblyName System.Net.Http;"
-set "d1=!d1! $client = [System.Net.Http.HttpClient]::new();"
-set "d1=!d1! $response = $client.GetAsync('https://%%#').GetAwaiter().GetResult();"
-set "d1=!d1! $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()"
-%psc% "!tls! !d1!" %nul2% | findstr /i "PurchaseFD DeviceAddResponse" %nul1% || set resfail=1
+%psc% "try { !tls! irm https://%%# -Method POST } catch { if ($_.Exception.Response -eq $null) { Write-Host """"[%%#] $($_.Exception.Message)"""" -ForegroundColor Red -BackgroundColor Black; exit 3 } }"
+if !errorlevel!==3 set resfail=1
 )
-
-if not defined resfail (
-%psc% "!tls! irm https://licensing.mp.microsoft.com/v7.0/licenses/content -Method POST" | find /i "traceId" %nul1% || set resfail=1
 )
 
 if defined resfail (
 set error=1
-echo:
-call :dk_color %Red% "Checking Licensing Servers              [Failed to Connect]"
-set fixes=%fixes% %mas%licensing-servers-issue
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%licensing-servers-issue"
+for %%# in (
+live.com
+microsoft.com
+login.live.com
+purchase.mp.microsoft.com
+licensing.mp.microsoft.com
+) do (
+findstr /i "%%#" "%SysPath%\drivers\etc\hosts" %nul1% && set "hosfail= [%%# Blocked in Hosts]"
 )
+call :dk_color %Red% "Checking Licensing Servers              [Failed to Connect]!hosfail!"
+set fixes=%fixes% %mas%licensing-servers-issue
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%licensing-servers-issue"
 )
 
 ::==========================================================================================================================================
 
-if %keyerror% EQU 0 if not defined _perm if defined _int (
+::  Windows update and store block check
 
-reg query "%_ident%" %nul% || (
-set error=1
-echo:
-call :dk_color %Red% "Generating New IdentityCRL Registry     [Failed] [%_ident%]"
-)
+if %keyerror% EQU 0 if not defined _perm if defined _int (
 
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DisableWindowsUpdateAccess %nul2% | find /i "0x1" %nul% && set wublock=1
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DoNotConnectToWindowsUpdateInternetLocations %nul2% | find /i "0x1" %nul% && set wublock=1
@@ -921,31 +1032,37 @@ reg query HKLM\SYSTEM\CurrentControlSet\Services\wuauserv\%%G %nul% || (set wuco
 )
 
 if defined wucorrupt (
+set error=1
 call :dk_color %Red% "Checking Windows Update Registry        [Corruption Found]"
 if !wcount! GTR 2 (
 call :dk_color %Red% "Windows seems to be infected with Mal%w%ware."
 set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
 ) else (
 call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
 )
 ) else (
 %psc% "Start-Job { Start-Service wuauserv } | Wait-Job -Timeout 20 | Out-Null"
 sc query wuauserv | find /i "RUNNING" %nul% || (
+set error=1
 set wuerror=1
 sc start wuauserv %nul%
 call :dk_color %Red% "Starting Windows Update Service         [Failed] [!errorlevel!]"
 call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
 )
 )
+)
 
-REM Check Internet related error codes
+::==========================================================================================================================================
 
-if not defined wucorrupt if not defined wublock if not defined wuerror if not defined storeblock (
+::  Check Internet related error codes
+
+if %keyerror% EQU 0 if not defined _perm if defined _int (
+if not defined wucorrupt if not defined wublock if not defined wuerror if not defined storeblock if not defined resfail (
 echo "%error_code%" | findstr /i "0x80072e 0x80072f 0x800704cf 0x87e10bcf 0x800705b4" %nul% && (
 call :dk_color %Red% "Checking Internet Issues                [Found] %error_code%"
 set fixes=%fixes% %mas%licensing-servers-issue
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%licensing-servers-issue"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%licensing-servers-issue"
 )
 )
 )
@@ -959,11 +1076,11 @@ call :dk_color %Green% "%winos% is permanently activated with a digital license.
 call :dk_color %Red% "Activation Failed %error_code%"
 if defined notworking (
 call :dk_color %Blue% "At the time of writing, HWID Activation is not supported for this product."
-call :dk_color %Blue% "Use KMS38 activation option instead."
+call :dk_color %Blue% "Use TSforge activation option from the main menu instead."
 ) else (
 if not defined error call :dk_color %Blue% "%_fixmsg%"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 )
 
@@ -997,9 +1114,15 @@ goto :dk_done
 
 :dk_setvar
 
-set psc=powershell.exe
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
@@ -1140,11 +1263,12 @@ set keyerror=%errorlevel%
 cmd /c exit /b %keyerror%
 if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
 
+if defined generickey (set "keyecho=Installing Generic Product Key         ") else (set "keyecho=Installing Product Key                 ")
 if %keyerror% EQU 0 (
 if %sps%==SoftwareLicensingService call :dk_refresh
-echo Installing Generic Product Key          %~1 [Successful]
+echo %keyecho% %~1 [Successful]
 ) else (
-call :dk_color %Red% "Installing Generic Product Key          %~1 [Failed] %keyerror%"
+call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
 if not defined error (
 if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
 call :dk_color %Blue% "%_fixmsg%"
@@ -1153,6 +1277,7 @@ set showfix=1
 set error=1
 )
 
+set generickey=
 exit /b
 
 ::  Activation command
@@ -1180,9 +1305,9 @@ if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISE
 
 if defined allapps if %1==0ff1ce15-a989-479d-af46-f275c6370663 (
 set len=0
-echo:!allapps!> %SystemRoot%\Temp\chklen
-for %%A in (%SystemRoot%\Temp\chklen) do (set len=%%~zA)
-del %SystemRoot%\Temp\chklen %nul%
+echo:!allapps!> "!_ttemp!\chklen"
+for %%A in ("!_ttemp!\chklen") do (set len=%%~zA)
+del "!_ttemp!\chklen" %nul%
 
 if !len! GTR 6000 (
 %eline%
@@ -1206,6 +1331,8 @@ exit /b
 ::  Trigger reevaluation, it helps in updating SPP tasks
 
 :dk_reeval
+
+if %winbuild% LSS 7600 exit /b
 
 ::  This key is left by the system in rearm process and sppsvc sometimes fails to delete it, it causes issues in working of the Scheduled Tasks of SPP
 
@@ -1252,13 +1379,13 @@ function InstallLicenseArr($Str) {
     ForEach ($x in $a) {InstallLicenseFile "$x"}
 }
 function InstallLicenseDir($Loc) {
-    dir $Loc *.xrm-ms -af -s | select -expand FullName | % {InstallLicenseFile "$_"}
+	Get-ChildItem $Loc -Recurse -Filter *.xrm-ms | ForEach-Object {InstallLicenseFile $_.FullName}
 }
 function ReinstallLicenses() {
-    $Oem = "$env:SysPath\oem"
-    $Spp = "$env:SysPath\spp\tokens"
-    InstallLicenseDir "$Spp"
-    If (Test-Path $Oem) {InstallLicenseDir "$Oem"}
+	$Paths = @("$env:SysPath\oem", "$env:SysPath\licensing", "$env:SysPath\spp\tokens")
+	foreach ($Path in $Paths) {
+    if (Test-Path $Path) { InstallLicenseDir "$Path" }
+	}
 }
 :xrm:
 
@@ -1266,6 +1393,7 @@ function ReinstallLicenses() {
 
 :dk_ckeckwmic
 
+if %winbuild% LSS 9200 (set _wmic=1&exit /b)
 set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" %nul2% | find /i "computersystem" %nul1% && set _wmic=1
@@ -1276,16 +1404,16 @@ exit /b
 
 :dk_sppissue
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 set spperror=%errorlevel%
 
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
-echo sc start sppsvc [Error Code: %spperror%]
+echo sc start %_slser% [Error Code: %spperror%]
 )
 
 echo:
-%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host 'sppsvc is not working correctly. Help - %mas%troubleshoot'}"
+%psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host '%_slser% is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
 exit /b
 
 ::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
@@ -1293,7 +1421,7 @@ exit /b
 :dk_product
 
 set d1=%ref% $meth = $TypeBuilder.DefinePInvokeMethod('BrandingFormatString', 'winbrand.dll', 'Public, Static', 1, [String], @([String]), 1, 3);
-set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%')
+set d1=%d1% $meth.SetImplementationFlags(128); $TypeBuilder.CreateType()::BrandingFormatString('%%WINDOWS_LONG%%') -replace [string][char]0xa9, '' -replace [string][char]0xae, '' -replace [string][char]0x2122, ''
 
 set winos=
 for /f "delims=" %%s in ('"%psc% %d1%"') do if not errorlevel 1 (set winos=%%s)
@@ -1349,19 +1477,19 @@ for %%# in (avira.com kaspersky.com virustotal.com mcafee.com) do (
 find /i "%%#" %SysPath%\drivers\etc\hosts %nul% && set /a hcount+=1)
 if %hcount%==4 set "results=[Antivirus URLs are blocked in hosts]"
 
-sc start sppsvc %nul%
+sc start %_slser% %nul%
 echo "%errorlevel%" | findstr "577 225" %nul% && (
 set "results=%results%[Likely File Infector]"
 ) || (
-if not exist %SysPath%\sppsvc.exe if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
+if not exist %SysPath%\%_slexe% if not exist %SysPath%\alg.exe (set "results=%results%[Likely File Infector]")
 )
 
 if not "%results%%pupfound%"=="" (
 if defined pupfound call :dk_color %Gray% "Checking PUP Activators                 [Found%pupfound%]"
 if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection..."
-if defined results call :dk_color %Red% "%results%"
+if defined results (call :dk_color %Red% "%results%"&set showfix=1)
 set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%remove_mal%w%ware"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
 )
 
@@ -1433,6 +1561,7 @@ for %%# in (%serv_ste%) do (
 if /i %%#==ClipSVC          (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "3" /f %nul% & sc config %%# start= demand %nul%)
 if /i %%#==wlidsvc          sc config %%# start= demand %nul%
 if /i %%#==sppsvc           (reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%#" /v "Start" /t REG_DWORD /d "2" /f %nul% & sc config %%# start= delayed-auto %nul%)
+if /i %%#==SLsvc            sc config %%# start= auto %nul%
 if /i %%#==KeyIso           sc config %%# start= demand %nul%
 if /i %%#==LicenseManager   sc config %%# start= demand %nul%
 if /i %%#==Winmgmt          sc config %%# start= auto %nul%
@@ -1481,7 +1610,7 @@ set showfix=1
 )
 echo %serv_e% | findstr /i "sppsvc-1060" %nul% && (
 set fixes=%fixes% %mas%fix_service
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_service"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_service"
 set showfix=1
 )
 )
@@ -1497,15 +1626,15 @@ call :dk_color2 %Red% "Checking Boot Mode                      [%safeboot_option
 )
 
 
-::  https://learn.microsoft.com/windows-hardware/manufacture/desktop/windows-setup-states
+::  https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states
 
 for /f "skip=2 tokens=2*" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" /v ImageState') do (set imagestate=%%B)
 
 if /i not "%imagestate%"=="IMAGE_STATE_COMPLETE" (
-set error=1
-set showfix=1
 call :dk_color %Gray% "Checking Windows Setup State            [%imagestate%]"
 echo "%imagestate%" | find /i "RESEAL" %nul% && (
+set error=1
+set showfix=1
 call :dk_color %Blue% "You need to run it in normal mode in case you are running it in Audit Mode."
 )
 echo "%imagestate%" | find /i "UNDEPLOYABLE" %nul% && (
@@ -1534,12 +1663,11 @@ echo Checking WPA Registry Count             [%wpainfo%]
 )
 
 
-if not defined officeact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
+if not defined notwinact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% || (
-set error=1
 call :dk_color %Red% "Checking Eval Packages                  [Non-Eval Licenses are installed in Eval Windows]"
 set fixes=%fixes% %mas%evaluation_editions
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%evaluation_editions"
 )
 )
 
@@ -1558,26 +1686,27 @@ if "%osSKU%"=="164" set osedition=ProfessionalEducation
 if "%osSKU%"=="165" set osedition=ProfessionalEducationN
 )
 
-if not defined officeact (
+if not defined notwinact (
 if %osedition%==0 (
 call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
 ) else (
 
-if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
-set error=1
+if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" if not exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set skunotfound=1
 call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
 )
 
 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*-%osedition%-*.mum" (
-set error=1
+if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-%osedition%Edition*.mum" (
 call :dk_color %Red% "Checking Package Files                  [Not Found] [%osedition%]"
 )
 )
 )
+)
 
 
-%psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
+if %_wmic% EQU 1 wmic path %sps% get Version %nul%
+if %_wmic% EQU 0 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
 set error_code=%errorlevel%
 cmd /c exit /b %error_code%
 if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
@@ -1601,7 +1730,7 @@ set showfix=1
 )
 
 
-if not defined officeact (
+if not defined notwinact (
 if %winbuild% GEQ 10240 (
 %nul% set /a "sum=%slcSKU%+%regSKU%+%wmiSKU%"
 set /a "sum/=3"
@@ -1634,11 +1763,7 @@ call :dk_color2 %Red% "Checking ClipSVC                        " %Blue% "[System
 ::  This "WLMS" service was included in previous Eval editions (which were activable) to automatically shut down the system every hour after the evaluation period expired and prevent SPPSVC from stopping.
 
 if exist "%SysPath%\wlms\wlms.exe" (
-if %winbuild% LSS 9200 (
 echo Checking Eval WLMS Service              [Found]
-) else (
-call :dk_color %Red% "Checking Eval WLMS Service              [Found]"
-)
 )
 
 
@@ -1651,7 +1776,7 @@ call :dk_color2 %Blue% "In case of activation issues, do this - " %_Yellow% " %m
 )
 
 
-for %%# in (SppEx%w%tComObj.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
+for %%# in (SppEx%w%tComObj.exe SLsvc.exe sppsvc.exe sppsvc.exe\PerfOptions) do (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (if defined _sppint (set "_sppint=!_sppint!, %%#") else (set "_sppint=%%#"))
 )
 if defined _sppint (
@@ -1665,39 +1790,39 @@ echo Checking SPP In IFEO                    [%_sppint%]
 )
 
 
-for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
+if %winbuild% GEQ 7600 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
 call :dk_color %Red% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
-set error=1
 )
 
 
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
+if %winbuild% GEQ 7600 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
 call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found]"
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
-call :dk_color2 %Blue% "Most likely caused by HWID spoofers. Help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
+call :dk_color2 %Blue% "Most likely caused by gaming spoofers. Check this webpage for help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
 set error=1
 set showfix=1
 )
 
 
 set tokenstore=
+if %winbuild% GEQ 7600 (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v TokenStore %nul6%') do call set "tokenstore=%%b"
 if %winbuild% LSS 9200 set "tokenstore=%Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform"
-if %winbuild% GEQ 9200 if /i not "%tokenstore%"=="%SysPath%\spp\store" if /i not "%tokenstore%"=="%SysPath%\spp\store\2.0" if /i not "%tokenstore%"=="%SysPath%\spp\store_test\2.0" (
+if %winbuild% GEQ 9200 if /i not "!tokenstore!"=="%SysPath%\spp\store" if /i not "!tokenstore!"=="%SysPath%\spp\store\2.0" if /i not "!tokenstore!"=="%SysPath%\spp\store_test\2.0" (
 set toerr=1
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [%tokenstore%]"
+call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [!tokenstore!]"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
-
+)
 
 ::  This code creates token folder only if it's missing and sets default permission for it
 
-if not defined toerr if not exist "%tokenstore%\" (
+if %winbuild% GEQ 7600 if not defined toerr if not exist "%tokenstore%\" (
 mkdir "%tokenstore%" %nul%
 if %winbuild% LSS 9200 set "d=$sddl = 'O:NSG:NSD:AI(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;NS)';"
 if %winbuild% GEQ 9200 set "d=$sddl = 'O:BAG:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICIIO;GR;;;BU)(A;;FR;;;BU)(A;OICI;FA;;;S-1-5-80-123231216-2592883651-3715271367-3753151631-4175906628)';"
@@ -1715,35 +1840,40 @@ set showfix=1
 )
 
 
+if not defined notwinact (
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
-%psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"
 call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined allapps (
+set error=1
 set "_notfoundids=Not found"
 )
-set error=1
 call :dk_color %Red% "Checking Activation IDs                 [!_notfoundids!]"
 )
 )
+)
 
 
-if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
+if %winbuild% GEQ 7600 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
 set error=1
 call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
 )
 
 
 if %winbuild% GEQ 9200 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
+%psc% "Get-WmiObject -Query 'SELECT Description FROM SoftwareLicensingProduct WHERE PartialProductKey IS NOT NULL AND LicenseDependsOn IS NULL' | Select-Object -Property Description" %nul2% | findstr /i "KMS_" %nul1% || (
 for /f "delims=" %%a in ('%psc% "(Get-ScheduledTask -TaskName 'SvcRestartTask' -TaskPath '\Microsoft\Windows\SoftwareProtectionPlatform\').State" %nul6%') do (set taskinfo=%%a)
 echo !taskinfo! | find /i "Ready" %nul% || (
 reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "actionlist" /f %nul%
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTask" %nul% || set taskinfo=Removed
 if "!taskinfo!"=="" set "taskinfo=Not Found"
 call :dk_color %Red% "Checking SvcRestartTask Status          [!taskinfo!, System might deactivate later]"
+if not defined error call :dk_color %Blue% "Reboot your machine using the restart option."
+)
 )
 )
 
@@ -1767,7 +1897,7 @@ set "permerror=Error Found In SPP Registries"
 )
 )
 
-REM  https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
+REM  https://learn.microsoft.com/en-us/office/troubleshoot/activation/license-issue-when-start-office-application
 
 if not defined permerror (
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% && (
@@ -1811,7 +1941,7 @@ exit /b
 $wpaKey = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $env:COMPUTERNAME).OpenSubKey("SYSTEM\\WPA")
 $count = 0
 foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
-    if ($subkeyName -match '.*-.*-.*-.*-.*-') {
+    if ($subkeyName -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
         $count++
     }
 }
@@ -1820,7 +1950,7 @@ $minBuildNumber = 14393
 if ($osVersion.Build -ge $minBuildNumber) {
     $subkeyHashTable = @{}
     foreach ($subkeyName in $wpaKey.GetSubKeyNames()) {
-        if ($subkeyName -match '.*-.*-.*-.*-.*-') {
+        if ($subkeyName -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
             $keyNumber = $subkeyName -replace '.*-', ''
             $subkeyHashTable[$keyNumber] = $true
         }
@@ -1834,7 +1964,7 @@ if ($osVersion.Build -ge $minBuildNumber) {
     }
 }
 $wpaKey.GetSubKeyNames() | ForEach-Object {
-    if ($_ -match '.*-.*-.*-.*-.*-') {
+    if ($_ -match '8DEC0AF1-0341-4b93-85CD-72606C2DF94C.*') {
         if ($PSVersionTable.PSVersion.Major -lt 3) {
             cmd /c "reg query "HKLM\SYSTEM\WPA\$_" /ve /t REG_BINARY >nul 2>&1"
 			if ($LASTEXITCODE -ne 0) {
@@ -1863,8 +1993,10 @@ $wpaKey.Close()
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
 )
 exit /b
 
@@ -1872,8 +2004,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
 )
 exit /b
 
@@ -1888,7 +2022,8 @@ if defined fixes (
 call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
-if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
+if !errorlevel!==2 exit /b
+if !errorlevel!==1 (start %selfgit% & start %github% & for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
@@ -2053,17 +2188,6 @@ for %%A in (%_act% %_rem%) do (if "%%A"=="1" set _unattended=1)
 
 ::========================================================================================================================================
 
-if %winbuild% LSS 9200 (
-%eline%
-echo Unsupported OS version detected [%winbuild%].
-echo Ohook Activation is supported only on Windows 8/10/11 and their server equivalents.
-echo:
-call :dk_color %Blue% "Use Online KMS activation option instead."
-goto dk_done
-)
-
-::========================================================================================================================================
-
 if %_rem%==1 goto :oh_uninstall
 
 :oh_menu
@@ -2106,8 +2230,8 @@ goto :oh_menu
 
 cls
 if not defined terminal (
-mode 130, 32
-if exist "%SysPath%\spp\store_test\" mode 134, 32
+mode 140, 32
+if exist "%SysPath%\spp\store_test\" mode 140, 32
 %psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=32;$B.Height=300;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}" %nul%
 )
 title  Ohook Activation %masver%
@@ -2116,12 +2240,17 @@ echo:
 echo Initializing...
 call :dk_chkmal
 
-if not exist %SysPath%\sppsvc.exe (
+if not exist %SysPath%\%_slexe% (
 %eline%
-echo [%SysPath%\sppsvc.exe] file is missing, aborting...
+echo [%SysPath%\%_slexe%] file is missing, aborting...
+echo:
+if not defined results (
+call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
+call :dk_color %Blue% "After that, restart system and try activation again."
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
 goto dk_done
 )
 
@@ -2147,24 +2276,26 @@ call :dk_showosinfo
 
 echo Initiating Diagnostic Tests...
 
-set "_serv=sppsvc Winmgmt"
+set "_serv=%_slser% Winmgmt"
 
 ::  Software Protection
 ::  Windows Management Instrumentation
 
-set officeact=1
+set notwinact=1
+set ohookact=1
 call :dk_errorcheck
+
+call :oh_setspp
 
 ::  Check unsupported office versions
 
-set o14msi=
 set o14c2r=
 set o16uwp=
 
 set _68=HKLM\SOFTWARE\Microsoft\Office
 set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=Office 2010 MSI )
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=Office 2010 MSI )
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=Office 2010 MSI )
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=Office 2010 MSI )
 %nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 %nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
 
@@ -2172,10 +2303,10 @@ if %winbuild% GEQ 10240 (
 for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Desktop' | Select-Object -ExpandProperty InstallLocation)" %nul6%') do (if exist "%%a\Integration\Integrator.exe" set o16uwp=Office UWP )
 )
 
-if not "%o14msi%%o14c2r%%o16uwp%"=="" (
+if not "%o14c2r%%o16uwp%"=="" (
 echo:
-call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%%o16uwp%]"
-if not "%o14msi%%o16uwp%"=="" call :dk_color %Blue% "Use Online KMS option to activate it."
+call :dk_color %Red% "Checking Unsupported Office Install     [ %o14c2r%%o16uwp%]"
+if not "%o16uwp%"=="" call :dk_color %Blue% "Use TSforge option to activate it."
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -2206,10 +2337,10 @@ set o15c2r=
 set error=1
 )
 
-if "%o16c2r%%o15c2r%%o16msi%%o15msi%"=="" (
+if "%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="" (
 set error=1
 echo:
-if not "%o14msi%%o14c2r%%o16uwp%"=="" (
+if not "%o14c2r%%o16uwp%"=="" (
 call :dk_color %Red% "Checking Supported Office Install       [Not Found]"
 ) else (
 call :dk_color %Red% "Checking Installed Office               [Not Found]"
@@ -2217,7 +2348,7 @@ call :dk_color %Red% "Checking Installed Office               [Not Found]"
 
 if defined ohub (
 echo:
-echo You only have the Office dashboard app installed, you need to install the full version of Office.
+echo You only have the Office Dashboard app installed. You need to install the full version of Office.
 )
 echo:
 call :dk_color %Blue% "Download and install Office from the below URL and then try again."
@@ -2228,8 +2359,8 @@ goto dk_done
 )
 
 set multioffice=
-if not "%o16c2r%%o15c2r%%o16msi%%o15msi%"=="1" set multioffice=1
-if not "%o14msi%%o14c2r%%o16uwp%"=="" set multioffice=1
+if not "%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="1" set multioffice=1
+if not "%o14c2r%%o16uwp%"=="" set multioffice=1
 
 if defined multioffice (
 call :dk_color %Gray% "Checking Multiple Office Install        [Found, its recommended to install only one version]"
@@ -2244,16 +2375,6 @@ reg query "HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions" /v ProductType 
 if not defined winserver (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Server" %nul1% && set winserver=1
 )
-
-::========================================================================================================================================
-
-::  Check already activated products list
-
-set actiProds15=
-set actiProds16=
-
-if not "%o15c2r%%o15msi%"=="" call :oh_findactivated -like 15
-if not "%o16c2r%%o16msi%"=="" call :oh_findactivated -notlike 16
 
 ::========================================================================================================================================
 
@@ -2281,14 +2402,10 @@ echo "!_oIds!" | find /i " %%a " %nul1% || (set "_oIds= !_oIds! %%a ")
 set "_oLPath=%_oRoot%\Licenses"
 set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
-if "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
-if "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
-if not "%osarch%"=="x86" (
-if "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
-) else (
-set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-)
+if /i "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
+if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
+
+call :oh_ppcpath
 
 echo:
 echo Activating Office...                    [C2R ^| %_version% ^| %_oArch%]
@@ -2299,9 +2416,21 @@ set error=1
 goto :starto16c2r
 )
 
+if defined noOsppc (
+call :dk_color %Red% "Checking OSPPC.DLL                      [Not found. Aborting activation...]"
+call :dk_color %Blue% "%_fixmsg%"
+set error=1
+goto :starto16c2r
+)
+
+call :oh_expiredpreview 2013
 call :oh_fixprids
 call :oh_process
+if defined isOspp (
+call :oh_hookinstall_ospp
+) else (
 call :oh_hookinstall
+)
 
 ::========================================================================================================================================
 
@@ -2331,14 +2460,10 @@ set _o16c2rIds=%_oIds%
 set "_oLPath=%_oRoot%\Licenses16"
 set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
-if "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
-if "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
-if not "%osarch%"=="x86" (
-if "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
-) else (
-set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-)
+if /i "%_oArch%"=="x64" (set "_hookPath=%_oRoot%\vfs\System"    & set "_hook=sppc64.dll")
+if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=sppc32.dll")
+
+call :oh_ppcpath
 
 echo:
 echo Activating Office...                    [C2R ^| %_version% %_AudienceData%^| %_oArch%]
@@ -2349,18 +2474,30 @@ set error=1
 goto :startmsi
 )
 
+if defined noOsppc (
+call :dk_color %Red% "Checking OSPPC.DLL                      [Not found. Aborting activation...]"
+call :dk_color %Blue% "%_fixmsg%"
+set error=1
+goto :startmsi
+)
+
+call :oh_expiredpreview 2016 2019 2021 2024
 call :oh_fixprids
 call :oh_process
+if defined isOspp (
+call :oh_hookinstall_ospp
+) else (
 call :oh_hookinstall
+)
 
 ::========================================================================================================================================
 
-::  Old version (16.0.9xxxx and below) of Office with subscription license key may show a banner to sign in to fix license issue.
+::  Old version of Office with subscription license key may show a banner to sign in to fix license issue.
 ::  Although script applies a Resiliency registry entry to fix that but it doesn't work on old office versions.
 ::  Below code checks that condition and informs the user to update the Office.
 
 if defined _sublic (
-if not exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" (
+if not exist "%_oLPath%\Word2021VL_KMS_Client_AE*.xrm-ms" (
 call :dk_color %Gray% "Checking Old Office With Sub License    [Found. Update Office, otherwise, it may show a licensing issue-related banner.]"
 )
 )
@@ -2388,6 +2525,9 @@ echo Adding a Registry to Prevent Banner     [Successful]
 
 :startmsi
 
+if defined o14msi call :oh_setspp 14
+if defined o14msi call :oh_processmsi 14 %o14msi_reg%
+call :oh_setspp
 if defined o15msi call :oh_processmsi 15 %o15msi_reg%
 if defined o16msi call :oh_processmsi 16 %o16msi_reg%
 
@@ -2409,7 +2549,7 @@ call :dk_color %Red% "Some errors were detected."
 if not defined ierror if not defined showfix if not defined serv_cor if not defined serv_cste call :dk_color %Blue% "%_fixmsg%"
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 goto :dk_done
@@ -2419,7 +2559,7 @@ goto :dk_done
 :oh_uninstall
 
 cls
-if not defined terminal mode 99, 32
+if not defined terminal mode 145, 32
 title  Uninstall Ohook Activation %masver%
 
 set _present=
@@ -2435,6 +2575,7 @@ if defined o16c2r_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg
 if defined o15c2r_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg% /v InstallPath" %nul6%') do (set "_15CHook=%%b\root\vfs"))
 if defined o16msi_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o16msi_reg%\Common\InstallRoot /v Path" %nul6%') do (set "_16MHook=%%b"))
 if defined o15msi_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o15msi_reg%\Common\InstallRoot /v Path" %nul6%') do (set "_15MHook=%%b"))
+if defined o14msi_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o14msi_reg%\Common\InstallRoot /v Path" %nul6%') do (set "_14MHook=%%b"))
 
 if defined _16CHook (if exist "%_16CHook%\System\sppc*dll"    (set _present=1& del /s /f /q "%_16CHook%\System\sppc*dll"    & if exist "%_16CHook%\System\sppc*dll"    set _unerror=1))
 if defined _16CHook (if exist "%_16CHook%\SystemX86\sppc*dll" (set _present=1& del /s /f /q "%_16CHook%\SystemX86\sppc*dll" & if exist "%_16CHook%\SystemX86\sppc*dll" set _unerror=1))
@@ -2442,8 +2583,9 @@ if defined _15CHook (if exist "%_15CHook%\System\sppc*dll"    (set _present=1& d
 if defined _15CHook (if exist "%_15CHook%\SystemX86\sppc*dll" (set _present=1& del /s /f /q "%_15CHook%\SystemX86\sppc*dll" & if exist "%_15CHook%\SystemX86\sppc*dll" set _unerror=1))
 if defined _16MHook (if exist "%_16MHook%sppc*dll"            (set _present=1& del /s /f /q "%_16MHook%sppc*dll"            & if exist "%_16MHook%sppc*dll"            set _unerror=1))
 if defined _15MHook (if exist "%_15MHook%sppc*dll"            (set _present=1& del /s /f /q "%_15MHook%sppc*dll"            & if exist "%_15MHook%sppc*dll"            set _unerror=1))
+if defined _14MHook (if exist "%_14MHook%sppc*dll"            (set _present=1& del /s /f /q "%_14MHook%sppc*dll"            & if exist "%_14MHook%sppc*dll"            set _unerror=1))
 
-for %%# in (15 16) do (
+for %%# in (14 15 16) do (
 for %%A in ("%ProgramFiles%" "%ProgramW6432%" "%ProgramFiles(x86)%") do (
 if exist "%%~A\Microsoft Office\Office%%#\sppc*dll" (set _present=1& del /s /f /q "%%~A\Microsoft Office\Office%%#\sppc*dll" & if exist "%%~A\Microsoft Office\Office%%#\sppc*dll" set _unerror=1)
 )
@@ -2456,6 +2598,31 @@ if exist "%%~A\Microsoft %%~G\root\vfs\%%#\sppc*dll" (set _present=1& del /s /f 
 )
 )
 )
+
+::==================================
+
+for %%# in (OSPPC.DLL sppcs.dll) do (
+for %%A in ("%CommonProgramFiles%" "%CommonProgramW6432%" "%CommonProgramFiles(x86)%") do (
+for %%G in ("%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\%%#") do (
+set size=0
+set size=%%~zG
+if !size! GEQ 1 if !size! LSS 100000 (
+set _present=1
+del /f /q "%%~G"
+if exist "%%~G" (move /y "%%~G" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+if exist "%%~G" (set _unerror=1) else (echo Deleted file - %%~G)
+)
+if /i sppcs.dll==%%# if !size! GEQ 100000 (
+move /y "%%~G" "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL" %nul%
+if exist "%%~G" (move /y "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+move /y "%%~G" "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL" %nul%
+if exist "%%~G" (set _unerror=1&echo Failed to rename sppcs.dll back to "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL") else (echo Renamed sppcs.dll back to "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL")
+)
+)
+)
+)
+
+::==================================
 
 reg query HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency %nul% && (
 echo:
@@ -2485,6 +2652,8 @@ reg unload HKU\%%# %nul%
 )
 )
 )
+
+::==================================
 
 set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
 reg query "%kmskey%" %nul% && (
@@ -2532,6 +2701,7 @@ set _oLPath=
 set _hookPath=
 set _hook=
 set _sppcPath=
+set _osppPath=
 set _actid=
 set _prod=
 set _lic=
@@ -2540,7 +2710,6 @@ set _prids=
 set _config=
 set _version=
 set _License=
-set _oBranding=
 exit /b
 
 ::========================================================================================================================================
@@ -2551,6 +2720,7 @@ set o16c2r=
 set o15c2r=
 set o16msi=
 set o15msi=
+set o14msi=
 
 set _68=HKLM\SOFTWARE\Microsoft\Office
 set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
@@ -2560,10 +2730,71 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_86%\15.0\ClickToRun)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_68%\15.0\ClickToRun)
 
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o16msi=1&set o16msi_reg=%_86%\16.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o16msi=1&set o16msi_reg=%_68%\16.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_86%\15.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_68%\15.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o16msi=1&set o16msi_reg=%_86%\16.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o16msi=1&set o16msi_reg=%_68%\16.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o15msi=1&set o15msi_reg=%_86%\15.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o15msi=1&set o15msi_reg=%_68%\15.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=1&set o14msi_reg=%_86%\14.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=1&set o14msi_reg=%_68%\14.0)
+
+exit /b
+
+::========================================================================================================================================
+
+:oh_expiredpreview
+
+for %%# in (%*) do (
+if exist "!_oLPath!\ProPlus%%#PreviewVL_*.xrm-ms" if not exist "!_oLPath!\ProPlus%%#VL_*.xrm-ms" (
+set error=1
+set showfix=1
+call :dk_color %Red% "Checking Expired Preview Products       [Office %%# Preview Found]"
+call :dk_color %Blue% "Please run the Office updates first, and then attempt to activate it again."
+)
+)
+
+exit /b
+
+::========================================================================================================================================
+
+:oh_ppcpath
+
+if not defined isOspp (
+if not "%osarch%"=="x86" (
+if /i "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+if /i "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
+) else (
+set "_sppcPath=%SystemRoot%\System32\sppc.dll"
+)
+)
+
+set noOsppc=
+set _hook68=
+set _hook86=
+set _osppPath68=
+set _osppPath86=
+
+if defined isOspp (
+if not "%osarch%"=="x86" (
+if /i "%_oArch%"=="x64" (
+for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform /v Path" %nul6%') do (set "_osppPath68=%%b")
+if not exist "!_osppPath68!OSPPC.DLL" set noOsppc=1
+)
+if /i "%_oArch%"=="x86" (
+for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform /v Path" %nul6%') do (set "_osppPath68=%%b")
+for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Wow6432Node\Microsoft\OfficeSoftwareProtectionPlatform /v Path" %nul6%') do (set "_osppPath86=%%b")
+if not exist "!_osppPath68!OSPPC.DLL" set noOsppc=1
+if not exist "!_osppPath86!OSPPC.DLL" set noOsppc=1
+)
+) else (
+for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform /v Path" %nul6%') do (set "_osppPath86=%%b")
+if not exist "!_osppPath86!OSPPC.DLL" set noOsppc=1
+)
+if "!_osppPath68:~-1!"=="\" set "_osppPath68=!_osppPath68:~0,-1!"
+if "!_osppPath86:~-1!"=="\" set "_osppPath86=!_osppPath86:~0,-1!"
+)
+
+if defined _osppPath68 set _hook68=sppc64.dll
+if defined _osppPath86 set _hook86=sppc32.dll
 
 exit /b
 
@@ -2659,15 +2890,24 @@ set hasherror=
 if %_hook%==sppc32.dll set offset=2564
 if %_hook%==sppc64.dll set offset=3076
 
-del /s /q "%_hookPath%\sppcs.dll" %nul%
-del /s /q "%_hookPath%\sppc.dll" %nul%
+::======================================
 
-if exist "%_hookPath%\sppcs.dll" set "ierror=Remove Previous Ohook Install"
-if exist "%_hookPath%\sppc.dll" set "ierror=Remove Previous Ohook Install"
+::  Remove previous Install
+
+for %%# in (sppcs.dll sppc.dll) do (
+del /f /q "%_hookPath%\%%#" %nul%
+if exist "%_hookPath%\%%#" (move /y "%_hookPath%\%%#" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+if exist "%_hookPath%\%%#" (set "ierror=Remove Previous Ohook Install [%%#]")
+)
+
+if defined ierror goto :oh_hookinstall_error
+
+::======================================
 
 mklink "%_hookPath%\sppcs.dll" "%_sppcPath%" %nul%
-if not %errorlevel%==0 (
-if not defined ierror set ierror=mklink
+if not exist "%_hookPath%\sppcs.dll" (
+set ierror=mklink sppcs.dll
+goto :oh_hookinstall_error
 )
 
 set exhook=
@@ -2682,17 +2922,122 @@ popd
 call :oh_extractdll "%_hookPath%\sppc.dll" "%offset%"
 )
 )
-if not exist "%_hookPath%\sppc.dll" (if not defined ierror set ierror=Copy)
+if not exist "%_hookPath%\sppc.dll" (
+set ierror=Copy
+goto :oh_hookinstall_error
+)
 
 echo:
-if not defined ierror (
-echo Symlinking System's sppc.dll to         ["%_hookPath%\sppcs.dll"] [Successful]
+echo Symlinking System's sppc.dll            ["%_hookPath%\sppcs.dll"] [Successful]
 if defined exhook (
 echo Copying Custom %_hook% to            ["%_hookPath%\sppc.dll"] [Successful]
 ) else (
 echo Extracting Custom %_hook% to         ["%_hookPath%\sppc.dll"] [Successful]
 )
+
+goto :oh_hookinstall_error
+
+::========================================================================================================================================
+
+:oh_hookinstall_ospp
+
+set ierror=
+set hasherror=
+
+if defined _hook86 set offset86=2564
+if defined _hook68 set offset68=3076
+
+::======================================
+
+::  Remove previous Install
+
+for %%# in (OSPPC.DLL sppcs.dll) do (
+for %%A in ("%_osppPath68%\%%#" "%_osppPath86%\%%#") do (
+set size=0
+set size=%%~zA
+if !size! GEQ 1 if !size! LSS 100000 (
+del /f /q "%%~A" %nul%
+if exist "%%~A" (move /y "%%~A" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+if exist "%%~A" (set "ierror=Remove Previous Ohook Install [%%#]")
+)
+)
+)
+
+if defined ierror goto :oh_hookinstall_error
+
+for %%A in ("%_osppPath68%" "%_osppPath86%") do (
+if exist "%%~A\sppcs.dll" (move /y "%%~A\sppcs.dll" "%%~A\OSPPC.DLL" %nul%)
+if exist "%%~A\sppcs.dll" (
+move /y "%%~A\OSPPC.DLL" "!_ttemp!\needsToBeDeleted%random%" %nul%
+move /y "%%~A\sppcs.dll" "%%~A\OSPPC.DLL" %nul%
+)
+if exist "%%~A\sppcs.dll" (set "ierror=Move sppcs.dll back to OSPPC.DLL")
+)
+
+del /f /q "%_hookPath%\sppcs.dll" %nul%
+if exist "%_hookPath%\sppcs.dll" (move /y "%_hookPath%\sppcs.dll" "!_ttemp!\needsToBeDeleted%random%" %nul%)
+if exist "%_hookPath%\sppcs.dll" (set "ierror=Remove Previous Ohook mklink sppcs.dll")
+
+if defined ierror goto :oh_hookinstall_error
+
+::======================================
+
+if defined _osppPath68 (move /y "%_osppPath68%\OSPPC.DLL" "%_osppPath68%\sppcs.dll" %nul% & if not exist "%_osppPath68%\sppcs.dll" set ierror=1)
+if defined _osppPath86 (move /y "%_osppPath86%\OSPPC.DLL" "%_osppPath86%\sppcs.dll" %nul% & if not exist "%_osppPath86%\sppcs.dll" set ierror=1)
+
+if defined ierror (
+set "ierror=Rename OSPPC.DLL"
+goto :oh_hookinstall_error
+)
+
+if defined _osppPath68 if defined _osppPath86     (mklink "%_hookPath%\sppcs.dll" "%_osppPath86%\sppcs.dll" %nul%)
+if defined _osppPath68 if not defined _osppPath86 (mklink "%_hookPath%\sppcs.dll" "%_osppPath68%\sppcs.dll" %nul%)
+if defined _osppPath86 if not defined _osppPath68 (mklink "%_hookPath%\sppcs.dll" "%_osppPath86%\sppcs.dll" %nul%)
+
+if not exist "%_hookPath%\sppcs.dll" (
+set ierror=mklink sppcs.dll
+goto :oh_hookinstall_error
+)
+
+set exhook=
+if exist "!_work!\BIN\%_hook68%" if exist "!_work!\BIN\%_hook86%"  set exhook=1
+
+if defined exhook (
+pushd "!_work!\BIN\"
+if defined _osppPath68 (copy /y /b "%_hook68%" "%_osppPath68%\OSPPC.DLL" %nul%)
+if defined _osppPath86 (copy /y /b "%_hook86%" "%_osppPath86%\OSPPC.DLL" %nul%)
+popd
 ) else (
+if defined _osppPath68 (set _hook=%_hook68%&call :oh_extractdll "%_osppPath68%\OSPPC.DLL" "%offset68%")
+if defined _osppPath86 (set _hook=%_hook86%&call :oh_extractdll "%_osppPath86%\OSPPC.DLL" "%offset86%")
+)
+
+if defined _osppPath68 (if not exist "%_osppPath68%\OSPPC.DLL" set ierror=1)
+if defined _osppPath86 (if not exist "%_osppPath86%\OSPPC.DLL" set ierror=1)
+
+if defined ierror (
+set ierror=Copy
+goto :oh_hookinstall_error
+)
+
+echo:
+if defined _osppPath68 (echo Renaming OSPPC.DLL to sppcs.dll         ["%_osppPath68%\sppcs.dll"])
+if defined _osppPath86 (echo Renaming OSPPC.DLL to sppcs.dll         ["%_osppPath86%\sppcs.dll"])
+if defined exhook (
+if defined _osppPath68 (echo Copying Custom %_hook68% to            ["%_osppPath68%\OSPPC.DLL"])
+if defined _osppPath86 (echo Copying Custom %_hook86% to            ["%_osppPath86%\OSPPC.DLL"])
+) else (
+if defined _osppPath68 (echo Extracting Custom %_hook68% to         ["%_osppPath68%\OSPPC.DLL"])
+if defined _osppPath86 (echo Extracting Custom %_hook86% to         ["%_osppPath86%\OSPPC.DLL"])
+)
+
+echo Symlinking Renamed sppcs.dll            ["%_hookPath%\sppcs.dll"]
+
+::========================================================================================================================================
+
+:oh_hookinstall_error
+
+if defined ierror (
 set error=1
 call :dk_color %Red% "Installing Ohook                        [Failed to %ierror%]"
 echo:
@@ -2711,9 +3056,9 @@ if not defined exhook if not defined ierror (
 if defined hasherror (
 set error=1
 set ierror=1
-call :dk_color %Red% "Modifying Hash of Custom %_hook%     [Failed]"
+call :dk_color %Red% "Modifying Hash of Custom sppcs.dll      [Failed]"
 ) else (
-echo Modifying Hash of Custom %_hook%     [Successful]
+echo Modifying Hash of Custom sppcs.dll      [Successful]
 )
 )
 
@@ -2721,14 +3066,29 @@ exit /b
 
 ::========================================================================================================================================
 
+:oh_setspp
+
+set isOspp=
+if %winbuild% GEQ 9200 (
+set spp=SoftwareLicensingProduct
+set sps=SoftwareLicensingService
+) else (
+set isOspp=1
+set spp=OfficeSoftwareProtectionProduct
+set sps=OfficeSoftwareProtectionService
+)
+if "%1"=="14" (
+set isOspp=1
+set spp=OfficeSoftwareProtectionProduct
+set sps=OfficeSoftwareProtectionService
+)
+exit /b
+
+::========================================================================================================================================
+
 :oh_process
 
 for %%# in (%_oIds%) do (
-
-echo: !actiProds%oVer%! | find /i "-%%#-" %nul1% && (
-call :dk_color %Gray% "Checking Activation Status              [%%# is already permanently activated]"
-
-) || (
 
 set key=
 set _actid=
@@ -2745,21 +3105,21 @@ call :ohookdata getinfo !_prod!
 
 if not "!key!"=="" (
 echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
+if not %oVer%==14 set generickey=1
 call :dk_inskey "[!key!] [!_prod!] [!_lic!]"
 ) else (
 set error=1
-call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !_prod! not found in script]"
+call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !_prod! key not found in script]"
 call :dk_color %Blue% "Make sure you are using the latest version of MAS."
 set fixes=%fixes% %mas%
 call :dk_color %_Yellow% "%mas%"
-)
 )
 )
 
 ::  Add SharedComputerLicensing registry key if Retail Office C2R is installed on Windows Server
 ::  https://learn.microsoft.com/en-us/office/troubleshoot/office-suite-issues/click-to-run-office-on-terminal-server
 
-if defined winserver if defined _config (
+if defined winserver if defined _config if exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" (
 echo %_oIds% | find /i "Retail" %nul1% && (
 set scaIsNeeded=1
 reg add %_config% /v SharedComputerLicensing /t REG_SZ /d "1" /f %nul1%
@@ -2776,7 +3136,11 @@ exit /b
 ::  Process Office MSI Version
 
 call :oh_reset
+if "%1"=="14" (
+call :dk_actids 59a52881-a989-479d-af46-f275c6370663
+) else (
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
+)
 
 set oVer=%1
 for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\InstallRoot /v Path" %nul6%') do (set "_oRoot=%%b")
@@ -2787,32 +3151,15 @@ echo "%2" | find /i "Wow6432Node" %nul1% && set _oArch=x86
 if not "%osarch%"=="x86" if not defined _oArch set _oArch=x64
 if "%osarch%"=="x86" set _oArch=x86
 
-if "%_oArch%"=="x64" (set "_hookPath=%_oRoot%" & set "_hook=sppc64.dll")
-if "%_oArch%"=="x86" (set "_hookPath=%_oRoot%" & set "_hook=sppc32.dll")
-if not "%osarch%"=="x86" (
-if "%_oArch%"=="x64" set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-if "%_oArch%"=="x86" set "_sppcPath=%SystemRoot%\SysWOW64\sppc.dll"
-) else (
-set "_sppcPath=%SystemRoot%\System32\sppc.dll"
-)
+if /i "%_oArch%"=="x64" (set "_hookPath=%_oRoot%" & set "_hook=sppc64.dll")
+if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%" & set "_hook=sppc32.dll")
 
-set "_common=%CommonProgramFiles%"
-if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
-set "_common2=%CommonProgramFiles(x86)%"
+call :oh_ppcpath
 
-for /r "%_common%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-if not defined _oBranding for /r "%_common2%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-
-call :ohookdata getmsiprod %2
+call :msiofficedata %2
 
 echo:
 echo Activating Office...                    [MSI ^| %_version% ^| %_oArch%]
-
-if not defined _oBranding (
-set error=1
-call :dk_color %Red% "Checking BRANDING.XML                   [Not Found, aborting activation...]"
-exit /b
-)
 
 if not defined _oIds (
 set error=1
@@ -2820,57 +3167,32 @@ call :dk_color %Red% "Checking Installed Products             [Product IDs not f
 exit /b
 )
 
-call :oh_process
-call :oh_hookinstall
-
+if defined noOsppc (
+call :dk_color %Red% "Checking OSPPC.DLL                      [Not found. Aborting activation...]"
+call :dk_color %Blue% "%_fixmsg%"
+set error=1
 exit /b
-
-::========================================================================================================================================
-
-:oh_findactivated
-
-set oVer=%2
-set _FsortIds=
-set actiProds=
-
-for /f "delims=" %%a in ('%psc% "(Get-WmiObject -Query 'SELECT LicenseFamily, Name FROM %spp% WHERE ApplicationID=''0ff1ce15-a989-479d-af46-f275c6370663'' AND LicenseStatus=1 AND GracePeriodRemaining=0 AND PartialProductKey IS NOT NULL' | Where-Object { $_.Name %1 '*Office 15*' }).LicenseFamily" %nul6%') do call set "actiProds=%%a !actiProds!"
-
-if not defined actiProds exit /b
-
-for %%# in (%actiProds%) do (
-set _sortIds=%%#
-set _sortIds=!_sortIds:OfficeSPDFreeR_=SPDRetail_!
-set _sortIds=!_sortIds:XC2RVL_=XVolume_!
-set _sortIds=!_sortIds:CO365R_=Retail_!
-set _sortIds=!_sortIds:O365R_=Retail_!
-set _sortIds=!_sortIds:E5R_=Retail_!
-set _sortIds=!_sortIds:MSDNR_=Retail_!
-set _sortIds=!_sortIds:DemoR_=Retail_!
-set _sortIds=!_sortIds:EDUR_=Retail_!
-set _sortIds=!_sortIds:R_=Retail_!
-set _sortIds=!_sortIds:VL_=Volume_!
-set _sortIds=!_sortIds:Office16=!
-set _sortIds=!_sortIds:Office19=!
-set _sortIds=!_sortIds:Office21=!
-set _sortIds=!_sortIds:Office24=!
-set _sortIds=!_sortIds:Office=!
-for /f "tokens=1 delims=-_" %%a in ("!_sortIds!") do set "_sortIds=-%%a-"
-set _FsortIds=!_sortIds! !_FsortIds!
 )
 
-call :ohookdata findactivated %2
-exit /b
+if %oVer%==14 if defined SingleImage (
+echo Checking Installed Products             [SingleImage product found, Professional Retail key will be used for activation]
+)
 
-::  Below IDs are not checked for permanent activation
-set _sortIds=!_sortIds:PreviewVL_=Volume_!
-set _sortIds=!_sortIds:PreInstallR_=Retail_!
+call :oh_process
+if defined isOspp (
+call :oh_hookinstall_ospp
+) else (
+call :oh_hookinstall
+)
+
+exit /b
 
 ::========================================================================================================================================
 
 :oh_clearblock
 
 ::  Find remnants of Office vNext/shared/device license block and remove it because it stops other licenses from appearing
-::  https://learn.microsoft.com/office/troubleshoot/activation/reset-office-365-proplus-activation-state
+::  https://learn.microsoft.com/en-us/office/troubleshoot/activation/reset-office-365-proplus-activation-state
 
 set _sidlist=
 for /f "tokens=* delims=" %%a in ('%psc% "$p = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList'; Get-ChildItem $p | ForEach-Object { $pi = (Get-ItemProperty """"$p\$($_.PSChildName)"""").ProfileImagePath; if ($pi -like '*\Users\*' -and (Test-Path """"$pi\NTUSER.DAT"""") -and -not ($_.PSChildName -match '\.bak$')) { Split-Path $_.PSPath -Leaf } }" %nul6%') do (if defined _sidlist (set _sidlist=!_sidlist! %%a) else (set _sidlist=%%a))
@@ -2966,12 +3288,12 @@ reg delete HKLM\SOFTWARE\Microsoft\Office\15.0\ClickToRun\Configuration /v Share
 )
 
 ::  Clear device-based-licensing
-::  https://learn.microsoft.com/deployoffice/device-based-licensing
+::  https://learn.microsoft.com/en-us/deployoffice/device-based-licensing
 
 for /f %%# in ('reg query "%o16c2r_reg%\Configuration" /f *.DeviceBasedLicensing %nul6% ^| findstr REG_') do reg delete "%o16c2r_reg%\Configuration" /v %%# /f %nul%
 
 ::  Remove OEM registry key
-::  https://support.microsoft.com/office/office-repeatedly-prompts-you-to-activate-on-a-new-pc-a9a6b05f-f6ce-4d1f-8d49-eb5007b64ba1
+::  https://support.microsoft.com/en-us/office/office-repeatedly-prompts-you-to-activate-on-a-new-pc-a9a6b05f-f6ce-4d1f-8d49-eb5007b64ba1
 
 for %%# in (15 16) do (
 reg delete "HKLM\SOFTWARE\Microsoft\Office\%%#.0\Common\OEM" /f %nul%
@@ -2992,7 +3314,7 @@ echo Clearing Office License Blocks          [Successfully cleared from all %cou
 set defname=DEFTEMP-%random%
 for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList" /v Default" %nul6%') do call set "defdat=%%b"
 
-if defined o16c2r if defined officeact (
+if defined o16c2r if defined ohookact (
 if exist "%defdat%\NTUSER.DAT" (
 reg load HKU\%defname% "%defdat%\NTUSER.DAT" %nul%
 reg query HKU\%defname%\Software %nul% && (
@@ -3028,11 +3350,8 @@ set upk_result=0
 call :dk_actid 0ff1ce15-a989-479d-af46-f275c6370663
 
 if "%_actprojvis%"=="1" (
-set _allactid=
-for /f "delims=" %%a in ('%psc% "(Get-WmiObject -Query 'SELECT ID, Description, LicenseFamily FROM %spp% WHERE ApplicationID=''0ff1ce15-a989-479d-af46-f275c6370663'' AND PartialProductKey IS NOT NULL' | Where-Object { $_.LicenseFamily -notmatch 'Project' -and $_.LicenseFamily -notmatch 'Visio' }).ID" %nul6%') do call set "_allactid=%%a !_allactid!"
-for /f "delims=" %%a in ('%psc% "(Get-WmiObject -Query 'SELECT ID, Description, LicenseFamily FROM %spp% WHERE ApplicationID=''0ff1ce15-a989-479d-af46-f275c6370663'' AND PartialProductKey IS NOT NULL' | Where-Object { $_.Description -match 'KMSCLIENT' -and ($_.LicenseFamily -match 'Project' -or $_.LicenseFamily -match 'Visio') }).ID" %nul6%') do call set "_allactid=%%a !_allactid!"
-) else (
-for /f "delims=" %%a in ('%psc% "(Get-WmiObject -Query 'SELECT ID FROM %spp% WHERE ApplicationID=''0ff1ce15-a989-479d-af46-f275c6370663'' AND LicenseStatus=1 AND GracePeriodRemaining=0 AND PartialProductKey IS NOT NULL').ID" %nul6%') do call set "_allactid=%%a !_allactid!"
+for /f "delims=" %%a in ('%psc% "Get-WmiObject -Query 'SELECT ID, Description, LicenseFamily FROM %spp% WHERE ApplicationID=''0ff1ce15-a989-479d-af46-f275c6370663'' AND PartialProductKey IS NOT NULL' | Where-Object { $_.LicenseFamily -notmatch 'Project' -and $_.LicenseFamily -notmatch 'Visio' } | Select-Object -ExpandProperty ID" %nul6%') do call set "_allactid=%%a !_allactid!"
+for /f "delims=" %%a in ('%psc% "Get-WmiObject -Query 'SELECT ID, Description, LicenseFamily FROM %spp% WHERE ApplicationID=''0ff1ce15-a989-479d-af46-f275c6370663'' AND PartialProductKey IS NOT NULL' | Where-Object { '!_allactid!' -contains $_.ID -and ($_.LicenseFamily -match 'Project' -or $_.LicenseFamily -match 'Visio') } | Select-Object -ExpandProperty ID" %nul6%') do call set "_allactid=%%a !_allactid!"
 )
 
 for %%# in (%apps%) do (
@@ -3050,7 +3369,7 @@ set upk_result=2
 )
 )
 
-if defined officeact if not %upk_result%==0 echo:
+if defined ohookact if not %upk_result%==0 echo:
 if %upk_result%==1 echo Uninstalling Other/Grace Keys           [Successful]
 if %upk_result%==2 call :dk_color %Red% "Uninstalling Other/Grace Keys           [Failed]"
 exit /b
@@ -3102,17 +3421,72 @@ exit /b
 
 ::  1st column = Office version number
 ::  2nd column = Activation ID
-::  3rd column = Generic key. Preference is given in this order, Retail:TB:Sub > Retail > OEM:NONSLP > Volume:MAK > Volume:GVLK
+::  3rd column = For Office 2013 and later, the generated keys are listed. For Office 2010, the blocked keys sourced from the Internet are listed.
+::               For Office 2013 and later, key preference is given in this order, Retail:TB:Sub > Retail > OEM:NONSLP > Volume:MAK > Volume:GVLK
+::               For Office 2010, key preference is given in this order, Retail > Volume:MAK
 ::  4th column = Last part of license description
 ::  5th column = Edition
+::  6th column = Other Edition IDs if they are part of the same primary product (For reference only)
 ::  Separator  = "_"
+
+::===============
+
+:: We couldn't find any keys (blocked/generic doesn't matter) for these Office 2010 products. If you have them, please share with us.
+
+14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_Retail________ExcelR_[HSExcelR]
+14_7004b7f0-6407-4f45-8eac-966e5f868bde_Retail________GrooveR
+14_fbf4ac36-31c8-4340-8666-79873129cf40_Retail________OutlookR
+14_133c8359-4e93-4241-8118-30bb18737ea0_Retail________PowerPointR_[HSPowerPointR]
+14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_Retail________WordR_[HSWordR]
+14_dbe3aee0-5183-4ff7-8142-66050173cb01_Retail________SmallBusBasicsR_[SmallBusBasicsMSDNR]
+
+:: These installers are not publicly available, so it doesn't matter if we don't have their keys.
+
+14_19316117-30a8-4773-8fd9-7f7231f4e060_SubPrepid_____HomeBusinessSubR
+14_4d06f72e-fd50-4bc2-a24b-d448d7f17ef2_SubPrepid_____ProjectProSubR
+14_e98ef0c0-71c4-42ce-8305-287d8721e26c_SubPrepid_____ProPlusSubR
+14_14f5946a-debc-4716-babc-7e2c240fec08_Retail________MondoR
+14_533b656a-4425-480b-8e30-1a2358898350_MAK___________MondoVL
 
 :ohookdata
 
 set f=
 for %%# in (
+:: Office 2010
+14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_7KTYC-XR43P-C3MRW-BJKFD-XB%f%YPG_Retail________AccessR
+14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_7XHPQ-BQMYG-YBP49-CY8B2-T8%f%CGQ_ByPass________AccessRuntimeR
+14_95ab3ec8-4106-4f9d-b632-03c019d1d23f_89RTQ-MT4GK-6CPTX-WWP7C-J9%f%KXR_MAK___________AccessVL
+14_71dc86ff-f056-40d0-8ffb-9592705c9b76_39TRR-C2F37-9WYJ2-MJQXH-B9%f%38K_MAK___________ExcelVL
+14_fdad0dfa-417d-4b4f-93e4-64ea8867b7fd_RCGT3-FPQDV-H49CD-PPDBF-TH%f%47G_MAK___________GrooveVL
+14_7b7d1f17-fdcb-4820-9789-9bec6e377821_3YR9B-D9W79-BY66R-R8XYP-QY%f%YYY_Retail________HomeBusinessR_[HomeBusinessDemoR]
+14_09e2d37e-474b-4121-8626-58ad9be5776f_3X43R-HHHXX-FRHRW-2M2WJ-8V%f%PHD_Retail________HomeStudentR_[HomeStudentDemoR]
+14_ef1da464-01c8-43a6-91af-e4e5713744f9_XDGJY-KFHW9-JWX9X-YM4GW-GC%f%8WR_Retail________InfoPathR
+14_85e22450-b741-430c-a172-a37962c938af_6GKT2-KMJPK-4RRBF-8VQKB-JB%f%6G6_MAK___________InfoPathVL
+14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_2TG3P-9DB76-4YT99-8RXGD-CW%f%XBP_Retail________OneNoteR_[HSOneNoteR]
+14_6860b31f-6a67-48b8-84b9-e312b3485c4b_CV64P-F4VRH-BJ33D-PH6MR-X6%f%9RY_MAK___________OneNoteVL
+14_a9aeabd8-63b8-4079-a28e-f531807fd6b8_J8C9M-YXMH2-9CX44-2C3YG-V7%f%692_MAK___________OutlookVL
+14_acb51361-c0db-4895-9497-1831c41f31a6_GMBWM-WVX26-7WHV4-DB43D-WV%f%DY2_Retail________PersonalR_[PersonalDemoR,PersonalPrepaidR]
+14_38252940-718c-4aa6-81a4-135398e53851_HPBQP-RJHDR-Q3472-PT9Q6-PB%f%B72_MAK___________PowerPointVL
+14_8b559c37-0117-413e-921b-b853aeb6e210_367X9-9HP9R-TKHY6-DH4QH-K9%f%PY7_Retail________ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR,OEM-SingleImage]
+14_725714d7-d58f-4d12-9fa8-35873c6f7215_6JD4G-KRW3J-48MGV-DM6FC-T9%f%WKR_Retail________ProjectProR_[ProjectProMSDNR]
+14_1cf57a59-c532-4e56-9a7d-ffa2fe94b474_3XDTH-MMGJ6-F9MKX-THP8D-G9%f%BP7_MAK___________ProjectProVL
+14_688f6589-2bd9-424e-a152-b13f36aa6de1_2W96V-RTQ9R-2BPVT-PT8H9-MV%f%68T_Retail________ProjectStdR
+14_11b39439-6b93-4642-9570-f2eb81be2238_4DTT4-D4MKX-23KFH-JKR6T-YK%f%G2J_MAK___________ProjectStdVL
+14_71af7e84-93e6-4363-9b69-699e04e74071_2J9H6-H4D3G-PCXD2-96XVM-TR%f%R73_Retail________ProPlusR_[ProPlusAcadR,ProPlusMSDNR,Sub4R]
+14_fdf3ecb9-b56f-43b2-a9b8-1b48b6bae1a7_6CD6C-9R8PB-T2D9Y-8RKKX-W7%f%DFK_MAK___________ProPlusVL_[ProPlusAcadVL]
+14_98677603-a668-4fa4-9980-3f1f05f78f69_CTRJP-P72VV-JBF8Y-4W6WW-HX%f%HVG_Retail________PublisherR
+14_3d014759-b128-4466-9018-e80f6320d9d0_32YG9-3VX77-YXJVV-PRVFW-TT%f%8BV_MAK___________PublisherVL
+14_8090771e-d41a-4482-929e-de87f1f47e46_7VKXH-9BWCG-RPTBB-JBRV3-GR%f%HYC_MAK___________SmallBusBasicsVL
+14_b78df69e-0966-40b1-ae85-30a5134dedd0_H48K6-FB4Y6-P83GH-9J7XG-HD%f%KKX_ByPass________SPDR
+14_b6d2565c-341d-4768-ad7d-addbe00bb5ce_W3BTX-H6BW7-Q6DFW-BXFFY-8R%f%VJP_Retail________StandardR_[StandardMSDNR][KeyisforMSDNR]
+14_1f76e346-e0be-49bc-9954-70ec53a4fcfe_2XTQP-GDR7C-GTXPC-6W6PV-4R%f%XGC_MAK___________StandardVL_[StandardAcadVL]
+14_2745e581-565a-4670-ae90-6bf7c57ffe43_VXHHB-W7HBD-7M342-RJ7P8-CH%f%BD6_ByPass________StarterR
+14_66cad568-c2dc-459d-93ec-2f3cb967ee34_2RDPT-WPYQM-C2WXF-BTPDW-2J%f%2HM_Retail________VisioSIR_Prem[Pro,Std]
+14_36756cb8-8e69-4d11-9522-68899507cd6a_7PKFT-X2MKQ-GT6X2-8CB2W-CH%f%C9K_MAK___________VisioSIVL_Prem[Pro,Std]
+14_98d4050e-9c98-49bf-9be1-85e12eb3ab13_6J3XK-DFKGK-X373V-QJHYM-V3%f%FC2_MAK___________WordVL
 :: Office 2013
 15_ab4d047b-97cf-4126-a69f-34df08e2f254_B7RFY-7NXPK-Q4342-Y9X2H-3J%f%X4X_Retail________AccessRetail
+15_259de5be-492b-44b3-9d78-9645f848f7b0_X3XNB-HJB7K-66THH-8DWQ3-XH%f%GJP_Bypass________AccessRuntimeRetail
 15_4374022d-56b8-48c1-9bb7-d8f2fc726343_9MF9G-CN32B-HV7XT-9XJ8T-9K%f%VF4_MAK___________AccessVolume
 15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_NT889-MBH4X-8MD4H-X8R2D-WQ%f%HF8_Retail________ExcelRetail
 15_ac1ae7fd-b949-4e04-a330-849bc40638cf_Y3N36-YCHDK-XYWBG-KYQVV-BD%f%TJ2_MAK___________ExcelVolume
@@ -3120,6 +3494,8 @@ for %%# in (
 15_4825ac28-ce41-45a7-9e6e-1fed74057601_RN84D-7HCWY-FTCBK-JMXWM-HT%f%7GJ_MAK___________GrooveVolume
 15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_2WQNF-GBK4B-XVG6F-BBMX7-M4%f%F2Y_OEM-Perp______HomeBusinessPipcRetail
 15_a2b90e7a-a797-4713-af90-f0becf52a1dd_YWD4R-CNKVT-VG8VJ-9333B-RC%f%W9F_Subscription__HomeBusinessRetail
+15_1fdfb4e4-f9c9-41c4-b055-c80daf00697d_B92QY-NKYFQ-6KTKH-VWW2Q-3P%f%B3B_OEM-ARM_______HomeStudentARMRetail
+15_ebef9f05-5273-404a-9253-c5e252f50555_QPG96-CNT7M-KH36K-KY4HQ-M7%f%TBR_OEM-ARM_______HomeStudentPlusARMRetail
 15_f2de350d-3028-410a-bfae-283e00b44d0e_6WW3N-BDGM9-PCCHD-9QPP9-P3%f%4QG_Subscription__HomeStudentRetail
 15_44984381-406e-4a35-b1c3-e54f499556e2_RV7NQ-HY3WW-7CKWH-QTVMW-29%f%VHC_Retail________InfoPathRetail
 15_9e016989-4007-42a6-8051-64eb97110cf2_C4TGN-QQW6Y-FYKXC-6WJW7-X7%f%3VG_MAK___________InfoPathVolume
@@ -3163,6 +3539,7 @@ for %%# in (
 15_e3dacc06-3bc2-4e13-8e59-8e05f3232325_H8DN8-Y2YP3-CR9JT-DHDR9-C7%f%GP3_Subscription2_O365ProPlusRetail
 15_0bc1dae4-6158-4a1c-a893-807665b934b2_2QCNB-RMDKJ-GC8PB-7QGQV-7Q%f%TQJ_Subscription2_O365SmallBusPremRetail
 :: Office 365 - 16.0 version
+16_dabaa1f2-109b-496d-bf49-1536cc862900_3HYJN-9KG99-F8VG9-V3DT8-JF%f%MHV_Subscription__O365AppsBasicRetail
 16_742178ed-6b28-42dd-b3d7-b7c0ea78741b_Y9NF9-M2QWD-FF6RJ-QJW36-RR%f%F2T_SubTest_______O365BusinessRetail
 16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_W62NQ-267QR-RTF74-PF2MH-JQ%f%MTH_Subscription__O365EduCloudRetail
 16_a96f8dae-da54-4fad-bdc6-108da592707a_3NMDC-G7C3W-68RGP-CB4MH-4C%f%XCH_SubTest1______O365HomePremRetail
@@ -3176,6 +3553,8 @@ for %%# in (
 16_685062a7-6024-42e7-8c5f-6bb9e63e697f_FVGNR-X82B2-6PRJM-YT4W7-8H%f%V36_MAK___________ExcelVolume
 16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_2WQNF-GBK4B-XVG6F-BBMX7-M4%f%F2Y_OEM-Perp______HomeBusinessPipcRetail
 16_86834d00-7896-4a38-8fae-32f20b86fa2b_HM6FM-NVF78-KV9PM-F36B8-D9%f%MXD_Retail________HomeBusinessRetail
+16_090896a0-ea98-48ac-b545-ba5da0eb0c9c_PBQPJ-NC22K-69MXD-KWMRF-WF%f%G77_OEM-ARM_______HomeStudentARMRetail
+16_6bbe2077-01a4-4269-bf15-5bf4d8efc0b2_6F2NY-7RTX4-MD9KM-TJ43H-94%f%TBT_OEM-ARM_______HomeStudentPlusARMRetail
 16_c28acdb8-d8b3-4199-baa4-024d09e97c99_PNPRV-F2627-Q8JVC-3DGR9-WT%f%YRK_Retail________HomeStudentRetail
 16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_YWD4R-CNKVT-VG8VJ-9333B-RC%f%3B8_Retail________HomeStudentVNextRetail
 16_69ec9152-153b-471a-bf35-77ec88683eae_VNWHF-FKFBW-Q2RGD-HYHWF-R3%f%HH2_Subscription__MondoRetail
@@ -3222,6 +3601,8 @@ for %%# in (
 16_c201c2b7-02a1-41a8-b496-37c72910cd4a_KBPNW-64CMM-8KWCB-23F44-8B%f%7HM_Retail________Excel2019Retail
 16_05cb4e1d-cc81-45d5-a769-f34b09b9b391_8NT4X-GQMCK-62X4P-TW6QP-YK%f%PYF_MAK-AE________Excel2019Volume
 16_7fe09eef-5eed-4733-9a60-d7019df11cac_QBN2Y-9B284-9KW78-K48PB-R6%f%2YT_Retail________HomeBusiness2019Retail
+16_6303d14a-afad-431f-8434-81052a65f575_DJTNY-4HDWM-TDWB2-8PWC2-W2%f%RRT_OEM-ARM_______HomeStudentARM2019Retail
+16_215c841d-ffc1-4f03-bd11-5b27b6ab64cc_NM8WT-CFHB2-QBGXK-J8W6J-GV%f%K8F_OEM-ARM_______HomeStudentPlusARM2019Retail
 16_4539aa2c-5c31-4d47-9139-543a868e5741_XNWPM-32XQC-Y7QJC-QGGBV-YY%f%7JK_Retail________HomeStudent2019Retail
 16_20e359d5-927f-47c0-8a27-38adbdd27124_WR43D-NMWQQ-HCQR2-VKXDR-37%f%B7H_Retail________Outlook2019Retail
 16_92a99ed8-2923-4cb7-a4c5-31da6b0b8cf3_RN3QB-GT6D7-YB3VH-F3RPB-3G%f%QYB_MAK-AE________Outlook2019Volume
@@ -3251,11 +3632,14 @@ for %%# in (
 :: Office 2021
 16_f634398e-af69-48c9-b256-477bea3078b5_P286B-N3XYP-36QRQ-29CMP-RV%f%X9M_Retail________Access2021Retail
 16_ae17db74-16b0-430b-912f-4fe456e271db_JBH3N-P97FP-FRTJD-MGK2C-VF%f%WG6_MAK-AE________Access2021Volume
+16_844c36cb-851c-49e7-9079-12e62a049e2a_MNX9D-PB834-VCGY2-K2RW2-2D%f%P3D_Bypass________AccessRuntime2021Retail
 16_fb099c19-d48b-4a2f-a160-4383011060aa_V6QFB-7N7G9-PF7W9-M8FQM-MY%f%8G9_Retail________Excel2021Retail
 16_9da1ecdb-3a62-4273-a234-bf6d43dc0778_WNYR4-KMR9H-KVC8W-7HJ8B-K7%f%9DQ_MAK-AE________Excel2021Volume
 16_38b92b63-1dff-4be7-8483-2a839441a2bc_JM99N-4MMD8-DQCGJ-VMYFY-R6%f%3YK_Subscription__HomeBusiness2021Retail
 16_2f258377-738f-48dd-9397-287e43079958_N3CWD-38XVH-KRX2Y-YRP74-6R%f%BB2_Subscription__HomeStudent2021Retail
 16_279706f4-3a4b-4877-949b-f8c299cf0cc5_NB2TQ-3Y79C-77C6M-QMY7H-7Q%f%Y8P_Retail________OneNote2021Retail
+16_0c7af60d-0664-49fc-9b01-41b2dea81380_THNKC-KFR6C-Y86Q9-W8CB3-GF%f%7PD_MAK-AE________OneNote2021Volume
+16_778ccb9a-2f6a-44e5-853c-eb22b7609643_CNM3W-V94GB-QJQHH-BDQ3J-33%f%Y8H_Bypass________OneNoteFree2021Retail
 16_ecea2cfa-d406-4a7f-be0d-c6163250d126_4NCWR-9V92Y-34VB2-RPTHR-YT%f%GR7_Retail________Outlook2021Retail
 16_45bf67f9-0fc8-4335-8b09-9226cef8a576_JQ9MJ-QYN6B-67PX9-GYFVY-QJ%f%6TB_MAK-AE________Outlook2021Volume
 16_8f89391e-eedb-429d-af90-9d36fbf94de6_RRRYB-DN749-GCPW4-9H6VK-HC%f%HPT_Retail________Personal2021Retail
@@ -3323,23 +3707,6 @@ if %oVer%==16 (echo "%%D" | find /i "Subscription" %nul% && set _sublic=1)
 )
 )
 
-if %1==getmsiprod if %oVer%==%%A (
-for /f "tokens=*" %%x in ('findstr /i /c:"%%B" "%_oBranding%"') do set "prodId=%%x"
-set prodId=!prodId:"/>=!
-set prodId=!prodId:~-4!
-reg query "%2\Registration\{%%B}" /v ProductCode %nul2% | find /i "-!prodId!-" %nul% && (
-reg query "%2\Common\InstalledPackages" %nul2% | find /i "-!prodId!-" %nul% && (
-if defined _oIds (set _oIds=!_oIds! %%E) else (set _oIds=%%E)
-)
-)
-)
-
-if %1==findactivated if %oVer%==%%A (
-echo "!_FsortIds!" | find /i "-%%E-" %nul% && (
-set actiProds%oVer%=!actiProds%oVer%! -%%E-
-)
-)
-
 )
 )
 exit /b
@@ -3352,7 +3719,7 @@ exit /b
 :oh_extractdll
 
 set b=
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$encoded = ($f[1]) -replace '-', 'A' -replace '_', 'a';$bytes = [Con%b%vert]::FromBas%b%e64String($encoded); $PePath='%1'; $offset='%2'; $m=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';iex ($m[1]);" %nul2% | find /i "Error found" %nul1% && set hasherror=1
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$encoded = ($f[1]) -replace '-', 'A' -replace '_', 'a';$bytes = [Con%b%vert]::FromBas%b%e64String($encoded); $PePath='%1'; $offset='%2'; $m=[io.file]::ReadAllText('!_batp!') -split ':hexedit\:.*';iex ($m[1])" %nul2% | find /i "Error found" %nul1% && set hasherror=1
 exit /b
 
 :hexedit:
@@ -3391,7 +3758,7 @@ $Writer.Write($unixTimestamp)
 $Writer.Flush()
 
 # Write the current state of the MemoryStream to a temporary file
-$tempFilePath = [System.IO.Path]::Combine($env:windir, "Temp", [System.IO.Path]::GetRandomFileName())
+$tempFilePath = "$env:windir\Temp\$([System.IO.Path]::GetRandomFileName())"
 [System.IO.File]::WriteAllBytes($tempFilePath, $MemoryStream.ToArray())
 
 # Update hash using the temporary file
@@ -3591,6 +3958,7712 @@ M--u-D----BE-----QBW-GE-cgBG-Gk-b-Bl-Ek-bgBm-G8------CQ-B----FQ-cgBh-G4-cwBs-GE-
 
 :+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+:TSforgeActivation
+
+::  To activate Windows, run the script with "/Z-Windows" parameter or change 0 to 1 in below line
+set _actwin=0
+
+::  To activate Windows ESU, run the script with "/Z-ESU" parameter or change 0 to 1 in below line
+set _actesu=0
+
+::  To activate all Office apps (including Project/Visio), run the script with "/Z-Office" parameter or change 0 to 1 in below line
+set _actoff=0
+
+::  To activate only Project/Visio, run the script with "/Z-ProjectVisio" parameter or change 0 to 1 in below line
+set _actprojvis=0
+
+::  To activate all Windows/ESU/Office, run the script with "/Z-WindowsESUOffice" parameter or change 0 to 1 in below line
+set _actwinesuoff=0
+
+::  Advanced options:
+::  To activate Windows K-M-S host (csvlk), run the script with "/Z-WinHost" parameter or change 0 to 1 in below line
+set _actwinhost=0
+
+::  To activate Office K-M-S host (csvlk), run the script with "/Z-OffHost" parameter or change 0 to 1 in below line
+set _actoffhost=0
+
+::  To activate Windows 8/8.1 APPX Sideloading (APPXLOB), run the script with "/Z-APPX" parameter or change 0 to 1 in below line
+set _actappx=0
+
+::  To activate certain activation IDs, change 0 to 1 in below line and set activation IDs in "tsids" variable, you can enter multiple by adding a space after each of them
+::  or run the script with "/Z-ID-ActivationIdGoesHere" parameter. If you want to add multiple through parameter, pass each of them in separate parameters
+set _actman=
+set tsids=
+
+::  To reset rearm counter, evaluation period and clear the tamper state, key lock, run the script with "/Z-Reset" parameter or change 0 to 1 in below line
+set _resall=0
+
+::  Choose activation method:
+::  In builds 19041 and later, the script will auto select StaticCID (requires internet). If no internet is detected, it will then auto select the KMS4k method. For builds lower than 19041, the script will auto select ZeroCID.
+::  To change the activation method, run the script with the parameters "/Z-SCID", "/Z-ZCID", or "/Z-KMS4k", or modify the option from Auto to SCID, ZCID, or KMS4k in the line below.
+set _actmethod=Auto
+
+::  Debug Mode:
+::  To run the script in debug mode, change 0 to any parameter above that you want to run, in below line
+set "_debug=0"
+
+::  Script will run in unattended mode if parameters are used OR value is changed in above lines.
+::  If multiple options are selected then script will only pick one from the advanced option.
+
+
+
+::========================================================================================================================================
+
+cls
+color 07
+set KS=K%blank%MS
+title  TSforge Activation %masver%
+
+set _args=
+set _elev=
+set _unattended=0
+
+set _args=%*
+if defined _args set _args=%_args:"=%
+if defined _args for %%A in (%_args%) do (
+if /i "%%A"=="-el"                     (set _elev=1)
+if /i "%%A"=="/Z-Windows"              (set _actwin=1)
+if /i "%%A"=="/Z-ESU"                  (set _actesu=1)
+if /i "%%A"=="/Z-Office"               (set _actoff=1)
+if /i "%%A"=="/Z-ProjectVisio"         (set _actprojvis=1)
+if /i "%%A"=="/Z-WindowsESUOffice"     (set _actwinesuoff=1)
+if /i "%%A"=="/Z-WinHost"              (set _actwinhost=1)
+if /i "%%A"=="/Z-OffHost"              (set _actoffhost=1)
+if /i "%%A"=="/Z-APPX"                 (set _actappx=1)
+echo "%%A" | find /i "/Z-ID-"  >nul && (set _actman=1& set "filtsids=%%A" & call set "filtsids=%%filtsids:~6%%" & if defined filtsids call set tsids=%%filtsids%% %%tsids%%)
+if /i "%%A"=="/Z-Reset"                (set _resall=1)
+if /i "%%A"=="/Z-SCID"                 (set _actmethod=SCID)
+if /i "%%A"=="/Z-ZCID"                 (set _actmethod=ZCID)
+if /i "%%A"=="/Z-KMS4k"                (set _actmethod=KMS4k)
+)
+
+if not defined tsids set _actman=0
+for %%A in (%_actwin% %_actesu% %_actoff% %_actprojvis% %_actwinesuoff% %_actwinhost% %_actoffhost% %_actappx% %_actman% %_resall%) do (if "%%A"=="1" set _unattended=1)
+if /i not %_actmethod%==Auto set _unattended=1
+
+if %winbuild% LSS 7600 (
+reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" /v Install %nul2% | find /i "0x1" %nul1% || (
+%eline%
+echo .NET 3.5 Framework is not installed in your system.
+echo Install it using the following URL.
+echo:
+echo https://www.microsoft.com/en-us/download/details.aspx?id=25150
+if %_unattended%==0 start https://www.microsoft.com/en-us/download/details.aspx?id=25150
+goto dk_done
+)
+)
+
+::========================================================================================================================================
+
+:ts_menu
+
+if %_unattended%==0 (
+cls
+if not defined terminal mode 76, 33
+title  TSforge Activation %masver%
+
+echo:
+echo:
+echo:
+echo        ______________________________________________________________
+echo: 
+echo               [1] Activate - Windows
+echo               [2] Activate - ESU
+echo               [3] Activate - Office [All]
+echo               [4] Activate - Office [Project/Visio]
+echo               [5] Activate - All
+echo               _______________________________________________  
+echo: 
+echo                   Advanced Options:
+echo:
+echo               [A] Activate - Windows %KS% Host
+echo               [B] Activate - Office %KS% Host
+echo               [C] Activate - Windows 8/8.1 APPX Sideloading
+echo               [D] Activate - Manually Select Products
+if defined _vis (
+echo               [E] Reset    - Rearm/Timers
+) else (
+echo               [E] Reset    - Rearm/Timers/Tamper/Lock
+)
+echo               [F] Change   - Activation Method [%_actmethod%]
+echo               _______________________________________________       
+echo:
+echo               [6] Remove TSforge Activation
+echo               [7] Download Office
+echo               [0] %_exitmsg%
+echo        ______________________________________________________________
+echo:
+call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard..."
+choice /C:12345ABCDEF670 /N
+set _el=!errorlevel!
+
+if !_el!==14 exit /b
+if !_el!==13 start %mas%genuine-installation-media & goto :ts_menu
+if !_el!==12 call :ts_remove & cls & goto :ts_menu
+if !_el!==11 goto :ts_changemethod
+if !_el!==10 cls & setlocal & set "_resall=1"       & call :ts_start & endlocal & cls & goto :ts_menu
+if !_el!==9  cls & setlocal & set "_actman=1"       & call :ts_start & endlocal & cls & goto :ts_menu
+if !_el!==8  cls & setlocal & set "_actappx=1"      & call :ts_start & endlocal & cls & goto :ts_menu
+if !_el!==7  cls & setlocal & set "_actoffhost=1"   & call :ts_start & endlocal & cls & goto :ts_menu
+if !_el!==6  cls & setlocal & set "_actwinhost=1"   & call :ts_start & endlocal & cls & goto :ts_menu
+if !_el!==5  cls & setlocal & set "_actwinesuoff=1" & call :ts_start & endlocal & cls & goto :ts_menu
+if !_el!==4  cls & setlocal & set "_actprojvis=1"   & call :ts_start & endlocal & cls & goto :ts_menu
+if !_el!==3  cls & setlocal & set "_actoff=1"       & call :ts_start & endlocal & cls & goto :ts_menu
+if !_el!==2  cls & setlocal & set "_actesu=1"       & call :ts_start & endlocal & cls & goto :ts_menu
+if !_el!==1  cls & setlocal & set "_actwin=1"       & call :ts_start & endlocal & cls & goto :ts_menu
+goto :ts_menu
+)
+
+goto :ts_start
+
+::========================================================================================================================================
+
+:ts_changemethod
+
+cls
+if not defined terminal mode 76, 36
+
+echo:
+echo:
+echo:
+echo        ______________________________________________________________
+echo: 
+call :dk_color2 %_White% "             [1] " %_Green% "Auto"
+echo                  Builds ^>= 19041 - StaticCID (KMS4k if offline)
+echo                  Builds ^<  19041 - ZeroCID
+echo              __________________________________________________
+echo: 
+echo              [2] StaticCID
+echo                  Needs Internet
+echo                  Not for Windows 7 or older
+echo              __________________________________________________
+echo:
+echo              [3] ZeroCID
+echo                  Works reliably on builds below 19041
+echo                  May break on builds between 19041-26100
+echo                  Does not work on builds above 26100.4188
+echo              __________________________________________________
+echo:
+echo              [4] KMS4k
+echo                  Volume licenses only
+echo                  Activates for 4000+ years
+echo              __________________________________________________
+echo:
+echo              [5] Learn More
+echo              [0] %_exitmsg%
+echo        ______________________________________________________________
+echo:
+call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard..."
+choice /C:123450 /N
+set _el=!errorlevel!
+
+if !_el!==6 goto :ts_menu
+if !_el!==5  cls & start %mas%tsforge &goto :ts_menu
+if !_el!==4  cls & set "_actmethod=KMS4k" & goto :ts_menu
+if !_el!==3  cls & set "_actmethod=ZCID"  & goto :ts_menu
+if !_el!==2  cls & set "_actmethod=SCID"  & goto :ts_menu
+if !_el!==1  cls & set "_actmethod=Auto"  & goto :ts_menu
+goto :ts_changemethod
+
+::========================================================================================================================================
+
+:ts_start
+
+cls
+
+if %_actwinesuoff%==1 (set height=38) else (set height=32)
+if not defined terminal (
+mode 125, %height%
+if exist "%SysPath%\spp\store_test\" mode 134, %height%
+%psc% "&{$W=$Host.UI.RawUI.WindowSize;$B=$Host.UI.RawUI.BufferSize;$W.Height=%height%;$B.Height=300;$Host.UI.RawUI.WindowSize=$W;$Host.UI.RawUI.BufferSize=$B;}" %nul%
+)
+title  TSforge Activation %masver%
+
+echo:
+echo Initializing...
+call :dk_chkmal
+
+if not exist %SysPath%\%_slexe% (
+%eline%
+echo [%SysPath%\%_slexe%] file is missing, aborting...
+echo:
+if not defined results (
+call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
+call :dk_color %Blue% "After that, restart system and try activation again."
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
+goto dk_done
+)
+
+for /f "delims=" %%a in ('%psc% "[System.Environment]::Version.Major" %nul6%') do if "%%a"=="2" (
+reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" /v Install %nul2% | find /i "0x1" %nul1% || (
+%eline%
+echo .NET 3.5 Framework is corrupt or missing. Aborting...
+if exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-Embedded" (
+echo Install .NET Framework 4.8 and Windows Management Framework 5.1
+)
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto dk_done
+)
+)
+
+if %winbuild% LSS 9200 if exist "%SysPath%\wlms\wlms.exe" (
+sc query wlms | find /i "RUNNING" %nul% && (
+sc stop %_slser% %nul%
+if !errorlevel! EQU 1051 (
+%eline%
+echo Evaluation WLMS service is running, %_slser% service can not be stopped. Aborting...
+echo Install Non-Eval version for Windows build %winbuild%.
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto dk_done
+)
+)
+)
+
+::========================================================================================================================================
+
+if %_actwinesuoff%==1 (set "_actwin=1" & set "_actesu=1" & set "_actoff=1")
+if %_actprojvis%==1   (set "_actoff=1")
+
+set spp=SoftwareLicensingProduct
+set sps=SoftwareLicensingService
+
+call :dk_ckeckwmic
+call :dk_checksku
+call :dk_product
+call :dk_sppissue
+
+::========================================================================================================================================
+
+set error=
+
+cls
+echo:
+call :dk_showosinfo
+
+if /i %_actmethod%==SCID set tsmethod=StaticCID
+if /i %_actmethod%==ZCID set tsmethod=ZeroCID
+if /i %_actmethod%==KMS4k set tsmethod=KMS4k
+
+if /i %_actmethod%==Auto (
+if %winbuild% GEQ 19041 (
+set tsmethod=StaticCID
+) else (
+set tsmethod=ZeroCID
+)
+)
+
+if %winbuild% LSS 9200 if /i %tsmethod%==StaticCID (
+%eline%
+echo StaticCID method is supported only on Windows 8 and later.
+goto dk_done
+)
+
+::========================================================================================================================================
+
+::  Check Internet connection
+
+if /i %tsmethod%==StaticCID (
+set _int=
+for %%a in (l.root-servers.net resolver1.opendns.com download.windowsupdate.com google.com) do if not defined _int (
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not "%%#"=="" set _int=1)
+)
+
+if not defined _int (
+%psc% "If([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]'{DCB00C01-570F-4A9B-8D69-199FDBA5723B}')).IsConnectedToInternet){Exit 0}Else{Exit 1}"
+if !errorlevel!==0 (set _int=1&set ping_f= But Ping Failed)
+)
+
+if defined _int (
+echo Checking Internet Connection            [Connected!ping_f!]
+) else (
+if /i %_actmethod%==Auto if not %_actman%==1 set tsmethod=KMS4k
+if /i !tsmethod!==KMS4k (
+call :dk_color %Gray% "Checking Internet Connection            [Not Connected]"
+call :dk_color %Blue% "Switching To KMS4k Activation Method because Internet is needed for StaticCID method."
+) else (
+set error=1
+call :dk_color %Red% "Checking Internet Connection            [Not Connected]"
+call :dk_color %Blue% "Internet is required for TSforge StaticCID option."
+)
+echo:
+)
+)
+
+::========================================================================================================================================
+
+echo Initiating Diagnostic Tests...
+
+set "_serv=%_slser% Winmgmt"
+
+::  Software Protection
+::  Windows Management Instrumentation
+
+call :dk_errorcheck
+
+call :ts_getedition
+if not defined tsedition (
+call :dk_color %Red% "Checking Windows Edition ID             [Not found in installed licenses, aborting...]"
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto :dk_done
+)
+
+if /i !tsmethod!==KMS4k (
+call :_taskclear-cache
+echo Clearing %KS% Cache                      [Successful]
+)
+
+::========================================================================================================================================
+
+if %_resall%==1 goto :ts_resetall
+if %_actman%==1 goto :ts_actman
+if %_actappx%==1 goto :ts_appxlob
+if %_actwinhost%==1 goto :ts_whost
+if %_actoffhost%==1 goto :ts_ohost
+if not %_actwin%==1 goto :ts_esu
+
+::========================================================================================================================================
+
+::  Process Windows
+::  Check if system is permanently activated or not
+
+echo:
+echo Processing Windows...
+
+echo %tsedition% | find /i "Eval" %nul1% && (
+goto :ts_wineval
+)
+
+set /a UBR=0
+if %winbuild% EQU 26100 (
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
+if !UBR! LSS 4188 (set dontcheckact=1)
+)
+
+if not defined dontcheckact call :ts_checkwinperm
+if defined _perm (
+call :dk_color %Gray% "Checking OS Activation                  [Windows is already permanently activated]"
+goto :ts_esu
+)
+
+if %winbuild% LSS 9200 if /i %tsmethod%==KMS4k goto :ts_oldks
+if defined _vis goto :ts_winvista
+
+set tempid=
+if /i %tsmethod%==KMS4k (set keytype=ks) else (set keytype=zero)
+for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wintsid\:.*';iex ($f[1])" %nul6%') do (
+echo "%%a" | findstr /r ".*-.*-.*-.*-.*" %nul1% && (set tsids=!tsids! %%a& set tempid=%%a)
+)
+
+if defined tempid (
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+) else (
+call :dk_color %Red% "Checking Activation ID                  [Not Found] [%tsedition%] [%osSKU%]"
+set error=1
+if /i %tsmethod%==KMS4k (
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+)
+goto :ts_esu
+)
+
+if defined winsub (
+call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. Script will activate base edition [SKU ID-%regSKU%]."
+echo:
+)
+
+goto :ts_esu
+
+::========================================================================================================================================
+
+:ts_oldks
+
+::  KMS keys for KMS4k method because TSforge cannot install KMS key on Windows Vista and 7
+
+::  1st column = Activation ID
+::  2nd column = Generic key
+::  3rd column = Edition ID
+::  Separator  = _
+
+set f=
+set key=
+set tempid=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+:: Windows 7
+ae2ee509-1b34-41c0-acb7-6d4650168915_33PXH-7Y6KF-2VJC9-XBBR8-HV%f%THH_Enterprise
+1cb6d605-11b3-4e14-bb30-da91c8e3983a_YDRBP-3D83W-TY26F-D46B2-XC%f%KRJ_EnterpriseN
+b92e9980-b9d5-4821-9c94-140f632f6312_FJ82H-XT6CR-J8D7P-XQJJ2-GP%f%DD4_Professional
+54a09a0d-d57b-4c10-8b69-a842d6590ad5_MRPKT-YTG23-K7D7T-X2JMM-QY%f%7MG_ProfessionalN
+db537896-376f-48ae-a492-53d0547773d0_YBYF6-BHCR3-JPKRB-CDW7B-F9%f%BK4_Embedded_POSReady
+aa6dd3aa-c2b4-40e2-a544-a6bbb3f5c395_73KQT-CD9G6-K7TQG-66MRP-CQ%f%22C_Embedded_ThinPC
+5a041529-fef8-4d07-b06f-b59b573b32d2_W82YF-2Q76Y-63HXB-FGJG9-GF%f%7QX_ProfessionalE
+46bbed08-9c7b-48fc-a614-95250573f4ea_C29WB-22CC8-VJ326-GHFJW-H9%f%DH4_EnterpriseE
+:: Windows Server 2008 R2
+68531fb9-5511-4989-97be-d11a0f55633f_YC6KT-GKW9T-YTKYR-T4X34-R7%f%VHC_ServerStandard
+7482e61b-c589-4b7f-8ecc-46d455ac3b87_74YFP-3QFB3-KQT8W-PMXWJ-7M%f%648_ServerDatacenter
+620e2b3d-09e7-42fd-802a-17a13652fe7a_489J6-VHDMP-X63PK-3K798-CP%f%X3Y_ServerEnterprise
+7482e61b-c589-4b7f-8ecc-46d455ac3b87_74YFP-3QFB3-KQT8W-PMXWJ-7M%f%648_ServerDatacenterCore
+68531fb9-5511-4989-97be-d11a0f55633f_YC6KT-GKW9T-YTKYR-T4X34-R7%f%VHC_ServerStandardCore
+620e2b3d-09e7-42fd-802a-17a13652fe7a_489J6-VHDMP-X63PK-3K798-CP%f%X3Y_ServerEnterpriseCore
+8a26851c-1c7e-48d3-a687-fbca9b9ac16b_GT63C-RJFQ3-4GMB6-BRFB9-CB%f%83V_ServerEnterpriseIA64
+a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4_ServerWeb
+cda18cf3-c196-46ad-b289-60c072869994_TT8MH-CG224-D3D7Q-498W2-9Q%f%CTX_ServerHPC
+a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4_ServerWebCore
+f772515c-0e87-48d5-a676-e6962c3e1195_736RG-XDKJK-V34PF-BHK87-J6%f%X3K_ServerEmbeddedSolution
+:: Windows Vista
+cfd8ff08-c0d7-452b-9f60-ef5c70c32094_VKK3X-68KWM-X2YGT-QR4M6-4B%f%WMV_Enterprise
+4f3d1606-3fea-4c01-be3c-8d671c401e3b_YFKBB-PQJJV-G996G-VWGXY-2V%f%3X8_Business
+2c682dc2-8b68-4f63-a165-ae291d4cf138_HMBQG-8H2RH-C77VX-27R82-VM%f%QBT_BusinessN
+d4f54950-26f2-4fb4-ba21-ffab16afcade_VTC42-BM838-43QHV-84HX6-XJ%f%XKV_EnterpriseN
+:: Windows Server 2008
+ad2542d4-9154-4c6d-8a44-30f11ee96989_TM24T-X9RMF-VWXK6-X8JC9-BF%f%GM2_ServerStandard
+68b6e220-cf09-466b-92d3-45cd964b9509_7M67G-PC374-GR742-YH8V4-TC%f%BY3_ServerDatacenter
+c1af4d90-d1bc-44ca-85d4-003ba33db3b9_YQGMW-MPWTJ-34KDK-48M3W-X4%f%Q6V_ServerEnterprise
+01ef176b-3e0d-422a-b4f8-4ea880035e8f_4DWFP-JF3DJ-B7DTH-78FJB-PD%f%RHK_ServerEnterpriseIA64
+ddfa9f7c-f09e-40b9-8c1a-be877a9a7f4b_WYR28-R7TFJ-3X2YQ-YCY4H-M2%f%49D_ServerWeb
+7afb1156-2c1d-40fc-b260-aab7442b62fe_RCTX3-KWVHP-BR6TB-RB6DM-6X%f%7HP_ServerComputeCluster
+2401e3d0-c50a-4b58-87b2-7e794b7d2607_W7VD6-7JFBR-RX26B-YKQ3Y-6F%f%FFJ_ServerStandardV
+fd09ef77-5647-4eff-809c-af2b64659a45_22XQ2-VRXRG-P8D42-K34TD-G3%f%QQC_ServerDatacenterV
+8198490a-add0-47b2-b3ba-316b12d647b4_39BXF-X8Q23-P2WWT-38T2F-G3%f%FPG_ServerEnterpriseV
+) do (
+for /f "tokens=1-3 delims=_" %%A in ("%%#") do if %tsedition%==%%C if not defined key (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+set key=%%B
+set tempid=%%A
+)
+)
+)
+
+if not defined key (
+call :dk_color %Red% "Checking Activation ID                  [%tsedition% SKU-%osSKU% %KS% key is not available]"
+call :dk_color %Blue% "Use ZeroCID activation method from the previous menu."
+goto :ts_esu
+)
+
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+
+set oldks=1
+set generickey=1
+call :dk_inskey "[%key%]"
+set tsids=%tsids% %tempid%
+goto :ts_esu
+
+::========================================================================================================================================
+
+:ts_winvista
+
+::  Process Windows Vista
+
+::  1st column = Activation ID
+::  2nd column = Generic key
+::  3rd column = Key channel
+::  4th column = Edition ID
+::  Separator  = _
+
+::  Keys aren't available for these editions, but since these editions aren't publicly available, it doesn't matter
+::  a797d61e-1475-470b-86c8-f737a72c188d StarterN
+::  5e9f548a-c8a9-44e6-a6c2-3f8d0a7a99dd ServerComputeClusterV
+
+set f=
+set key=
+set tempid=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+::  WindowsVista
+9de9abe2-d01d-4538-af84-4498bdbc2ba3_4D2XH-PRBMM-8Q22B-K8BM3-MR%f%W4W_____Retail_Business
+db442be4-81ed-4ab3-9d66-2417e8a5c81c_76884-QXFY2-6Q2WX-2QTQ8-QX%f%X44_____Retail_BusinessN
+b51791c2-b562-4b73-97b0-735a0e4429a6_YQPQV-RW8R3-XMPFG-RXG9R-JG%f%TVF_____Retail_Enterprise
+58c37517-42f8-4723-bb44-30b05791ff2a_Q7J9R-G63R4-BFMHF-FWM9R-RW%f%DMV_____Retail_EnterpriseN
+95c6e80a-0ff8-4bd0-95f2-c4a39b79d09e_RCG7P-TX42D-HM8FM-TCFCW-3V%f%4VD_____Retail_HomeBasic
+d0333dad-c14e-46f2-b62a-8b47a1b9768b_HY2VV-XC6FF-MD6WV-FPYBQ-GF%f%JBT_____Retail_HomeBasicN
+9e042223-03bf-49ae-808f-ff37f128d40d_X9HTF-MKJQQ-XK376-TJ7T4-76%f%PKF_____Retail_HomePremium
+92d8977c-d506-4e63-b500-6d39283b6cd5_KJ6TP-PF9W2-23T3Q-XTV7M-PX%f%DT2_____Retail_HomePremiumN
+89e51a3c-76c0-4beb-a650-53d34c8f8186_X9PYV-YBQRV-9BXWV-TQDMK-QD%f%WK4_____Retail_Starter
+30fab9cc-8614-4339-989f-7ce61fb7a5c4_VMCB9-FDRV6-6CDQM-RV23K-RP%f%8F7_____Retail_Ultimate
+1eefed20-8ac0-478c-8774-70cd44782ea1_CVX38-P27B4-2X8BT-RXD4J-V7%f%CKX_____Retail_UltimateN
+::  WindowsServer2008
+c9ad502b-ef48-41d1-a2a0-38a38e82fed0_24FV9-H7JW8-C8Q6X-BQKMK-K9%f%77J_____Retail_ServerComputeCluster
+866e924e-c2a3-4872-aca1-6b48c13962d5_6QBHY-DXTPJ-T9W3P-DTJXX-4V%f%QMB_____Retail_ServerDatacenter
+d020c729-07f0-4f8f-87ce-bf803275c786_83TWG-TD3TC-HRDP2-K93FJ-Y3%f%4YC_OEM:NONSLP_ServerDatacenterV
+32b40e5e-0c6d-4c6f-ab12-a031933fd2c6_MRB7H-QJRHG-FXTBR-B2Q2M-8W%f%MTJ_____Retail_ServerEnterprise
+256cc990-1692-4ea8-965c-2d423d5dd24e_H4VB6-QPRWH-VDCYM-996P8-MH%f%KFY_OEM:NONSLP_ServerEnterpriseIA64
+1ba5e036-e386-42c4-b7eb-16bdb4fa1945_H8H7M-HDPQT-PJHQF-M7B83-9C%f%VGV_____Retail_ServerEnterpriseV
+8df04457-07c8-4301-bce9-d61eb76cb2d6_RGBMC-PQBVF-94Q9K-HD63B-VY%f%6MP_____Retail_ServerHomePremium
+5bd23b19-aa71-4a5b-8b68-c8801c2baff6_6C8KR-MD3QK-9GWFW-44CY2-W9%f%CBM_____Retail_ServerHomeStandard
+b86c7736-91ff-4de9-bfa9-b32b8a09acac_7XRBY-6MP2K-VQPT8-F37JV-YY%f%Q83_____Retail_ServerMediumBusinessManagement
+d3f5642f-081d-40b2-a4b9-efd3054d4584_6PDTD-JK48J-662TF-8J2QV-R4%f%CRB_____Retail_ServerMediumBusinessMessaging
+c6936a36-69f3-4994-9857-3069c7b9ec7a_D694V-CMWKH-PY92X-PFQKQ-JC%f%B69_____Retail_ServerMediumBusinessSecurity
+cc4c2cf8-ef29-4d8e-b168-2b65a3db3309_MRDK3-YYQF3-88BQJ-D6FJG-69%f%YJY_____Retail_ServerSBSPremium
+b3827b27-bd38-4284-98af-e4f4d1c051a0_2KB23-GJRBD-W3T9C-6CH2W-39%f%B7V_____Retail_ServerSBSPrime
+5dad0eff-3f6f-4310-8844-422f9dc7c84b_H4XDD-B27GY-667P6-XWVV7-GY%f%G8J_____Retail_ServerSBSStandard
+603504f9-109f-49f0-9271-8c66f7878f58_8YVM4-YQBDH-7WDQM-R27WR-WV%f%CWG_____Retail_ServerStandard
+65ab7338-9ad0-43fe-af1b-190b577495e2_H9MW3-6V7GK-94P9G-7FTPJ-VK%f%CKF_____Retail_ServerStandardV
+2be204da-24a0-4943-b66c-81e8464acd7e_2264C-TD9T8-P8HPW-CC9GH-MH%f%M2V_____Retail_ServerStorageEnterprise
+60207eba-8b4a-486c-a013-023b4b742c2f_RCYMT-YX342-8T6YY-XYHYC-3D%f%D7X_____Retail_ServerStorageExpress
+368856e9-43f7-4601-8358-e561f36c7dd8_FKFT2-WXYY9-WBPY7-6YMY4-X4%f%8JF_____Retail_ServerStorageStandard
+4bf433fa-ab04-4c6c-b55b-00170e14b8cd_8X9J7-HCJ7J-3WDJT-QM7D8-46%f%4YH_____Retail_ServerStorageWorkgroup
+a77a6806-f59e-4953-97d7-229317b8e6a6_BGT39-9FYH7-X2CYD-T628F-QP%f%QPW_____Retail_ServerWeb
+f92f836d-4d3e-4e90-a08f-2d612d65e716_HPH76-FHFPP-DRW9D-7W2V4-HW%f%GKT_____Retail_ServerWinSB
+3059a9fd-b068-4f0d-acaf-66324dca67ac_2V8G6-KRXYR-MMGXJ-6RWM3-GX%f%CCG_____Retail_ServerWinSBV
+) do (
+for /f "tokens=1-4 delims=_" %%A in ("%%#") do if %tsedition%==%%D if not defined key (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+set key=%%B
+set tempid=%%A
+)
+)
+)
+
+if not defined key (
+set error=1
+call :dk_color %Red% "Checking Activation ID                  [%tsedition% SKU-%osSKU% not found in the system]"
+call :dk_color %Blue% "%_fixmsg%"
+goto :ts_esu
+)
+
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+
+set generickey=1
+call :dk_inskey "[%key%]"
+set tsids=%tsids% %tempid%
+goto :ts_esu
+
+::========================================================================================================================================
+
+:ts_wineval
+
+call :dk_color %Gray% "Checking OS Edition                     [%tsedition%] [Evaluation edition found]"
+call :dk_color %Blue% "Evaluation editions cannot be activated outside of evaluation period."
+
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
+call :dk_color %Blue% "Script will reset evaluation period, but to permanently activate Windows,"
+call :dk_color %Blue% "Go back to main menu and use [Change Edition] option and change to Non-eval edition."
+) else (
+call :dk_color %Blue% "Script will reset evaluation period, but to permanently activate Windows, install Non-eval edition."
+call :dk_color %_Yellow% "%mas%evaluation_editions"
+)
+
+::  Check Internet connection
+
+set _int=
+for %%a in (l.root-servers.net resolver1.opendns.com download.windowsupdate.com google.com) do if not defined _int (
+for /f "delims=[] tokens=2" %%# in ('ping -n 1 %%a') do (if not "%%#"=="" set _int=1)
+)
+
+if not defined _int (
+%psc% "If([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]'{DCB00C01-570F-4A9B-8D69-199FDBA5723B}')).IsConnectedToInternet){Exit 0}Else{Exit 1}"
+if !errorlevel!==0 (set _int=1&set ping_f= But Ping Failed)
+)
+
+if defined _int (
+echo Checking Internet Connection            [Connected%ping_f%]
+) else (
+set error=1
+call :dk_color %Red% "Checking Internet Connection            [Not Connected]"
+call :dk_color %Blue% "Internet is required for Windows Evaluation activation."
+)
+
+::  List of products lacking activable evaluation keys and ISOs
+
+::  c4b908d2-c4b9-439d-8ff0-48b656a24da4_EmbeddedIndustryEEval_8.1
+::  9b74255b-afe1-4da7-a143-98d1874b2a6c_EnterpriseNEval_8
+::  7fd0a88b-fb89-415f-9b79-84adc6a7cd56_EnterpriseNEval_8.1
+::  994578eb-193c-4c99-bea0-2483274c9afd_EnterpriseSNEval_2015
+::  b9f3109c-bfa9-4f37-9824-6dba9ee62056_ServerStorageStandardEval_2012R2
+::  2d3b7269-65f4-467d-9d51-dbe0e5a4e668_ServerStorageWorkgroupEval_2012R2
+
+:: --------
+
+::  1st column = Activation ID
+::  2nd column = Activable evaluation key
+::  3rd column = Edition ID
+::  4th column = Windows version (for reference only)
+::  5th column = NoAct = activation is not working
+::  Separator  = _
+
+set f=
+set key=
+set eval=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+d9eea459-1e6b-499d-8486-e68163f2a8be_N3QJR-YCWKK-RVJGK-GQFMX-T8%f%2BF_EmbeddedIndustryEval_8.1
+fbd4c5c6-adc6-4740-bc65-b2dc6dc249c1_MJ8TN-42JH8-886MT-8THCF-36%f%67B_EnterpriseEval_8_NoAct_          REM New time based activation not available
+0eebbb45-29d4-49cb-ba87-a23db0cce40a_76FKW-8NR3K-QDH4P-3C87F-JH%f%TTW_EnterpriseEval_8.1
+3f4c0546-36c6-46a8-a37f-be13cdd0cf25_7HBDQ-QNKVG-K4RBF-HMBY6-YG%f%9R6_EnterpriseEval_10
+1f8dbfe8-defa-4676-b5a6-f76949a01540_4N8VT-7Y686-43DGV-THTW9-M9%f%8W7_EnterpriseNEval_10
+57a4ebb6-8e0c-41f8-b79e-8872ddc971ef_W63GF-7N4D9-GQH3K-K4FP7-9B%f%T6C_EnterpriseSEval_2015
+b47dd250-fd6a-44c8-9217-03aca6e4812e_N4DMT-RJKDQ-XR6H7-3DKKP-3Y%f%JWT_EnterpriseSEval_2016
+267bf82d-08e8-4046-b061-9ef3f8ac2b5a_N7HMH-MK36Q-M4X93-76KQ2-6J%f%HWR_EnterpriseSEval_2019
+aff25f1f-fb53-4e27-95ef-b8e5aca10ac6_9V4NK-624Y3-VK47R-Q27GP-27%f%PGF_EnterpriseSEval_2021
+399f0697-886b-4881-894c-4ff6c52e7d8f_CYPB3-XNV9V-QR4G4-Q3B8K-KQ%f%FGJ_EnterpriseSEval_2024
+6162e8c2-3c30-46e1-b964-0de603498e2d_R34N9-HJ6Q3-GBX4F-Q24KQ-49%f%DF7_EnterpriseSNEval_2016
+aed14fc8-907d-44fb-a3a1-d5d8e638acb3_MHN9Q-RD9PW-BFHDQ-9FTWQ-WQ%f%PF8_EnterpriseSNEval_2019
+5dd0c869-eae9-40ce-af48-736692cd8e43_XCN62-29X92-C4T8X-WP82X-DY%f%MJ8_EnterpriseSNEval_2021
+522cc0dc-3c7b-4258-ae68-f297ca63b64e_Y8DJM-NPXF3-QG4MH-W7WJK-KQ%f%FGM_EnterpriseSNEval_2024
+aa708397-8618-42de-b120-a44190ef456d_R63DV-9NPDX-QVWJF-HMR8V-M4%f%K7D_IoTEnterpriseSEval_2024
+cd25b1e8-5839-4a96-a769-b6abe3aa5dee_73BMN-332G9-DX6B8-FGDT3-GF%f%YT6_ServerDatacenterEval_2012
+e628c5e8-2300-4429-8b80-a8b21bd7ce0a_WPR94-KN3J7-MRB7X-JPJV8-RX%f%7J2_ServerDatacenterEval_2012R2
+01398239-85ff-487f-9e90-0e3cc5bcc92e_QVTQ9-GNRBH-JQ9G7-W7FBW-RX%f%9QR_ServerDatacenterEval_2016
+5ea4af9e-fd59-4691-b61c-1fc1ff3e309e_KNW3G-22YD2-7QKQJ-2RF2X-H6%f%F8M_ServerDatacenterEval_2019
+1d02774d-66ab-4c57-8b14-e254fdce09d4_PK7JN-24236-FH7JP-V792F-37%f%CYR_ServerDatacenterEval_2021
+96794a98-097f-42fe-8f28-2c38ea115229_M4RNW-CRTHF-TY7BG-DDHG6-J2%f%T92_ServerDatacenterEval_2025
+38d172c7-36b3-4e4b-b435-fd0b06b95c6e_RNFGD-WFFQR-XQ8BG-K7QQK-GJ%f%CP9_ServerStandardEval_2012
+4fc45a88-26b5-4cf9-9eef-769ee3f0a016_79M8M-N36BX-8YGJY-2G9KP-3Y%f%GPC_ServerStandardEval_2012R2
+9dfa8ec0-7665-4b9d-b2cb-bfc2dc37c9f4_9PBKX-4NHGT-QWV4C-4JD94-TV%f%KQ6_ServerStandardEval_2016
+7783a126-c108-4cf7-b59f-13c78c7a7337_J4WNC-H9BG3-6XRX4-3XD8K-Y7%f%XRX_ServerStandardEval_2019
+c1a197b6-ba5e-4394-b9bf-b659a6c1b873_7PBJM-MNVPD-MBQD7-TYTY4-W8%f%JDY_ServerStandardEval_2021
+753c53a2-4274-4339-8c2e-f66c0b9646c5_YPBVM-HFNWQ-CTF9M-FR4RR-7H%f%9YG_ServerStandardEval_2025
+0de5ff31-2d62-4912-b1a8-3ea01d2461fd_3CKBN-3GJ8X-7YT4X-D8DDC-D6%f%69B_ServerStorageStandardEval_2012
+fb08f53a-e597-40dc-9f08-8bbf99f19b92_NCJ6J-J23VR-DBYB3-QQBJF-W8%f%CP7_ServerStorageWorkgroupEval_2012
+) do (
+for /f "tokens=1-5 delims=_" %%A in ("%%#") do if %tsedition%==%%C if not defined key (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+set key=%%B
+set eval=1
+if /i "%%E"=="NoAct" set noact=1
+echo Checking Activation ID                  [%%A] [%%C]
+)
+)
+)
+
+if not defined key (
+set error=1
+call :dk_color %Red% "Checking Activation ID                  [%tsedition% not found in the script]"
+call :dk_color %Blue% "Make sure you are using the updated version of the script."
+goto :ts_esu
+)
+
+set resetstuff=1
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':tsforge\:.*';iex ($f[1])"
+set resetstuff=
+if !errorlevel!==3 (
+set error=1
+call :dk_color %Red% "Resetting Rearm / GracePeriod           [Failed]"
+call :dk_color %Blue% "%_fixmsg%"
+goto :ts_esu
+) else (
+echo Resetting Rearm / GracePeriod           [Successful]
+)
+
+set generickey=1
+call :dk_inskey "[%key%]"
+
+::========================================================================================================================================
+
+:ts_esu
+
+if not %_actesu%==1 goto :ts_off
+if /i %tsmethod%==KMS4k (
+call :dk_color %Red% "Skipping Windows ESU                    [KMS4k method is not supported with Windows ESU]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+goto :ts_off
+)
+
+::  Process Windows ESU
+
+echo:
+echo Processing Windows ESU...
+
+set esuexist=
+set esuexistsup=
+set esueditionlist=
+set esuexistbutnosup=
+
+for %%# in (EnterpriseS IoTEnterpriseS IoTEnterpriseSK) do (if /i %tsedition%==%%# set isltsc=1)
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" set isServer=1
+
+if /i %tsedition%==Embedded (
+if exist "%SystemRoot%\Servicing\Packages\WinEmb-Branding-Embedded-ThinPC-Package*.mum" set isThinpc=1
+if exist "%SystemRoot%\Servicing\Packages\WinEmb-Branding-Embedded-POSReady7-Package*.mum" set subEdition=[POS]
+if exist "%SystemRoot%\Servicing\Packages\WinEmb-Branding-Embedded-Standard-Package*.mum" set subEdition=[Standard]
+)
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+if not defined isThinpc if not defined isltsc for %%# in (
+REM Windows7
+4220f546-f522-46df-8202-4d07afd26454_Client-ESU-Year3[1-3y]_-Enterprise-EnterpriseE-EnterpriseN-Professional-ProfessionalE-ProfessionalN-Ultimate-UltimateE-UltimateN-
+7e94be23-b161-4956-a682-146ab291774c_Client-ESU-Year6[4-6y]_-Enterprise-EnterpriseE-EnterpriseN-Professional-ProfessionalE-ProfessionalN-Ultimate-UltimateE-UltimateN-
+REM Windows7EmbeddedPOSReady7
+4f1f646c-1e66-4908-acc7-d1606229b29e_POS-ESU-Year3[1-3y]_-Embedded[POS]-
+REM Windows7EmbeddedStandard
+6aaf1c7d-527f-4ed5-b908-9fc039dfc654_WES-ESU-Year3[1-3y]_-Embedded[Standard]-
+REM WindowsServer2008/WindowsServer2008R2
+8e7bfb1e-acc1-4f56-abae-b80fce56cd4b_Server-ESU-PA[1-6y]_-ServerDatacenter-ServerDatacenterCore-ServerDatacenterV-ServerDatacenterVCore-ServerStandard-ServerStandardCore-ServerStandardV-ServerStandardVCore-ServerEnterprise-ServerEnterpriseCore-ServerEnterpriseV-ServerEnterpriseVCore-
+REM Windows8.1
+4afc620f-12a4-48ad-8015-2aebfbd6e47c_Client-ESU-Year3[1-3y]_-Enterprise-EnterpriseN-Professional-ProfessionalN-
+11be7019-a309-4763-9a09-091d1722ffe3_Client-FES-ESU-Year3[1-3y]_-EmbeddedIndustry-EmbeddedIndustryE-
+REM WindowsServer2012/2012R2
+55b1dd2d-2209-4ea0-a805-06298bad25b3_Server-ESU-Year3[1-3y]_-ServerDatacenter-ServerDatacenterCore-ServerDatacenterV-ServerDatacenterVCore-ServerStandard-ServerStandardCore-ServerStandardV-ServerStandardVCore-
+REM Windows10
+f520e45e-7413-4a34-a497-d2765967d094_Client-ESU-Year1_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+1043add5-23b1-4afb-9a0f-64343c8f3f8d_Client-ESU-Year2_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+83d49986-add3-41d7-ba33-87c7bfb5c0fb_Client-ESU-Year3_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+0b533b5e-08b6-44f9-b885-c2de291ba456_Client-ESU-Year6[4-6y]_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+b8527af1-5389-447c-9a88-2d1691ea33d3_Client-IoT-ESU-Year1_-IoTEnterprise-
+7b76ee02-0a75-4f08-85d5-bd0feadad0c0_Client-IoT-ESU-Year2_-IoTEnterprise-
+4dac5a0c-5709-4595-a32c-14a56a4a6b31_Client-IoT-ESU-Year3_-IoTEnterprise-
+f69e2d51-3bbd-4ddf-8da7-a145e9dca597_Client-IoT-ESU-Year6[4-6y]_-IoTEnterprise-
+) do (
+for /f "tokens=1-3 delims=_" %%A in ("%%#") do (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+set esuexist=1
+echo "%%C" | find /i "-%tsedition%%subEdition%-" %nul1% && (
+set esuexistsup=1
+set esueditionlist=
+set esuexistbutnosup=
+set tsids=!tsids! %%A
+echo Checking Activation ID                  [%%A] [%%B]
+) || (
+if not defined esueditionlist set esueditionlist=%%C
+set esuexistbutnosup=1
+)
+)
+)
+)
+
+if defined esuexistsup if defined _vis (
+set key=9FPV7-MWGT8-7XPDF-JC23W-WT7TW
+REM This is a non-generic blocked MAK key for Server-ESU-PA
+call :dk_inskey "[!key!]"
+goto :ts_off
+)
+
+if defined esuexistsup (
+echo "%tsids%" | find /i "4220f546-f522-46df-8202-4d07afd26454" %nul1% && (
+echo "%tsids%" | find /i "7e94be23-b161-4956-a682-146ab291774c" %nul1% || (
+call :dk_color %Gray% "To get Client-ESU-Year6[4-6y] license, install updates from the below URL."
+call :dk_color %Blue% "%mas%tsforge#windows-esu"
+)
+)
+goto :ts_off
+)
+
+if defined isltsc (
+call :dk_color %Gray% "Checking Activation ID                  [%tsedition% LTSC already has longer support, ESU is not applicable]"
+goto :ts_off
+)
+
+if defined esuexistbutnosup (
+call :dk_color %Red% "Checking Activation ID                  [Commercial ESU is not supported for %tsedition%]"
+echo %esueditionlist% | find /i "Professional" %nul1% && (
+call :dk_color %Blue% "Go back to Main Menu, select Change Windows Edition option, and change it to [Professional] or any non-Home edition."
+) || (
+call :dk_color %Blue% "Go back to Main Menu, select Change Windows Edition option and change to any of the below listed editions."
+echo [%esueditionlist%]
+)
+goto :ts_off
+)
+
+set esuavail=
+if defined _vis if defined isServer set esuavail=1
+if %winbuild% LEQ 7602 if not defined _vis if not defined isThinpc set esuavail=1
+if %winbuild% GTR 7602 if %winbuild% LSS 10240 if defined isServer set esuavail=1
+if %winbuild% GEQ 10240 if %winbuild% LEQ 19045 if not defined isServer set esuavail=1
+if %winbuild% EQU 9600 set esuavail=1
+
+if defined esuavail (
+call :dk_color %Red% "Checking Activation ID                  [ESU license is not found, make sure Windows is fully updated]"
+set fixes=%fixes% %mas%tsforge#windows-esu
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%tsforge#windows-esu"
+) else (
+call :dk_color %Gray% "Checking Activation ID                  [ESU is not available for %winos%]"
+)
+
+::========================================================================================================================================
+
+:ts_off
+
+if not %_actoff%==1 goto :ts_act
+
+if %winbuild% LSS 9200 (
+echo:
+call :dk_color %Gray% "Checking Supported Office               [TSforge for Office is supported on Windows 8 and later versions]"
+call :dk_color %Blue% "On Windows Vista / 7, use Ohook activation option for Office instead."
+goto :ts_act
+)
+
+::  Check ohook install
+
+set ohook=
+for %%# in (15 16) do (
+for %%A in ("%ProgramFiles%" "%ProgramW6432%" "%ProgramFiles(x86)%") do (
+if exist "%%~A\Microsoft Office\Office%%#\sppc*dll" set ohook=1
+)
+)
+
+for %%# in (System SystemX86) do (
+for %%G in ("Office 15" "Office") do (
+for %%A in ("%ProgramFiles%" "%ProgramW6432%" "%ProgramFiles(x86)%") do (
+if exist "%%~A\Microsoft %%~G\root\vfs\%%#\sppc*dll" set ohook=1
+)
+)
+)
+
+if defined ohook (
+echo:
+call :dk_color %Gray% "Checking Ohook                          [Ohook activation is already installed for Office]"
+)
+
+::  Check unsupported office versions
+
+set o14msi=
+set o14c2r=
+
+set _68=HKLM\SOFTWARE\Microsoft\Office
+set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=Office 2010 MSI )
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=Office 2010 MSI )
+%nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
+%nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
+
+if not "%o14msi%%o14c2r%"=="" (
+echo:
+call :dk_color %Red% "Checking Unsupported Office Install     [ %o14msi%%o14c2r%]"
+if defined o14msi call :dk_color %Blue% "Use Ohook activation option for Office 2010."
+)
+
+if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
+set ohub=1
+)
+
+::========================================================================================================================================
+
+::  Check supported office versions
+
+call :ts_getpath
+
+set o16uwp=
+set o16uwp_path=
+
+if %winbuild% GEQ 10240 (
+for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Desktop' | Select-Object -ExpandProperty InstallLocation)" %nul6%') do (if exist "%%a\Integration\Integrator.exe" (set o16uwp=1&set "o16uwp_path=%%a"))
+)
+
+sc query ClickToRunSvc %nul%
+set error1=%errorlevel%
+
+if defined o16c2r if %error1% EQU 1060 (
+echo:
+call :dk_color %Red% "Checking ClickToRun Service             [Not found, Office 16.0 files found]"
+set o16c2r=
+set error=1
+)
+
+sc query OfficeSvc %nul%
+set error2=%errorlevel%
+
+if defined o15c2r if %error1% EQU 1060 if %error2% EQU 1060 (
+echo:
+call :dk_color %Red% "Checking ClickToRun Service             [Not found, Office 15.0 files found]"
+set o15c2r=
+set error=1
+)
+
+if "%o16uwp%%o16c2r%%o15c2r%%o16msi%%o15msi%"=="" (
+set error=1
+set showfix=1
+echo:
+if not "%o14msi%%o14c2r%"=="" (
+call :dk_color %Red% "Checking Supported Office Install       [Not Found]"
+) else (
+if %_actwin%==0 (
+call :dk_color %Red% "Checking Installed Office               [Not Found]"
+) else (
+call :dk_color %Gray% "Checking Installed Office               [Not Found]"
+)
+)
+
+if defined ohub (
+echo:
+echo You only have the Office Dashboard app installed. You need to install the full version of Office.
+)
+call :dk_color %Blue% "Download and install Office from below URL and try again."
+if %_actwin%==0 set fixes=%fixes% %mas%genuine-installation-media
+call :dk_color %_Yellow% "%mas%genuine-installation-media"
+goto :ts_act
+)
+
+set multioffice=
+if not "%o16uwp%%o16c2r%%o15c2r%%o16msi%%o15msi%"=="1" set multioffice=1
+if not "%o14c2r%%o14msi%"=="" set multioffice=1
+
+if defined multioffice (
+echo:
+call :dk_color %Gray% "Checking Multiple Office Install        [Found. Recommended to install one version only]"
+)
+
+::========================================================================================================================================
+
+::  Check Windows Server
+
+set winserver=
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions" /v ProductType %nul2% | find /i "WinNT" %nul1% || set winserver=1
+if not defined winserver (
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Server" %nul1% && set winserver=1
+)
+
+::========================================================================================================================================
+
+::  Process Office UWP
+
+if not defined o16uwp goto :ts_starto15c2r
+
+call :ts_reset
+call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
+
+set oVer=16
+set "_oLPath=%o16uwp_path%\Licenses16"
+set "pkeypath=%o16uwp_path%\Office16\pkeyconfig-office.xrm-ms"
+for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Desktop' | Select-Object -ExpandProperty Dependencies) | Select-Object PackageFullName" %nul6%') do (set "o16uwpapplist=!o16uwpapplist! %%a")
+
+echo "%o16uwpapplist%" | findstr /i "Access Excel OneNote Outlook PowerPoint Publisher SkypeForBusiness Word" %nul% && set "_oIds=O365HomePremRetail"
+
+for %%# in (Project Visio) do (
+echo "%o16uwpapplist%" | findstr /i "%%#" %nul% && (
+set _lat=
+if exist "%_oLPath%\%%#Pro2024VL*.xrm-ms" set "_oIds= !_oIds! %%#Pro2024Retail " & set _lat=1
+if not defined _lat if exist "%_oLPath%\%%#Pro2021VL*.xrm-ms" set "_oIds= !_oIds! %%#Pro2021Retail " & set _lat=1
+if not defined _lat if exist "%_oLPath%\%%#Pro2019VL*.xrm-ms" set "_oIds= !_oIds! %%#Pro2019Retail " & set _lat=1
+if not defined _lat set "_oIds= !_oIds! %%#ProRetail "
+)
+)
+
+set uwpinfo=%o16uwp_path:C:\Program Files\WindowsApps\Microsoft.Office.Desktop_=%
+
+echo:
+echo Processing Office...                    [UWP ^| %uwpinfo%]
+
+if not defined _oIds (
+call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+set error=1
+goto :ts_starto15c2r
+)
+
+call :ts_process
+
+::========================================================================================================================================
+
+:ts_starto15c2r
+
+::  Process Office 15.0 C2R
+
+if not defined o15c2r goto :ts_starto16c2r
+
+call :ts_reset
+call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
+
+set oVer=15
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg% /v InstallPath" %nul6%') do (set "_oRoot=%%b\root")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg%\Configuration /v Platform" %nul6%') do (set "_oArch=%%b")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg%\Configuration /v VersionToReport" %nul6%') do (set "_version=%%b")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg%\Configuration /v ProductReleaseIds" %nul6%') do (set "_prids=%o15c2r_reg%\Configuration /v ProductReleaseIds" & set "_config=%o15c2r_reg%\Configuration")
+if not defined _oArch   for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg%\propertyBag /v Platform" %nul6%') do (set "_oArch=%%b")
+if not defined _version for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg%\propertyBag /v version" %nul6%') do (set "_version=%%b")
+if not defined _prids   for /f "skip=2 tokens=2*" %%a in ('"reg query %o15c2r_reg%\propertyBag /v ProductReleaseId" %nul6%') do (set "_prids=%o15c2r_reg%\propertyBag /v ProductReleaseId" & set "_config=%o15c2r_reg%\propertyBag")
+
+echo "%o15c2r_reg%" | find /i "Wow6432Node" %nul1% && (set _tok=10) || (set _tok=9)
+for /f "tokens=%_tok% delims=\" %%a in ('reg query %o15c2r_reg%\ProductReleaseIDs\Active %nul6% ^| findstr /i "Retail Volume"') do (
+echo "!_oIds!" | find /i " %%a " %nul1% || (set "_oIds= !_oIds! %%a ")
+)
+
+set "_oLPath=%_oRoot%\Licenses"
+set "pkeypath=%_oRoot%\Office15\pkeyconfig-office.xrm-ms"
+set "_oIntegrator=%_oRoot%\integration\integrator.exe"
+
+echo:
+echo Processing Office...                    [C2R ^| %_version% ^| %_oArch%]
+
+if not defined _oIds (
+call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+set error=1
+goto :ts_starto16c2r
+)
+
+call :oh_expiredpreview 2013
+if "%_actprojvis%"=="0" call :oh_fixprids
+call :ts_process
+
+::========================================================================================================================================
+
+:ts_starto16c2r
+
+::  Process Office 16.0 C2R
+
+if not defined o16c2r goto :ts_startmsi
+
+call :ts_reset
+call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
+
+set oVer=16
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg% /v InstallPath" %nul6%') do (set "_oRoot=%%b\root")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\Configuration /v Platform" %nul6%') do (set "_oArch=%%b")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\Configuration /v VersionToReport" %nul6%') do (set "_version=%%b")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\Configuration /v AudienceData" %nul6%') do (set "_AudienceData=^| %%b ")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\Configuration /v ProductReleaseIds" %nul6%') do (set "_prids=%o16c2r_reg%\Configuration /v ProductReleaseIds" & set "_config=%o16c2r_reg%\Configuration")
+
+echo "%o16c2r_reg%" | find /i "Wow6432Node" %nul1% && (set _tok=9) || (set _tok=8)
+for /f "tokens=%_tok% delims=\" %%a in ('reg query "%o16c2r_reg%\ProductReleaseIDs" /s /f ".16" /k %nul6% ^| findstr /i "Retail Volume"') do (
+echo "!_oIds!" | find /i " %%a " %nul1% || (set "_oIds= !_oIds! %%a ")
+)
+set _oIds=%_oIds:.16=%
+set _o16c2rIds=%_oIds%
+
+set "_oLPath=%_oRoot%\Licenses16"
+set "pkeypath=%_oRoot%\Office16\pkeyconfig-office.xrm-ms"
+set "_oIntegrator=%_oRoot%\integration\integrator.exe"
+
+echo:
+echo Processing Office...                    [C2R ^| %_version% %_AudienceData%^| %_oArch%]
+
+if not defined _oIds (
+call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+set error=1
+goto :ts_startmsi
+)
+
+call :oh_expiredpreview 2016 2019 2021 2024
+if "%_actprojvis%"=="0" call :oh_fixprids
+call :ts_process
+
+::========================================================================================================================================
+
+::  mass grave[.]dev/office-license-is-not-genuine
+::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
+
+set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
+if /i %tsmethod%==KMS4k (
+if %winbuild% GEQ 9200 (
+if not "%osarch%"=="x86" (
+reg delete "%kmskey%" /f /reg:32 %nul%
+reg add "%kmskey%" /f /v KeyManagementServiceName /t REG_SZ /d "10.0.0.10" /reg:32 %nul%
+)
+reg delete "%kmskey%" /f %nul%
+reg add "%kmskey%" /f /v KeyManagementServiceName /t REG_SZ /d "10.0.0.10" %nul%
+echo Adding a Registry to Prevent Banner     [Successful]
+)
+)
+
+::========================================================================================================================================
+
+:ts_startmsi
+
+if defined o15msi call :ts_processmsi 15 %o15msi_reg%
+if defined o16msi call :ts_processmsi 16 %o16msi_reg%
+
+::========================================================================================================================================
+
+echo:
+call :oh_clearblock
+if "%o16msi%%o15msi%"=="" if not "%o16uwp%%o16c2r%%o15c2r%"=="" call :oh_uninstkey
+call :oh_licrefresh
+
+goto :ts_act
+
+::========================================================================================================================================
+
+:ts_whost
+
+::  Process Windows K-M-S host
+
+echo:
+echo Processing Windows %KS% Host...
+
+if /i %tsmethod%==KMS4k (
+echo:
+call :dk_color %Red% "Skipping Windows %KS% Host               [KMS4k method is not supported with Windows %KS% Host]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+goto :ts_act
+)
+
+echo:
+if %winbuild% GEQ 10586 (
+call :dk_color %Gray% "With %KS% Host license, system may randomly change Windows Edition later. It is a Windows issue and can be safely ignored."
+)
+call :dk_color %Gray% "%KS% Host [Not to be confused with %KS% Client] license causes the %_slser% service to run continuously."
+call :dk_color %Blue% "Only use this activation when necessary, you can revert to normal activation from the previous menu."
+
+if %_unattended%==0 (
+echo:
+choice /C:0F /N /M "> [0] Go back  [F] Continue : "
+if !errorlevel!==1 exit /b
+echo:
+)
+
+set _arr=
+set tempid=
+set keytype=kmshost
+
+if defined _vis goto :ts_whost_vista
+
+::  Install current edition csvlk license so that correct edition can reflect for csvlk
+
+if %winbuild% GEQ 10586 (
+for %%# in ("%SysPath%\spp\tokens\skus\%tsedition%\*CSVLK*.xrm-ms") do (
+if defined _arr (set "_arr=!_arr!;"%SysPath%\spp\tokens\skus\%tsedition%\%%~nx#"") else (set "_arr="%SysPath%\spp\tokens\skus\%tsedition%\%%~nx#"")
+)
+if defined _arr %psc% "$sls = Get-WmiObject %sps%; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); InstallLicenseArr '!_arr!'" %nul%
+)
+
+for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wintsid\:.*';iex ($f[1])" %nul6%') do (
+echo "%%a" | findstr /r ".*-.*-.*-.*-.*" %nul1% && (set tsids=!tsids! %%a& set tempid=%%a)
+)
+
+if defined tempid (
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+) else (
+call :dk_color %Red% "Checking Activation ID                  [Not Found] [%tsedition%] [%osSKU%]"
+call :dk_color %Blue% "%KS% Host license is not found on your system. It is available for the below editions."
+call :dk_color %Blue% "Professional, Education, ProfessionalWorkstation, Enterprise, EnterpriseS, and Server editions, etc."
+goto :ts_act
+)
+
+if defined winsub (
+echo:
+call :dk_color %Blue% "Windows Subscription [SKU ID-%slcSKU%] found. Script will activate base edition [SKU ID-%regSKU%]."
+)
+
+goto :ts_act
+
+::========================================================================================================================================
+
+:ts_whost_vista
+
+::  Process Windows K-M-S host for Vista
+
+::  1st column = Activation ID
+::  2nd column = CSVLK key
+::  3rd column = Edition IDs
+::  Separator  = _
+
+set f=
+set key=
+set tempid=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+::  WindowsVista
+212a64dc-43b1-4d3d-a30c-2fc69d2095c6_TWVG3-9Q4P8-W9XJF-Y76FJ-DW%f%Q4R_-Business-BusinessN-Enterprise-EnterpriseN-
+::  WindowsServer2008
+c90d1b4e-8aa8-439e-8b9e-b6d6b6a6d975_BHC4Q-6D7B7-QMVH7-4MKQH-Y9%f%VK7_-ServerComputeCluster-ServerDatacenter-ServerDatacenterV-ServerEnterprise-ServerEnterpriseIA64-ServerEnterpriseV-ServerStandard-ServerStandardV-ServerWeb-
+56df4151-1f9f-41bf-acaa-2941c071872b_PVGKG-2R7XQ-7WTFD-FXTJR-DQ%f%BQ3_-ServerComputeCluster-ServerEnterprise-ServerEnterpriseV-ServerStandard-ServerStandardV-ServerWeb-
+c448fa06-49d1-44ec-82bb-0085545c3b51_KH4PC-KJFX6-XFVHQ-GDK2G-JC%f%JY9_-ServerComputeCluster-ServerWeb-
+) do (
+for /f "tokens=1-3 delims=_" %%A in ("%%#") do if not defined key (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+echo "%%C" | find /i "-%tsedition%-" %nul1% && (
+set key=%%B
+set tempid=%%A
+)
+)
+)
+)
+
+if defined key (
+echo Checking Activation ID                  [%tempid%] [%tsedition%]
+) else (
+call :dk_color %Red% "Checking Activation ID                  [Not Found] [%tsedition%] [%osSKU%]"
+call :dk_color %Blue% "%KS% Host license is not found on your system. It is available for the below editions."
+call :dk_color %Blue% "Business, BusinessN, Enterprise, EnterpriseN, and Server editions, etc."
+goto :ts_act
+)
+
+call :dk_inskey "[%key%]"
+set tsids=%tsids% %tempid%
+goto :ts_act
+
+::========================================================================================================================================
+
+:ts_ohost
+
+::  Process Office K-M-S host
+
+echo:
+echo Processing Office %KS% Host...
+
+if defined _vis (
+echo:
+call :dk_color %Blue% "Windows Vista and Server 2008 do not support the installation of Office KMS Host."
+goto :ts_act
+)
+
+if /i %tsmethod%==KMS4k (
+echo:
+call :dk_color %Red% "Skipping Office %KS% Host                [KMS4k method is not supported with Office %KS% Host]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+goto :ts_act
+)
+
+set ohostexist=
+call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
+set ohostids=%allapps%
+call :dk_actids 59a52881-a989-479d-af46-f275c6370663
+set ohostids=%ohostids% %allapps%
+
+for %%# in (
+bfe7a195-4f8f-4f0b-a622-cf13c7d16864_KMSHost2010-ProPlusVL
+f3d89bbf-c0ec-47ce-a8fa-e5a5f97e447f_KMSHost2024Volume
+47f3b983-7c53-4d45-abc6-bcd91e2dd90a_KMSHost2021Volume
+70512334-47b4-44db-a233-be5ea33b914c_KMSHost2019Volume
+98ebfe73-2084-4c97-932c-c0cd1643bea7_KMSHost2016Volume
+2e28138a-847f-42bc-9752-61b03fff33cd_KMSHost2013Volume
+) do (
+for /f "tokens=1-2 delims=_" %%A in ("%%#") do (
+echo "%ohostids%" | find /i "%%A" %nul1% && (
+set ohostexist=1
+set tsids=!tsids! %%A
+echo Checking Activation ID                  [%%A] [%%B]
+)
+)
+)
+
+if not defined ohostexist (
+call :dk_color %Gray% "Checking Activation ID                  [Not found for Office %KS% Host]"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%tsforge#office-kms-host"
+)
+
+echo:
+call :dk_color %Gray% "%KS% Host [Not to be confused with %KS% Client] license causes the sppsvc service to run continuously."
+call :dk_color %Gray% "Only use this activation when necessary."
+
+goto :ts_act
+
+::========================================================================================================================================
+
+:ts_appxlob
+
+::  Process Windows 8/8.1 APPX Sideloading
+
+echo:
+echo Processing Windows 8/8.1 APPX Sideloading...
+
+if %winbuild% LSS 9200 set noappx=1
+if %winbuild% GTR 9600 set noappx=1
+
+echo:
+if defined noappx (
+call :dk_color %Gray% "Checking Activation ID                  [APPX Sideloading feature is available only on Windows 8/8.1]"
+goto :dk_done
+)
+
+if /i %tsmethod%==KMS4k (
+echo:
+call :dk_color %Red% "Skipping Windows 8/8.1 APPX             [KMS4k method is not supported with Windows 8/8.1 APPX]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+goto :dk_done
+)
+
+set appxexist=
+if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
+
+for %%# in (
+ec67814b-30e6-4a50-bf7b-d55daf729d1e_APPXLOB-Client
+251ef9bf-2005-442f-94c4-86307de7bb32_APPXLOB-Embedded-Industry
+1e58c9d7-e3f1-4f69-9039-1f162463ac2c_APPXLOB-Embedded-Standard
+3502d53e-5d43-436a-84af-714e8d334f8d_APPXLOB-Server
+) do (
+for /f "tokens=1-2 delims=_" %%A in ("%%#") do (
+echo "%allapps%" | find /i "%%A" %nul1% && (
+set appxexist=1
+set tsids=!tsids! %%A
+echo Checking Activation ID                  [%%A] [%%B]
+)
+)
+)
+
+if not defined appxexist (
+call :dk_color %Red% "Checking Activation ID                  [Not found]"
+call :dk_color %Blue% "APPX Sideloading feature is available only on Pro and higher level editions."
+)
+
+goto :ts_act
+
+::========================================================================================================================================
+
+:ts_resetall
+
+echo:
+if defined _vis (
+echo Processing Reset of Rearm / Timers...
+) else (
+echo Processing Reset of Rearm / Timers / Tamper / Lock...
+)
+echo:
+
+set resetstuff=1
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':tsforge\:.*';iex ($f[1])"
+
+if %errorlevel%==3 (
+call :dk_color %Red% "Reset Failed."
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+) else (
+call :dk_color %Green% "Reset process has been successfully done."
+)
+
+goto :dk_done
+
+::========================================================================================================================================
+
+:ts_actman
+
+echo:
+echo Processing Manual Activation...
+echo:
+
+if /i %tsmethod%==KMS4k (
+echo:
+call :dk_color %Red% "Skipping Manual Activation              [KMS4k method is not supported with it]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+goto :dk_done
+)
+
+call :dk_color %Gray% "This option is for advanced users, those who already know what they are doing."
+call :dk_color %Blue% "Some activation IDs may cause system crash [MUI mismatch], or irreversible changes [CloudEdition etc]."
+
+if %_unattended%==1 (
+echo:
+for %%# in (%tsids%) do (echo Activation ID - %%#)
+goto :ts_act
+)
+
+call :dk_color %Blue% "Although the script will try to remove those IDs from the list, it is not fully guaranteed."
+echo:
+choice /C:0F /N /M "> [0] Go back  [F] Continue : "
+if %errorlevel%==1 exit /b
+
+echo:
+echo Fetching Supported Activation IDs list. Please wait...
+
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':listactids\:.*';iex ($f[1])"
+if %errorlevel%==3 (
+call :dk_color %Gray% "No supported activation ID found, aborting..."
+goto :dk_done
+)
+
+for /f "delims=" %%a in ('%psc% "$ids = Get-WmiObject -Query 'SELECT ID FROM SoftwareLicensingProduct' | Select-Object -ExpandProperty ID; $ids" %nul6%') do call set "allactids= %%a !allactids! "
+
+if defined _vis (
+echo:
+call :dk_color %Blue% "On Windows Vista and Server 2008, you must manually install the key before activating it."
+)
+echo:
+call :dk_color %Gray% "Enter / Paste the Activation ID shown in first column in the opened text file, or just press Enter to return:"
+echo Add space after each Activation ID if you are adding multiple:
+echo:
+set /p tsids=
+
+del /f /q "%SystemRoot%\Temp\actids_159_*" %nul%
+if not defined tsids goto :dk_done
+
+for %%# in (%tsids%) do (
+echo "%allactids%" | find /i " %%# " %nul1% || (
+call :dk_color %Red% "[%%#] Incorrect Activation ID entered, aborting..."
+goto :dk_done
+)
+)
+
+goto :ts_act
+
+:listactids:
+$t = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0)
+$t.DefinePInvokeMethod('SLOpen', 'slc.dll', 22, 1, [Int32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+$t.DefinePInvokeMethod('SLClose', 'slc.dll', 22, 1, [IntPtr], @([IntPtr]), 1, 3).SetImplementationFlags(128)
+$t.DefinePInvokeMethod('SLGetProductSkuInformation', 'slc.dll', 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+$t.DefinePInvokeMethod('SLGetLicense', 'slc.dll', 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+$w = $t.CreateType()
+$m = [Runtime.InteropServices.Marshal]
+
+function slGetSkuInfo($SkuId) {
+    $c = 0; $b = 0
+    $r = $w::SLGetProductSkuInformation($hSLC, [ref][Guid]$SkuId, "msft:sl/EUL/PHONE/PUBLIC", [ref]$null, [ref]$c, [ref]$b)
+    return ($r -eq 0)
+}
+
+function IsMuiNotLocked($SkuId) {
+    $r = $true; $c = 0; $b = 0
+
+    $LicId = [Guid]::Empty
+    [void]$w::SLGetProductSkuInformation($hSLC, [ref][Guid]$SkuId, "fileId", [ref]$null, [ref]$c, [ref]$b)
+    $FileId = $m::PtrToStringUni($b)
+
+    $c = 0; $b = 0
+    [void]$w::SLGetLicense($hSLC, [ref][Guid]$FileId, [ref]$c, [ref]$b)
+    $blob = New-Object byte[] $c; $m::Copy($b, $blob, 0, $c)
+    $cont = [Text.Encoding]::UTF8.GetString($blob)
+    $xml = [xml]$cont.SubString($cont.IndexOf('<r'))
+
+    $xml.licenseGroup.license[0].grant | foreach {
+        $_.allConditions.allConditions.productPolicies.policyStr | where { $_.name -eq 'Kernel-MUI-Language-Allowed' } | foreach {
+            if ($_.InnerText -ne 'EMPTY') { $r = $false }
+        }
+    }
+    return $r
+}
+
+$hSLC = 0; [void]$w::SLOpen([ref]$hSLC)
+$results = Get-WmiObject -Query "SELECT ID, Name, Description FROM SoftwareLicensingProduct"
+$maxNameWidth = 60
+
+$filteredResults = $results | Where-Object {
+    if ($env:tsedition -like "*CountrySpecific*") {
+        $true
+    }
+    else {
+        $_.Name -notlike "*CountrySpecific*"
+    }
+} | Where-Object {
+    if ($env:tsedition -like "*CloudEdition*") {
+        $true
+    }
+    else {
+        $_.Name -notlike "*CloudEdition*"
+    }
+} | Where-Object {
+    $_.Name -like "*CountrySpecific*" -or (IsMuiNotLocked $_.ID)
+} | Where-Object {
+    slGetSkuInfo $_.ID
+} | ForEach-Object {
+    "$($_.ID)`t$($_.Name.PadRight($maxNameWidth))`t$($_.Description)"
+}
+
+[void]$w::SLClose($hSLC)
+if (-not $filteredResults) {
+    Exit 3
+}
+
+$sortedResults = $filteredResults | Sort-Object { $_.Split("`t")[1].Trim() }
+$output = $sortedResults -join "`r`n"
+$newGuid = [Guid]::NewGuid().Guid
+$filename = "$env:SystemRoot\Temp\actids_159_$newGuid.txt"
+$output | Set-Content -Path $filename -Encoding ASCII
+Start-Process notepad.exe $filename
+:listactids:
+
+::========================================================================================================================================
+
+:ts_act
+
+if defined eval (
+echo:
+echo Activating...
+echo:
+call :dk_act
+
+set gpr=0
+set gprdays=0
+set actdone=
+for /f "delims=" %%a in ('%psc% "(Get-WmiObject -Query 'SELECT GracePeriodRemaining FROM %spp% WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn is NULL').GracePeriodRemaining" %nul6%') do set "gpr=%%a"
+set /a "gprdays=(!gpr!+1440-1)/1440"
+
+if !gprdays! EQU 90 set actdone=1
+if !gprdays! EQU 180 set actdone=1
+
+if defined actdone (
+call :dk_color %Green% "[%winos%] has been reset and activated successfully for !gprdays! days."
+) else (
+set error=1
+set showfix=1
+call :dk_color %Red% "[%winos%] Activation Failed %error_code%. Remaining Period: !gprdays! days [!gpr! minutes]."
+if not defined noact (
+call :dk_color %Gray% "To activate, check your internet connection and ensure the date and time are correct."
+) else (
+call :dk_color %Blue% "This Windows version is known to not activate due to MS Windows/Server issues."
+)
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
+)
+
+if defined tsids (
+echo:
+if not defined _vis if not defined oldks echo Installing Forged Product Key Data...
+if /i %tsmethod%==KMS4k (
+echo Writing TrustedStore data...
+) else (
+if /i %tsmethod%==StaticCID (echo Depositing Static Confirmation ID...) else (echo Depositing Zero Confirmation ID...)
+)
+echo:
+%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':tsforge\:.*';& ([ScriptBlock]::Create($f[1])) %tsids%"
+if !errorlevel!==3 (
+if %_actman%==0 (if not defined error call :dk_color %Blue% "%_fixmsg%")
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+) else (
+echo "%tsids%" | find /i "7e94be23-b161-4956-a682-146ab291774c" %nul1% && (
+call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 years ESU is not officially supported, but you can manually install updates."
+)
+echo "%tsids%" | findstr /i "4afc620f-12a4-48ad-8015-2aebfbd6e47c 11be7019-a309-4763-9a09-091d1722ffe3" %nul1% && (
+call :dk_color %Gray% "ESU is not officially supported on Windows 8.1, but you can manually install updates until Jan-2024."
+)
+echo "%tsids%" | findstr /i "0b533b5e-08b6-44f9-b885-c2de291ba456 f69e2d51-3bbd-4ddf-8da7-a145e9dca597" %nul1% && (
+call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 years ESU is not officially supported, but it might be useful."
+)
+)
+
+if %_actwin%==1 for %%# in (407) do if %osSKU%==%%# (
+call :dk_color %Red% "%winos% does not support activation on non-azure platforms."
+)
+
+if %_actoff%==1 if not defined error if defined ohub (
+echo:
+call :dk_color %Gray% "Office apps such as Word, Excel are activated, use them directly. Ignore 'Buy' button in Office dashboard app."
+)
+
+REM Trigger reevaluation of SPP's Scheduled Tasks
+call :dk_reeval %nul%
+)
+
+if not defined tsids if defined error if not defined showfix (
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
+
+goto :dk_done
+
+::========================================================================================================================================
+
+:ts_remove
+
+cls
+if not defined terminal (
+mode 100, 30
+)
+title  Remove TSforge Activation %masver%
+
+echo:
+echo TSforge activation doesn't modify any Windows components and doesn't install any new files.
+echo:
+echo Instead, it appends data to one of data files used by Software Protection Platform.
+echo:
+call :dk_color %Gray% "If you want to reset the activation status,"
+call :dk_color %Blue% "%_fixmsg%"
+echo:
+
+goto :dk_done
+
+::========================================================================================================================================
+
+:ts_reset
+
+set key=
+set _oRoot=
+set _oArch=
+set _oIds=
+set _oLPath=
+set _actid=
+set _prod=
+set _lic=
+set _arr=
+set _prids=
+set _config=
+set _version=
+set _License=
+set _oMSI=
+exit /b
+
+::========================================================================================================================================
+
+:ts_getpath
+
+set o16c2r=
+set o15c2r=
+set o16msi=
+set o15msi=
+
+set _68=HKLM\SOFTWARE\Microsoft\Office
+set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
+
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set o16c2r=1&set o16c2r_reg=%_86%\ClickToRun)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set o16c2r=1&set o16c2r_reg=%_68%\ClickToRun)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_86%\15.0\ClickToRun)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_68%\15.0\ClickToRun)
+
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o16msi=1&set o16msi_reg=%_86%\16.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o16msi=1&set o16msi_reg=%_68%\16.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o15msi=1&set o15msi_reg=%_86%\15.0)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o15msi=1&set o15msi_reg=%_68%\15.0)
+
+exit /b
+
+::========================================================================================================================================
+
+:ts_process
+
+if not exist "%pkeypath%" (
+call :dk_color %Red% "Checking pkeyconfig-office.xrm-ms       [Not found. Aborting activation...]"
+set error=1
+exit /b
+)
+
+for %%# in (%_oIds%) do (
+set _actid=
+set _preview=
+set _License=%%#
+
+set skipprocess=
+
+set foundprod=
+call :tsksdata chkprod %%#
+if defined _oMSI if not defined foundprod if /i %tsmethod%==KMS4k (
+set skipprocess=1
+call :dk_color %Red% "Checking Product In Script              [%%# MSI Retail is not supported with KMS4k]"
+if /i %_actmethod%==Auto (
+call :dk_color %Blue% "Connect to the Internet and try again. Script will use the StaticCID activation method."
+) else (
+call :dk_color %Blue% "Use non-KMS4K activation options from the previous menu."
+)
+)
+
+if "%_actprojvis%"=="1" (
+echo %%# | findstr /i "Project Visio" %nul% || (
+set skipprocess=1
+call :dk_color %Gray% "Skipping Because Project/Visio Mode     [%%#]"
+)
+)
+
+if "%_actprojvis%"=="0" if /i %tsmethod%==KMS4k echo %_oIds% | findstr /i "O365" %nul% && (
+echo %%# | findstr /i "Project Visio" %nul% && (
+set skipprocess=1
+echo Skipping Because Mondo Is Available     [%%#]
+)
+)
+
+
+if not defined skipprocess (
+
+if /i not %tsmethod%==KMS4k (
+set no365=
+if "%oVer%"=="15" (echo %%# | findstr /i "O365HomePremRetail" %nul% && set no365=1)
+if "%oVer%"=="16" (echo %%# | findstr /i "O365" %nul% && set no365=1)
+
+if defined no365 (
+set _License=MondoRetail
+set _altoffid=MondoRetail
+call :ks_osppready
+echo Converting Unsupported O365 Office      [%%# To MondoRetail]
+if "%oVer%"=="15" (call :dk_color %Gray% "Mondo 2013 is equivalent to O365 [15.0 version] in terms of the latest features.")
+if "%oVer%"=="16" (call :dk_color %Gray% "Mondo 2016 is equivalent to O365 in terms of the latest features.")
+)
+
+if not defined _oMSI (
+echo %%# | findstr /i "ARM" %nul% && (
+set _License=MondoRetail
+set _altoffid=MondoRetail
+call :ks_osppready
+echo Converting Unsupported OEM-ARM Office   [%%# To MondoRetail]
+)
+)
+)
+
+if not defined _oMSI if /i %tsmethod%==KMS4k if not defined foundprod (
+call :tsksdata getinfo %%#
+if defined _altoffid (
+echo Converting Retail To Volume             [%%# To !_altoffid!]
+) else (
+set _License=MondoVolume
+set _altoffid=MondoVolume
+echo Converting Retail To Volume             [%%# To !_altoffid!] [Using Mondo because %%# is not found in the script]
+)
+echo %%# | find /i "O365" %nul% && (
+if "%oVer%"=="15" (call :dk_color %Gray% "Mondo 2013 is equivalent to O365 [15.0 version] in terms of the latest features.")
+if "%oVer%"=="16" (call :dk_color %Gray% "Mondo 2016 is equivalent to O365 in terms of the latest features.")
+)
+call :ks_osppready
+)
+
+if /i %tsmethod%==KMS4k (
+echo !_License! | find /i "Retail" %nul% && (set keytype=zero) || (set keytype=ks)
+) else (
+set keytype=zero
+)
+
+for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':offtsid\:.*';iex ($f[1])" %nul6%') do (
+echo "%%a" | findstr /r ".*-.*-.*-.*-.*" %nul1% && (set tsids=!tsids! %%a& set _actid=%%a)
+)
+set "_allactid=!tsids!"
+
+if defined _actid (
+echo Checking Activation ID                  [!_actid!] [!_License!]
+) else (
+call :dk_color %Red% "Checking Activation ID                  [Office %oVer%.0 !_License! not found]"
+set error=1
+set showfix=1
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
+
+echo %%# | find /i "2024" %nul% && (
+if exist "!_oLPath!\ProPlus2024PreviewVL_*.xrm-ms" if not exist "!_oLPath!\ProPlus2024VL_*.xrm-ms" set _preview=1
+)
+
+if defined _actid (
+echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
+)
+)
+)
+
+::  Add SharedComputerLicensing registry key if Retail Office C2R is installed on Windows Server
+::  https://learn.microsoft.com/en-us/office/troubleshoot/office-suite-issues/click-to-run-office-on-terminal-server
+
+if /i not %tsmethod%==KMS4k if defined winserver if defined _config if exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" (
+echo %_oIds% | find /i "Retail" %nul1% && (
+set scaIsNeeded=1
+reg add %_config% /v SharedComputerLicensing /t REG_SZ /d "1" /f %nul1%
+echo Adding SharedComputerLicensing Reg      [Successful] [Needed on Server With Retail Office]"
+)
+)
+
+exit /b
+
+::========================================================================================================================================
+
+:ts_processmsi
+
+::  Process Office MSI Version
+
+call :ts_reset
+call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
+
+set _oMSI=1
+set oVer=%1
+for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\InstallRoot /v Path" %nul6%') do (set "_oRoot=%%b")
+for /f "skip=2 tokens=2*" %%a in ('"reg query %2\Common\ProductVersion /v LastProduct" %nul6%') do (set "_version=%%b")
+if "%_oRoot:~-1%"=="\" set "_oRoot=%_oRoot:~0,-1%"
+
+echo "%2" | find /i "Wow6432Node" %nul1% && set _oArch=x86
+if not "%osarch%"=="x86" if not defined _oArch set _oArch=x64
+if "%osarch%"=="x86" set _oArch=x86
+
+set "_common=%CommonProgramFiles%"
+if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
+set "_common2=%CommonProgramFiles(x86)%"
+
+if exist "%_common%\Microsoft Shared\OFFICE%oVer%\Office Setup Controller\pkeyconfig-office.xrm-ms" (
+set "pkeypath=%_common%\Microsoft Shared\OFFICE%oVer%\Office Setup Controller\pkeyconfig-office.xrm-ms"
+) else if exist "%_common2%\Microsoft Shared\OFFICE%oVer%\Office Setup Controller\pkeyconfig-office.xrm-ms" (
+set "pkeypath=%_common2%\Microsoft Shared\OFFICE%oVer%\Office Setup Controller\pkeyconfig-office.xrm-ms"
+)
+
+call :msiofficedata %2
+
+echo:
+echo Processing Office...                    [MSI ^| %_version% ^| %_oArch%]
+
+if not defined _oIds (
+set error=1
+call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+exit /b
+)
+
+call :ts_process
+exit /b
+
+::========================================================================================================================================
+
+::  Get Windows permanent activation status (not counting csvlk)
+
+:ts_checkwinperm
+
+%psc% "Get-WmiObject -Query 'SELECT Name, Description FROM SoftwareLicensingProduct WHERE LicenseStatus=''1'' AND GracePeriodRemaining=''0'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn IS NULL' | Where-Object { $_.Description -notmatch 'KMS' } | Select-Object -Property Name" %nul2% | findstr /i "Windows" %nul1% && set _perm=1||set _perm=
+exit /b
+
+::========================================================================================================================================
+
+:tsforge:
+$src = @'
+#if !POWERSHELL2
+namespace ActivationWs
+{
+
+/*
+
+This code is adapted from ActivationWs.
+Original Repository: https://github.com/dadorner-msft/activationws
+
+MIT License
+
+Copyright (c) Daniel Dorner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+using System;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Linq;
+
+    public static class ActivationHelper {
+        // Key for HMAC/SHA256 signature.
+        private static readonly byte[] MacKey = new byte[64] {
+            254,  49, 152, 117, 251,  72, 132, 134,
+            156, 243, 241, 206, 153, 168, 144, 100,
+            171,  87,  31, 202,  71,   4,  80,  88,
+            48,   36, 226,  20,  98, 135, 121, 160,
+            0,     0,   0,   0,   0,   0,   0,   0,
+            0,     0,   0,   0,   0,   0,   0,   0,
+            0,     0,   0,   0,   0,   0,   0,   0,
+            0,     0,   0,   0,   0,   0,   0,   0
+        };
+
+        private const string Action = "http://www.microsoft.com/BatchActivationService/BatchActivate";
+
+        private static readonly Uri Uri = new Uri("https://activation.sls.microsoft.com/BatchActivation/BatchActivation.asmx");
+
+        private static readonly XNamespace SoapSchemaNs = "http://schemas.xmlsoap.org/soap/envelope/";
+        private static readonly XNamespace XmlSchemaInstanceNs = "http://www.w3.org/2001/XMLSchema-instance";
+        private static readonly XNamespace XmlSchemaNs = "http://www.w3.org/2001/XMLSchema";
+        private static readonly XNamespace BatchActivationServiceNs = "http://www.microsoft.com/BatchActivationService";
+        private static readonly XNamespace BatchActivationRequestNs = "http://www.microsoft.com/DRM/SL/BatchActivationRequest/1.0";
+        private static readonly XNamespace BatchActivationResponseNs = "http://www.microsoft.com/DRM/SL/BatchActivationResponse/1.0";
+
+        public static string CallWebService(int requestType, string installationId, string extendedProductId) {
+            XDocument soapRequest = CreateSoapRequest(requestType, installationId, extendedProductId);
+            HttpWebRequest webRequest = CreateWebRequest(soapRequest);
+            XDocument soapResponse = new XDocument();
+
+            try {
+                IAsyncResult asyncResult = webRequest.BeginGetResponse(null, null);
+                asyncResult.AsyncWaitHandle.WaitOne();
+
+                // Read data from the response stream.
+                using (WebResponse webResponse = webRequest.EndGetResponse(asyncResult))
+                using (StreamReader streamReader = new StreamReader(webResponse.GetResponseStream())) {
+                    soapResponse = XDocument.Parse(streamReader.ReadToEnd());
+                }
+
+                return ParseSoapResponse(soapResponse);
+
+            } catch {
+                throw;
+            }
+        }
+
+        private static XDocument CreateSoapRequest(int requestType, string installationId, string extendedProductId) {
+            // Create an activation request.           
+            XElement activationRequest = new XElement(BatchActivationRequestNs + "ActivationRequest",
+                new XElement(BatchActivationRequestNs + "VersionNumber", "2.0"),
+                new XElement(BatchActivationRequestNs + "RequestType", requestType),
+                new XElement(BatchActivationRequestNs + "Requests",
+                    new XElement(BatchActivationRequestNs + "Request",
+                        new XElement(BatchActivationRequestNs + "PID", extendedProductId),
+                        requestType == 1 ? new XElement(BatchActivationRequestNs + "IID", installationId) : null)
+                )
+            );
+
+            // Get the unicode byte array of activationRequest and convert it to Base64.
+            byte[] bytes = Encoding.Unicode.GetBytes(activationRequest.ToString());
+            string requestXml = Convert.ToBase64String(bytes);
+
+            XDocument soapRequest = new XDocument();
+
+            using (HMACSHA256 hMACSHA = new HMACSHA256(MacKey)) {
+                // Convert the HMAC hashed data to Base64.
+                string digest = Convert.ToBase64String(hMACSHA.ComputeHash(bytes));
+
+                soapRequest = new XDocument(
+                new XDeclaration("1.0", "UTF-8", "no"),
+                new XElement(SoapSchemaNs + "Envelope",
+                    new XAttribute(XNamespace.Xmlns + "soap", SoapSchemaNs),
+                    new XAttribute(XNamespace.Xmlns + "xsi", XmlSchemaInstanceNs),
+                    new XAttribute(XNamespace.Xmlns + "xsd", XmlSchemaNs),
+                    new XElement(SoapSchemaNs + "Body",
+                        new XElement(BatchActivationServiceNs + "BatchActivate",
+                            new XElement(BatchActivationServiceNs + "request",
+                                new XElement(BatchActivationServiceNs + "Digest", digest),
+                                new XElement(BatchActivationServiceNs + "RequestXml", requestXml)
+                            )
+                        )
+                    )
+                ));
+
+            }
+
+            return soapRequest;
+        }
+
+        private static HttpWebRequest CreateWebRequest(XDocument soapRequest) {
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(Uri);
+            webRequest.Accept = "text/xml";
+            webRequest.ContentType = "text/xml; charset=\"utf-8\"";
+            webRequest.Headers.Add("SOAPAction", Action);
+            webRequest.Host = "activation.sls.microsoft.com";
+            webRequest.Method = "POST";
+
+            try {
+                // Insert SOAP envelope
+                using (Stream stream = webRequest.GetRequestStream()) {
+                    soapRequest.Save(stream);
+                }
+
+                return webRequest;
+
+            } catch {
+                throw;
+            }
+        }
+
+        private static string ParseSoapResponse(XDocument soapResponse) {
+            if (soapResponse == null) {
+                throw new ArgumentNullException("soapResponse", "The remote server returned an unexpected response.");
+            }
+
+            if (!soapResponse.Descendants(BatchActivationServiceNs + "ResponseXml").Any()) {
+                throw new Exception("The remote server returned an unexpected response");
+            }
+
+            try {
+                XDocument responseXml = XDocument.Parse(soapResponse.Descendants(BatchActivationServiceNs + "ResponseXml").First().Value);
+
+                if (responseXml.Descendants(BatchActivationResponseNs + "ErrorCode").Any()) {
+                    string errorCode = responseXml.Descendants(BatchActivationResponseNs + "ErrorCode").First().Value;
+
+                    switch (errorCode) {
+                        case "0x7F":
+                            throw new Exception("The Multiple Activation Key has exceeded its limit");
+
+                        case "0x67":
+                            throw new Exception("The product key has been blocked");
+
+                        case "0x68":
+                            throw new Exception("Invalid product key");
+
+                        case "0x86":
+                            throw new Exception("Invalid key type");
+
+                        case "0x90":
+                            throw new Exception("Please check the Installation ID and try again");
+
+                        default:
+                            throw new Exception(string.Format("The remote server reported an error ({0})", errorCode));
+                    }
+
+                } else if (responseXml.Descendants(BatchActivationResponseNs + "ResponseType").Any()) {
+                    string responseType = responseXml.Descendants(BatchActivationResponseNs + "ResponseType").First().Value;
+
+                    switch (responseType) {
+                        case "1":
+                            string confirmationId = responseXml.Descendants(BatchActivationResponseNs + "CID").First().Value;
+                            return confirmationId;
+
+                        case "2":
+                            string activationsRemaining = responseXml.Descendants(BatchActivationResponseNs + "ActivationRemaining").First().Value;
+                            return activationsRemaining;
+
+                        default:
+                            throw new Exception("The remote server returned an unrecognized response");
+                    }
+
+                } else {
+                    throw new Exception("The remote server returned an unrecognized response");
+                }
+
+            } catch {
+                throw;
+            }
+        }
+    }
+}
+#endif
+
+// Common.cs
+namespace LibTSforge
+{
+    using System;
+    using System.IO;
+    using System.Linq;
+    using System.Runtime.InteropServices;
+    using System.Text;
+
+    public enum PSVersion
+    {
+        Vista,
+        Win7,
+        Win8,
+        WinBlue,
+        WinModern
+    }
+
+    public static class Constants
+    {
+        public static readonly byte[] UniversalHWIDBlock =
+        {
+            0x26, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1c, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x01, 0x0c, 0x01, 0x00
+        };
+
+        public static readonly byte[] KMSv4Response =
+        {
+            0x00, 0x00, 0x04, 0x00, 0x62, 0x00, 0x00, 0x00, 0x30, 0x00, 0x35, 0x00, 0x34, 0x00, 0x32, 0x00,
+            0x36, 0x00, 0x2D, 0x00, 0x30, 0x00, 0x30, 0x00, 0x32, 0x00, 0x30, 0x00, 0x36, 0x00, 0x2D, 0x00,
+            0x31, 0x00, 0x36, 0x00, 0x31, 0x00, 0x2D, 0x00, 0x36, 0x00, 0x35, 0x00, 0x35, 0x00, 0x35, 0x00,
+            0x30, 0x00, 0x36, 0x00, 0x2D, 0x00, 0x30, 0x00, 0x33, 0x00, 0x2D, 0x00, 0x31, 0x00, 0x30, 0x00,
+            0x33, 0x00, 0x33, 0x00, 0x2D, 0x00, 0x39, 0x00, 0x32, 0x00, 0x30, 0x00, 0x30, 0x00, 0x2E, 0x00,
+            0x30, 0x00, 0x30, 0x00, 0x30, 0x00, 0x30, 0x00, 0x2D, 0x00, 0x30, 0x00, 0x36, 0x00, 0x35, 0x00,
+            0x32, 0x00, 0x30, 0x00, 0x31, 0x00, 0x33, 0x00, 0x00, 0x00, 0xDE, 0x19, 0x02, 0xCF, 0x1F, 0x35,
+            0x97, 0x4E, 0x8A, 0x8F, 0xB8, 0x07, 0xB1, 0x92, 0xB5, 0xB5, 0x97, 0x42, 0xEC, 0x3A, 0x76, 0x84,
+            0xD5, 0x01, 0x32, 0x00, 0x00, 0x00, 0x78, 0x00, 0x00, 0x00, 0x60, 0x27, 0x00, 0x00, 0xC4, 0x1E,
+            0xAA, 0x8B, 0xDD, 0x0C, 0xAB, 0x55, 0x6A, 0xCE, 0xAF, 0xAC, 0x7F, 0x5F, 0xBD, 0xE9
+        };
+
+        public static readonly byte[] KMSv5Response =
+        {
+            0x00, 0x00, 0x05, 0x00, 0xBE, 0x96, 0xF9, 0x04, 0x54, 0x17, 0x3F, 0xAF, 0xE3, 0x08, 0x50, 0xEB,
+            0x22, 0xBA, 0x53, 0xBF, 0xF2, 0x6A, 0x7B, 0xC9, 0x05, 0x1D, 0xB5, 0x19, 0xDF, 0x98, 0xE2, 0x71,
+            0x4D, 0x00, 0x61, 0xE9, 0x9D, 0x03, 0xFB, 0x31, 0xF9, 0x1F, 0x2E, 0x60, 0x59, 0xC7, 0x73, 0xC8,
+            0xE8, 0xB6, 0xE1, 0x2B, 0x39, 0xC6, 0x35, 0x0E, 0x68, 0x7A, 0xAA, 0x4F, 0x28, 0x23, 0x12, 0x18,
+            0xE3, 0xAA, 0x84, 0x81, 0x6E, 0x82, 0xF0, 0x3F, 0xD9, 0x69, 0xA9, 0xDF, 0xBA, 0x5F, 0xCA, 0x32,
+            0x54, 0xB2, 0x52, 0x3B, 0x3E, 0xD1, 0x5C, 0x65, 0xBC, 0x3E, 0x59, 0x0D, 0x15, 0x9F, 0x37, 0xEC,
+            0x30, 0x9C, 0xCC, 0x1B, 0x39, 0x0D, 0x21, 0x32, 0x29, 0xA2, 0xDD, 0xC7, 0xC1, 0x69, 0xF2, 0x72,
+            0x3F, 0x00, 0x98, 0x1E, 0xF8, 0x9A, 0x79, 0x44, 0x5D, 0x25, 0x80, 0x7B, 0xF5, 0xE1, 0x7C, 0x68,
+            0x25, 0xAA, 0x0D, 0x67, 0x98, 0xE5, 0x59, 0x9B, 0x04, 0xC1, 0x23, 0x33, 0x48, 0xFB, 0x28, 0xD0,
+            0x76, 0xDF, 0x01, 0x56, 0xE7, 0xEC, 0xBF, 0x1A, 0xA2, 0x22, 0x28, 0xCA, 0xB1, 0xB4, 0x4C, 0x30,
+            0x14, 0x6F, 0xD2, 0x2E, 0x01, 0x2A, 0x04, 0xE3, 0xBD, 0xA7, 0x41, 0x2F, 0xC9, 0xEF, 0x53, 0xC0,
+            0x70, 0x48, 0xF1, 0xB2, 0xB6, 0xEA, 0xE7, 0x0F, 0x7A, 0x15, 0xD1, 0xA6, 0xFE, 0x23, 0xC8, 0xF3,
+            0xE1, 0x02, 0x9E, 0xA0, 0x4E, 0xBD, 0xF5, 0xEA, 0x53, 0x74, 0x8E, 0x74, 0xA1, 0xA1, 0xBD, 0xBE,
+            0x66, 0xC4, 0x73, 0x8F, 0x24, 0xA7, 0x2A, 0x2F, 0xE3, 0xD9, 0xF4, 0x28, 0xD9, 0xF8, 0xA3, 0x93,
+            0x03, 0x9E, 0x29, 0xAB
+        };
+
+        public static readonly byte[] KMSv6Response =
+        {
+            0x00, 0x00, 0x06, 0x00, 0x54, 0xD3, 0x40, 0x08, 0xF3, 0xCD, 0x03, 0xEF, 0xC8, 0x15, 0x87, 0x9E,
+            0xCA, 0x2E, 0x85, 0xFB, 0xE6, 0xF6, 0x73, 0x66, 0xFB, 0xDA, 0xBB, 0x7B, 0xB1, 0xBC, 0xD6, 0xF9,
+            0x5C, 0x41, 0xA0, 0xFE, 0xE1, 0x74, 0xC4, 0xBB, 0x91, 0xE5, 0xDE, 0x6D, 0x3A, 0x11, 0xD5, 0xFC,
+            0x68, 0xC0, 0x7B, 0x82, 0xB2, 0x24, 0xD1, 0x85, 0xBA, 0x45, 0xBF, 0xF1, 0x26, 0xFA, 0xA5, 0xC6,
+            0x61, 0x70, 0x69, 0x69, 0x6E, 0x0F, 0x0B, 0x60, 0xB7, 0x3D, 0xE8, 0xF1, 0x47, 0x0B, 0x65, 0xFD,
+            0xA7, 0x30, 0x1E, 0xF6, 0xA4, 0xD0, 0x79, 0xC4, 0x58, 0x8D, 0x81, 0xFD, 0xA7, 0xE7, 0x53, 0xF1,
+            0x67, 0x78, 0xF0, 0x0F, 0x60, 0x8F, 0xC8, 0x16, 0x35, 0x22, 0x94, 0x48, 0xCB, 0x0F, 0x8E, 0xB2,
+            0x1D, 0xF7, 0x3E, 0x28, 0x42, 0x55, 0x6B, 0x07, 0xE3, 0xE8, 0x51, 0xD5, 0xFA, 0x22, 0x0C, 0x86,
+            0x65, 0x0D, 0x3F, 0xDD, 0x8D, 0x9B, 0x1B, 0xC9, 0xD3, 0xB8, 0x3A, 0xEC, 0xF1, 0x11, 0x19, 0x25,
+            0xF7, 0x84, 0x4A, 0x4C, 0x0A, 0xB5, 0x31, 0x94, 0x37, 0x76, 0xCE, 0xE7, 0xAB, 0xA9, 0x69, 0xDF,
+            0xA4, 0xC9, 0x22, 0x6C, 0x23, 0xFF, 0x6B, 0xFC, 0xDA, 0x78, 0xD8, 0xC4, 0x8F, 0x74, 0xBB, 0x26,
+            0x05, 0x00, 0x98, 0x9B, 0xE5, 0xE2, 0xAD, 0x0D, 0x57, 0x95, 0x80, 0x66, 0x8E, 0x43, 0x74, 0x87,
+            0x93, 0x1F, 0xF4, 0xB2, 0x2C, 0x20, 0x5F, 0xD8, 0x9C, 0x4C, 0x56, 0xB3, 0x57, 0x44, 0x62, 0x68,
+            0x8D, 0xAA, 0x40, 0x11, 0x9D, 0x84, 0x62, 0x0E, 0x43, 0x8A, 0x1D, 0xF0, 0x1C, 0x49, 0xD8, 0x56,
+            0xEF, 0x4C, 0xD3, 0x64, 0xBA, 0x0D, 0xEF, 0x87, 0xB5, 0x2C, 0x88, 0xF3, 0x18, 0xFF, 0x3A, 0x8C,
+            0xF5, 0xA6, 0x78, 0x5C, 0x62, 0xE3, 0x9E, 0x4C, 0xB6, 0x31, 0x2D, 0x06, 0x80, 0x92, 0xBC, 0x2E,
+            0x92, 0xA6, 0x56, 0x96
+        };
+
+        // 2^31 - 8 minutes
+        public static readonly ulong TimerMax = (ulong)TimeSpan.FromMinutes(2147483640).Ticks;
+
+        public static readonly string ZeroCID = new string('0', 48);
+    }
+
+    public static class BinaryReaderExt
+    {
+        public static void Align(this BinaryReader reader, int to)
+        {
+            int pos = (int)reader.BaseStream.Position;
+            reader.BaseStream.Seek(-pos & (to - 1), SeekOrigin.Current);
+        }
+
+        public static string ReadNullTerminatedString(this BinaryReader reader, int maxLen)
+        {
+            return Encoding.Unicode.GetString(reader.ReadBytes(maxLen)).Split(new char[] { '\0' }, 2)[0];
+        }
+    }
+
+    public static class BinaryWriterExt
+    {
+        public static void Align(this BinaryWriter writer, int to)
+        {
+            int pos = (int)writer.BaseStream.Position;
+            writer.WritePadding(-pos & (to - 1));
+        }
+
+        public static void WritePadding(this BinaryWriter writer, int len)
+        {
+            writer.Write(Enumerable.Repeat((byte)0, len).ToArray());
+        }
+
+        public static void WriteFixedString(this BinaryWriter writer, string str, int bLen)
+        {
+            writer.Write(Encoding.ASCII.GetBytes(str));
+            writer.WritePadding(bLen - str.Length);
+        }
+
+        public static void WriteFixedString16(this BinaryWriter writer, string str, int bLen)
+        {
+            byte[] bstr = Utils.EncodeString(str);
+            writer.Write(bstr);
+            writer.WritePadding(bLen - bstr.Length);
+        }
+
+        public static byte[] GetBytes(this BinaryWriter writer)
+        {
+            return ((MemoryStream)writer.BaseStream).ToArray();
+        }
+    }
+
+    public static class ByteArrayExt
+    {
+        public static byte[] CastToArray<T>(this T data) where T : struct
+        {
+            int size = Marshal.SizeOf(typeof(T));
+            byte[] result = new byte[size];
+            GCHandle handle = GCHandle.Alloc(result, GCHandleType.Pinned);
+            try
+            {
+                Marshal.StructureToPtr(data, handle.AddrOfPinnedObject(), false);
+            }
+            finally
+            {
+                handle.Free();
+            }
+            return result;
+        }
+    }
+
+    public static class FileStreamExt
+    {
+        public static byte[] ReadAllBytes(this FileStream fs)
+        {
+            BinaryReader br = new BinaryReader(fs);
+            return br.ReadBytes((int)fs.Length);
+        }
+
+        public static void WriteAllBytes(this FileStream fs, byte[] data)
+        {
+            fs.Seek(0, SeekOrigin.Begin);
+            fs.SetLength(data.Length);
+            fs.Write(data, 0, data.Length);
+        }
+    }
+
+    public static class Utils
+    {
+        [DllImport("kernel32.dll")]
+        public static extern uint GetSystemDefaultLCID();
+
+        [DllImport("kernel32.dll")]
+        public static extern bool Wow64EnableWow64FsRedirection(bool Wow64FsEnableRedirection);
+
+        public static string DecodeString(byte[] data)
+        {
+            return Encoding.Unicode.GetString(data).Trim('\0');
+        }
+
+        public static byte[] EncodeString(string str)
+        {
+            return Encoding.Unicode.GetBytes(str + '\0');
+        }
+
+        public static uint CRC32(byte[] data)
+        {
+            const uint polynomial = 0x04C11DB7;
+            uint crc = 0xffffffff;
+
+            foreach (byte b in data)
+            {
+                crc ^= (uint)b << 24;
+                for (int bit = 0; bit < 8; bit++)
+                {
+                    if ((crc & 0x80000000) != 0)
+                    {
+                        crc = (crc << 1) ^ polynomial;
+                    }
+                    else
+                    {
+                        crc <<= 1;
+                    }
+                }
+            }
+            return ~crc;
+        }
+
+        public static string GetArchitecture()
+        {
+            string arch = Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE", EnvironmentVariableTarget.Machine).ToUpperInvariant();
+            return arch == "AMD64" ? "X64" : arch;
+        }
+
+        public static PSVersion DetectVersion()
+        {
+            int build = Environment.OSVersion.Version.Build;
+
+            if (build >= 9600) return PSVersion.WinModern;
+            if (build >= 6000 && build <= 6003) return PSVersion.Vista;
+            if (build >= 7600 && build <= 7602) return PSVersion.Win7;
+            if (build == 9200) return PSVersion.Win8;
+
+            throw new NotSupportedException("Unable to auto-detect version info");
+        }
+    }
+
+    public static class Logger
+    {
+        public static bool HideOutput = false;
+
+        public static void WriteLine(string line)
+        {
+            if (!HideOutput) Console.WriteLine(line);
+        }
+    }
+}
+
+
+// SPP/PKeyConfig.cs
+namespace LibTSforge.SPP
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Xml;
+
+    public enum PKeyAlgorithm
+    {
+        PKEY2005,
+        PKEY2009
+    }
+
+    public class KeyRange
+    {
+        public int Start;
+        public int End;
+        public string EulaType;
+        public string PartNumber;
+        public bool Valid;
+
+        public bool Contains(int n)
+        {
+            return Start <= n && End <= n;
+        }
+    }
+
+    public class ProductConfig
+    {
+        public int GroupId;
+        public string Edition;
+        public string Description;
+        public string Channel;
+        public bool Randomized;
+        public PKeyAlgorithm Algorithm;
+        public List<KeyRange> Ranges;
+        public Guid ActivationId;
+
+        private List<KeyRange> GetPkeyRanges()
+        {
+            if (Ranges.Count == 0)
+            {
+                throw new ArgumentException("No key ranges.");
+            }
+
+            if (Algorithm == PKeyAlgorithm.PKEY2005)
+            {
+                return Ranges;
+            }
+
+            List<KeyRange> FilteredRanges = Ranges.Where(r => !r.EulaType.Contains("WAU")).ToList();
+
+            if (FilteredRanges.Count == 0)
+            {
+                throw new NotSupportedException("Specified Activation ID is usable only for Windows Anytime Upgrade. Please use a non-WAU Activation ID instead.");
+            }
+
+            return FilteredRanges;
+        }
+
+        public ProductKey GetRandomKey()
+        {
+            List<KeyRange> KeyRanges = GetPkeyRanges();
+            Random rnd = new Random();
+
+            KeyRange range = KeyRanges[rnd.Next(KeyRanges.Count)];
+            int serial = rnd.Next(range.Start, range.End);
+
+            return new ProductKey(serial, 0, false, Algorithm, this, range);
+        }
+    }
+
+    public class PKeyConfig
+    {
+        public readonly Dictionary<Guid, ProductConfig> Products = new Dictionary<Guid, ProductConfig>();
+        private readonly List<Guid> loadedPkeyConfigs = new List<Guid>();
+
+        public void LoadConfig(Guid actId)
+        {
+            string pkcData;
+            Guid pkcFileId = SLApi.GetPkeyConfigFileId(actId);
+
+            if (loadedPkeyConfigs.Contains(pkcFileId)) return;
+
+            string licConts = SLApi.GetLicenseContents(pkcFileId);
+
+            using (TextReader tr = new StringReader(licConts))
+            {
+                XmlDocument lic = new XmlDocument();
+                lic.Load(tr);
+
+                XmlNamespaceManager nsmgr = new XmlNamespaceManager(lic.NameTable);
+                nsmgr.AddNamespace("rg", "urn:mpeg:mpeg21:2003:01-REL-R-NS");
+                nsmgr.AddNamespace("r", "urn:mpeg:mpeg21:2003:01-REL-R-NS");
+                nsmgr.AddNamespace("tm", "http://www.microsoft.com/DRM/XrML2/TM/v2");
+
+                XmlNode root = lic.DocumentElement;
+                XmlNode pkcDataNode = root.SelectSingleNode("/rg:licenseGroup/r:license/r:otherInfo/tm:infoTables/tm:infoList/tm:infoBin[@name=\"pkeyConfigData\"]", nsmgr);
+                pkcData = Encoding.UTF8.GetString(Convert.FromBase64String(pkcDataNode.InnerText));
+            }
+
+            using (TextReader tr = new StringReader(pkcData))
+            {
+                XmlDocument lic = new XmlDocument();
+                lic.Load(tr);
+
+                XmlNamespaceManager nsmgr = new XmlNamespaceManager(lic.NameTable);
+                nsmgr.AddNamespace("p", "http://www.microsoft.com/DRM/PKEY/Configuration/2.0");
+                XmlNodeList configNodes = lic.SelectNodes("//p:ProductKeyConfiguration/p:Configurations/p:Configuration", nsmgr);
+                XmlNodeList rangeNodes = lic.SelectNodes("//p:ProductKeyConfiguration/p:KeyRanges/p:KeyRange", nsmgr);
+                XmlNodeList pubKeyNodes = lic.SelectNodes("//p:ProductKeyConfiguration/p:PublicKeys/p:PublicKey", nsmgr);
+
+                Dictionary<int, PKeyAlgorithm> algorithms = new Dictionary<int, PKeyAlgorithm>();
+                Dictionary<string, List<KeyRange>> ranges = new Dictionary<string, List<KeyRange>>();
+
+                Dictionary<string, PKeyAlgorithm> algoConv = new Dictionary<string, PKeyAlgorithm>
+                {
+                    { "msft:rm/algorithm/pkey/2005", PKeyAlgorithm.PKEY2005 },
+                    { "msft:rm/algorithm/pkey/2009", PKeyAlgorithm.PKEY2009 }
+                };
+
+                foreach (XmlNode pubKeyNode in pubKeyNodes)
+                {
+                    int group = int.Parse(pubKeyNode.SelectSingleNode("./p:GroupId", nsmgr).InnerText);
+                    algorithms[group] = algoConv[pubKeyNode.SelectSingleNode("./p:AlgorithmId", nsmgr).InnerText];
+                }
+
+                foreach (XmlNode rangeNode in rangeNodes)
+                {
+                    string refActIdStr = rangeNode.SelectSingleNode("./p:RefActConfigId", nsmgr).InnerText;
+
+                    if (!ranges.ContainsKey(refActIdStr))
+                    {
+                        ranges[refActIdStr] = new List<KeyRange>();
+                    }
+
+                    KeyRange keyRange = new KeyRange
+                    {
+                        Start = int.Parse(rangeNode.SelectSingleNode("./p:Start", nsmgr).InnerText),
+                        End = int.Parse(rangeNode.SelectSingleNode("./p:End", nsmgr).InnerText),
+                        EulaType = rangeNode.SelectSingleNode("./p:EulaType", nsmgr).InnerText,
+                        PartNumber = rangeNode.SelectSingleNode("./p:PartNumber", nsmgr).InnerText,
+                        Valid = rangeNode.SelectSingleNode("./p:IsValid", nsmgr).InnerText.ToLower() == "true"
+                    };
+
+                    ranges[refActIdStr].Add(keyRange);
+                }
+
+                foreach (XmlNode configNode in configNodes)
+                {
+                    string refActIdStr = configNode.SelectSingleNode("./p:ActConfigId", nsmgr).InnerText;
+                    Guid refActId = new Guid(refActIdStr);
+                    int group = int.Parse(configNode.SelectSingleNode("./p:RefGroupId", nsmgr).InnerText);
+                    List<KeyRange> keyRanges = ranges[refActIdStr];
+
+                    if (keyRanges.Count > 0 && !Products.ContainsKey(refActId))
+                    {
+                        ProductConfig productConfig = new ProductConfig
+                        {
+                            GroupId = group,
+                            Edition = configNode.SelectSingleNode("./p:EditionId", nsmgr).InnerText,
+                            Description = configNode.SelectSingleNode("./p:ProductDescription", nsmgr).InnerText,
+                            Channel = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText,
+                            Randomized = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText.ToLower() == "true",
+                            Algorithm = algorithms[group],
+                            Ranges = keyRanges,
+                            ActivationId = refActId
+                        };
+
+                        Products[refActId] = productConfig;
+                    }
+                }
+            }
+
+            loadedPkeyConfigs.Add(pkcFileId);
+        }
+
+        public ProductConfig MatchParams(int group, int serial)
+        {
+            foreach (ProductConfig config in Products.Values)
+            {
+                if (config.GroupId == group)
+                {
+                    foreach (KeyRange range in config.Ranges)
+                    {
+                        if (range.Contains(serial))
+                        {
+                            return config;
+                        }
+                    }
+                }
+            }
+
+            throw new FileNotFoundException("Failed to find product matching supplied product key parameters.");
+        }
+
+        public void LoadAllConfigs(Guid appId)
+        {
+            foreach (Guid actId in SLApi.GetActivationIds(appId))
+            {
+                try
+                {
+                    LoadConfig(actId);
+                } 
+                catch (ArgumentException)
+                {
+
+                }
+            }
+        }
+    }
+}
+
+
+// SPP/ProductKey.cs
+namespace LibTSforge.SPP
+{
+    using System;
+    using System.IO;
+    using System.Linq;
+    using Crypto;
+    using PhysicalStore;
+
+    public class ProductKey
+    {
+        private static readonly string ALPHABET = "BCDFGHJKMPQRTVWXY2346789";
+
+        private readonly ulong klow;
+        private readonly ulong khigh;
+
+        public int Group;
+        public int Serial;
+        public ulong Security;
+        public bool Upgrade;
+        public PKeyAlgorithm Algorithm;
+        public readonly string EulaType;
+        public readonly string PartNumber;
+        public readonly string Edition;
+        public readonly string Channel;
+        public readonly Guid ActivationId;
+
+        private string mpc;
+        private string pid2;
+
+        public byte[] KeyBytes
+        {
+            get { return BitConverter.GetBytes(klow).Concat(BitConverter.GetBytes(khigh)).ToArray(); }
+        }
+
+        public ProductKey()
+        {
+
+        }
+
+        public ProductKey(int serial, ulong security, bool upgrade, PKeyAlgorithm algorithm, ProductConfig config, KeyRange range)
+        {
+            Group = config.GroupId;
+            Serial = serial;
+            Security = security;
+            Upgrade = upgrade;
+            Algorithm = algorithm;
+            EulaType = range.EulaType;
+            PartNumber = range.PartNumber.Split(':', ';')[0];
+            Edition = config.Edition;
+            Channel = config.Channel;
+            ActivationId = config.ActivationId;
+
+            klow = ((security & 0x3fff) << 50 | ((ulong)serial & 0x3fffffff) << 20 | ((ulong)Group & 0xfffff));
+            khigh = ((upgrade ? (ulong)1 : 0) << 49 | ((security >> 14) & 0x7fffffffff));
+
+            uint checksum = Utils.CRC32(KeyBytes) & 0x3ff;
+
+            khigh |= ((ulong)checksum << 39);
+        }
+
+        public string GetAlgoUri()
+        {
+            return "msft:rm/algorithm/pkey/" + (Algorithm == PKeyAlgorithm.PKEY2005 ? "2005" : (Algorithm == PKeyAlgorithm.PKEY2009 ? "2009" : "Unknown"));
+        }
+
+        public Guid GetPkeyId()
+        {
+            VariableBag pkb = new VariableBag(PSVersion.WinModern);
+            pkb.Blocks.AddRange(new[]
+            {
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.STRING,
+                    KeyAsStr = "SppPkeyBindingProductKey",
+                    ValueAsStr = ToString()
+                },
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.BINARY,
+                    KeyAsStr = "SppPkeyBindingMiscData",
+                    Value = new byte[] { }
+                },
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.STRING,
+                    KeyAsStr = "SppPkeyBindingAlgorithm",
+                    ValueAsStr = GetAlgoUri()
+                }
+            });
+
+            return new Guid(CryptoUtils.SHA256Hash(pkb.Serialize()).Take(16).ToArray());
+        }
+
+        public string GetMPC()
+        {
+            if (mpc != null)
+            {
+                return mpc;
+            }
+
+            int build = Environment.OSVersion.Version.Build;
+
+            mpc = build >= 10240 ? "03612" :
+                    build >= 9600 ? "06401" :
+                    build >= 9200 ? "05426" :
+                    "55041";
+
+            // setup.cfg doesn't exist in Windows 8+
+            string setupcfg = string.Format(@"{0}\oobe\{1}", Environment.SystemDirectory, "setup.cfg");
+
+            if (!File.Exists(setupcfg) || Edition.Contains(";"))
+            {
+                return mpc;
+            }
+
+            string mpcKey = string.Format("{0}.{1}=", Utils.GetArchitecture(), Edition);
+            string localMPC = File.ReadAllLines(setupcfg).FirstOrDefault(line => line.Contains(mpcKey));
+            if (localMPC != null)
+            {
+                mpc = localMPC.Split('=')[1].Trim();
+            }
+
+            return mpc;
+        }
+
+        public string GetPid2()
+        {
+            if (pid2 != null)
+            {
+                return pid2;
+            }
+
+            pid2 = "";
+
+            if (Algorithm == PKeyAlgorithm.PKEY2005)
+            {
+                string mpc = GetMPC();
+                string serialHigh;
+                int serialLow;
+                int lastPart;
+
+                if (EulaType == "OEM")
+                {
+                    serialHigh = "OEM";
+                    serialLow = ((Group / 2) % 100) * 10000 + (Serial / 100000);
+                    lastPart = Serial % 100000;
+                }
+                else
+                {
+                    serialHigh = (Serial / 1000000).ToString("D3");
+                    serialLow = Serial % 1000000;
+                    lastPart = ((Group / 2) % 100) * 1000 + new Random().Next(1000);
+                }
+
+                int checksum = 0;
+
+                foreach (char c in serialLow.ToString())
+                {
+                    checksum += int.Parse(c.ToString());
+                }
+                checksum = 7 - (checksum % 7);
+
+                pid2 = string.Format("{0}-{1}-{2:D6}{3}-{4:D5}", mpc, serialHigh, serialLow, checksum, lastPart);
+            }
+
+            return pid2;
+        }
+
+        public byte[] GetPid3()
+        {
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+            writer.Write(0xA4);
+            writer.Write(0x3);
+            writer.WriteFixedString(GetPid2(), 24);
+            writer.Write(Group);
+            writer.WriteFixedString(PartNumber, 16);
+            writer.WritePadding(0x6C);
+            byte[] data = writer.GetBytes();
+            byte[] crc = BitConverter.GetBytes(~Utils.CRC32(data.Reverse().ToArray())).Reverse().ToArray();
+            writer.Write(crc);
+
+            return writer.GetBytes();
+        }
+
+        public byte[] GetPid4()
+        {
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+            writer.Write(0x4F8);
+            writer.Write(0x4);
+            writer.WriteFixedString16(GetExtendedPid(), 0x80);
+            writer.WriteFixedString16(ActivationId.ToString(), 0x80);
+            writer.WritePadding(0x10);
+            writer.WriteFixedString16(Edition, 0x208);
+            writer.Write(Upgrade ? (ulong)1 : 0);
+            writer.WritePadding(0x50);
+            writer.WriteFixedString16(PartNumber, 0x80);
+            writer.WriteFixedString16(Channel, 0x80);
+            writer.WriteFixedString16(EulaType, 0x80);
+
+            return writer.GetBytes();
+        }
+
+        public string GetExtendedPid()
+        {
+            string mpc = GetMPC();
+            int serialHigh = Serial / 1000000;
+            int serialLow = Serial % 1000000;
+            int licenseType;
+            uint lcid = Utils.GetSystemDefaultLCID();
+            int build = Environment.OSVersion.Version.Build;
+            int dayOfYear = DateTime.Now.DayOfYear;
+            int year = DateTime.Now.Year;
+
+            switch (EulaType)
+            {
+                case "OEM":
+                    licenseType = 2;
+                    break;
+
+                case "Volume":
+                    licenseType = 3;
+                    break;
+
+                default:
+                    licenseType = 0;
+                    break;
+            }
+
+            return string.Format(
+                "{0}-{1:D5}-{2:D3}-{3:D6}-{4:D2}-{5:D4}-{6:D4}.0000-{7:D3}{8:D4}",
+                mpc,
+                Group,
+                serialHigh,
+                serialLow,
+                licenseType,
+                lcid,
+                build,
+                dayOfYear,
+                year
+            );
+        }
+
+        public byte[] GetPhoneData(PSVersion version)
+        {
+            if (version == PSVersion.Win7)
+            {
+                ulong shortauth = ((ulong)Group << 41) | (Security << 31) | ((ulong)Serial << 1) | (Upgrade ? (ulong)1 : 0);
+                return BitConverter.GetBytes(shortauth);
+            }
+
+            int serialHigh = Serial / 1000000;
+            int serialLow = Serial % 1000000;
+
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+            string algoId = Algorithm == PKeyAlgorithm.PKEY2005 ? "B8731595-A2F6-430B-A799-FBFFB81A8D73" : "660672EF-7809-4CFD-8D54-41B7FB738988";
+
+            writer.Write(new Guid(algoId).ToByteArray());
+            writer.Write(Group);
+            writer.Write(serialHigh);
+            writer.Write(serialLow);
+            writer.Write(Upgrade ? 1 : 0);
+            writer.Write(Security);
+
+            return writer.GetBytes();
+        }
+
+        public override string ToString()
+        {
+            string keyStr = "";
+            Random rnd = new Random(Group * 1000000000 + Serial);
+
+            if (Algorithm == PKeyAlgorithm.PKEY2005)
+            {
+                keyStr = "H4X3DH4X3DH4X3DH4X3D";
+
+                for (int i = 0; i < 5; i++)
+                {
+                    keyStr += ALPHABET[rnd.Next(24)];
+                }
+            }
+            else if (Algorithm == PKeyAlgorithm.PKEY2009)
+            {
+                int last = 0;
+                byte[] bKey = KeyBytes;
+
+                for (int i = 24; i >= 0; i--)
+                {
+                    int current = 0;
+
+                    for (int j = 14; j >= 0; j--)
+                    {
+                        current *= 0x100;
+                        current += bKey[j];
+                        bKey[j] = (byte)(current / 24);
+                        current %= 24;
+                        last = current;
+                    }
+
+                    keyStr = ALPHABET[current] + keyStr;
+                }
+
+                keyStr = keyStr.Substring(1, last) + "N" + keyStr.Substring(last + 1, keyStr.Length - last - 1);
+            }
+
+            for (int i = 5; i < keyStr.Length; i += 6)
+            {
+                keyStr = keyStr.Insert(i, "-");
+            }
+
+            return keyStr;
+        }
+    }
+}
+
+
+// SPP/SLAPI.cs
+namespace LibTSforge.SPP
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Runtime.InteropServices;
+    using System.Text;
+
+    public static class SLApi
+    {
+        private enum SLIDTYPE
+        {
+            SL_ID_APPLICATION,
+            SL_ID_PRODUCT_SKU,
+            SL_ID_LICENSE_FILE,
+            SL_ID_LICENSE,
+            SL_ID_PKEY,
+            SL_ID_ALL_LICENSES,
+            SL_ID_ALL_LICENSE_FILES,
+            SL_ID_STORE_TOKEN,
+            SL_ID_LAST
+        }
+
+        private enum SLDATATYPE
+        {
+            SL_DATA_NONE,
+            SL_DATA_SZ,
+            SL_DATA_DWORD,
+            SL_DATA_BINARY,
+            SL_DATA_MULTI_SZ,
+            SL_DATA_SUM
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct SL_LICENSING_STATUS
+        {
+            public Guid SkuId;
+            public uint eStatus;
+            public uint dwGraceTime;
+            public uint dwTotalGraceDays;
+            public uint hrReason;
+            public ulong qwValidityExpiration;
+        }
+
+        public static readonly Guid WINDOWS_APP_ID = new Guid("55c92734-d682-4d71-983e-d6ec3f16059f");
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        private static extern void SLOpen(out IntPtr hSLC);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        private static extern void SLClose(IntPtr hSLC);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLGetWindowsInformationDWORD(string ValueName, ref int Value);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLInstallProofOfPurchase(IntPtr hSLC, string pwszPKeyAlgorithm, string pwszPKeyString, uint cbPKeySpecificData, byte[] pbPKeySpecificData, ref Guid PKeyId);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLUninstallProofOfPurchase(IntPtr hSLC, ref Guid PKeyId);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLGetPKeyInformation(IntPtr hSLC, ref Guid pPKeyId, string pwszValueName, out SLDATATYPE peDataType, out uint pcbValue, out IntPtr ppbValue);
+
+        [DllImport("slcext.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLActivateProduct(IntPtr hSLC, ref Guid pProductSkuId, byte[] cbAppSpecificData, byte[] pvAppSpecificData, byte[] pActivationInfo, string pwszProxyServer, ushort wProxyPort);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLGenerateOfflineInstallationId(IntPtr hSLC, ref Guid pProductSkuId, ref string ppwszInstallationId);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLDepositOfflineConfirmationId(IntPtr hSLC, ref Guid pProductSkuId, string pwszInstallationId, string pwszConfirmationId);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLGetSLIDList(IntPtr hSLC, SLIDTYPE eQueryIdType, ref Guid pQueryId, SLIDTYPE eReturnIdType, out uint pnReturnIds, out IntPtr ppReturnIds);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        private static extern void SLGetLicensingStatusInformation(IntPtr hSLC, ref Guid pAppID, IntPtr pProductSkuId, string pwszRightName, out uint pnStatusCount, out IntPtr ppLicensingStatus);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLGetInstalledProductKeyIds(IntPtr hSLC, ref Guid pProductSkuId, out uint pnProductKeyIds, out IntPtr ppProductKeyIds);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLConsumeWindowsRight(uint unknown);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLGetProductSkuInformation(IntPtr hSLC, ref Guid pProductSkuId, string pwszValueName, out SLDATATYPE peDataType, out uint pcbValue, out IntPtr ppbValue);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLGetLicense(IntPtr hSLC, ref Guid pLicenseFileId, out uint pcbLicenseFile, out IntPtr ppbLicenseFile);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLSetCurrentProductKey(IntPtr hSLC, ref Guid pProductSkuId, ref Guid pProductKeyId);
+
+        [DllImport("slc.dll", CharSet = CharSet.Unicode)]
+        private static extern uint SLFireEvent(IntPtr hSLC, string pwszEventId, ref Guid pApplicationId);
+
+        private class SLContext : IDisposable
+        {
+            public readonly IntPtr Handle;
+
+            public SLContext()
+            {
+                SLOpen(out Handle);
+            }
+
+            public void Dispose()
+            {
+                SLClose(Handle);
+                GC.SuppressFinalize(this);
+            }
+
+            ~SLContext()
+            {
+                Dispose();
+            }
+        }
+
+        public static Guid GetDefaultActivationID(Guid appId, bool includeActivated)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                uint count;
+                IntPtr pLicStat;
+
+                SLGetLicensingStatusInformation(sl.Handle, ref appId, IntPtr.Zero, null, out count, out pLicStat);
+
+                unsafe
+                {
+                    SL_LICENSING_STATUS* licensingStatuses = (SL_LICENSING_STATUS*)pLicStat;
+                    for (int i = 0; i < count; i++)
+                    {
+                        SL_LICENSING_STATUS slStatus = licensingStatuses[i];
+
+                        Guid actId = slStatus.SkuId;
+                        if (GetInstalledPkeyID(actId) == Guid.Empty) continue;
+                        if (IsAddon(actId)) continue;
+                        if (!includeActivated && (slStatus.eStatus == 1)) continue;
+
+                        return actId;
+                    }
+                }
+
+                return Guid.Empty;
+            }
+        }
+
+        public static string GetInstallationID(Guid actId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                string installationId = null;
+                return SLGenerateOfflineInstallationId(sl.Handle, ref actId, ref installationId) == 0 ? installationId : null;
+            }
+        }
+
+        public static Guid GetInstalledPkeyID(Guid actId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                uint count;
+                IntPtr pProductKeyIds;
+
+                uint status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_PRODUCT_SKU, ref actId, SLIDTYPE.SL_ID_PKEY, out count, out pProductKeyIds);
+
+                if (status != 0 || count == 0)
+                {
+                    return Guid.Empty;
+                }
+
+                unsafe { return *(Guid*)pProductKeyIds; }
+            }
+        }
+
+        public static uint DepositConfirmationID(Guid actId, string installationId, string confirmationId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                return SLDepositOfflineConfirmationId(sl.Handle, ref actId, installationId, confirmationId);
+            }
+        }
+
+        public static void RefreshLicenseStatus()
+        {
+            SLConsumeWindowsRight(0);
+        }
+
+        public static void RefreshTrustedTime(Guid actId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                SLDATATYPE type;
+                uint count;
+                IntPtr ppbValue;
+
+                SLGetProductSkuInformation(sl.Handle, ref actId, "TrustedTime", out type, out count, out ppbValue);
+            }
+        }
+
+        public static void FireStateChangedEvent(Guid appId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                SLFireEvent(sl.Handle, "msft:rm/event/licensingstatechanged", ref appId);
+            }
+        }
+
+        public static Guid GetAppId(Guid actId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                uint count;
+                IntPtr pAppIds;
+
+                uint status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_PRODUCT_SKU, ref actId, SLIDTYPE.SL_ID_APPLICATION, out count, out pAppIds);
+
+                if (status != 0 || count == 0)
+                {
+                    return Guid.Empty;
+                }
+
+                unsafe { return *(Guid*)pAppIds; }
+            }
+        }
+
+        public static bool IsAddon(Guid actId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                uint count;
+                SLDATATYPE type;
+                IntPtr ppbValue;
+
+                uint status = SLGetProductSkuInformation(sl.Handle, ref actId, "DependsOn", out type, out count, out ppbValue);
+                return (int)status >= 0 && status != 0xC004F012;
+            }
+        }
+
+        public static Guid GetLicenseFileId(Guid licId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                uint count;
+                IntPtr ppReturnLics;
+
+                uint status = SLGetSLIDList(sl.Handle, SLIDTYPE.SL_ID_LICENSE, ref licId, SLIDTYPE.SL_ID_LICENSE_FILE, out count, out ppReturnLics);
+
+                if (status != 0 || count == 0)
+                {
+                    return Guid.Empty;
+                }
+
+                unsafe { return *(Guid*)ppReturnLics; }
+            }
+        }
+
+        public static Guid GetPkeyConfigFileId(Guid actId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                SLDATATYPE type;
+                uint len;
+                IntPtr ppReturnLics;
+
+                uint status = SLGetProductSkuInformation(sl.Handle, ref actId, "pkeyConfigLicenseId", out type, out len, out ppReturnLics);
+
+                if (status != 0 || len == 0)
+                {
+                    return Guid.Empty;
+                }
+
+                Guid pkcId = new Guid(Marshal.PtrToStringAuto(ppReturnLics));
+                return GetLicenseFileId(pkcId);
+            }
+        }
+
+        public static string GetLicenseContents(Guid fileId)
+        {
+            if (fileId == Guid.Empty) throw new ArgumentException("License contents could not be retrieved.");
+
+            using (SLContext sl = new SLContext())
+            {
+                uint dataLen;
+                IntPtr dataPtr;
+
+                if (SLGetLicense(sl.Handle, ref fileId, out dataLen, out dataPtr) != 0)
+                {
+                    return null;
+                }
+
+                byte[] data = new byte[dataLen];
+                Marshal.Copy(dataPtr, data, 0, (int)dataLen);
+
+                data = data.Skip(Array.IndexOf(data, (byte)'<')).ToArray();
+                return Encoding.UTF8.GetString(data);
+            }
+        }
+
+        public static bool IsPhoneActivatable(Guid actId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                uint count;
+                SLDATATYPE type;
+                IntPtr ppbValue;
+
+                uint status = SLGetProductSkuInformation(sl.Handle, ref actId, "msft:sl/EUL/PHONE/PUBLIC", out type, out count, out ppbValue);
+                return status != 0xC004F012;
+            }
+        }
+
+        public static string GetPKeyChannel(Guid pkeyId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                SLDATATYPE type;
+                uint len;
+                IntPtr ppbValue;
+
+                uint status = SLGetPKeyInformation(sl.Handle, ref pkeyId, "Channel", out type, out len, out ppbValue);
+
+                if (status != 0 || len == 0)
+                {
+                    return null;
+                }
+
+                return Marshal.PtrToStringAuto(ppbValue);
+            }
+        }
+
+        public static string GetMetaStr(Guid actId, string value)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                uint len;
+                SLDATATYPE type;
+                IntPtr ppbValue;
+
+                uint status = SLGetProductSkuInformation(sl.Handle, ref actId, value, out type, out len, out ppbValue);
+
+                if (status != 0 || len == 0 || type != SLDATATYPE.SL_DATA_SZ)
+                {
+                    return null;
+                }
+
+                return Marshal.PtrToStringAuto(ppbValue);
+            }
+        }
+
+        public static List<Guid> GetActivationIds(Guid appId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                uint count;
+                IntPtr pLicStat;
+
+                SLGetLicensingStatusInformation(sl.Handle, ref appId, IntPtr.Zero, null, out count, out pLicStat);
+
+                List<Guid> result = new List<Guid>();
+
+                unsafe
+                {
+                    SL_LICENSING_STATUS* licensingStatuses = (SL_LICENSING_STATUS*)pLicStat;
+                    for (int i = 0; i < count; i++)
+                    {
+                        result.Add(licensingStatuses[i].SkuId);
+                    }
+                }
+
+                return result;
+            }
+        }
+
+        public static uint SetCurrentProductKey(Guid actId, Guid pkeyId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                return SLSetCurrentProductKey(sl.Handle, ref actId, ref pkeyId);
+            }
+        }
+
+        public static uint InstallProductKey(ProductKey pkey)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                Guid pkeyId = Guid.Empty;
+                return SLInstallProofOfPurchase(sl.Handle, pkey.GetAlgoUri(), pkey.ToString(), 0, null, ref pkeyId);
+            }
+        }
+
+        public static void UninstallProductKey(Guid pkeyId)
+        {
+            using (SLContext sl = new SLContext())
+            {
+                SLUninstallProofOfPurchase(sl.Handle, ref pkeyId);
+            }
+        }
+
+        public static void UninstallAllProductKeys(Guid appId)
+        {
+            foreach (Guid actId in GetActivationIds(appId))
+            {
+                Guid pkeyId = GetInstalledPkeyID(actId);
+                if (pkeyId == Guid.Empty) continue;
+                if (IsAddon(actId)) continue;
+                UninstallProductKey(pkeyId);
+            }
+        }
+    }
+}
+
+
+// SPP/SPPUtils.cs
+namespace LibTSforge.SPP
+{
+    using Microsoft.Win32;
+    using System;
+    using System.IO;
+    using System.Linq;
+    using System.ServiceProcess;
+    using Crypto;
+    using PhysicalStore;
+    using TokenStore;
+
+    public static class SPPUtils
+    {
+        public static void KillSPP(PSVersion version)
+        {
+            ServiceController sc;
+
+            string svcName = version == PSVersion.Vista ? "slsvc" : "sppsvc";
+
+            try
+            {
+                sc = new ServiceController(svcName);
+
+                if (sc.Status == ServiceControllerStatus.Stopped)
+                    return;
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException(string.Format("Unable to access {0}: ", svcName) + ex.Message);
+            }
+
+            Logger.WriteLine(string.Format("Stopping {0}...", svcName));
+
+            bool stopped = false;
+
+            for (int i = 0; stopped == false && i < 1080; i++)
+            {
+                try
+                {
+                    if (sc.Status != ServiceControllerStatus.StopPending)
+                        sc.Stop();
+
+                    sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromMilliseconds(500));
+                }
+                catch (System.ServiceProcess.TimeoutException)
+                {
+                    continue;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Logger.WriteLine("Warning: Stopping sppsvc failed, retrying. Details: " + ex.Message);
+                    System.Threading.Thread.Sleep(500);
+                    continue;
+                }
+
+                stopped = true;
+            }
+
+            if (!stopped)
+                throw new System.TimeoutException(string.Format("Failed to stop {0}", svcName));
+
+            Logger.WriteLine(string.Format("{0} stopped successfully.", svcName));
+
+            if (version == PSVersion.Vista && SPSys.IsSpSysRunning())
+            {
+                Logger.WriteLine("Unloading spsys...");
+
+                int status = SPSys.ControlSpSys(false);
+
+                if (status < 0)
+                {
+                    throw new IOException("Failed to unload spsys");
+                }
+
+                Logger.WriteLine("spsys unloaded successfully.");
+            }
+        }
+
+        public static void RestartSPP(PSVersion version)
+        {
+            if (version == PSVersion.Vista)
+            {
+                ServiceController sc;
+
+                try
+                {
+                    sc = new ServiceController("slsvc");
+
+                    if (sc.Status == ServiceControllerStatus.Running)
+                        return;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    throw new InvalidOperationException("Unable to access slsvc: " + ex.Message);
+                }
+
+                Logger.WriteLine("Starting slsvc...");
+
+                bool started = false;
+
+                for (int i = 0; started == false && i < 360; i++)
+                {
+                    try
+                    {
+                        if (sc.Status != ServiceControllerStatus.StartPending)
+                            sc.Start();
+
+                        sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromMilliseconds(500));
+                    }
+                    catch (System.ServiceProcess.TimeoutException)
+                    {
+                        continue;
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        Logger.WriteLine("Warning: Starting slsvc failed, retrying. Details: " + ex.Message);
+                        System.Threading.Thread.Sleep(500);
+                        continue;
+                    }
+
+                    started = true;
+                }
+
+                if (!started)
+                    throw new System.TimeoutException("Failed to start slsvc");
+
+                Logger.WriteLine("slsvc started successfully.");
+            }
+
+            SLApi.RefreshLicenseStatus();
+        }
+
+        public static bool DetectCurrentKey()
+        {
+            SLApi.RefreshLicenseStatus();
+
+            using (RegistryKey wpaKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\WPA"))
+            {
+                foreach (string subKey in wpaKey.GetSubKeyNames())
+                {
+                    if (subKey.StartsWith("8DEC0AF1"))
+                    {
+                        return subKey.Contains("P");
+                    }
+                }
+            }
+
+            throw new FileNotFoundException("Failed to autodetect key type, specify physical store key with /prod or /test arguments.");
+        }
+
+        public static string GetPSPath(PSVersion version)
+        {
+            switch (version)
+            {
+                case PSVersion.Vista:
+                case PSVersion.Win7:
+                    return Directory.GetFiles(
+                        Environment.GetFolderPath(Environment.SpecialFolder.System),
+                        "7B296FB0-376B-497e-B012-9C450E1B7327-*.C7483456-A289-439d-8115-601632D005A0")
+                    .FirstOrDefault() ?? "";
+                default:
+                    string psDir = Environment.ExpandEnvironmentVariables(
+                        (string)Registry.GetValue(
+                            @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
+                            "TokenStore",
+                            ""
+                        )
+                    );
+                    string psPath = Path.Combine(psDir, "data.dat");
+
+                    if (string.IsNullOrEmpty(psDir) || !File.Exists(psPath))
+                    {
+                        string[] psDirs =
+                        {
+                            @"spp\store",
+                            @"spp\store\2.0",
+                            @"spp\store_test",
+                            @"spp\store_test\2.0"
+                        };
+
+                        foreach (string dir in psDirs)
+                        {
+                            psPath = Path.Combine(
+                                Path.Combine(
+                                    Environment.GetFolderPath(Environment.SpecialFolder.System),
+                                    dir
+                                ),
+                                "data.dat"
+                            );
+
+                            if (File.Exists(psPath)) return psPath;
+                        }
+                    } 
+                    else
+                    {
+                        return psPath;
+                    }
+
+                    throw new FileNotFoundException("Failed to locate physical store.");
+            }
+        }
+
+        public static string GetTokensPath(PSVersion version)
+        {
+            switch (version)
+            {
+                case PSVersion.Vista:
+                    return Path.Combine(
+                        Environment.ExpandEnvironmentVariables("%WINDIR%"),
+                        @"ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareLicensing\tokens.dat"
+                    );
+                case PSVersion.Win7:
+                    return Path.Combine(
+                        Environment.ExpandEnvironmentVariables("%WINDIR%"),
+                        @"ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\tokens.dat"
+                    );
+                default:
+                    string tokDir = Environment.ExpandEnvironmentVariables(
+                        (string)Registry.GetValue(
+                            @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
+                            "TokenStore",
+                            ""
+                        )
+                    );
+                    string tokPath = Path.Combine(tokDir, "tokens.dat");
+
+                    if (string.IsNullOrEmpty(tokDir) || !File.Exists(tokPath))
+                    {
+                        string[] tokDirs =
+                        {
+                            @"spp\store",
+                            @"spp\store\2.0",
+                            @"spp\store_test",
+                            @"spp\store_test\2.0"
+                        };
+
+                        foreach (string dir in tokDirs)
+                        {
+                            tokPath = Path.Combine(
+                                Path.Combine(
+                                    Environment.GetFolderPath(Environment.SpecialFolder.System),
+                                    dir
+                                ),
+                                "tokens.dat"
+                            );
+
+                            if (File.Exists(tokPath)) return tokPath;
+                        }
+                    }
+                    else
+                    {
+                        return tokPath;
+                    }
+
+                    throw new FileNotFoundException("Failed to locate token store.");
+            }
+        }
+
+        public static IPhysicalStore GetStore(PSVersion version, bool production)
+        {
+            string psPath = GetPSPath(version);
+
+            switch (version)
+            {
+                case PSVersion.Vista:
+                    return new PhysicalStoreVista(psPath, production);
+                case PSVersion.Win7:
+                    return new PhysicalStoreWin7(psPath, production);
+                default:
+                    return new PhysicalStoreModern(psPath, production, version);
+            }
+        }
+
+        public static ITokenStore GetTokenStore(PSVersion version)
+        {
+            string tokPath = GetTokensPath(version);
+
+            return new TokenStoreModern(tokPath);
+        }
+
+        public static void DumpStore(PSVersion version, bool production, string filePath, string encrFilePath)
+        {
+            bool manageSpp = false;
+
+            if (encrFilePath == null)
+            {
+                encrFilePath = GetPSPath(version);
+                manageSpp = true;
+                KillSPP(version);
+            }
+
+            if (string.IsNullOrEmpty(encrFilePath) || !File.Exists(encrFilePath))
+            {
+                throw new FileNotFoundException("Store does not exist at expected path '" + encrFilePath + "'.");
+            }
+
+            try
+            {
+                using (FileStream fs = File.Open(encrFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    byte[] encrData = fs.ReadAllBytes();
+                    File.WriteAllBytes(filePath, PhysStoreCrypto.DecryptPhysicalStore(encrData, production, version));
+                }
+                Logger.WriteLine("Store dumped successfully to '" + filePath + "'.");
+            }
+            finally
+            {
+                if (manageSpp)
+                {
+                    RestartSPP(version);
+                }
+            }
+        }
+
+        public static void LoadStore(PSVersion version, bool production, string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                throw new FileNotFoundException("Store file '" + filePath + "' does not exist.");
+            }
+
+            KillSPP(version);
+
+            using (IPhysicalStore store = GetStore(version, production))
+            {
+                store.WriteRaw(File.ReadAllBytes(filePath));
+            }
+
+            RestartSPP(version);
+
+            Logger.WriteLine("Loaded store file successfully.");
+        }
+    }
+}
+
+
+// SPP/SPSys.cs
+namespace LibTSforge.SPP
+{
+    using Microsoft.Win32.SafeHandles;
+    using System;
+    using System.Runtime.InteropServices;
+
+    public class SPSys
+    {
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr CreateFile(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
+        private static SafeFileHandle CreateFileSafe(string device)
+        {
+            return new SafeFileHandle(CreateFile(device, 0xC0000000, 0, IntPtr.Zero, 3, 0, IntPtr.Zero), true);
+        }
+
+        [return: MarshalAs(UnmanagedType.Bool)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool DeviceIoControl([In] SafeFileHandle hDevice, [In] uint dwIoControlCode, [In] IntPtr lpInBuffer, [In] int nInBufferSize, [Out] IntPtr lpOutBuffer, [In] int nOutBufferSize, out int lpBytesReturned, [In] IntPtr lpOverlapped);
+
+        public static bool IsSpSysRunning()
+        {
+            SafeFileHandle file = CreateFileSafe(@"\\.\SpDevice");
+            IntPtr buffer = Marshal.AllocHGlobal(1);
+            int bytesReturned;
+            DeviceIoControl(file, 0x80006008, IntPtr.Zero, 0, buffer, 1, out bytesReturned, IntPtr.Zero);
+            bool running = Marshal.ReadByte(buffer) != 0;
+            Marshal.FreeHGlobal(buffer);
+            file.Close();
+            return running;
+        }
+
+        public static int ControlSpSys(bool start)
+        {
+            SafeFileHandle file = CreateFileSafe(@"\\.\SpDevice");
+            IntPtr buffer = Marshal.AllocHGlobal(4);
+            int bytesReturned;
+            DeviceIoControl(file, start ? 0x8000a000 : 0x8000a004, IntPtr.Zero, 0, buffer, 4, out bytesReturned, IntPtr.Zero);
+            int result = Marshal.ReadInt32(buffer);
+            Marshal.FreeHGlobal(buffer);
+            file.Close();
+            return result;
+        }
+    }
+}
+
+
+// Crypto/CryptoUtils.cs
+namespace LibTSforge.Crypto
+{
+    using System;
+    using System.Linq;
+    using System.Security.Cryptography;
+
+    public static class CryptoUtils
+    {
+        public static byte[] GenerateRandomKey(int len)
+        {
+            byte[] rand = new byte[len];
+            Random r = new Random();
+            r.NextBytes(rand);
+
+            return rand;
+        }
+
+        public static byte[] AESEncrypt(byte[] data, byte[] key)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.PKCS7;
+
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, Enumerable.Repeat((byte)0, 16).ToArray());
+                byte[] encryptedData = encryptor.TransformFinalBlock(data, 0, data.Length);
+                return encryptedData;
+            }
+        }
+
+        public static byte[] AESDecrypt(byte[] data, byte[] key)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.PKCS7;
+
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, Enumerable.Repeat((byte)0, 16).ToArray());
+                byte[] decryptedData = decryptor.TransformFinalBlock(data, 0, data.Length);
+                return decryptedData;
+            }
+        }
+
+        public static byte[] RSADecrypt(byte[] rsaKey, byte[] data)
+        {
+
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.ImportCspBlob(rsaKey);
+                return rsa.Decrypt(data, false);
+            }
+        }
+
+        public static byte[] RSAEncrypt(byte[] rsaKey, byte[] data)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.ImportCspBlob(rsaKey);
+                return rsa.Encrypt(data, false);
+            }
+        }
+
+        public static byte[] RSASign(byte[] rsaKey, byte[] data)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.ImportCspBlob(rsaKey);
+                RSAPKCS1SignatureFormatter formatter = new RSAPKCS1SignatureFormatter(rsa);
+                formatter.SetHashAlgorithm("SHA1");
+
+                byte[] hash;
+                using (SHA1 sha1 = SHA1.Create())
+                {
+                    hash = sha1.ComputeHash(data);
+                }
+
+                return formatter.CreateSignature(hash);
+            }
+        }
+
+        public static bool RSAVerifySignature(byte[] rsaKey, byte[] data, byte[] signature)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                rsa.ImportCspBlob(rsaKey);
+                RSAPKCS1SignatureDeformatter deformatter = new RSAPKCS1SignatureDeformatter(rsa);
+                deformatter.SetHashAlgorithm("SHA1");
+
+                byte[] hash;
+                using (SHA1 sha1 = SHA1.Create())
+                {
+                    hash = sha1.ComputeHash(data);
+                }
+
+                return deformatter.VerifySignature(hash, signature);
+            }
+        }
+
+        public static byte[] HMACSign(byte[] key, byte[] data)
+        {
+            HMACSHA1 hmac = new HMACSHA1(key);
+            return hmac.ComputeHash(data);
+        }
+
+        public static bool HMACVerify(byte[] key, byte[] data, byte[] signature)
+        {
+            return Enumerable.SequenceEqual(signature, HMACSign(key, data));
+        }
+
+        public static byte[] SaltSHASum(byte[] salt, byte[] data)
+        {
+            SHA1 sha1 = SHA1.Create();
+            byte[] sha_data = salt.Concat(data).ToArray();
+            return sha1.ComputeHash(sha_data);
+        }
+
+        public static bool SaltSHAVerify(byte[] salt, byte[] data, byte[] checksum)
+        {
+            return Enumerable.SequenceEqual(checksum, SaltSHASum(salt, data));
+        }
+
+        public static byte[] SHA256Hash(byte[] data)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                return sha256.ComputeHash(data);
+            }
+        }
+    }
+}
+
+
+// Crypto/Keys.cs
+namespace LibTSforge.Crypto
+{
+    public static class Keys
+    {
+        public static readonly byte[] PRODUCTION = {
+            0x07, 0x02, 0x00, 0x00, 0x00, 0xA4, 0x00, 0x00, 0x52, 0x53, 0x41, 0x32, 0x00, 0x04, 0x00, 0x00,
+            0x01, 0x00, 0x01, 0x00, 0x29, 0x87, 0xBA, 0x3F, 0x52, 0x90, 0x57, 0xD8, 0x12, 0x26, 0x6B, 0x38,
+            0xB2, 0x3B, 0xF9, 0x67, 0x08, 0x4F, 0xDD, 0x8B, 0xF5, 0xE3, 0x11, 0xB8, 0x61, 0x3A, 0x33, 0x42,
+            0x51, 0x65, 0x05, 0x86, 0x1E, 0x00, 0x41, 0xDE, 0xC5, 0xDD, 0x44, 0x60, 0x56, 0x3D, 0x14, 0x39,
+            0xB7, 0x43, 0x65, 0xE9, 0xF7, 0x2B, 0xA5, 0xF0, 0xA3, 0x65, 0x68, 0xE9, 0xE4, 0x8B, 0x5C, 0x03,
+            0x2D, 0x36, 0xFE, 0x28, 0x4C, 0xD1, 0x3C, 0x3D, 0xC1, 0x90, 0x75, 0xF9, 0x6E, 0x02, 0xE0, 0x58,
+            0x97, 0x6A, 0xCA, 0x80, 0x02, 0x42, 0x3F, 0x6C, 0x15, 0x85, 0x4D, 0x83, 0x23, 0x6A, 0x95, 0x9E,
+            0x38, 0x52, 0x59, 0x38, 0x6A, 0x99, 0xF0, 0xB5, 0xCD, 0x53, 0x7E, 0x08, 0x7C, 0xB5, 0x51, 0xD3,
+            0x8F, 0xA3, 0x0D, 0xA0, 0xFA, 0x8D, 0x87, 0x3C, 0xFC, 0x59, 0x21, 0xD8, 0x2E, 0xD9, 0x97, 0x8B,
+            0x40, 0x60, 0xB1, 0xD7, 0x2B, 0x0A, 0x6E, 0x60, 0xB5, 0x50, 0xCC, 0x3C, 0xB1, 0x57, 0xE4, 0xB7,
+            0xDC, 0x5A, 0x4D, 0xE1, 0x5C, 0xE0, 0x94, 0x4C, 0x5E, 0x28, 0xFF, 0xFA, 0x80, 0x6A, 0x13, 0x53,
+            0x52, 0xDB, 0xF3, 0x04, 0x92, 0x43, 0x38, 0xB9, 0x1B, 0xD9, 0x85, 0x54, 0x7B, 0x14, 0xC7, 0x89,
+            0x16, 0x8A, 0x4B, 0x82, 0xA1, 0x08, 0x02, 0x99, 0x23, 0x48, 0xDD, 0x75, 0x9C, 0xC8, 0xC1, 0xCE,
+            0xB0, 0xD7, 0x1B, 0xD8, 0xFB, 0x2D, 0xA7, 0x2E, 0x47, 0xA7, 0x18, 0x4B, 0xF6, 0x29, 0x69, 0x44,
+            0x30, 0x33, 0xBA, 0xA7, 0x1F, 0xCE, 0x96, 0x9E, 0x40, 0xE1, 0x43, 0xF0, 0xE0, 0x0D, 0x0A, 0x32,
+            0xB4, 0xEE, 0xA1, 0xC3, 0x5E, 0x9B, 0xC7, 0x7F, 0xF5, 0x9D, 0xD8, 0xF2, 0x0F, 0xD9, 0x8F, 0xAD,
+            0x75, 0x0A, 0x00, 0xD5, 0x25, 0x43, 0xF7, 0xAE, 0x51, 0x7F, 0xB7, 0xDE, 0xB7, 0xAD, 0xFB, 0xCE,
+            0x83, 0xE1, 0x81, 0xFF, 0xDD, 0xA2, 0x77, 0xFE, 0xEB, 0x27, 0x1F, 0x10, 0xFA, 0x82, 0x37, 0xF4,
+            0x7E, 0xCC, 0xE2, 0xA1, 0x58, 0xC8, 0xAF, 0x1D, 0x1A, 0x81, 0x31, 0x6E, 0xF4, 0x8B, 0x63, 0x34,
+            0xF3, 0x05, 0x0F, 0xE1, 0xCC, 0x15, 0xDC, 0xA4, 0x28, 0x7A, 0x9E, 0xEB, 0x62, 0xD8, 0xD8, 0x8C,
+            0x85, 0xD7, 0x07, 0x87, 0x90, 0x2F, 0xF7, 0x1C, 0x56, 0x85, 0x2F, 0xEF, 0x32, 0x37, 0x07, 0xAB,
+            0xB0, 0xE6, 0xB5, 0x02, 0x19, 0x35, 0xAF, 0xDB, 0xD4, 0xA2, 0x9C, 0x36, 0x80, 0xC6, 0xDC, 0x82,
+            0x08, 0xE0, 0xC0, 0x5F, 0x3C, 0x59, 0xAA, 0x4E, 0x26, 0x03, 0x29, 0xB3, 0x62, 0x58, 0x41, 0x59,
+            0x3A, 0x37, 0x43, 0x35, 0xE3, 0x9F, 0x34, 0xE2, 0xA1, 0x04, 0x97, 0x12, 0x9D, 0x8C, 0xAD, 0xF7,
+            0xFB, 0x8C, 0xA1, 0xA2, 0xE9, 0xE4, 0xEF, 0xD9, 0xC5, 0xE5, 0xDF, 0x0E, 0xBF, 0x4A, 0xE0, 0x7A,
+            0x1E, 0x10, 0x50, 0x58, 0x63, 0x51, 0xE1, 0xD4, 0xFE, 0x57, 0xB0, 0x9E, 0xD7, 0xDA, 0x8C, 0xED,
+            0x7D, 0x82, 0xAC, 0x2F, 0x25, 0x58, 0x0A, 0x58, 0xE6, 0xA4, 0xF4, 0x57, 0x4B, 0xA4, 0x1B, 0x65,
+            0xB9, 0x4A, 0x87, 0x46, 0xEB, 0x8C, 0x0F, 0x9A, 0x48, 0x90, 0xF9, 0x9F, 0x76, 0x69, 0x03, 0x72,
+            0x77, 0xEC, 0xC1, 0x42, 0x4C, 0x87, 0xDB, 0x0B, 0x3C, 0xD4, 0x74, 0xEF, 0xE5, 0x34, 0xE0, 0x32,
+            0x45, 0xB0, 0xF8, 0xAB, 0xD5, 0x26, 0x21, 0xD7, 0xD2, 0x98, 0x54, 0x8F, 0x64, 0x88, 0x20, 0x2B,
+            0x14, 0xE3, 0x82, 0xD5, 0x2A, 0x4B, 0x8F, 0x4E, 0x35, 0x20, 0x82, 0x7E, 0x1B, 0xFE, 0xFA, 0x2C,
+            0x79, 0x6C, 0x6E, 0x66, 0x94, 0xBB, 0x0A, 0xEB, 0xBA, 0xD9, 0x70, 0x61, 0xE9, 0x47, 0xB5, 0x82,
+            0xFC, 0x18, 0x3C, 0x66, 0x3A, 0x09, 0x2E, 0x1F, 0x61, 0x74, 0xCA, 0xCB, 0xF6, 0x7A, 0x52, 0x37,
+            0x1D, 0xAC, 0x8D, 0x63, 0x69, 0x84, 0x8E, 0xC7, 0x70, 0x59, 0xDD, 0x2D, 0x91, 0x1E, 0xF7, 0xB1,
+            0x56, 0xED, 0x7A, 0x06, 0x9D, 0x5B, 0x33, 0x15, 0xDD, 0x31, 0xD0, 0xE6, 0x16, 0x07, 0x9B, 0xA5,
+            0x94, 0x06, 0x7D, 0xC1, 0xE9, 0xD6, 0xC8, 0xAF, 0xB4, 0x1E, 0x2D, 0x88, 0x06, 0xA7, 0x63, 0xB8,
+            0xCF, 0xC8, 0xA2, 0x6E, 0x84, 0xB3, 0x8D, 0xE5, 0x47, 0xE6, 0x13, 0x63, 0x8E, 0xD1, 0x7F, 0xD4,
+            0x81, 0x44, 0x38, 0xBF
+        };
+
+        public static readonly byte[] TEST = {
+            0x07, 0x02, 0x00, 0x00, 0x00, 0xA4, 0x00, 0x00, 0x52, 0x53, 0x41, 0x32, 0x00, 0x04, 0x00, 0x00,
+            0x01, 0x00, 0x01, 0x00, 0x0F, 0xBE, 0x77, 0xB8, 0xDD, 0x54, 0x36, 0xDD, 0x67, 0xD4, 0x17, 0x66,
+            0xC4, 0x13, 0xD1, 0x3F, 0x1E, 0x16, 0x0C, 0x16, 0x35, 0xAB, 0x6D, 0x3D, 0x34, 0x51, 0xED, 0x3F,
+            0x57, 0x14, 0xB6, 0xB7, 0x08, 0xE9, 0xD9, 0x7A, 0x80, 0xB3, 0x5F, 0x9B, 0x3A, 0xFD, 0x9E, 0x37,
+            0x3A, 0x53, 0x72, 0x67, 0x92, 0x60, 0xC3, 0xEF, 0xB5, 0x8E, 0x1E, 0xCF, 0x9D, 0x9C, 0xD3, 0x90,
+            0xE5, 0xDD, 0xF4, 0xDB, 0xF3, 0xD6, 0x65, 0xB3, 0xC1, 0xBD, 0x69, 0xE1, 0x76, 0x95, 0xD9, 0x37,
+            0xB8, 0x5E, 0xCA, 0x3D, 0x98, 0xFC, 0x50, 0x5C, 0x98, 0xAE, 0xE3, 0x7C, 0x4C, 0x27, 0xC3, 0xD0,
+            0xCE, 0x78, 0x06, 0x51, 0x68, 0x23, 0xE6, 0x70, 0xF8, 0x7C, 0xAE, 0x36, 0xBE, 0x41, 0x57, 0xE2,
+            0xC3, 0x2D, 0xAF, 0x21, 0xB1, 0xB3, 0x15, 0x81, 0x19, 0x26, 0x6B, 0x10, 0xB3, 0xE9, 0xD1, 0x45,
+            0x21, 0x77, 0x9C, 0xF6, 0xE1, 0xDD, 0xB6, 0x78, 0x9D, 0x1D, 0x32, 0x61, 0xBC, 0x2B, 0xDB, 0x86,
+            0xFB, 0x07, 0x24, 0x10, 0x19, 0x4F, 0x09, 0x6D, 0x03, 0x90, 0xD4, 0x5E, 0x30, 0x85, 0xC5, 0x58,
+            0x7E, 0x5D, 0xAE, 0x9F, 0x64, 0x93, 0x04, 0x82, 0x09, 0x0E, 0x1C, 0x66, 0xA8, 0x95, 0x91, 0x51,
+            0xB2, 0xED, 0x9A, 0x75, 0x04, 0x87, 0x50, 0xAC, 0xCC, 0x20, 0x06, 0x45, 0xB9, 0x7B, 0x42, 0x53,
+            0x9A, 0xD1, 0x29, 0xFC, 0xEF, 0xB9, 0x47, 0x16, 0x75, 0x69, 0x05, 0x87, 0x2B, 0xCB, 0x54, 0x9C,
+            0x21, 0x2D, 0x50, 0x8E, 0x12, 0xDE, 0xD3, 0x6B, 0xEC, 0x92, 0xA1, 0xB1, 0xE9, 0x4B, 0xBF, 0x6B,
+            0x9A, 0x38, 0xC7, 0x13, 0xFA, 0x78, 0xA1, 0x3C, 0x1E, 0xBB, 0x38, 0x31, 0xBB, 0x0C, 0x9F, 0x70,
+            0x1A, 0x31, 0x00, 0xD7, 0x5A, 0xA5, 0x84, 0x24, 0x89, 0x80, 0xF5, 0x88, 0xC2, 0x31, 0x18, 0xDC,
+            0x53, 0x05, 0x5D, 0xFA, 0x81, 0xDC, 0xE1, 0xCE, 0xA4, 0xAA, 0xBA, 0x07, 0xDA, 0x28, 0x4F, 0x64,
+            0x0E, 0x84, 0x9B, 0x06, 0xDE, 0xC8, 0x78, 0x66, 0x2F, 0x17, 0x25, 0xA8, 0x9C, 0x99, 0xFC, 0xBC,
+            0x7D, 0x01, 0x42, 0xD7, 0x35, 0xBF, 0x19, 0xF6, 0x3F, 0x20, 0xD9, 0x98, 0x9B, 0x5D, 0xDD, 0x39,
+            0xBE, 0x81, 0x00, 0x0B, 0xDE, 0x6F, 0x14, 0xCA, 0x7E, 0xF8, 0xC0, 0x26, 0xA8, 0x1D, 0xD1, 0x16,
+            0x88, 0x64, 0x87, 0x36, 0x45, 0x37, 0x50, 0xDA, 0x6C, 0xEB, 0x85, 0xB5, 0x43, 0x29, 0x88, 0x6F,
+            0x2F, 0xFE, 0x8D, 0x12, 0x8B, 0x72, 0xB7, 0x5A, 0xCB, 0x66, 0xC2, 0x2E, 0x1D, 0x7D, 0x42, 0xA6,
+            0xF4, 0xFE, 0x26, 0x5D, 0x54, 0x9E, 0x77, 0x1D, 0x97, 0xC2, 0xF3, 0xFD, 0x60, 0xB3, 0x22, 0x88,
+            0xCA, 0x27, 0x99, 0xDF, 0xC8, 0xB1, 0xD7, 0xC6, 0x54, 0xA6, 0x50, 0xB9, 0x54, 0xF5, 0xDE, 0xFE,
+            0xE1, 0x81, 0xA2, 0xBE, 0x81, 0x9F, 0x48, 0xFF, 0x2F, 0xB8, 0xA4, 0xB3, 0x17, 0xD8, 0xC1, 0xB9,
+            0x5D, 0x21, 0x3D, 0xA2, 0xED, 0x1C, 0x96, 0x66, 0xEE, 0x1F, 0x47, 0xCF, 0x62, 0xFA, 0xD6, 0xC1,
+            0x87, 0x5B, 0xC4, 0xE5, 0xD9, 0x08, 0x38, 0x22, 0xFA, 0x21, 0xBD, 0xF2, 0x88, 0xDA, 0xE2, 0x24,
+            0x25, 0x1F, 0xF1, 0x0B, 0x2D, 0xAE, 0x04, 0xBE, 0xA6, 0x7F, 0x75, 0x8C, 0xD9, 0x97, 0xE1, 0xCA,
+            0x35, 0xB9, 0xFC, 0x6F, 0x01, 0x68, 0x11, 0xD3, 0x68, 0x32, 0xD0, 0xC1, 0x69, 0xA3, 0xCF, 0x9B,
+            0x10, 0xE4, 0x69, 0xA7, 0xCF, 0xE1, 0xFE, 0x2A, 0x07, 0x9E, 0xC1, 0x37, 0x84, 0x68, 0xE5, 0xC5,
+            0xAB, 0x25, 0xEC, 0x7D, 0x7D, 0x74, 0x6A, 0xD1, 0xD5, 0x4D, 0xD7, 0xE1, 0x7D, 0xDE, 0x30, 0x4B,
+            0xE6, 0x5D, 0xCD, 0x91, 0x59, 0xF6, 0x80, 0xFD, 0xC6, 0x3C, 0xDD, 0x94, 0x7F, 0x15, 0x9D, 0xEF,
+            0x2F, 0x00, 0x62, 0xD7, 0xDA, 0xB9, 0xB3, 0xD9, 0x8D, 0xE8, 0xD7, 0x3C, 0x96, 0x45, 0x5D, 0x1E,
+            0x50, 0xFB, 0xAA, 0x43, 0xD3, 0x47, 0x77, 0x81, 0xE9, 0x67, 0xE4, 0xFE, 0xDF, 0x42, 0x79, 0xCB,
+            0xA7, 0xAD, 0x5D, 0x48, 0xF5, 0xB7, 0x74, 0x96, 0x12, 0x23, 0x06, 0x70, 0x42, 0x68, 0x7A, 0x44,
+            0xFC, 0xA0, 0x31, 0x7F, 0x68, 0xCA, 0xA2, 0x14, 0x5D, 0xA3, 0xCF, 0x42, 0x23, 0xAB, 0x47, 0xF6,
+            0xB2, 0xFC, 0x6D, 0xF1
+        };
+    }
+}
+
+
+// Crypto/PhysStoreCrypto.cs
+namespace LibTSforge.Crypto
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+
+    public static class PhysStoreCrypto
+    {
+        public static byte[] DecryptPhysicalStore(byte[] data, bool production, PSVersion version)
+        {
+            byte[] rsaKey = production ? Keys.PRODUCTION : Keys.TEST;
+            BinaryReader br = new BinaryReader(new MemoryStream(data));
+            br.BaseStream.Seek(0x10, SeekOrigin.Begin);
+            byte[] aesKeySig = br.ReadBytes(0x80);
+            byte[] encAesKey = br.ReadBytes(0x80);
+
+            if (!CryptoUtils.RSAVerifySignature(rsaKey, encAesKey, aesKeySig))
+            {
+                throw new Exception("Failed to decrypt physical store.");
+            }
+
+            byte[] aesKey = CryptoUtils.RSADecrypt(rsaKey, encAesKey);
+            byte[] decData = CryptoUtils.AESDecrypt(br.ReadBytes((int)br.BaseStream.Length - 0x110), aesKey);
+            byte[] hmacKey = decData.Take(0x10).ToArray(); // SHA-1 salt on Vista
+            byte[] hmacSig = decData.Skip(0x10).Take(0x14).ToArray(); // SHA-1 hash on Vista
+            byte[] psData = decData.Skip(0x28).ToArray();
+
+            if (version != PSVersion.Vista)
+            {
+                if (!CryptoUtils.HMACVerify(hmacKey, psData, hmacSig))
+                {
+                    throw new InvalidDataException("Failed to verify HMAC. Physical store is corrupt.");
+                }
+            }
+            else
+            {
+                if (!CryptoUtils.SaltSHAVerify(hmacKey, psData, hmacSig))
+                {
+                    throw new InvalidDataException("Failed to verify checksum. Physical store is corrupt.");
+                }
+            }
+
+            return psData;
+        }
+
+        public static byte[] EncryptPhysicalStore(byte[] data, bool production, PSVersion version)
+        {
+            Dictionary<PSVersion, int> versionTable = new Dictionary<PSVersion, int>
+            {
+                {PSVersion.Vista, 2},
+                {PSVersion.Win7, 5},
+                {PSVersion.Win8, 1},
+                {PSVersion.WinBlue, 2},
+                {PSVersion.WinModern, 3}
+            };
+
+            byte[] rsaKey = production ? Keys.PRODUCTION : Keys.TEST;
+
+            byte[] aesKey = Encoding.UTF8.GetBytes("massgrave.dev :3");
+            byte[] hmacKey = CryptoUtils.GenerateRandomKey(0x10);
+
+            byte[] encAesKey = CryptoUtils.RSAEncrypt(rsaKey, aesKey);
+            byte[] aesKeySig = CryptoUtils.RSASign(rsaKey, encAesKey);
+            byte[] hmacSig = version != PSVersion.Vista ? CryptoUtils.HMACSign(hmacKey, data) : CryptoUtils.SaltSHASum(hmacKey, data);
+
+            byte[] decData = { };
+            decData = decData.Concat(hmacKey).Concat(hmacSig).Concat(BitConverter.GetBytes(0)).Concat(data).ToArray();
+            byte[] encData = CryptoUtils.AESEncrypt(decData, aesKey);
+
+            BinaryWriter bw = new BinaryWriter(new MemoryStream());
+            bw.Write(versionTable[version]);
+            bw.Write(Encoding.UTF8.GetBytes("UNTRUSTSTORE"));
+            bw.Write(aesKeySig);
+            bw.Write(encAesKey);
+            bw.Write(encData);
+
+            return bw.GetBytes();
+        }
+    }
+}
+
+
+// Modifiers/GenPKeyInstall.cs
+namespace LibTSforge.Modifiers
+{
+    using System;
+    using System.IO;
+    using Microsoft.Win32;
+    using PhysicalStore;
+    using SPP;
+    using TokenStore;
+
+    public static class GenPKeyInstall
+    {
+        private static void WritePkey2005RegistryValues(PSVersion version, ProductKey pkey)
+        {
+            Logger.WriteLine("Writing registry data for Windows product key...");
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ProductId", pkey.GetPid2());
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "DigitalProductId", pkey.GetPid3());
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "DigitalProductId4", pkey.GetPid4());
+
+            if (Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\Registration", "ProductId", null) != null)
+            {
+                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\Registration", "ProductId", pkey.GetPid2());
+                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\Registration", "DigitalProductId", pkey.GetPid3());
+                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\Registration", "DigitalProductId4", pkey.GetPid4());
+            }
+
+            if (pkey.Channel == "Volume:CSVLK" && version != PSVersion.Win7)
+            {
+                Registry.SetValue(@"HKEY_USERS\S-1-5-20\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform", "KmsHostConfig", 1);
+            }
+        }
+
+        public static void InstallGenPKey(PSVersion version, bool production, Guid actId)
+        {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+            if (actId == Guid.Empty) throw new ArgumentException("Activation ID must be specified for generated product key install.");
+
+            PKeyConfig pkc = new PKeyConfig();
+            
+            try
+            {
+                pkc.LoadConfig(actId);
+            }
+            catch (ArgumentException)
+            {
+                pkc.LoadAllConfigs(SLApi.GetAppId(actId));
+            }
+
+            ProductConfig config;
+            pkc.Products.TryGetValue(actId, out config);
+
+            if (config == null) throw new ArgumentException("Activation ID " + actId + " not found in PKeyConfig.");
+
+            ProductKey pkey = config.GetRandomKey();
+
+            Guid instPkeyId = SLApi.GetInstalledPkeyID(actId);
+            if (instPkeyId != Guid.Empty) SLApi.UninstallProductKey(instPkeyId);
+
+            if (pkey.Algorithm == PKeyAlgorithm.PKEY2009)
+            {
+                uint status = SLApi.InstallProductKey(pkey);
+                Logger.WriteLine(string.Format("Installing generated product key {0} status {1:X}", pkey, status));
+
+                if ((int)status < 0)
+                {
+                    throw new ApplicationException("Failed to install generated product key.");
+                }
+
+                Logger.WriteLine("Successfully deposited generated product key.");
+                return;
+            }
+
+            Logger.WriteLine("Key range is PKEY2005, creating fake key data...");
+
+            if (pkey.Channel == "Volume:GVLK" && version == PSVersion.Win7) throw new NotSupportedException("Fake GVLK generation is not supported on Windows 7.");
+
+            VariableBag pkb = new VariableBag(version);
+            pkb.Blocks.AddRange(new[]
+            {
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.STRING,
+                    KeyAsStr = "SppPkeyBindingProductKey",
+                    ValueAsStr = pkey.ToString()
+                },
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.STRING,
+                    KeyAsStr = "SppPkeyBindingMPC",
+                    ValueAsStr = pkey.GetMPC()
+                },
+                new CRCBlockModern {
+                    DataType = CRCBlockType.BINARY,
+                    KeyAsStr = "SppPkeyBindingPid2",
+                    ValueAsStr = pkey.GetPid2()
+                },
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.BINARY,
+                    KeyAsStr = "SppPkeyBindingPid3",
+                    Value = pkey.GetPid3()
+                },
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.BINARY,
+                    KeyAsStr = "SppPkeyBindingPid4",
+                    Value = pkey.GetPid4()
+                },
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.STRING,
+                    KeyAsStr = "SppPkeyChannelId",
+                    ValueAsStr = pkey.Channel
+                },
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.STRING,
+                    KeyAsStr = "SppPkeyBindingEditionId",
+                    ValueAsStr = pkey.Edition
+                },
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.BINARY,
+                    KeyAsStr = (version == PSVersion.Win7) ? "SppPkeyShortAuthenticator" : "SppPkeyPhoneActivationData",
+                    Value = pkey.GetPhoneData(version)
+                },
+                new CRCBlockModern
+                {
+                    DataType = CRCBlockType.BINARY,
+                    KeyAsStr = "SppPkeyBindingMiscData",
+                    Value = new byte[] { }
+                }
+            });
+
+            Guid appId = SLApi.GetAppId(actId);
+            string pkeyId = pkey.GetPkeyId().ToString();
+            bool isAddon = SLApi.IsAddon(actId);
+            string currEdition = SLApi.GetMetaStr(actId, "Family");
+
+            if (appId == SLApi.WINDOWS_APP_ID && !isAddon)
+            {
+                SLApi.UninstallAllProductKeys(appId);
+            }
+
+            SPPUtils.KillSPP(version);
+
+            using (IPhysicalStore ps = SPPUtils.GetStore(version, production))
+            {
+                using (ITokenStore tks = SPPUtils.GetTokenStore(version))
+                {
+                    Logger.WriteLine("Writing to physical store and token store...");
+
+                    string suffix = (version == PSVersion.Win8 || version == PSVersion.WinBlue || version == PSVersion.WinModern) ? "_--" : "";
+                    string metSuffix = suffix + "_met";
+
+                    if (appId == SLApi.WINDOWS_APP_ID && !isAddon)
+                    {
+                        string edTokName = "msft:spp/token/windows/productkeyid/" + currEdition;
+
+                        TokenMeta edToken = tks.GetMetaEntry(edTokName);
+                        edToken.Data["windowsComponentEditionPkeyId"] = pkeyId;
+                        edToken.Data["windowsComponentEditionSkuId"] = actId.ToString();
+                        tks.SetEntry(edTokName, "xml", edToken.Serialize());
+
+                        WritePkey2005RegistryValues(version, pkey);
+                    }
+
+                    string uriMapName = "msft:spp/token/PKeyIdUriMapper" + metSuffix;
+                    TokenMeta uriMap = tks.GetMetaEntry(uriMapName);
+                    uriMap.Data[pkeyId] = pkey.GetAlgoUri();
+                    tks.SetEntry(uriMapName, "xml", uriMap.Serialize());
+
+                    string skuMetaName = actId + metSuffix;
+                    TokenMeta skuMeta = tks.GetMetaEntry(skuMetaName);
+
+                    foreach (string k in skuMeta.Data.Keys)
+                    {
+                        if (k.StartsWith("pkeyId_"))
+                        {
+                            skuMeta.Data.Remove(k);
+                            break;
+                        }
+                    }
+
+                    skuMeta.Data["pkeyId"] = pkeyId;
+                    skuMeta.Data["pkeyIdList"] = pkeyId;
+                    tks.SetEntry(skuMetaName, "xml", skuMeta.Serialize());
+
+                    string psKey = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
+                    ps.DeleteBlock(psKey, pkeyId);
+                    ps.AddBlock(new PSBlock
+                    {
+                        Type = BlockType.NAMED,
+                        Flags = (version == PSVersion.WinModern) ? (uint)0x402 : 0x2,
+                        KeyAsStr = psKey,
+                        ValueAsStr = pkeyId,
+                        Data = pkb.Serialize()
+                    });
+
+                    string cachePath = SPPUtils.GetTokensPath(version).Replace("tokens.dat", @"cache\cache.dat");
+                    if (File.Exists(cachePath)) File.Delete(cachePath);
+                }
+            }
+
+            SLApi.RefreshTrustedTime(actId);
+            Logger.WriteLine("Successfully deposited fake product key.");
+        }
+    }
+}
+
+
+// Modifiers/GracePeriodReset.cs
+namespace LibTSforge.Modifiers
+{
+    using System.Collections.Generic;
+    using System.Linq;
+    using PhysicalStore;
+    using SPP;
+
+    public static class GracePeriodReset
+    {
+        public static void Reset(PSVersion version, bool production)
+        {
+            SPPUtils.KillSPP(version);
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                string value = "msft:sl/timer";
+                List<PSBlock> blocks = store.FindBlocks(value).ToList();
+
+                foreach (PSBlock block in blocks)
+                {
+                    store.DeleteBlock(block.KeyAsStr, block.ValueAsStr);
+                }
+            }
+
+            SPPUtils.RestartSPP(version);
+            Logger.WriteLine("Successfully reset all grace and evaluation period timers.");
+        }
+    }
+}
+
+
+// Modifiers/KeyChangeLockDelete.cs
+namespace LibTSforge.Modifiers
+{
+    using System.Collections.Generic;
+    using System.Linq;
+    using PhysicalStore;
+    using SPP;
+    using System;
+
+    public static class KeyChangeLockDelete
+    {
+        public static void Delete(PSVersion version, bool production)
+        {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+
+            SPPUtils.KillSPP(version);
+            Logger.WriteLine("Writing TrustedStore data...");
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                List<string> values = new List<string>
+                {
+                    "msft:spp/timebased/AB",
+                    "msft:spp/timebased/CD"
+                };
+                List<PSBlock> blocks = new List<PSBlock>();
+                foreach (string value in values)
+                {
+                    blocks.AddRange(store.FindBlocks(value).ToList());
+                }
+                foreach (PSBlock block in blocks)
+                {
+                    store.DeleteBlock(block.KeyAsStr, block.ValueAsStr);
+                }
+            }
+            Logger.WriteLine("Successfully removed the key change lock.");
+        }
+    }
+}
+
+
+// Modifiers/KMSHostCharge.cs
+namespace LibTSforge.Modifiers
+{
+    using System;
+    using System.IO;
+    using PhysicalStore;
+    using SPP;
+
+    public static class KMSHostCharge
+    {
+        public static void Charge(PSVersion version, bool production, Guid actId)
+        {
+            if (actId == Guid.Empty)
+            {
+                actId = SLApi.GetDefaultActivationID(SLApi.WINDOWS_APP_ID, true);
+
+                if (actId == Guid.Empty)
+                {
+                    throw new NotSupportedException("No applicable activation IDs found.");
+                }
+            }
+
+            if (SLApi.GetPKeyChannel(SLApi.GetInstalledPkeyID(actId)) != "Volume:CSVLK")
+            {
+                throw new NotSupportedException("Non-Volume:CSVLK product key installed.");
+            }
+
+            Guid appId = SLApi.GetAppId(actId);
+            int totalClients = 50;
+            int currClients = 25;
+            byte[] hwidBlock = Constants.UniversalHWIDBlock;
+            string key = string.Format("SPPSVC\\{0}", appId);
+            long ldapTimestamp = DateTime.Now.ToFileTime();
+
+            byte[] cmidGuids = { };
+            byte[] reqCounts = { };
+            byte[] kmsChargeData = { };
+
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+
+            if (version == PSVersion.Vista)
+            {
+                writer.Write(new byte[44]);
+                writer.Seek(0, SeekOrigin.Begin);
+
+                writer.Write(totalClients);
+                writer.Write(43200);
+                writer.Write(32);
+
+                writer.Seek(20, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                writer.Seek(32, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                writer.Seek(0, SeekOrigin.End);
+
+                for (int i = 0; i < currClients; i++)
+                {
+                    writer.Write(Guid.NewGuid().ToByteArray());
+                    writer.Write(ldapTimestamp - (10 * (i + 1)));
+                }
+
+                kmsChargeData = writer.GetBytes();
+            } 
+            else
+            {
+                for (int i = 0; i < currClients; i++)
+                {
+                    writer.Write(ldapTimestamp - (10 * (i + 1)));
+                    writer.Write(Guid.NewGuid().ToByteArray());
+                }
+
+                cmidGuids = writer.GetBytes();
+
+                writer = new BinaryWriter(new MemoryStream());
+
+                writer.Write(new byte[40]);
+
+                writer.Seek(4, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                writer.Seek(24, SeekOrigin.Begin);
+                writer.Write((byte)currClients);
+
+                reqCounts = writer.GetBytes();
+            }
+
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                if (version != PSVersion.Vista)
+                {
+                    VariableBag kmsCountData = new VariableBag(version);
+                    kmsCountData.Blocks.AddRange(new[]
+                    {
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.BINARY,
+                            KeyAsStr = "SppBindingLicenseData",
+                            Value = hwidBlock
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.UINT,
+                            Key = new byte[] { },
+                            ValueAsInt = (uint)totalClients
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.UINT,
+                            Key = new byte[] { },
+                            ValueAsInt = 1051200000
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.UINT,
+                            Key = new byte[] { },
+                            ValueAsInt = (uint)currClients
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.BINARY,
+                            Key = new byte[] { },
+                            Value = cmidGuids
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.BINARY,
+                            Key = new byte[] { },
+                            Value = reqCounts
+                        }
+                    });
+
+                    kmsChargeData = kmsCountData.Serialize();
+                }
+
+                string countVal = version == PSVersion.Vista ? "C8F6FFF1-79CE-404C-B150-F97991273DF1" : string.Format("msft:spp/kms/host/2.0/store/counters/{0}", appId);
+
+                store.DeleteBlock(key, countVal);
+                store.AddBlock(new PSBlock
+                {
+                    Type = BlockType.NAMED,
+                    Flags = (version == PSVersion.WinModern) ? (uint)0x400 : 0,
+                    KeyAsStr = key,
+                    ValueAsStr = countVal,
+                    Data = kmsChargeData
+                });
+
+                Logger.WriteLine(string.Format("Set charge count to {0} successfully.", currClients));
+            }
+
+            SPPUtils.RestartSPP(version);
+        }
+    }
+}
+
+
+// Modifiers/RearmReset.cs
+namespace LibTSforge.Modifiers
+{
+    using System.Collections.Generic;
+    using System.Linq;
+    using PhysicalStore;
+    using SPP;
+
+    public static class RearmReset
+    {
+        public static void Reset(PSVersion version, bool production)
+        {
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                List<PSBlock> blocks;
+
+                if (version == PSVersion.Vista)
+                {
+                    blocks = store.FindBlocks("740D70D8-6448-4b2f-9063-4A7A463600C5").ToList();
+                }
+                else if (version == PSVersion.Win7)
+                {
+                    blocks = store.FindBlocks(0xA0000).ToList();
+                }
+                else
+                {
+                    blocks = store.FindBlocks("__##USERSEP-RESERVED##__$$REARM-COUNT$$").ToList();
+                }
+
+                foreach (PSBlock block in blocks)
+                {
+                    if (version == PSVersion.Vista)
+                    {
+                        store.DeleteBlock(block.KeyAsStr, block.ValueAsStr);
+                    }
+                    else if (version == PSVersion.Win7)
+                    {
+                        store.SetBlock(block.KeyAsStr, block.ValueAsInt, new byte[8]);
+                    }
+                    else
+                    {
+                        store.SetBlock(block.KeyAsStr, block.ValueAsStr, new byte[8]);
+                    }
+                }
+
+                Logger.WriteLine("Successfully reset all rearm counters.");
+            }
+        }
+    }
+}
+
+
+// Modifiers/SetIIDParams.cs
+namespace LibTSforge.Modifiers
+{
+    using PhysicalStore;
+    using SPP;
+    using System.IO;
+    using System;
+
+    public static class SetIIDParams
+    {
+        public static void SetParams(PSVersion version, bool production, Guid actId, PKeyAlgorithm algorithm, int group, int serial, ulong security)
+        {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+
+            Guid appId;
+
+            if (actId == Guid.Empty)
+            {
+                appId = SLApi.WINDOWS_APP_ID;
+                actId = SLApi.GetDefaultActivationID(appId, true);
+
+                if (actId == Guid.Empty)
+                {
+                    throw new Exception("No applicable activation IDs found.");
+                }
+            }
+            else
+            {
+                appId = SLApi.GetAppId(actId);
+            }
+
+            Guid pkeyId = SLApi.GetInstalledPkeyID(actId);
+
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
+                PSBlock keyBlock = store.GetBlock(key, pkeyId.ToString());
+
+                if (keyBlock == null)
+                {
+                    throw new InvalidDataException("Failed to get product key data for activation ID " + actId + ".");
+                }
+
+                VariableBag pkb = new VariableBag(keyBlock.Data, version);
+
+                ProductKey pkey = new ProductKey
+                {
+                    Group = group,
+                    Serial = serial,
+                    Security = security,
+                    Algorithm = algorithm,
+                    Upgrade = false
+                };
+
+                string blockName = version == PSVersion.Win7 ? "SppPkeyShortAuthenticator" : "SppPkeyPhoneActivationData";
+                pkb.SetBlock(blockName, pkey.GetPhoneData(version));
+                store.SetBlock(key, pkeyId.ToString(), pkb.Serialize());
+            }
+
+            Logger.WriteLine("Successfully set IID parameters.");
+        }
+    }
+}
+
+
+// Modifiers/TamperedFlagsDelete.cs
+namespace LibTSforge.Modifiers
+{
+    using System.Linq;
+    using PhysicalStore;
+    using SPP;
+
+    public static class TamperedFlagsDelete
+    {
+        public static void DeleteTamperFlags(PSVersion version, bool production)
+        {
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                if (version == PSVersion.Vista)
+                {
+                    DeleteFlag(store, "6BE8425B-E3CF-4e86-A6AF-5863E3DCB606");
+                }
+                else if (version == PSVersion.Win7)
+                {
+                    SetFlag(store, 0xA0001);
+                }
+                else
+                {
+                    DeleteFlag(store, "__##USERSEP-RESERVED##__$$RECREATED-FLAG$$");
+                    DeleteFlag(store, "__##USERSEP-RESERVED##__$$RECOVERED-FLAG$$");
+                }
+
+                Logger.WriteLine("Successfully cleared the tamper state.");
+            }
+
+            SPPUtils.RestartSPP(version);
+        }
+
+        private static void DeleteFlag(IPhysicalStore store, string flag)
+        {
+            store.FindBlocks(flag).ToList().ForEach(block => store.DeleteBlock(block.KeyAsStr, block.ValueAsStr));
+        }
+
+        private static void SetFlag(IPhysicalStore store, uint flag)
+        {
+            store.FindBlocks(flag).ToList().ForEach(block => store.SetBlock(block.KeyAsStr, block.ValueAsInt, new byte[8]));
+        }
+    }
+}
+
+
+// Modifiers/UniqueIdDelete.cs
+namespace LibTSforge.Modifiers
+{
+    using System;
+    using PhysicalStore;
+    using SPP;
+
+    public static class UniqueIdDelete
+    {
+        public static void DeleteUniqueId(PSVersion version, bool production, Guid actId)
+        {
+            if (version == PSVersion.Vista) throw new NotSupportedException("This feature is not supported on Windows Vista/Server 2008.");
+
+            Guid appId;
+
+            if (actId == Guid.Empty)
+            {
+                appId = SLApi.WINDOWS_APP_ID;
+                actId = SLApi.GetDefaultActivationID(appId, true);
+
+                if (actId == Guid.Empty)
+                {
+                    throw new Exception("No applicable activation IDs found.");
+                }
+            }
+            else
+            {
+                appId = SLApi.GetAppId(actId);
+            }
+
+            Guid pkeyId = SLApi.GetInstalledPkeyID(actId);
+
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
+                PSBlock keyBlock = store.GetBlock(key, pkeyId.ToString());
+
+                if (keyBlock == null)
+                {
+                    throw new Exception("No product key found.");
+                }
+
+                VariableBag pkb = new VariableBag(keyBlock.Data, version);
+
+                pkb.DeleteBlock("SppPkeyUniqueIdToken");
+
+                store.SetBlock(key, pkeyId.ToString(), pkb.Serialize());
+            }
+
+            Logger.WriteLine("Successfully removed Unique ID for product key ID " + pkeyId);
+        }
+    }
+}
+
+
+// Activators/KMS4K.cs
+namespace LibTSforge.Activators
+{
+    using System;
+    using System.IO;
+    using PhysicalStore;
+    using SPP;
+
+    public class KMS4k
+    {
+        public static void Activate(PSVersion version, bool production, Guid actId)
+        {
+            Guid appId;
+            if (actId == Guid.Empty)
+            {
+                appId = SLApi.WINDOWS_APP_ID;
+                actId = SLApi.GetDefaultActivationID(appId, true);
+
+                if (actId == Guid.Empty)
+                {
+                    throw new NotSupportedException("No applicable activation IDs found.");
+                }
+            }
+            else
+            {
+                appId = SLApi.GetAppId(actId);
+            }
+
+            if (SLApi.GetPKeyChannel(SLApi.GetInstalledPkeyID(actId)) != "Volume:GVLK")
+            {
+                throw new NotSupportedException("Non-Volume:GVLK product key installed.");
+            }
+
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
+
+                ulong unknown = 0;
+                ulong time1;
+                ulong time2 = (ulong)DateTime.UtcNow.ToFileTime();
+                ulong expiry = Constants.TimerMax;
+
+                if (version == PSVersion.Vista || version == PSVersion.Win7)
+                {
+                    unknown = 0x800000000;
+                    time1 = 0;
+                }
+                else
+                {
+                    long creationTime = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-CREATION-TIME$$").Data, 0);
+                    long tickCount = BitConverter.ToInt64(store.GetBlock("__##USERSEP##\\$$_RESERVED_$$\\NAMESPACE__", "__##USERSEP-RESERVED##__$$GLOBAL-TICKCOUNT-UPTIME$$").Data, 0);
+                    long deltaTime = BitConverter.ToInt64(store.GetBlock(key, "__##USERSEP-RESERVED##__$$UP-TIME-DELTA$$").Data, 0);
+
+                    time1 = (ulong)(creationTime + tickCount + deltaTime);
+                    time2 /= 10000;
+                    expiry /= 10000;
+                }
+
+                if (version == PSVersion.Vista)
+                {
+                    VistaTimer vistaTimer = new VistaTimer
+                    {
+                        Time = time2,
+                        Expiry = Constants.TimerMax
+                    };
+
+                    string vistaTimerName = string.Format("msft:sl/timer/VLExpiration/VOLUME/{0}/{1}", appId, actId);
+
+                    store.DeleteBlock(key, vistaTimerName);
+                    store.DeleteBlock(key, actId.ToString());
+
+                    BinaryWriter writer = new BinaryWriter(new MemoryStream());
+                    writer.Write(Constants.KMSv4Response.Length);
+                    writer.Write(Constants.KMSv4Response);
+                    writer.Write(Constants.UniversalHWIDBlock);
+                    byte[] kmsData = writer.GetBytes();
+
+                    store.AddBlocks(new[]
+                    {
+                        new PSBlock
+                        {
+                            Type = BlockType.TIMER,
+                            Flags = 0,
+                            KeyAsStr = key,
+                            ValueAsStr = vistaTimerName,
+                            Data = vistaTimer.CastToArray()
+                        },
+                        new PSBlock
+                        {
+                            Type = BlockType.NAMED,
+                            Flags = 0,
+                            KeyAsStr = key,
+                            ValueAsStr = actId.ToString(),
+                            Data = kmsData
+                        }
+                    });
+                }
+                else
+                {
+                    byte[] hwidBlock = Constants.UniversalHWIDBlock;
+                    byte[] kmsResp;
+
+                    switch (version)
+                    {
+                        case PSVersion.Win7:
+                            kmsResp = Constants.KMSv4Response;
+                            break;
+                        case PSVersion.Win8:
+                            kmsResp = Constants.KMSv5Response;
+                            break;
+                        case PSVersion.WinBlue:
+                        case PSVersion.WinModern:
+                            kmsResp = Constants.KMSv6Response;
+                            break;
+                        default:
+                            throw new NotSupportedException("Unsupported PSVersion.");
+                    }
+
+                    VariableBag kmsBinding = new VariableBag(version);
+
+                    kmsBinding.Blocks.AddRange(new[]
+                    {
+                    new CRCBlockModern
+                    {
+                        DataType = CRCBlockType.BINARY,
+                        Key = new byte[] { },
+                        Value = kmsResp
+                    },
+                    new CRCBlockModern
+                    {
+                        DataType = CRCBlockType.STRING,
+                        Key = new byte[] { },
+                        ValueAsStr = "msft:rm/algorithm/hwid/4.0"
+                    },
+                    new CRCBlockModern
+                    {
+                        DataType = CRCBlockType.BINARY,
+                        KeyAsStr = "SppBindingLicenseData",
+                        Value = hwidBlock
+                    }
+                    });
+
+                    if (version == PSVersion.WinModern)
+                    {
+                        kmsBinding.Blocks.AddRange(new[]
+                        {
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.STRING,
+                            Key = new byte[] { },
+                            ValueAsStr = "massgrave.dev"
+                        },
+                        new CRCBlockModern
+                        {
+                            DataType = CRCBlockType.STRING,
+                            Key = new byte[] { },
+                            ValueAsStr = "6969"
+                        }
+                        });
+                    }
+
+                    byte[] kmsBindingData = kmsBinding.Serialize();
+
+                    Timer kmsTimer = new Timer
+                    {
+                        Unknown = unknown,
+                        Time1 = time1,
+                        Time2 = time2,
+                        Expiry = expiry
+                    };
+
+                    string storeVal = string.Format("msft:spp/kms/bind/2.0/store/{0}/{1}", appId, actId);
+                    string timerVal = string.Format("msft:spp/kms/bind/2.0/timer/{0}/{1}", appId, actId);
+
+                    store.DeleteBlock(key, storeVal);
+                    store.DeleteBlock(key, timerVal);
+
+                    store.AddBlocks(new[]
+                    {
+                    new PSBlock
+                    {
+                        Type = BlockType.NAMED,
+                        Flags = (version == PSVersion.WinModern) ? (uint)0x400 : 0,
+                        KeyAsStr = key,
+                        ValueAsStr = storeVal,
+                        Data = kmsBindingData
+                    },
+                    new PSBlock
+                    {
+                        Type = BlockType.TIMER,
+                        Flags = (version == PSVersion.Win7) ? (uint)0 : 0x4,
+                        KeyAsStr = key,
+                        ValueAsStr = timerVal,
+                        Data = kmsTimer.CastToArray()
+                    }
+                    });
+                }
+            }
+
+            SPPUtils.RestartSPP(version);
+            SLApi.FireStateChangedEvent(appId);
+            Logger.WriteLine("Activated using KMS4k successfully.");
+        }
+    }
+}
+
+
+// Activators/ZeroCID.cs
+namespace LibTSforge.Activators
+{
+    using System;
+    using System.IO;
+    using System.Linq;
+    using Crypto;
+    using PhysicalStore;
+    using SPP;
+
+    public static class ZeroCID
+    {
+        private static void Deposit(Guid actId, string instId)
+        {
+            uint status = SLApi.DepositConfirmationID(actId, instId, Constants.ZeroCID);
+            Logger.WriteLine(string.Format("Depositing fake CID status {0:X}", status));
+
+            if (status != 0)
+            {
+                throw new InvalidOperationException("Failed to deposit fake CID.");
+            }
+        }
+
+        public static void Activate(PSVersion version, bool production, Guid actId)
+        {
+            Guid appId;
+
+            if (actId == Guid.Empty)
+            {
+                appId = SLApi.WINDOWS_APP_ID;
+                actId = SLApi.GetDefaultActivationID(appId, false);
+
+                if (actId == Guid.Empty)
+                {
+                    throw new NotSupportedException("No applicable activation IDs found.");
+                }
+            }
+            else
+            {
+                appId = SLApi.GetAppId(actId);
+            }
+
+            if (!SLApi.IsPhoneActivatable(actId))
+            {
+                throw new NotSupportedException("Phone license is unavailable for this product.");
+            }
+
+            string instId = SLApi.GetInstallationID(actId);
+            Guid pkeyId = SLApi.GetInstalledPkeyID(actId);
+
+            if (version == PSVersion.Vista || version == PSVersion.Win7)
+            {
+                Deposit(actId, instId);
+            }
+
+            SPPUtils.KillSPP(version);
+
+            Logger.WriteLine("Writing TrustedStore data...");
+
+            using (IPhysicalStore store = SPPUtils.GetStore(version, production))
+            {
+                byte[] hwidBlock = Constants.UniversalHWIDBlock;
+
+                Logger.WriteLine("Activation ID: " + actId);
+                Logger.WriteLine("Installation ID: " + instId);
+                Logger.WriteLine("Product Key ID: " + pkeyId);
+
+                byte[] iidHash;
+
+                if (version == PSVersion.Vista)
+                {
+                    iidHash = CryptoUtils.SHA256Hash(Utils.EncodeString(instId)).Take(0x10).ToArray();
+                }
+                else if (version == PSVersion.Win7)
+                {
+                    iidHash = CryptoUtils.SHA256Hash(Utils.EncodeString(instId));
+                }
+                else
+                {
+                    iidHash = CryptoUtils.SHA256Hash(Utils.EncodeString(instId + '\0' + Constants.ZeroCID));
+                }
+
+                string key = string.Format("SPPSVC\\{0}\\{1}", appId, actId);
+                PSBlock keyBlock = store.GetBlock(key, pkeyId.ToString());
+
+                if (keyBlock == null)
+                {
+                    throw new InvalidDataException("Failed to get product key data for activation ID " + actId + ".");
+                }
+
+                VariableBag pkb = new VariableBag(keyBlock.Data, version);
+
+                byte[] pkeyData;
+
+                if (version == PSVersion.Vista)
+                {
+                    pkeyData = pkb.GetBlock("PKeyBasicInfo").Value;
+                    string uniqueId = Utils.DecodeString(pkeyData.Skip(0x120).Take(0x80).ToArray());
+                    string extPid = Utils.DecodeString(pkeyData.Skip(0x1A0).Take(0x80).ToArray());
+
+                    uint group;
+                    uint.TryParse(extPid.Split('-')[1], out group);
+
+                    if (group == 0)
+                    {
+                        throw new FormatException("Extended PID has invalid format.");
+                    }
+
+                    ulong shortauth;
+
+                    try
+                    {
+                        shortauth = BitConverter.ToUInt64(Convert.FromBase64String(uniqueId.Split('&')[1]), 0);
+                    } 
+                    catch
+                    {
+                        throw new FormatException("Key Unique ID has invalid format.");
+                    }
+
+                    shortauth |= (ulong)group << 41;
+                    pkeyData = BitConverter.GetBytes(shortauth);
+                }
+                else if (version == PSVersion.Win7)
+                {
+                    pkeyData = pkb.GetBlock("SppPkeyShortAuthenticator").Value;
+                }
+                else
+                {
+                    pkeyData = pkb.GetBlock("SppPkeyPhoneActivationData").Value;
+                }
+
+                pkb.DeleteBlock("SppPkeyVirtual");
+                store.SetBlock(key, pkeyId.ToString(), pkb.Serialize());
+
+                BinaryWriter writer = new BinaryWriter(new MemoryStream());
+                writer.Write(iidHash.Length);
+                writer.Write(iidHash);
+                writer.Write(hwidBlock.Length);
+                writer.Write(hwidBlock);
+                byte[] tsHwidData = writer.GetBytes();
+
+                writer = new BinaryWriter(new MemoryStream());
+                writer.Write(iidHash.Length);
+                writer.Write(iidHash);
+                writer.Write(pkeyData.Length);
+                writer.Write(pkeyData);
+                byte[] tsPkeyInfoData = writer.GetBytes();
+
+                string phoneVersion = version == PSVersion.Vista ? "6.0" : "7.0";
+                Guid indexSlid = version == PSVersion.Vista ? actId : pkeyId;
+                string hwidBlockName = string.Format("msft:Windows/{0}/Phone/Cached/HwidBlock/{1}", phoneVersion, indexSlid);
+                string pkeyInfoName = string.Format("msft:Windows/{0}/Phone/Cached/PKeyInfo/{1}", phoneVersion, indexSlid);
+
+                store.DeleteBlock(key, hwidBlockName);
+                store.DeleteBlock(key, pkeyInfoName);
+
+                store.AddBlocks(new[] {
+                    new PSBlock
+                    {
+                        Type = BlockType.NAMED,
+                        Flags = 0,
+                        KeyAsStr = key,
+                        ValueAsStr = hwidBlockName,
+                        Data = tsHwidData
+                    }, 
+                    new PSBlock
+                    {
+                        Type = BlockType.NAMED,
+                        Flags = 0,
+                        KeyAsStr = key,
+                        ValueAsStr = pkeyInfoName,
+                        Data = tsPkeyInfoData
+                    }
+                });
+            }
+
+            if (version != PSVersion.Vista && version != PSVersion.Win7)
+            {
+                Deposit(actId, instId);
+            }
+
+            SPPUtils.RestartSPP(version);
+            SLApi.FireStateChangedEvent(appId);
+            Logger.WriteLine("Activated using ZeroCID successfully.");
+        }
+    }
+}
+
+
+// TokenStore/Common.cs
+namespace LibTSforge.TokenStore
+{
+    using System.Collections.Generic;
+    using System.IO;
+
+    public class TokenEntry
+    {
+        public string Name;
+        public string Extension;
+        public byte[] Data;
+        public bool Populated;
+    }
+
+    public class TokenMeta
+    {
+        public string Name;
+        public readonly Dictionary<string, string> Data = new Dictionary<string, string>();
+
+        public byte[] Serialize()
+        {
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+            writer.Write(1);
+            byte[] nameBytes = Utils.EncodeString(Name);
+            writer.Write(nameBytes.Length);
+            writer.Write(nameBytes);
+
+            foreach (KeyValuePair<string, string> kv in Data)
+            {
+                byte[] keyBytes = Utils.EncodeString(kv.Key);
+                byte[] valueBytes = Utils.EncodeString(kv.Value);
+                writer.Write(keyBytes.Length);
+                writer.Write(valueBytes.Length);
+                writer.Write(keyBytes);
+                writer.Write(valueBytes);
+            }
+
+            return writer.GetBytes();
+        }
+
+        private void Deserialize(byte[] data)
+        {
+            BinaryReader reader = new BinaryReader(new MemoryStream(data));
+            reader.ReadInt32();
+            int nameLen = reader.ReadInt32();
+            Name = reader.ReadNullTerminatedString(nameLen);
+
+            while (reader.BaseStream.Position < data.Length - 0x8)
+            {
+                int keyLen = reader.ReadInt32();
+                int valueLen = reader.ReadInt32();
+                string key = reader.ReadNullTerminatedString(keyLen);
+                string value = reader.ReadNullTerminatedString(valueLen);
+                Data[key] = value;
+            }
+        }
+
+        public TokenMeta(byte[] data)
+        {
+            Deserialize(data);
+        }
+
+        public TokenMeta()
+        {
+
+        }
+    }
+}
+
+
+// TokenStore/ITokenStore.cs
+namespace LibTSforge.TokenStore
+{
+    using System;
+
+    public interface ITokenStore : IDisposable
+    {
+        void Deserialize();
+        void Serialize();
+        void AddEntry(TokenEntry entry);
+        void AddEntries(TokenEntry[] entries);
+        void DeleteEntry(string name, string ext);
+        void DeleteUnpopEntry(string name, string ext);
+        TokenEntry GetEntry(string name, string ext);
+        TokenMeta GetMetaEntry(string name);
+        void SetEntry(string name, string ext, byte[] data);
+    }
+}
+
+
+// TokenStore/TokenStoreModern.cs
+namespace LibTSforge.TokenStore
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using Crypto;
+
+    public class TokenStoreModern : ITokenStore
+    {
+        private static readonly uint VERSION = 3;
+        private static readonly int ENTRY_SIZE = 0x9E;
+        private static readonly int BLOCK_SIZE = 0x4020;
+        private static readonly int ENTRIES_PER_BLOCK = BLOCK_SIZE / ENTRY_SIZE;
+        private static readonly int BLOCK_PAD_SIZE = 0x66;
+
+        private static readonly byte[] CONTS_HEADER = Enumerable.Repeat((byte)0x55, 0x20).ToArray();
+        private static readonly byte[] CONTS_FOOTER = Enumerable.Repeat((byte)0xAA, 0x20).ToArray();
+
+        private List<TokenEntry> Entries = new List<TokenEntry>();
+        private readonly FileStream TokensFile;
+
+        public void Deserialize()
+        {
+            if (TokensFile.Length < BLOCK_SIZE) return;
+
+            TokensFile.Seek(0x24, SeekOrigin.Begin);
+            uint nextBlock;
+
+            BinaryReader reader = new BinaryReader(TokensFile);
+            do
+            {
+                reader.ReadUInt32();
+                nextBlock = reader.ReadUInt32();
+
+                for (int i = 0; i < ENTRIES_PER_BLOCK; i++)
+                {
+                    uint curOffset = reader.ReadUInt32();
+                    bool populated = reader.ReadUInt32() == 1;
+                    uint contentOffset = reader.ReadUInt32();
+                    uint contentLength = reader.ReadUInt32();
+                    uint allocLength = reader.ReadUInt32();
+                    byte[] contentData = { };
+
+                    if (populated)
+                    {
+                        reader.BaseStream.Seek(contentOffset + 0x20, SeekOrigin.Begin);
+                        uint dataLength = reader.ReadUInt32();
+
+                        if (dataLength != contentLength)
+                        {
+                            throw new FormatException("Data length in tokens content is inconsistent with entry.");
+                        }
+
+                        reader.ReadBytes(0x20);
+                        contentData = reader.ReadBytes((int)contentLength);
+                    }
+
+                    reader.BaseStream.Seek(curOffset + 0x14, SeekOrigin.Begin);
+
+                    Entries.Add(new TokenEntry
+                    {
+                        Name = reader.ReadNullTerminatedString(0x82),
+                        Extension = reader.ReadNullTerminatedString(0x8),
+                        Data = contentData,
+                        Populated = populated
+                    });
+                }
+
+                reader.BaseStream.Seek(nextBlock, SeekOrigin.Begin);
+            } while (nextBlock != 0);
+        }
+
+        public void Serialize()
+        {
+            MemoryStream tokens = new MemoryStream();
+
+            using (BinaryWriter writer = new BinaryWriter(tokens))
+            {
+                writer.Write(VERSION);
+                writer.Write(CONTS_HEADER);
+
+                int curBlockOffset = (int)writer.BaseStream.Position;
+                int curEntryOffset = curBlockOffset + 0x8;
+                int curContsOffset = curBlockOffset + BLOCK_SIZE;
+
+                for (int eIndex = 0; eIndex < ((Entries.Count / ENTRIES_PER_BLOCK) + 1) * ENTRIES_PER_BLOCK; eIndex++)
+                {
+                    TokenEntry entry;
+
+                    if (eIndex < Entries.Count)
+                    {
+                        entry = Entries[eIndex];
+                    }
+                    else
+                    {
+                        entry = new TokenEntry
+                        {
+                            Name = "",
+                            Extension = "",
+                            Populated = false,
+                            Data = new byte[] { }
+                        };
+                    }
+
+                    writer.BaseStream.Seek(curBlockOffset, SeekOrigin.Begin);
+                    writer.Write(curBlockOffset);
+                    writer.Write(0);
+
+                    writer.BaseStream.Seek(curEntryOffset, SeekOrigin.Begin);
+                    writer.Write(curEntryOffset);
+                    writer.Write(entry.Populated ? 1 : 0);
+                    writer.Write(entry.Populated ? curContsOffset : 0);
+                    writer.Write(entry.Populated ? entry.Data.Length : -1);
+                    writer.Write(entry.Populated ? entry.Data.Length : -1);
+                    writer.WriteFixedString16(entry.Name, 0x82);
+                    writer.WriteFixedString16(entry.Extension, 0x8);
+                    curEntryOffset = (int)writer.BaseStream.Position;
+
+                    if (entry.Populated)
+                    {
+                        writer.BaseStream.Seek(curContsOffset, SeekOrigin.Begin);
+                        writer.Write(CONTS_HEADER);
+                        writer.Write(entry.Data.Length);
+                        writer.Write(CryptoUtils.SHA256Hash(entry.Data));
+                        writer.Write(entry.Data);
+                        writer.Write(CONTS_FOOTER);
+                        curContsOffset = (int)writer.BaseStream.Position;
+                    }
+
+                    if ((eIndex + 1) % ENTRIES_PER_BLOCK == 0 && eIndex != 0)
+                    {
+                        if (eIndex < Entries.Count)
+                        {
+                            writer.BaseStream.Seek(curBlockOffset + 0x4, SeekOrigin.Begin);
+                            writer.Write(curContsOffset);
+                        }
+
+                        writer.BaseStream.Seek(curEntryOffset, SeekOrigin.Begin);
+                        writer.WritePadding(BLOCK_PAD_SIZE);
+
+                        writer.BaseStream.Seek(curBlockOffset, SeekOrigin.Begin);
+                        byte[] blockData = new byte[BLOCK_SIZE - 0x20];
+
+                        tokens.Read(blockData, 0, BLOCK_SIZE - 0x20);
+                        byte[] blockHash = CryptoUtils.SHA256Hash(blockData);
+
+                        writer.BaseStream.Seek(curBlockOffset + BLOCK_SIZE - 0x20, SeekOrigin.Begin);
+                        writer.Write(blockHash);
+
+                        curBlockOffset = curContsOffset;
+                        curEntryOffset = curBlockOffset + 0x8;
+                        curContsOffset = curBlockOffset + BLOCK_SIZE;
+                    }
+                }
+
+                tokens.SetLength(curBlockOffset);
+            }
+
+            byte[] tokensData = tokens.ToArray();
+            byte[] tokensHash = CryptoUtils.SHA256Hash(tokensData.Take(0x4).Concat(tokensData.Skip(0x24)).ToArray());
+
+            tokens = new MemoryStream(tokensData);
+
+            BinaryWriter tokWriter = new BinaryWriter(TokensFile);
+            using (BinaryReader reader = new BinaryReader(tokens))
+            {
+                TokensFile.Seek(0, SeekOrigin.Begin);
+                TokensFile.SetLength(tokens.Length);
+                tokWriter.Write(reader.ReadBytes(0x4));
+                reader.ReadBytes(0x20);
+                tokWriter.Write(tokensHash);
+                tokWriter.Write(reader.ReadBytes((int)reader.BaseStream.Length - 0x4));
+            }
+        }
+
+        public void AddEntry(TokenEntry entry)
+        {
+            Entries.Add(entry);
+        }
+
+        public void AddEntries(TokenEntry[] entries)
+        {
+            Entries.AddRange(entries);
+        }
+
+        public void DeleteEntry(string name, string ext)
+        {
+            foreach (TokenEntry entry in Entries)
+            {
+                if (entry.Name == name && entry.Extension == ext)
+                {
+                    Entries.Remove(entry);
+                    return;
+                }
+            }
+        }
+
+        public void DeleteUnpopEntry(string name, string ext)
+        {
+            List<TokenEntry> delEntries = new List<TokenEntry>();
+            foreach (TokenEntry entry in Entries)
+            {
+                if (entry.Name == name && entry.Extension == ext && !entry.Populated)
+                {
+                    delEntries.Add(entry);
+                }
+            }
+
+            Entries = Entries.Except(delEntries).ToList();
+        }
+
+        public TokenEntry GetEntry(string name, string ext)
+        {
+            foreach (TokenEntry entry in Entries)
+            {
+                if (entry.Name == name && entry.Extension == ext)
+                {
+                    if (!entry.Populated) continue;
+                    return entry;
+                }
+            }
+
+            return null;
+        }
+
+        public TokenMeta GetMetaEntry(string name)
+        {
+            DeleteUnpopEntry(name, "xml");
+            TokenEntry entry = GetEntry(name, "xml");
+            TokenMeta meta;
+
+            if (entry == null)
+            {
+                meta = new TokenMeta
+                {
+                    Name = name
+                };
+            }
+            else
+            {
+                meta = new TokenMeta(entry.Data);
+            }
+
+            return meta;
+        }
+
+        public void SetEntry(string name, string ext, byte[] data)
+        {
+            for (int i = 0; i < Entries.Count; i++)
+            {
+                TokenEntry entry = Entries[i];
+
+                if (entry.Name == name && entry.Extension == ext && entry.Populated)
+                {
+                    entry.Data = data;
+                    Entries[i] = entry;
+                    return;
+                }
+            }
+
+            Entries.Add(new TokenEntry
+            {
+                Populated = true,
+                Name = name,
+                Extension = ext,
+                Data = data
+            });
+        }
+
+        public TokenStoreModern(string tokensPath)
+        {
+            TokensFile = File.Open(tokensPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            Deserialize();
+        }
+
+        public void Dispose()
+        {
+            Serialize();
+            TokensFile.Close();
+        }
+    }
+}
+
+
+// PhysicalStore/Common.cs
+namespace LibTSforge.PhysicalStore
+{
+    using System.Runtime.InteropServices;
+
+    public enum BlockType : uint
+    {
+        NONE,
+        NAMED,
+        ATTRIBUTE,
+        TIMER
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct Timer
+    {
+        public ulong Unknown;
+        public ulong Time1;
+        public ulong Time2;
+        public ulong Expiry;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct VistaTimer
+    {
+        public ulong Time;
+        public ulong Expiry;
+    }
+}
+
+
+// PhysicalStore/IPhysicalStore.cs
+namespace LibTSforge.PhysicalStore
+{
+    using System;
+    using System.Collections.Generic;
+
+    public class PSBlock
+    {
+        public BlockType Type;
+        public uint Flags;
+        public uint Unknown = 0;
+        public byte[] Key;
+        public string KeyAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Key);
+            }
+            set
+            {
+                Key = Utils.EncodeString(value);
+            }
+        }
+        public byte[] Value;
+        public string ValueAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Value);
+            }
+            set
+            {
+                Value = Utils.EncodeString(value);
+            }
+        }
+        public uint ValueAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Value, 0);
+            }
+            set
+            {
+                Value = BitConverter.GetBytes(value);
+            }
+        }
+        public byte[] Data;
+        public string DataAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Data);
+            }
+            set
+            {
+                Data = Utils.EncodeString(value);
+            }
+        }
+        public uint DataAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Data, 0);
+            }
+            set
+            {
+                Data = BitConverter.GetBytes(value);
+            }
+        }
+    }
+
+    public interface IPhysicalStore : IDisposable
+    {
+        PSBlock GetBlock(string key, string value);
+        PSBlock GetBlock(string key, uint value);
+        void AddBlock(PSBlock block);
+        void AddBlocks(IEnumerable<PSBlock> blocks);
+        void SetBlock(string key, string value, byte[] data);
+        void SetBlock(string key, string value, string data);
+        void SetBlock(string key, string value, uint data);
+        void SetBlock(string key, uint value, byte[] data);
+        void SetBlock(string key, uint value, string data);
+        void SetBlock(string key, uint value, uint data);
+        void DeleteBlock(string key, string value);
+        void DeleteBlock(string key, uint value);
+        byte[] Serialize();
+        void Deserialize(byte[] data);
+        byte[] ReadRaw();
+        void WriteRaw(byte[] data);
+        IEnumerable<PSBlock> FindBlocks(string valueSearch);
+        IEnumerable<PSBlock> FindBlocks(uint valueSearch);
+    }
+}
+
+
+// PhysicalStore/PhysicalStoreModern.cs
+namespace LibTSforge.PhysicalStore
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using Crypto;
+
+    public class ModernBlock
+    {
+        public BlockType Type;
+        public uint Flags;
+        public uint Unknown;
+        public byte[] Value;
+        public string ValueAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Value);
+            }
+            set
+            {
+                Value = Utils.EncodeString(value);
+            }
+        }
+        public uint ValueAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Value, 0);
+            }
+            set
+            {
+                Value = BitConverter.GetBytes(value);
+            }
+        }
+        public byte[] Data;
+        public string DataAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Data);
+            }
+            set
+            {
+                Data = Utils.EncodeString(value);
+            }
+        }
+        public uint DataAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Data, 0);
+            }
+            set
+            {
+                Data = BitConverter.GetBytes(value);
+            }
+        }
+
+        public void Encode(BinaryWriter writer)
+        {
+            writer.Write((uint)Type);
+            writer.Write(Flags);
+            writer.Write((uint)Value.Length);
+            writer.Write((uint)Data.Length);
+            writer.Write(Unknown);
+            writer.Write(Value);
+            writer.Write(Data);
+        }
+
+        public static ModernBlock Decode(BinaryReader reader)
+        {
+            uint type = reader.ReadUInt32();
+            uint flags = reader.ReadUInt32();
+
+            uint valueLen = reader.ReadUInt32();
+            uint dataLen = reader.ReadUInt32();
+            uint unk3 = reader.ReadUInt32();
+
+            byte[] value = reader.ReadBytes((int)valueLen);
+            byte[] data = reader.ReadBytes((int)dataLen);
+
+            return new ModernBlock
+            {
+                Type = (BlockType)type,
+                Flags = flags,
+                Unknown = unk3,
+                Value = value,
+                Data = data,
+            };
+        }
+    }
+
+    public sealed class PhysicalStoreModern : IPhysicalStore
+    {
+        private byte[] PreHeaderBytes = { };
+        private readonly Dictionary<string, List<ModernBlock>> Data = new Dictionary<string, List<ModernBlock>>();
+        private readonly FileStream TSFile;
+        private readonly PSVersion Version;
+        private readonly bool Production;
+
+        public byte[] Serialize()
+        {
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+            writer.Write(PreHeaderBytes);
+            writer.Write(Data.Keys.Count);
+
+            foreach (string key in Data.Keys)
+            {
+                List<ModernBlock> blocks = Data[key];
+                byte[] keyNameEnc = Utils.EncodeString(key);
+
+                writer.Write(keyNameEnc.Length);
+                writer.Write(keyNameEnc);
+                writer.Write(blocks.Count);
+                writer.Align(4);
+
+                foreach (ModernBlock block in blocks)
+                {
+                    block.Encode(writer);
+                    writer.Align(4);
+                }
+            }
+
+            return writer.GetBytes();
+        }
+
+        public void Deserialize(byte[] data)
+        {
+            BinaryReader reader = new BinaryReader(new MemoryStream(data));
+            PreHeaderBytes = reader.ReadBytes(8);
+
+            while (reader.BaseStream.Position < data.Length - 0x4)
+            {
+                uint numKeys = reader.ReadUInt32();
+
+                for (int i = 0; i < numKeys; i++)
+                {
+                    uint lenKeyName = reader.ReadUInt32();
+                    string keyName = Utils.DecodeString(reader.ReadBytes((int)lenKeyName)); uint numValues = reader.ReadUInt32();
+
+                    reader.Align(4);
+
+                    Data[keyName] = new List<ModernBlock>();
+
+                    for (int j = 0; j < numValues; j++)
+                    {
+                        Data[keyName].Add(ModernBlock.Decode(reader));
+                        reader.Align(4);
+                    }
+                }
+            }
+        }
+
+        public void AddBlock(PSBlock block)
+        {
+            if (!Data.ContainsKey(block.KeyAsStr))
+            {
+                Data[block.KeyAsStr] = new List<ModernBlock>();
+            }
+
+            Data[block.KeyAsStr].Add(new ModernBlock
+            {
+                Type = block.Type,
+                Flags = block.Flags,
+                Unknown = block.Unknown,
+                Value = block.Value,
+                Data = block.Data
+            });
+        }
+
+        public void AddBlocks(IEnumerable<PSBlock> blocks)
+        {
+            foreach (PSBlock block in blocks)
+            {
+                AddBlock(block);
+            }
+        }
+
+        public PSBlock GetBlock(string key, string value)
+        {
+            List<ModernBlock> blocks = Data[key];
+
+            foreach (ModernBlock block in blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = Utils.EncodeString(key),
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public PSBlock GetBlock(string key, uint value)
+        {
+            List<ModernBlock> blocks = Data[key];
+
+            foreach (ModernBlock block in blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = Utils.EncodeString(key),
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public void SetBlock(string key, string value, byte[] data)
+        {
+            List<ModernBlock> blocks = Data[key];
+
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                ModernBlock block = blocks[i];
+
+                if (block.ValueAsStr == value)
+                {
+                    block.Data = data;
+                    blocks[i] = block;
+                    break;
+                }
+            }
+
+            Data[key] = blocks;
+        }
+
+        public void SetBlock(string key, uint value, byte[] data)
+        {
+            List<ModernBlock> blocks = Data[key];
+
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                ModernBlock block = blocks[i];
+
+                if (block.ValueAsInt == value)
+                {
+                    block.Data = data;
+                    blocks[i] = block;
+                    break;
+                }
+            }
+
+            Data[key] = blocks;
+        }
+
+        public void SetBlock(string key, string value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, string value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void SetBlock(string key, uint value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, uint value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void DeleteBlock(string key, string value)
+        {
+            if (!Data.ContainsKey(key))
+            {
+                return;
+            }
+
+            List<ModernBlock> blocks = Data[key];
+
+            foreach (ModernBlock block in blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    blocks.Remove(block);
+                    break;
+                }
+            }
+
+            Data[key] = blocks;
+        }
+
+        public void DeleteBlock(string key, uint value)
+        {
+            if (!Data.ContainsKey(key))
+            {
+                return;
+            }
+
+            List<ModernBlock> blocks = Data[key];
+
+            foreach (ModernBlock block in blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    blocks.Remove(block);
+                    break;
+                }
+            }
+
+            Data[key] = blocks;
+        }
+
+        public PhysicalStoreModern(string tsPath, bool production, PSVersion version)
+        {
+            TSFile = File.Open(tsPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), production, version));
+            TSFile.Seek(0, SeekOrigin.Begin);
+            Version = version;
+            Production = production;
+        }
+
+        public void Dispose()
+        {
+            if (TSFile.CanWrite)
+            {
+                byte[] data = PhysStoreCrypto.EncryptPhysicalStore(Serialize(), Production, Version);
+                TSFile.SetLength(data.LongLength);
+                TSFile.Seek(0, SeekOrigin.Begin);
+                TSFile.WriteAllBytes(data);
+                TSFile.Close();
+            }
+        }
+
+        public byte[] ReadRaw()
+        {
+            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSFile.ReadAllBytes(), Production, Version);
+            TSFile.Seek(0, SeekOrigin.Begin);
+            return data;
+        }
+
+        public void WriteRaw(byte[] data)
+        {
+            byte[] encrData = PhysStoreCrypto.EncryptPhysicalStore(data, Production, Version);
+            TSFile.SetLength(encrData.LongLength);
+            TSFile.Seek(0, SeekOrigin.Begin);
+            TSFile.WriteAllBytes(encrData);
+            TSFile.Close();
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(string valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (string key in Data.Keys)
+            {
+                List<ModernBlock> values = Data[key];
+
+                foreach (ModernBlock block in values)
+                {
+                    if (block.ValueAsStr.Contains(valueSearch))
+                    {
+                        results.Add(new PSBlock
+                        {
+                            Type = block.Type,
+                            Flags = block.Flags,
+                            KeyAsStr = key,
+                            Value = block.Value,
+                            Data = block.Data
+                        });
+                    }
+                }
+            }
+
+            return results;
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(uint valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (string key in Data.Keys)
+            {
+                List<ModernBlock> values = Data[key];
+
+                foreach (ModernBlock block in values)
+                {
+                    if (block.ValueAsInt == valueSearch)
+                    {
+                        results.Add(new PSBlock
+                        {
+                            Type = block.Type,
+                            Flags = block.Flags,
+                            KeyAsStr = key,
+                            Value = block.Value,
+                            Data = block.Data
+                        });
+                    }
+                }
+            }
+
+            return results;
+        }
+    }
+}
+
+
+// PhysicalStore/PhysicalStoreVista.cs
+namespace LibTSforge.PhysicalStore
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using Crypto;
+
+    public class VistaBlock
+    {
+        public BlockType Type;
+        public uint Flags;
+        public byte[] Value;
+        public string ValueAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Value);
+            }
+            set
+            {
+                Value = Utils.EncodeString(value);
+            }
+        }
+        public uint ValueAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Value, 0);
+            }
+            set
+            {
+                Value = BitConverter.GetBytes(value);
+            }
+        }
+        public byte[] Data;
+        public string DataAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Data);
+            }
+            set
+            {
+                Data = Utils.EncodeString(value);
+            }
+        }
+        public uint DataAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Data, 0);
+            }
+            set
+            {
+                Data = BitConverter.GetBytes(value);
+            }
+        }
+
+        internal void Encode(BinaryWriter writer)
+        {
+            writer.Write((uint)Type);
+            writer.Write(Flags);
+            writer.Write(Value.Length);
+            writer.Write(Data.Length);
+            writer.Write(Value);
+            writer.Write(Data);
+        }
+
+        internal static VistaBlock Decode(BinaryReader reader)
+        {
+            uint type = reader.ReadUInt32();
+            uint flags = reader.ReadUInt32();
+
+            int valueLen = reader.ReadInt32();
+            int dataLen = reader.ReadInt32();
+
+            byte[] value = reader.ReadBytes(valueLen);
+            byte[] data = reader.ReadBytes(dataLen);
+            return new VistaBlock
+            {
+                Type = (BlockType)type,
+                Flags = flags,
+                Value = value,
+                Data = data,
+            };
+        }
+    }
+
+    public sealed class PhysicalStoreVista : IPhysicalStore
+    {
+        private byte[] PreHeaderBytes = { };
+        private readonly List<VistaBlock> Blocks = new List<VistaBlock>();
+        private readonly FileStream TSPrimary;
+        private readonly FileStream TSSecondary;
+        private readonly bool Production;
+
+        public byte[] Serialize()
+        {
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+            writer.Write(PreHeaderBytes);
+
+            foreach (VistaBlock block in Blocks)
+            {
+                block.Encode(writer);
+                writer.Align(4);
+            }
+
+            return writer.GetBytes();
+        }
+
+        public void Deserialize(byte[] data)
+        {
+            int len = data.Length;
+
+            BinaryReader reader = new BinaryReader(new MemoryStream(data));
+            PreHeaderBytes = reader.ReadBytes(8);
+
+            while (reader.BaseStream.Position < len - 0x14)
+            {
+                Blocks.Add(VistaBlock.Decode(reader));
+                reader.Align(4);
+            }
+        }
+
+        public void AddBlock(PSBlock block)
+        {
+            Blocks.Add(new VistaBlock
+            {
+                Type = block.Type,
+                Flags = block.Flags,
+                Value = block.Value,
+                Data = block.Data
+            });
+        }
+
+        public void AddBlocks(IEnumerable<PSBlock> blocks)
+        {
+            foreach (PSBlock block in blocks)
+            {
+                AddBlock(block);
+            }
+        }
+
+        public PSBlock GetBlock(string key, string value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public PSBlock GetBlock(string key, uint value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public void SetBlock(string key, string value, byte[] data)
+        {
+            for (int i = 0; i < Blocks.Count; i++)
+            {
+                VistaBlock block = Blocks[i];
+
+                if (block.ValueAsStr == value)
+                {
+                    block.Data = data;
+                    Blocks[i] = block;
+                    break;
+                }
+            }
+        }
+
+        public void SetBlock(string key, uint value, byte[] data)
+        {
+            for (int i = 0; i < Blocks.Count; i++)
+            {
+                VistaBlock block = Blocks[i];
+
+                if (block.ValueAsInt == value)
+                {
+                    block.Data = data;
+                    Blocks[i] = block;
+                    break;
+                }
+            }
+        }
+
+        public void SetBlock(string key, string value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, string value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void SetBlock(string key, uint value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, uint value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void DeleteBlock(string key, string value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsStr == value)
+                {
+                    Blocks.Remove(block);
+                    return;
+                }
+            }
+        }
+
+        public void DeleteBlock(string key, uint value)
+        {
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsInt == value)
+                {
+                    Blocks.Remove(block);
+                    return;
+                }
+            }
+        }
+
+        public PhysicalStoreVista(string primaryPath, bool production)
+        {
+            TSPrimary = File.Open(primaryPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            TSSecondary = File.Open(primaryPath.Replace("-0.", "-1."), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            Production = production;
+
+            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), production, PSVersion.Vista));
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+        }
+
+        public void Dispose()
+        {
+            if (TSPrimary.CanWrite && TSSecondary.CanWrite)
+            {
+                byte[] data = PhysStoreCrypto.EncryptPhysicalStore(Serialize(), Production, PSVersion.Vista);
+
+                TSPrimary.SetLength(data.LongLength);
+                TSSecondary.SetLength(data.LongLength);
+
+                TSPrimary.Seek(0, SeekOrigin.Begin);
+                TSSecondary.Seek(0, SeekOrigin.Begin);
+
+                TSPrimary.WriteAllBytes(data);
+                TSSecondary.WriteAllBytes(data);
+
+                TSPrimary.Close();
+                TSSecondary.Close();
+            }
+        }
+
+        public byte[] ReadRaw()
+        {
+            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), Production, PSVersion.Vista);
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+            return data;
+        }
+
+        public void WriteRaw(byte[] data)
+        {
+            byte[] encrData = PhysStoreCrypto.EncryptPhysicalStore(data, Production, PSVersion.Vista);
+
+            TSPrimary.SetLength(encrData.LongLength);
+            TSSecondary.SetLength(encrData.LongLength);
+
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+            TSSecondary.Seek(0, SeekOrigin.Begin);
+
+            TSPrimary.WriteAllBytes(encrData);
+            TSSecondary.WriteAllBytes(encrData);
+
+            TSPrimary.Close();
+            TSSecondary.Close();
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(string valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsStr.Contains(valueSearch))
+                {
+                    results.Add(new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(uint valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (VistaBlock block in Blocks)
+            {
+                if (block.ValueAsInt == valueSearch)
+                {
+                    results.Add(new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = new byte[0],
+                        Value = block.Value,
+                        Data = block.Data
+                    });
+                }
+            }
+
+            return results;
+        }
+    }
+}
+
+
+// PhysicalStore/PhysicalStoreWin7.cs
+namespace LibTSforge.PhysicalStore
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using Crypto;
+
+    public class Win7Block
+    {
+        public BlockType Type;
+        public uint Flags;
+        public byte[] Key;
+        public string KeyAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Key);
+            }
+            set
+            {
+                Key = Utils.EncodeString(value);
+            }
+        }
+        public byte[] Value;
+        public string ValueAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Value);
+            }
+            set
+            {
+                Value = Utils.EncodeString(value);
+            }
+        }
+        public uint ValueAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Value, 0);
+            }
+            set
+            {
+                Value = BitConverter.GetBytes(value);
+            }
+        }
+        public byte[] Data;
+        public string DataAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Data);
+            }
+            set
+            {
+                Data = Utils.EncodeString(value);
+            }
+        }
+        public uint DataAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Data, 0);
+            }
+            set
+            {
+                Data = BitConverter.GetBytes(value);
+            }
+        }
+
+        internal void Encode(BinaryWriter writer)
+        {
+            writer.Write((uint)Type);
+            writer.Write(Flags);
+            writer.Write(Key.Length);
+            writer.Write(Value.Length);
+            writer.Write(Data.Length);
+            writer.Write(Key);
+            writer.Write(Value);
+            writer.Write(Data);
+        }
+
+        internal static Win7Block Decode(BinaryReader reader)
+        {
+            uint type = reader.ReadUInt32();
+            uint flags = reader.ReadUInt32();
+
+            int keyLen = reader.ReadInt32();
+            int valueLen = reader.ReadInt32();
+            int dataLen = reader.ReadInt32();
+
+            byte[] key = reader.ReadBytes(keyLen);
+            byte[] value = reader.ReadBytes(valueLen);
+            byte[] data = reader.ReadBytes(dataLen);
+            return new Win7Block
+            {
+                Type = (BlockType)type,
+                Flags = flags,
+                Key = key,
+                Value = value,
+                Data = data,
+            };
+        }
+    }
+
+    public sealed class PhysicalStoreWin7 : IPhysicalStore
+    {
+        private byte[] PreHeaderBytes = { };
+        private readonly List<Win7Block> Blocks = new List<Win7Block>();
+        private readonly FileStream TSPrimary;
+        private readonly FileStream TSSecondary;
+        private readonly bool Production;
+
+        public byte[] Serialize()
+        {
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+            writer.Write(PreHeaderBytes);
+
+            foreach (Win7Block block in Blocks)
+            {
+                block.Encode(writer);
+                writer.Align(4);
+            }
+
+            return writer.GetBytes();
+        }
+
+        public void Deserialize(byte[] data)
+        {
+            int len = data.Length;
+
+            BinaryReader reader = new BinaryReader(new MemoryStream(data));
+            PreHeaderBytes = reader.ReadBytes(8);
+
+            while (reader.BaseStream.Position < len - 0x14)
+            {
+                Blocks.Add(Win7Block.Decode(reader));
+                reader.Align(4);
+            }
+        }
+
+        public void AddBlock(PSBlock block)
+        {
+            Blocks.Add(new Win7Block
+            {
+                Type = block.Type,
+                Flags = block.Flags,
+                Key = block.Key,
+                Value = block.Value,
+                Data = block.Data
+            });
+        }
+
+        public void AddBlocks(IEnumerable<PSBlock> blocks)
+        {
+            foreach (PSBlock block in blocks)
+            {
+                AddBlock(block);
+            }
+        }
+
+        public PSBlock GetBlock(string key, string value)
+        {
+            foreach (Win7Block block in Blocks)
+            {
+                if (block.KeyAsStr == key && block.ValueAsStr == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = block.Key,
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public PSBlock GetBlock(string key, uint value)
+        {
+            foreach (Win7Block block in Blocks)
+            {
+                if (block.KeyAsStr == key && block.ValueAsInt == value)
+                {
+                    return new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = block.Key,
+                        Value = block.Value,
+                        Data = block.Data
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        public void SetBlock(string key, string value, byte[] data)
+        {
+            for (int i = 0; i < Blocks.Count; i++)
+            {
+                Win7Block block = Blocks[i];
+
+                if (block.KeyAsStr == key && block.ValueAsStr == value)
+                {
+                    block.Data = data;
+                    Blocks[i] = block;
+                    break;
+                }
+            }
+        }
+
+        public void SetBlock(string key, uint value, byte[] data)
+        {
+            for (int i = 0; i < Blocks.Count; i++)
+            {
+                Win7Block block = Blocks[i];
+
+                if (block.KeyAsStr == key && block.ValueAsInt == value)
+                {
+                    block.Data = data;
+                    Blocks[i] = block;
+                    break;
+                }
+            }
+        }
+
+        public void SetBlock(string key, string value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, string value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void SetBlock(string key, uint value, string data)
+        {
+            SetBlock(key, value, Utils.EncodeString(data));
+        }
+
+        public void SetBlock(string key, uint value, uint data)
+        {
+            SetBlock(key, value, BitConverter.GetBytes(data));
+        }
+
+        public void DeleteBlock(string key, string value)
+        {
+            foreach (Win7Block block in Blocks)
+            {
+                if (block.KeyAsStr == key && block.ValueAsStr == value)
+                {
+                    Blocks.Remove(block);
+                    return;
+                }
+            }
+        }
+
+        public void DeleteBlock(string key, uint value)
+        {
+            foreach (Win7Block block in Blocks)
+            {
+                if (block.KeyAsStr == key && block.ValueAsInt == value)
+                {
+                    Blocks.Remove(block);
+                    return;
+                }
+            }
+        }
+
+        public PhysicalStoreWin7(string primaryPath, bool production)
+        {
+            TSPrimary = File.Open(primaryPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            TSSecondary = File.Open(primaryPath.Replace("-0.", "-1."), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            Production = production;
+
+            Deserialize(PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), production, PSVersion.Win7));
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+        }
+
+        public void Dispose()
+        {
+            if (TSPrimary.CanWrite && TSSecondary.CanWrite)
+            {
+                byte[] data = PhysStoreCrypto.EncryptPhysicalStore(Serialize(), Production, PSVersion.Win7);
+
+                TSPrimary.SetLength(data.LongLength);
+                TSSecondary.SetLength(data.LongLength);
+
+                TSPrimary.Seek(0, SeekOrigin.Begin);
+                TSSecondary.Seek(0, SeekOrigin.Begin);
+
+                TSPrimary.WriteAllBytes(data);
+                TSSecondary.WriteAllBytes(data);
+
+                TSPrimary.Close();
+                TSSecondary.Close();
+            }
+        }
+
+        public byte[] ReadRaw()
+        {
+            byte[] data = PhysStoreCrypto.DecryptPhysicalStore(TSPrimary.ReadAllBytes(), Production, PSVersion.Win7);
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+            return data;
+        }
+
+        public void WriteRaw(byte[] data)
+        {
+            byte[] encrData = PhysStoreCrypto.EncryptPhysicalStore(data, Production, PSVersion.Win7);
+
+            TSPrimary.SetLength(encrData.LongLength);
+            TSSecondary.SetLength(encrData.LongLength);
+
+            TSPrimary.Seek(0, SeekOrigin.Begin);
+            TSSecondary.Seek(0, SeekOrigin.Begin);
+
+            TSPrimary.WriteAllBytes(encrData);
+            TSSecondary.WriteAllBytes(encrData);
+
+            TSPrimary.Close();
+            TSSecondary.Close();
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(string valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (Win7Block block in Blocks)
+            {
+                if (block.ValueAsStr.Contains(valueSearch))
+                {
+                    results.Add(new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = block.Key,
+                        Value = block.Value,
+                        Data = block.Data
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        public IEnumerable<PSBlock> FindBlocks(uint valueSearch)
+        {
+            List<PSBlock> results = new List<PSBlock>();
+
+            foreach (Win7Block block in Blocks)
+            {
+                if (block.ValueAsInt == valueSearch)
+                {
+                    results.Add(new PSBlock
+                    {
+                        Type = block.Type,
+                        Flags = block.Flags,
+                        Key = block.Key,
+                        Value = block.Value,
+                        Data = block.Data
+                    });
+                }
+            }
+
+            return results;
+        }
+    }
+}
+
+
+// PhysicalStore/VariableBag.cs
+namespace LibTSforge.PhysicalStore
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+
+    public enum CRCBlockType : uint
+    {
+        UINT = 1 << 0,
+        STRING = 1 << 1,
+        BINARY = 1 << 2
+    }
+
+    public abstract class CRCBlock
+    {
+        public CRCBlockType DataType;
+        public byte[] Key;
+        public string KeyAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Key);
+            }
+            set
+            {
+                Key = Utils.EncodeString(value);
+            }
+        }
+        public byte[] Value;
+        public string ValueAsStr
+        {
+            get
+            {
+                return Utils.DecodeString(Value);
+            }
+            set
+            {
+                Value = Utils.EncodeString(value);
+            }
+        }
+        public uint ValueAsInt
+        {
+            get
+            {
+                return BitConverter.ToUInt32(Value, 0);
+            }
+            set
+            {
+                Value = BitConverter.GetBytes(value);
+            }
+        }
+
+        public abstract void Encode(BinaryWriter writer);
+        public abstract void Decode(BinaryReader reader);
+        public abstract uint CRC();
+    }
+
+    public class CRCBlockVista : CRCBlock
+    {
+        public override void Encode(BinaryWriter writer)
+        {
+            uint crc = CRC();
+            writer.Write((uint)DataType);
+            writer.Write(0);
+            writer.Write(Key.Length);
+            writer.Write(Value.Length);
+            writer.Write(crc);
+
+            writer.Write(Key);
+
+            writer.Write(Value);
+        }
+
+        public override void Decode(BinaryReader reader)
+        {
+            uint type = reader.ReadUInt32();
+            reader.ReadUInt32();
+            uint lenName = reader.ReadUInt32();
+            uint lenVal = reader.ReadUInt32();
+            uint crc = reader.ReadUInt32();
+
+            byte[] key = reader.ReadBytes((int)lenName);
+            byte[] value = reader.ReadBytes((int)lenVal);
+
+            DataType = (CRCBlockType)type;
+            Key = key;
+            Value = value;
+
+            if (CRC() != crc)
+            {
+                throw new InvalidDataException("Invalid CRC in variable bag.");
+            }
+        }
+
+        public override uint CRC()
+        {
+            return Utils.CRC32(Value);
+        }
+    }
+
+    public class CRCBlockModern : CRCBlock
+    {
+        public override void Encode(BinaryWriter writer)
+        {
+            uint crc = CRC();
+            writer.Write(crc);
+            writer.Write((uint)DataType);
+            writer.Write(Key.Length);
+            writer.Write(Value.Length);
+
+            writer.Write(Key);
+            writer.Align(8);
+
+            writer.Write(Value);
+            writer.Align(8);
+        }
+
+        public override void Decode(BinaryReader reader)
+        {
+            uint crc = reader.ReadUInt32();
+            uint type = reader.ReadUInt32();
+            uint lenName = reader.ReadUInt32();
+            uint lenVal = reader.ReadUInt32();
+
+            byte[] key = reader.ReadBytes((int)lenName);
+            reader.Align(8);
+
+            byte[] value = reader.ReadBytes((int)lenVal);
+            reader.Align(8);
+
+            DataType = (CRCBlockType)type;
+            Key = key;
+            Value = value;
+
+            if (CRC() != crc)
+            {
+                throw new InvalidDataException("Invalid CRC in variable bag.");
+            }
+        }
+
+        public override uint CRC()
+        {
+            BinaryWriter wtemp = new BinaryWriter(new MemoryStream());
+            wtemp.Write(0);
+            wtemp.Write((uint)DataType);
+            wtemp.Write(Key.Length);
+            wtemp.Write(Value.Length);
+            wtemp.Write(Key);
+            wtemp.Write(Value);
+            return Utils.CRC32(wtemp.GetBytes());
+        }
+    }
+
+    public class VariableBag
+    {
+        public List<CRCBlock> Blocks = new List<CRCBlock>();
+        private readonly PSVersion Version;
+
+        private void Deserialize(byte[] data)
+        {
+            int len = data.Length;
+
+            BinaryReader reader = new BinaryReader(new MemoryStream(data));
+
+            while (reader.BaseStream.Position < len - 0x10)
+            {
+                CRCBlock block;
+
+                if (Version == PSVersion.Vista)
+                {
+                    block = new CRCBlockVista();
+                }
+                else
+                {
+                    block = new CRCBlockModern();
+                }
+
+                block.Decode(reader);
+                Blocks.Add(block);
+            }
+        }
+
+        public byte[] Serialize()
+        {
+            BinaryWriter writer = new BinaryWriter(new MemoryStream());
+
+            foreach (CRCBlock block in Blocks)
+            {
+                if (Version == PSVersion.Vista)
+                {
+                    ((CRCBlockVista)block).Encode(writer);
+                } else
+                {
+                    ((CRCBlockModern)block).Encode(writer);
+                }
+            }
+
+            return writer.GetBytes();
+        }
+
+        public CRCBlock GetBlock(string key)
+        {
+            foreach (CRCBlock block in Blocks)
+            {
+                if (block.KeyAsStr == key)
+                {
+                    return block;
+                }
+            }
+
+            return null;
+        }
+
+        public void SetBlock(string key, byte[] value)
+        {
+            for (int i = 0; i < Blocks.Count; i++)
+            {
+                CRCBlock block = Blocks[i];
+
+                if (block.KeyAsStr == key)
+                {
+                    block.Value = value;
+                    Blocks[i] = block;
+                    break;
+                }
+            }
+        }
+
+        public void DeleteBlock(string key)
+        {
+            foreach (CRCBlock block in Blocks)
+            {
+                if (block.KeyAsStr == key)
+                {
+                    Blocks.Remove(block);
+                    return;
+                }
+            }
+        }
+
+        public VariableBag(byte[] data, PSVersion version)
+        {
+            Version = version;
+            Deserialize(data);
+        }
+
+        public VariableBag(PSVersion version)
+        {
+            Version = version;
+        }
+    }
+}
+'@
+$ErrorActionPreference = 'Stop'
+$binPath = "$env:_work\BIN\LibTSforge.dll"
+$psMajorVer = (Get-Host).Version.Major
+
+if (Test-Path -LiteralPath $binPath) {
+    Write-Host "LibTSforge.dll found in BIN folder. Loading the DLL..."
+    Add-Type -Path $binPath
+}
+else {
+    $cp = [CodeDom.Compiler.CompilerParameters] [string[]]@("System.dll", "System.Core.dll", "System.ServiceProcess.dll", "System.Xml.dll", "System.Xml.Linq.dll")
+    if ($psMajorVer -le 2) { $cp.CompilerOptions = "/define:POWERSHELL2 /unsafe" } else { $cp.CompilerOptions = "/unsafe" }
+    $lang = if ($psMajorVer -gt 2) { "CSharp" } else { "CSharpVersion3" }
+
+    $ctemp = "$env:SystemRoot\Temp\"
+    if (-Not (Test-Path -Path $ctemp)) { New-Item -Path $ctemp -ItemType Directory > $null }
+    $env:TMP = $ctemp
+    $env:TEMP = $ctemp
+
+    $cp.GenerateInMemory = $true
+    Add-Type -Language $lang -TypeDefinition $src -CompilerParameters $cp
+}
+
+if ($env:_debug -eq '0') {
+    [LibTSforge.Logger]::HideOutput = $true
+}
+$ver = [LibTSforge.Utils]::DetectVersion()
+$prod = [LibTSforge.SPP.SPPUtils]::DetectCurrentKey()
+$tsactids = @($args)
+
+function Get-WmiInfo {
+    param ([string]$tsactid, [string]$property)
+    
+    $query = "SELECT ID, $property FROM SoftwareLicensingProduct WHERE ID='$tsactid'"
+    $record = Get-WmiObject -Query $query
+    if ($record) {
+        return $record.$property
+    }
+}
+
+function slGetSkuInfo($SkuId) {
+    $t = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0)
+    $t.DefinePInvokeMethod('SLOpen', 'slc.dll', 22, 1, [Int32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+    $t.DefinePInvokeMethod('SLClose', 'slc.dll', 22, 1, [IntPtr], @([IntPtr]), 1, 3).SetImplementationFlags(128)
+    $t.DefinePInvokeMethod('SLGetProductSkuInformation', 'slc.dll', 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+    $w = $t.CreateType()
+    $hSLC = 0
+    try {
+        [void]$w::SLOpen([ref]$hSLC)
+        $c = 0; $b = 0
+        $r = $w::SLGetProductSkuInformation($hSLC, [ref][Guid]$SkuId, "msft:sl/EUL/PHONE/PUBLIC", [ref]$null, [ref]$c, [ref]$b)
+        return ($r -eq 0)
+    }
+    finally {
+        [void]$w::SLClose($hSLC)
+    }
+}
+
+if (-not $env:resetstuff) {
+    foreach ($tsactid in $tsactids) {
+        try {
+            $activated = $null
+            $prodDes = Get-WmiInfo -tsactid $tsactid -property "Description"
+            $prodName = Get-WmiInfo -tsactid $tsactid -property "Name"
+            if ($prodName) {
+                $nameParts = $prodName -split ',', 2
+                $prodName = if ($nameParts.Count -gt 1) { ($nameParts[1].Trim() -split '[ ,]')[0] } else { $null }
+            }
+            if (-not $env:_vis -and -not $env:oldks) {
+                [LibTSforge.Modifiers.GenPKeyInstall]::InstallGenPKey($ver, $prod, $tsactid)
+            }
+            if ($prodName -match 'Office' -and $prodDes -notmatch 'KMS' -and -not (slGetSkuInfo($tsactid))) {
+                $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
+                if ($licenseStatus -eq 1) {
+                    Write-Host "[$prodName] is already permanently activated." -ForegroundColor White -BackgroundColor DarkGreen
+                    continue
+                }
+            }
+            if ($env:tsmethod -eq "StaticCID") {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $attempts = @(
+                    @(100055, 1000043, 1338662172562478),
+                    @(1345, 1003020, 6311608238084405)
+                )
+                foreach ($params in $attempts) {
+                    [LibTSforge.Modifiers.SetIIDParams]::SetParams($ver, $prod, $tsactid, [LibTSforge.SPP.PKeyAlgorithm]::PKEY2009, $params[0], $params[1], $params[2])
+                    $instId = [LibTSforge.SPP.SLApi]::GetInstallationID($tsactid)
+                    $confId = [ActivationWs.ActivationHelper]::CallWebService(1, $instId, "31337-42069-123-456789-04-1337-2600.0000-2542001")
+                    $result = [LibTSforge.SPP.SLApi]::DepositConfirmationID($tsactid, $instId, $confId)
+                    if ($result -eq 0) { break }
+                }
+                [LibTSforge.SPP.SPPUtils]::RestartSPP($ver)
+            }
+            elseif ($env:tsmethod -eq "KMS4k") {
+                [LibTSforge.Activators.KMS4k]::Activate($ver, $prod, $tsactid)
+            }
+            else {
+                [LibTSforge.Activators.ZeroCID]::Activate($ver, $prod, $tsactid)
+            }
+            if ($env:tsmethod -eq "KMS4k") {
+                $GracePeriodStatus = Get-WmiInfo -tsactid $tsactid -property "GracePeriodRemaining"
+                if ($GracePeriodStatus -gt 259200) { $activated = 1 }
+            }
+            else {
+                $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
+                if ($licenseStatus -eq 1) { $activated = 1 }
+            }
+            if ($activated) {
+                if ($prodDes -match 'KMS' -and $prodDes -notmatch 'CLIENT') {
+                    [LibTSforge.Modifiers.KMSHostCharge]::Charge($ver, $prod, $tsactid)
+                    Write-Host "[$prodName] CSVLK is permanently activated with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
+                    Write-Host "[$prodName] CSVLK is charged with 25 clients for 30 days." -ForegroundColor White -BackgroundColor DarkGreen
+                }
+                else {
+                    if ($env:tsmethod -eq "KMS4k") {
+                        Write-Host "[$prodName] is activated till $([DateTime]::Now.AddMinutes($GracePeriodStatus).ToString('yyyy-MM-dd HH:mm:ss')) with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
+                    }
+                    else {
+                        Write-Host "[$prodName] is permanently activated with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
+                    }
+                }
+            }
+            else {
+                Write-Host "[$prodName] activation has failed." -ForegroundColor White -BackgroundColor DarkRed
+                $errcode = 3
+            }
+        }
+        catch {
+            $errcode = 3
+            Write-Host "$($_.Exception.Message)" -ForegroundColor Red -BackgroundColor Black
+            Write-Host "[$prodName] activation has failed." -ForegroundColor White -BackgroundColor DarkRed
+        }
+    }
+}
+
+if ($env:resetstuff) {
+    try {
+        if (-not $env:_vis) { [LibTSforge.Modifiers.TamperedFlagsDelete]::DeleteTamperFlags($ver, $prod) }
+        [LibTSforge.SPP.SLApi]::RefreshLicenseStatus()
+        [LibTSforge.Modifiers.RearmReset]::Reset($ver, $prod)
+        [LibTSforge.Modifiers.GracePeriodReset]::Reset($ver, $prod)
+        if (-not $env:_vis) { [LibTSforge.Modifiers.KeyChangeLockDelete]::Delete($ver, $prod) }
+    }
+    catch {
+        $errcode = 3
+        Write-Host "$($_.Exception.Message)" -ForegroundColor Red -BackgroundColor Black
+    }
+}
+
+Exit $errcode
+:tsforge:
+
+::========================================================================================================================================
+
+::  Get Windows Activation ID
+
+:wintsid:
+$SysPath = "$env:SystemRoot\System32"
+if (Test-Path "$env:SystemRoot\Sysnative\reg.exe") {
+    $SysPath = "$env:SystemRoot\Sysnative"
+}
+
+function Windows-ActID {
+    param (
+        [string]$edition,
+        [string]$keytype
+    )
+    
+    $filePatterns = @(
+        "$SysPath\spp\tokens\skus\$edition\$edition*.xrm-ms",
+        "$SysPath\spp\tokens\skus\Security-SPP-Component-SKU-$edition\*-$edition-*.xrm-ms"
+    )
+    
+    switch ($keytype) {
+        "zero" {
+            $licenseTypes = @('OEM_DM', 'OEM_COA_SLP', 'OEM_COA_NSLP', 'MAK', 'RETAIL')
+        }
+        "ks" {
+            $licenseTypes = @('KMSCLIENT')
+        }
+        "avma" {
+            $licenseTypes = @('VIRTUAL_MACHINE')
+        }
+        "kmshost" {
+            $licenseTypes = @('KMS_')
+        }
+    }
+    
+    $softwareLicensingProducts = Get-WmiObject -Query "SELECT ID, Description, LicenseFamily FROM SoftwareLicensingProduct WHERE ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f'" | Where-Object { $_.LicenseFamily -eq $edition }
+    
+    $orderedLicenses = @()
+    foreach ($type in $licenseTypes) {
+        $orderedLicenses += $softwareLicensingProducts | Where-Object { $_.Description -match $type } | Select-Object -ExpandProperty ID
+    }
+    
+    $fileIds = @()
+    $muiLockedIds = @()
+    $kmsCountedIdCounts = @{}
+
+    $t = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0)
+
+    $methods = @(
+        @{name = 'SLOpen'; returnType = [Int32]; parameters = @([IntPtr].MakeByRefType()) },
+        @{name = 'SLClose'; returnType = [Int32]; parameters = @([IntPtr]) },
+        @{name = 'SLGetProductSkuInformation'; returnType = [Int32]; parameters = @([IntPtr], [Guid].MakeByRefType(), [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()) },
+        @{name = 'SLGetLicense'; returnType = [Int32]; parameters = @([IntPtr], [Guid].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()) }
+    )
+    
+    foreach ($method in $methods) {
+        $t.DefinePInvokeMethod($method.name, 'slc.dll', 22, 1, $method.returnType, $method.parameters, 1, 3).SetImplementationFlags(128)
+    }
+    
+    $w = $t.CreateType()
+    $m = [Runtime.InteropServices.Marshal]
+
+    function GetLicenseInfo($SkuId, $checkType) {
+        $result = $false
+        $c = 0; $b = 0
+        
+        [void]$w::SLGetProductSkuInformation($hSLC, [ref][Guid]$SkuId, "fileId", [ref]$null, [ref]$c, [ref]$b)
+        $FileId = $m::PtrToStringUni($b)
+        
+        $c = 0; $b = 0
+        [void]$w::SLGetLicense($hSLC, [ref][Guid]$FileId, [ref]$c, [ref]$b)
+        $blob = New-Object byte[] $c; $m::Copy($b, $blob, 0, $c)
+        $cont = [Text.Encoding]::UTF8.GetString($blob)
+        $xml = [xml]$cont.SubString($cont.IndexOf('<r'))
+        
+        if ($checkType -eq 'MUI') {
+            $xml.licenseGroup.license[0].grant | foreach {
+                $_.allConditions.allConditions.productPolicies.policyStr | where { $_.name -eq 'Kernel-MUI-Language-Allowed' } | foreach {
+                    if ($_.InnerText -ne 'EMPTY') { $result = $true }
+                }
+            }
+        }
+        elseif ($checkType -eq 'KMS') {
+            $xml.licenseGroup.license[0].grant | foreach {
+                $_.allConditions.allConditions.productPolicies.policyStr | where { $_.name -eq 'Security-SPP-KmsCountedIdList' } | foreach {
+                    $result = ($_.InnerText.Replace(' ', '').Replace("`n", '') -split ',').Count
+                }
+            }
+        }
+        
+        return $result
+    }
+
+    $hSLC = 0; [void]$w::SLOpen([ref]$hSLC)
+
+    foreach ($id in $orderedLicenses) {
+        if ($keytype -eq 'kmshost') {
+            $kmsCount = GetLicenseInfo $id 'KMS'
+            if ($kmsCount -gt 0) {
+                $kmsCountedIdCounts[$id] = $kmsCount
+            }
+        }
+        if ($edition -notcontains "CountrySpecific" -and (GetLicenseInfo $id 'MUI')) {
+            $muiLockedIds += $id
+        }
+    }
+    
+    foreach ($filePattern in $filePatterns) {
+        $files = Get-ChildItem -Path $filePattern -Filter '*.xrm-ms' -ErrorAction SilentlyContinue
+        foreach ($file in $files) {
+            if ($null -ne $file.FullName) {
+                $content = Get-Content -Path $file.FullName -ErrorAction SilentlyContinue | Out-String
+                foreach ($id in $orderedLicenses) {
+                    if ($content -match "name=`"productSkuId`">\{$id\}" -and -not ($file.Name -match 'Beta|Test')) {
+                        $fileIds += $id
+                    }
+                }
+            }
+        }
+    }
+    
+    if ($kmsCountedIdCounts.Count -gt 0) {
+        $idWithMostIds = $kmsCountedIdCounts.GetEnumerator() | Sort-Object Value -Descending
+        $fileIds = $idWithMostIds | Select-Object -ExpandProperty Key
+    }
+    else {
+        if ($fileIds.Count -eq 0) {
+            $fileIds = $orderedLicenses
+        }
+    
+        $fileIds = $orderedLicenses | Where-Object { $fileIds -contains $_ -and $muiLockedIds -notcontains $_ } | Select-Object -Unique
+    }
+    
+    [void]$w::SLClose($hSLC)
+    
+    $pkeyconfig = "$SysPath\spp\tokens\pkeyconfig\pkeyconfig.xrm-ms"
+    if ($keytype -eq 'kmshost') {
+        $csvlkPath = "$SysPath\spp\tokens\pkeyconfig\pkeyconfig-csvlk.xrm-ms"
+        if (Test-Path $csvlkPath) {
+            $pkeyconfig = $csvlkPath
+        }
+    }
+    
+    $data = [xml][Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(([xml](get-content $pkeyconfig)).licenseGroup.license.otherInfo.infoTables.infoList.infoBin.InnerText))
+    
+    $betaIds = @()
+    $excludedIds = @()
+    $checkedIds = @()
+    
+    foreach ($id in $fileIds) {
+        $actConfig = $data.ProductKeyConfiguration.Configurations.Configuration | Where-Object { $_.ActConfigId -eq "{$id}" }
+        if ($actConfig) {
+            $productDescription = $actConfig.ProductDescription
+            $productEditionID = $actConfig.EditionID
+            if ($productDescription -match 'MUI locked|Tencent|Qihoo|WAU') {
+                $excludedIds += $id
+                continue
+            }
+    
+            if ($productDescription -match 'Beta|RC |Next |Test|Pre-') {
+                $betaIds += $id
+                continue
+            }
+    
+            if ($keytype -ne 'kmshost' -and $productEditionID -eq '$edition') {
+                $checkedIds += $id
+                continue
+            }
+    
+            $refGroupId = $actConfig.RefGroupId
+            $publicKey = $data.ProductKeyConfiguration.PublicKeys.PublicKey | Where-Object { $_.GroupId -eq $refGroupId -and $_.AlgorithmId -eq 'msft:rm/algorithm/pkey/2009' }
+            if ($publicKey) {
+                $keyRanges = $data.ProductKeyConfiguration.KeyRanges.KeyRange | Where-Object { $_.RefActConfigId -eq "{$id}" }
+                foreach ($keyRange in $keyRanges) {
+                    if ($keyRange.EulaType -match 'WAU') {
+                        $excludedIds += $id
+                        break
+                    }
+                }
+            }
+        }
+    }
+    
+    $prefinalIds = @()
+    $finalIds = @()
+    
+    $prefinalIds = $fileIds | Where-Object { $excludedIds -notcontains $_ } | Select-Object -Unique
+    $finalIds = $prefinalIds | Where-Object { $betaIds -notcontains $_ } | Select-Object -Unique
+    
+    if ($finalIds.Count -eq 0) {
+        $finalIds = $prefinalIds
+    }
+    
+    if ($checkedIds.Count -gt 0) {
+        $finalIds = $checkedIds + $finalIds
+    }
+    
+    $firstId = $finalIds | Select-Object -First 1
+    return $firstId.ToLower()
+}
+
+Windows-ActID -edition "$env:tsedition" -keytype "$env:keytype"
+:wintsid:
+
+::========================================================================================================================================
+
+::  Get Office Activation ID
+
+:offtsid:
+function Office-ActID {
+    param (
+        [string]$pkeypath,
+        [string]$edition,
+        [string]$keytype
+    )
+
+    switch ($keytype) {
+        "zero" { $productKeyTypes = @("OEM:NONSLP","Volume:MAK","Retail") }
+        "ks" { $productKeyTypes = @("Volume:GVLK") }
+    }
+
+    $data = [xml][Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(([xml](Get-Content $pkeypath)).licenseGroup.license.otherInfo.infoTables.infoList.infoBin.InnerText))
+    $configurations = $data.ProductKeyConfiguration.Configurations.Configuration
+
+    $filteredConfigs = @()
+    foreach ($type in $productKeyTypes) {
+        $filteredConfigs += $configurations | Where-Object { 
+            $_.EditionId -eq $edition -and 
+            $_.ProductKeyType -eq $type -and 
+            $_.ProductDescription -notmatch 'demo|MSDN|PIN'
+        }
+    }
+
+    $filterPreview = $filteredConfigs | Where-Object { $_.ProductDescription -notmatch 'preview|c2r' }
+
+    if ($filterPreview.Count -ne 0) {
+        $filteredConfigs = $filterPreview
+    } 
+
+    $firstConfig = ($filteredConfigs | Select-Object -First 1).ActConfigID -replace '^\{|\}$', ''
+    return $firstConfig.ToLower()
+}
+
+Office-ActID -pkeypath "$env:pkeypath" -edition "$env:_License" -keytype "$env:keytype"
+:offtsid:
+
+::========================================================================================================================================
+
+::  1st column = Office version
+::  2nd column = Volume or free retail product
+::  3rd column = Retail product names that needs to be converted to the Volume product mentioned in 2nd column
+::  Separator  = "_"
+
+:tsksdata
+
+set f=
+for %%# in (
+:: Office 2013
+15_AccessVolume_-AccessRetail-
+15_AccessRuntimeRetail
+15_ExcelVolume_-ExcelRetail-
+15_GrooveVolume_-GrooveRetail-
+15_InfoPathVolume_-InfoPathRetail-
+15_LyncAcademicRetail
+15_LyncEntryRetail
+15_LyncVolume_-LyncRetail-
+15_MondoRetail
+15_MondoVolume_-O365BusinessRetail-O365HomePremRetail-O365ProPlusRetail-O365SmallBusPremRetail-
+15_OneNoteFreeRetail
+15_OneNoteVolume_-OneNoteRetail-
+15_OutlookVolume_-OutlookRetail-
+15_PowerPointVolume_-PowerPointRetail-
+15_ProjectProVolume_-ProjectProRetail-
+15_ProjectStdVolume_-ProjectStdRetail-
+15_ProPlusVolume_-ProPlusRetail-ProfessionalPipcRetail-ProfessionalRetail-
+15_PublisherVolume_-PublisherRetail-
+15_SPDRetail
+15_StandardVolume_-StandardRetail-HomeBusinessPipcRetail-HomeBusinessRetail-HomeStudentARMRetail-HomeStudentPlusARMRetail-HomeStudentRetail-PersonalPipcRetail-PersonalRetail-
+15_VisioProVolume_-VisioProRetail-
+15_VisioStdVolume_-VisioStdRetail-
+15_WordVolume_-WordRetail-
+:: Office 2016
+16_AccessRuntimeRetail
+16_AccessVolume_-AccessRetail-
+16_ExcelVolume_-ExcelRetail-
+16_MondoRetail
+16_MondoVolume_-O365AppsBasicRetail-O365BusinessRetail-O365EduCloudRetail-O365HomePremRetail-O365ProPlusRetail-O365SmallBusPremRetail-
+16_OneNoteFreeRetail
+16_OneNoteVolume_-OneNoteRetail-OneNote2021Retail-
+16_OutlookVolume_-OutlookRetail-
+16_PowerPointVolume_-PowerPointRetail-
+16_ProjectProVolume_-ProjectProRetail-
+16_ProjectProXVolume
+16_ProjectStdVolume_-ProjectStdRetail-
+16_ProjectStdXVolume
+16_ProPlusVolume_-ProPlusRetail-ProfessionalPipcRetail-ProfessionalRetail-
+16_PublisherVolume_-PublisherRetail-
+16_SkypeServiceBypassRetail
+16_SkypeforBusinessEntryRetail
+16_SkypeforBusinessVolume_-SkypeforBusinessRetail-
+16_StandardVolume_-StandardRetail-HomeBusinessPipcRetail-HomeBusinessRetail-HomeStudentARMRetail-HomeStudentPlusARMRetail-HomeStudentRetail-HomeStudentVNextRetail-PersonalPipcRetail-PersonalRetail-
+16_VisioProVolume_-VisioProRetail-
+16_VisioProXVolume
+16_VisioStdVolume_-VisioStdRetail-
+16_VisioStdXVolume
+16_WordVolume_-WordRetail-
+:: Office 2019
+16_AccessRuntime2019Retail
+16_Access2019Volume_-Access2019Retail-
+16_Excel2019Volume_-Excel2019Retail-
+16_Outlook2019Volume_-Outlook2019Retail-
+16_PowerPoint2019Volume_-PowerPoint2019Retail-
+16_ProjectPro2019Volume_-ProjectPro2019Retail-
+16_ProjectStd2019Volume_-ProjectStd2019Retail-
+16_ProPlus2019Volume_-ProPlus2019Retail-Professional2019Retail-
+16_Publisher2019Volume_-Publisher2019Retail-
+16_SkypeforBusiness2019Volume_-SkypeforBusiness2019Retail-
+16_SkypeforBusinessEntry2019Retail
+16_Standard2019Volume_-Standard2019Retail-HomeBusiness2019Retail-HomeStudentARM2019Retail-HomeStudentPlusARM2019Retail-HomeStudent2019Retail-Personal2019Retail-
+16_VisioPro2019Volume_-VisioPro2019Retail-
+16_VisioStd2019Volume_-VisioStd2019Retail-
+16_Word2019Volume_-Word2019Retail-
+:: Office 2021
+:: OneNote2021Volume KMS license is not available
+16_AccessRuntime2021Retail
+16_Access2021Volume_-Access2021Retail-
+16_Excel2021Volume_-Excel2021Retail-
+16_Outlook2021Volume_-Outlook2021Retail-
+16_OneNoteFree2021Retail
+16_PowerPoint2021Volume_-PowerPoint2021Retail-
+16_ProjectPro2021Volume_-ProjectPro2021Retail-
+16_ProjectStd2021Volume_-ProjectStd2021Retail-
+16_ProPlus2021Volume_-ProPlus2021Retail-Professional2021Retail-
+16_Publisher2021Volume_-Publisher2021Retail-
+16_SkypeforBusiness2021Volume_-SkypeforBusiness2021Retail-
+16_Standard2021Volume_-Standard2021Retail-HomeBusiness2021Retail-HomeStudent2021Retail-Personal2021Retail-
+16_VisioPro2021Volume_-VisioPro2021Retail-
+16_VisioStd2021Volume_-VisioStd2021Retail-
+16_Word2021Volume_-Word2021Retail-
+:: Office 2024
+16_Access2024Volume_-Access2024Retail-
+16_Excel2024Volume_-Excel2024Retail-
+16_Outlook2024Volume_-Outlook2024Retail-
+16_PowerPoint2024Volume_-PowerPoint2024Retail-
+16_ProjectPro2024Volume_-ProjectPro2024Retail-
+16_ProjectStd2024Volume_-ProjectStd2024Retail-
+16_ProPlus2024Volume_-ProPlus2024Retail-
+16_SkypeforBusiness2024Volume
+16_Standard2024Volume_-Home2024Retail-HomeBusiness2024Retail-
+16_VisioPro2024Volume_-VisioPro2024Retail-
+16_VisioStd2024Volume_-VisioStd2024Retail-
+16_Word2024Volume_-Word2024Retail-
+) do (
+for /f "tokens=1-3 delims=_" %%A in ("%%#") do (
+
+if %1==chkprod if "%oVer%"=="%%A" if not defined foundprod (
+if /i "%%B"=="%2" set foundprod=1
+)
+
+if %1==getinfo if "%oVer%"=="%%A" (
+echo: %%C | find /i "-%2-" %nul% && (
+set _License=%%B
+set _altoffid=%%B
+)
+)
+
+)
+)
+exit /b
+
+::========================================================================================================================================
+
+:ts_getedition
+
+set tsedition=
+set _wtarget=
+
+if %_wmic% EQU 1 set "chkedi=for /f "tokens=2 delims==" %%a in ('"wmic path %spp% where (ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' AND LicenseDependsOn is NULL) get LicenseFamily /VALUE" %nul6%')"
+if %_wmic% EQU 0 set "chkedi=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT LicenseFamily FROM %spp% WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND LicenseDependsOn is NULL').Get()).LicenseFamily ^| %% {echo ('LicenseFamily='+$_)}" %nul6%')"
+%chkedi% do if not errorlevel 1 call set "_wtarget= !_wtarget! %%a "
+
+::  SKU and Edition ID database
+
+for %%# in (
+1:Ultimate
+2:HomeBasic
+3:HomePremium
+4:Enterprise
+5:HomeBasicN
+6:Business
+7:ServerStandard
+8:ServerDatacenter
+9:ServerSBSStandard
+10:ServerEnterprise
+11:Starter
+12:ServerDatacenterCore
+13:ServerStandardCore
+14:ServerEnterpriseCore
+15:ServerEnterpriseIA64
+16:BusinessN
+17:ServerWeb
+18:ServerHPC
+19:ServerHomeStandard
+20:ServerStorageExpress
+21:ServerStorageStandard
+22:ServerStorageWorkgroup
+23:ServerStorageEnterprise
+24:ServerWinSB
+25:ServerSBSPremium
+26:HomePremiumN
+27:EnterpriseN
+28:UltimateN
+29:ServerWebCore
+30:ServerMediumBusinessManagement
+31:ServerMediumBusinessSecurity
+32:ServerMediumBusinessMessaging
+33:ServerWinFoundation
+34:ServerHomePremium
+35:ServerWinSBV
+36:ServerStandardV
+37:ServerDatacenterV
+38:ServerEnterpriseV
+39:ServerDatacenterVCore
+40:ServerStandardVCore
+41:ServerEnterpriseVCore
+42:ServerHyperCore
+43:ServerStorageExpressCore
+44:ServerStorageStandardCore
+45:ServerStorageWorkgroupCore
+46:ServerStorageEnterpriseCore
+47:StarterN
+48:Professional
+49:ProfessionalN
+50:ServerSolution
+51:ServerForSBSolutions
+52:ServerSolutionsPremium
+53:ServerSolutionsPremiumCore
+54:ServerSolutionEM
+55:ServerForSBSolutionsEM
+56:ServerEmbeddedSolution
+57:ServerEmbeddedSolutionCore
+58:ProfessionalEmbedded
+59:ServerEssentialManagement
+60:ServerEssentialAdditional
+61:ServerEssentialManagementSvc
+62:ServerEssentialAdditionalSvc
+63:ServerSBSPremiumCore
+64:ServerHPCV
+65:Embedded
+66:StarterE
+67:HomeBasicE
+68:HomePremiumE
+69:ProfessionalE
+70:EnterpriseE
+71:UltimateE
+72:EnterpriseEval
+74:Prerelease
+76:ServerMultiPointStandard
+77:ServerMultiPointPremium
+79:ServerStandardEval
+80:ServerDatacenterEval
+81:PrereleaseARM
+82:PrereleaseN
+84:EnterpriseNEval
+85:EmbeddedAutomotive
+86:EmbeddedIndustryA
+87:ThinPC
+88:EmbeddedA
+89:EmbeddedIndustry
+90:EmbeddedE
+91:EmbeddedIndustryE
+92:EmbeddedIndustryAE
+93:ProfessionalPlus
+95:ServerStorageWorkgroupEval
+96:ServerStorageStandardEval
+97:CoreARM
+98:CoreN
+99:CoreCountrySpecific
+100:CoreSingleLanguage
+101:Core
+103:ProfessionalWMC
+104:MobileCore
+105:EmbeddedIndustryEval
+106:EmbeddedIndustryEEval
+107:EmbeddedEval
+108:EmbeddedEEval
+109:CoreSystemServer
+110:ServerCloudStorage
+111:CoreConnected
+112:ProfessionalStudent
+113:CoreConnectedN
+114:ProfessionalStudentN
+115:CoreConnectedSingleLanguage
+116:CoreConnectedCountrySpecific
+117:ConnectedCar
+118:IndustryHandheld
+119:PPIPRO
+120:ServerARM64
+121:Education
+122:EducationN
+123:IoTUAP
+124:ServerHI
+125:EnterpriseS
+126:EnterpriseSN
+127:ProfessionalS
+128:ProfessionalSN
+129:EnterpriseSEval
+130:EnterpriseSNEval
+131:IoTUAPCommercial
+133:MobileEnterprise
+134:AnalogOneCoreEnterprise
+135:AnalogOneCore
+136:Holographic
+138:ProfessionalSingleLanguage
+139:ProfessionalCountrySpecific
+140:EnterpriseSubscription
+141:EnterpriseSubscriptionN
+143:ServerDatacenterNano
+144:ServerStandardNano
+145:ServerDatacenterACor
+146:ServerStandardACor
+147:ServerDatacenterCor
+148:ServerStandardCor
+149:UtilityVM
+159:ServerDatacenterEvalCor
+160:ServerStandardEvalCor
+161:ProfessionalWorkstation
+162:ProfessionalWorkstationN
+163:ServerAzure
+164:ProfessionalEducation
+165:ProfessionalEducationN
+168:ServerAzureCor
+169:ServerAzureNano
+171:EnterpriseG
+172:EnterpriseGN
+173:BusinessSubscription
+174:BusinessSubscriptionN
+175:ServerRdsh
+178:Cloud
+179:CloudN
+180:HubOS
+182:OneCoreUpdateOS
+183:CloudE
+184:Andromeda
+185:IoTOS
+186:CloudEN
+187:IoTEdgeOS
+188:IoTEnterprise
+189:ModernPC
+191:IoTEnterpriseS
+192:SystemOS
+193:NativeOS
+194:GameCoreXbox
+195:GameOS
+196:DurangoHostOS
+197:ScarlettHostOS
+198:Keystone
+199:CloudHost
+200:CloudMOS
+201:CloudCore
+202:CloudEditionN
+203:CloudEdition
+204:WinVOS
+205:IoTEnterpriseSK
+206:IoTEnterpriseK
+207:IoTEnterpriseSEval
+208:AgentBridge
+209:NanoHost
+210:WNC
+406:ServerAzureStackHCICor
+407:ServerTurbine
+408:ServerTurbineCor
+
+REM Some old edition names with same SKU ID
+
+4:ProEnterprise
+6:ProStandard
+10:ProSBS
+16:ProStandardN
+18:ServerComputeCluster
+19:ServerHome
+30:ServerMidmarketStandard
+31:ServerMidmarketEdge
+32:ServerMidmarketPremium
+33:ServerSBSPrime
+42:ServerHyper
+64:ServerComputeClusterV
+85:EmbeddedIapetus
+86:EmbeddedTethys
+88:EmbeddedDione
+89:EmbeddedRhea
+90:EmbeddedEnceladus
+109:ServerNano
+124:ServerCloudHostInfrastructure
+133:MobileBusiness
+134:HololensEnterprise
+145:ServerDatacenterSCor
+146:ServerStandardSCor
+147:ServerDatacenterWSCor
+148:ServerStandardWSCor
+189:Lite
+) do (
+for /f "tokens=1-2 delims=:" %%A in ("%%#") do if "%osSKU%"=="%%A" if not defined tsedition (
+echo "%_wtarget%" | find /i " %%B " %nul% && set tsedition=%%B
+)
+)
+
+if defined tsedition exit /b
+
+set d1=%ref% [void]$TypeBuilder.DefinePInvokeMethod('GetEditionNameFromId', 'pkeyhelper.dll', 'Public, Static', 1, [int], @([int], [IntPtr].MakeByRefType()), 1, 3);
+set d1=%d1% $out = 0; [void]$TypeBuilder.CreateType()::GetEditionNameFromId(%osSKU%, [ref]$out);$s=[Runtime.InteropServices.Marshal]::PtrToStringUni($out); $s
+
+for %%# in (pkeyhelper.dll) do @if not "%%~$PATH:#"=="" (
+for /f %%a in ('%psc% "%d1%"') do if not errorlevel 1 (
+echo "%_wtarget%" | find /i " %%a " %nul% && set tsedition=%%a
+)
+)
+
+exit /b
+
+:+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 :KMS38Activation
 
 ::  To activate, run the script with "/KMS38" parameter or change 0 to 1 in below line
@@ -3639,9 +11712,9 @@ echo Unsupported OS version detected [%winbuild%].
 echo KMS38 activation is only supported on Windows 10/11/Server, build 14393 and later.
 echo:
 if %winbuild% LSS 10240 (
-call :dk_color %Blue% "Use Online KMS activation option."
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 ) else (
-call :dk_color %Blue% "Use HWID activation option."
+call :dk_color %Blue% "Use HWID activation option from the main menu."
 )
 goto dk_done
 )
@@ -3671,7 +11744,7 @@ echo:
 echo                 [0] %_exitmsg%
 echo:           ______________________________________________________
 echo: 
-call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard [1,2,0]"
+call :dk_color2 %_White% "              " %_Green% "Choose a menu option using your keyboard [1,2,0]"
 choice /C:120 /N
 set _el=!errorlevel!
 if !_el!==3  exit /b
@@ -3703,8 +11776,13 @@ if defined _fmiss (
 %eline%
 echo [%_fmiss%] file is missing, aborting...
 echo:
+if not defined results (
+call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
+call :dk_color %Blue% "After that, restart system and try activation again."
+echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
 goto dk_done
 )
 
@@ -3757,10 +11835,11 @@ echo Server Evaluation cannot be activated. Convert it to full Server OS.
 echo:
 call :dk_color %Blue% "Go Back to main menu and use [Change Edition] option."
 ) else (
-echo Evaluation editions cannot be activated outside of their evaluation period. 
+echo Evaluation editions cannot be activated outside of their evaluation period.
+call :dk_color %Blue% "Use TSforge activation option from the main menu to reset evaluation period."
 echo:
 set fixes=%fixes% %mas%evaluation_editions
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%evaluation_editions"
 )
 goto dk_done
 )
@@ -3776,7 +11855,7 @@ if not exist "!_work!\clipup.exe" (
 echo clipup.exe doesn't exist in Server Cor/Acor [No GUI] versions.
 echo The file is required for KMS38 activation.
 echo Check the below page for instructions on how to activate it.
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%kms38"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%kms38"
 goto dk_done
 )
 )
@@ -3788,7 +11867,7 @@ if defined a_cor (
 if !errorlevel!==3 (
 %eline%
 echo Valid digital signature not found in clipup.exe file.
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 )
@@ -3856,18 +11935,18 @@ if exist "%SysPath%\spp\tokens\skus\%osedition%\*GVLK*.xrm-ms" set sppks=1
 if defined skunotfound (
 call :dk_color %Red% "Required license files not found in %SysPath%\spp\tokens\skus\"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 if defined sppks (
 call :dk_color %Red% "KMS38 activation is supported but failed to find the key."
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 if not defined skunotfound if not defined sppks (
 call :dk_color %Red% "This product does not support KMS38 activation."
-call :dk_color %Blue% "Make sure you are using the latest version of the script."
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 set fixes=%fixes% %mas%
 echo %mas%
 )
@@ -3898,6 +11977,7 @@ call echo Checking Installed Product Key          [Partial Key - %%_partial%%] [
 )
 
 if defined key (
+set generickey=1
 call :dk_inskey "[%key%]"
 )
 
@@ -3912,7 +11992,7 @@ if %_wmic% EQU 0 for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELE
 if not defined app (
 call :dk_color %Red% "Checking Installed GVLK Activation ID   [Not Found] Aborting..."
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto :dk_done
 )
 
@@ -3996,12 +12076,6 @@ set "_xmlexist=if exist "%tdir%\GenuineTicket.xml""
 
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 
-sc query sppsvc | find /i "STOPPED" %nul% && (
-echo Stopping sppsvc Service                 [Successful]
-) || (
-call :dk_color %Gray% "Stopping sppsvc Service                 [Failed]"
-)
-
 %_xmlexist% (
 %psc% "Start-Job { Restart-Service ClipSVC } | Wait-Job -Timeout 20 | Out-Null"
 %_xmlexist% timeout /t 2 %nul%
@@ -4080,7 +12154,7 @@ goto :k_final
 call :dk_color %Red% "Activation Failed"
 if not defined error call :dk_color %Blue% "%_fixmsg%"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 
 ::========================================================================================================================================
 
@@ -4530,12 +12604,17 @@ echo:
 echo Initializing...
 call :dk_chkmal
 
-if not exist %SysPath%\sppsvc.exe (
+if not exist %SysPath%\%_slexe% (
 %eline%
-echo [%SysPath%\sppsvc.exe] file is missing, aborting...
+echo [%SysPath%\%_slexe%] file is missing, aborting...
+echo:
+if not defined results (
+call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
+call :dk_color %Blue% "After that, restart system and try activation again."
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
 goto dk_done
 )
 
@@ -4584,11 +12663,12 @@ call :dk_color %Blue% "Internet is required for Online %KS% Activation."
 
 echo Initiating Diagnostic Tests...
 
-set "_serv=sppsvc Winmgmt"
+set "_serv=%_slser% Winmgmt"
 
 ::  Software Protection
 ::  Windows Management Instrumentation
 
+if %_actwin%==0 set notwinact=1
 call :dk_errorcheck
 
 ::========================================================================================================================================
@@ -4625,8 +12705,9 @@ call :dk_color %Red% "Checking Evaluation Edition             [Evaluation editio
 if defined _evalserv (
 call :dk_color %Blue% "Go back to main menu and use [Change Edition] option."
 ) else (
+call :dk_color %Blue% "Use TSforge activation option from the main menu to reset evaluation period."
 set fixes=%fixes% %mas%evaluation_editions
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%evaluation_editions"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%evaluation_editions"
 )
 
 goto :ks_office
@@ -4672,25 +12753,24 @@ echo [%winos% ^| %winbuild% ^| SKU:%osSKU%]
 if %winbuild% GEQ 9200 if exist "%SysPath%\spp\tokens\skus\%osedition%\*GVLK*.xrm-ms" set sppks=1
 if %winbuild% LSS 9200 if exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*VLKMS*.xrm-ms" set sppks=1
 if %winbuild% LSS 9200 if exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*VL-BYPASS*.xrm-ms" set sppks=1
+if %winbuild% LSS 7600 if exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*KMS*.xrm-ms" set sppks=1
+if %winbuild% LSS 7600 if exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*VL-BYPASS*.xrm-ms" set sppks=1
 
 if defined skunotfound (
-call :dk_color %Red% "Required license files not found in %SysPath%\spp\tokens\skus\"
+call :dk_color %Red% "Required license files not found."
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 if defined sppks (
 call :dk_color %Red% "%KS% activation is supported but failed to find the %KS% key."
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 if not defined skunotfound if not defined sppks (
 call :dk_color %Red% "This product does not support %KS% activation."
-if %winbuild% LSS 9200 (
-call :dk_color2 %Blue% "Use the alternative activator listed here - " %_Yellow% " %mas%unsupported_products_activation"
-)
-set fixes=%fixes% %mas%unsupported_products_activation
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 )
 echo:
 goto :ks_office
@@ -4718,6 +12798,7 @@ call echo Checking Installed Product Key          [Partial Key - %%_partial%%] [
 )
 
 if defined key (
+set generickey=1
 call :dk_inskey "[%key%]"
 )
 
@@ -4727,7 +12808,7 @@ call :dk_inskey "[%key%]"
 
 if not %_actoff%==1 goto :ks_activate
 
-call :ks_setspp
+call :oh_setspp
 
 ::  Check ohook install
 
@@ -4772,7 +12853,7 @@ set ohub=1
 
 ::  Check supported office versions
 
-call :ks_getpath
+call :oh_getpath
 
 set o16uwp=
 set o16uwp_path=
@@ -4812,7 +12893,7 @@ call :dk_color %Red% "Checking Installed Office               [Not Found]"
 
 if defined ohub (
 echo:
-echo You have only Office dashboard app installed, you need to install full Office version.
+echo You only have the Office Dashboard app installed. You need to install the full version of Office.
 )
 call :dk_color %Blue% "Download and install Office from below URL and try again."
 set fixes=%fixes% %mas%genuine-installation-media
@@ -4904,6 +12985,7 @@ set error=1
 goto :ks_starto16c2r
 )
 
+call :oh_expiredpreview 2013
 if "%_actprojvis%"=="0" call :oh_fixprids
 call :ks_process
 
@@ -4944,6 +13026,7 @@ set error=1
 goto :ks_startmsi
 )
 
+call :oh_expiredpreview 2016 2019 2021 2024
 if "%_actprojvis%"=="0" call :oh_fixprids
 call :ks_process
 
@@ -4951,9 +13034,9 @@ call :ks_process
 
 :ks_startmsi
 
-if defined o14msi call :ks_setspp 14
+if defined o14msi call :oh_setspp 14
 if defined o14msi call :ks_processmsi 14 %o14msi_reg%
-call :ks_setspp
+call :oh_setspp
 if defined o15msi call :ks_processmsi 15 %o15msi_reg%
 if defined o16msi call :ks_processmsi 16 %o16msi_reg%
 
@@ -4969,7 +13052,7 @@ call :oh_licrefresh
 :ks_activate
 
 ::  Opt out of sending KMSclient activation data to Microsoft
-::  https://learn.microsoft.com/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#19-software-protection-platform
+::  https://learn.microsoft.com/en-us/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services#19-software-protection-platform
 
 if %winbuild% GEQ 9600 (
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v NoGenTicket /t REG_DWORD /d 1 /f %nul%
@@ -5037,7 +13120,7 @@ echo Cleared %KS% Server from the registry.
 )
 )
 
-::  https://learn.microsoft.com/azure/virtual-desktop/windows-10-multisession-faq
+::  https://learn.microsoft.com/en-us/azure/virtual-desktop/windows-10-multisession-faq
 
 if %_actwin%==1 for %%# in (407) do if %osSKU%==%%# (
 call :dk_color %Red% "%winos% does not support activation on non-azure platforms."
@@ -5092,34 +13175,7 @@ set _prids=
 set _config=
 set _version=
 set _License=
-set _oBranding=
-exit /b
-
-::========================================================================================================================================
-
-:ks_getpath
-
-set o16c2r=
-set o15c2r=
-set o16msi=
-set o15msi=
-set o14msi=
-
-set _68=HKLM\SOFTWARE\Microsoft\Office
-set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
-
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set o16c2r=1&set o16c2r_reg=%_86%\ClickToRun)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set o16c2r=1&set o16c2r_reg=%_68%\ClickToRun)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_86%\15.0\ClickToRun)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set o15c2r=1&set o15c2r_reg=%_68%\15.0\ClickToRun)
-
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o16msi=1&set o16msi_reg=%_86%\16.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o16msi=1&set o16msi_reg=%_68%\16.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_86%\15.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o15msi=1&set o15msi_reg=%_68%\15.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=1&set o14msi_reg=%_86%\14.0)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set o14msi=1&set o14msi_reg=%_68%\14.0)
-
+set _oMSI=
 exit /b
 
 ::========================================================================================================================================
@@ -5152,16 +13208,19 @@ exit /b
 
 ::========================================================================================================================================
 
-:ks_setspp
+:oh_setspp
 
+set isOspp=
 if %winbuild% GEQ 9200 (
 set spp=SoftwareLicensingProduct
 set sps=SoftwareLicensingService
 ) else (
+set isOspp=1
 set spp=OfficeSoftwareProtectionProduct
 set sps=OfficeSoftwareProtectionService
 )
 if "%1"=="14" (
+set isOspp=1
 set spp=OfficeSoftwareProtectionProduct
 set sps=OfficeSoftwareProtectionService
 )
@@ -5174,7 +13233,7 @@ exit /b
 for %%# in (%_oIds%) do (
 
 set skipprocess=
-if %_NoEditionChange%==1 if not defined _oBranding (
+if %_NoEditionChange%==1 if not defined _oMSI (
 set foundprod=
 call :ksdata chkprod %%#
 if not defined foundprod (
@@ -5215,21 +13274,26 @@ call :ksdata getinfo !_prod!
 if defined _altoffid (
 set _License=!_altoffid!
 echo Converting Retail To Volume             [!_prod! To !_altoffid!]
+echo %%# | find /i "O365" %nul% && (
+if "%oVer%"=="15" (call :dk_color %Gray% "Mondo 2013 is equivalent to O365 [15.0 version] in terms of the latest features.")
+if "%oVer%"=="16" (call :dk_color %Gray% "Mondo 2016 is equivalent to O365 in terms of the latest features.")
+)
 set _prod=!_altoffid!
 call :ks_osppready
 )
 
 if not "!key!"=="" (
 echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
+set generickey=1
 call :dk_inskey "[!key!] [!_prod!]"
 ) else (
-if not defined _oBranding (
+if not defined _oMSI (
 set error=1
 call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !_prod! not found in script]"
 call :dk_color %Blue% "Make sure you are using Latest MAS script."
 ) else (
 call :dk_color %Red% "Checking Product In Script              [!_prod! MSI Retail is not supported]"
-call :dk_color %Blue% "Uninstall this and Install C2R or MSI VL version of Office."
+call :dk_color %Blue% "Use Ohook option to activate it. To activate with %KS%, you need to install Volume version of Office."
 )
 set fixes=%fixes% %mas%genuine-installation-media
 call :dk_color %_Yellow% "%mas%genuine-installation-media"
@@ -5246,6 +13310,7 @@ exit /b
 ::  Process Office MSI Version
 
 call :ks_reset
+set _oMSI=1
 
 if "%1"=="14" (
 call :dk_actids 59a52881-a989-479d-af46-f275c6370663
@@ -5262,24 +13327,10 @@ echo "%2" | find /i "Wow6432Node" %nul1% && set _oArch=x86
 if not "%osarch%"=="x86" if not defined _oArch set _oArch=x64
 if "%osarch%"=="x86" set _oArch=x86
 
-set "_common=%CommonProgramFiles%"
-if defined PROCESSOR_ARCHITEW6432 set "_common=%CommonProgramW6432%"
-set "_common2=%CommonProgramFiles(x86)%"
-
-for /r "%_common%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-if not defined _oBranding for /r "%_common2%\Microsoft Shared\OFFICE%oVer%\" %%f in (BRANDING.XML) do if exist "%%f" set "_oBranding=%%f"
-
-call :ksdata getmsiprod %2
-call :ks_msiretaildata getmsiret %2
+call :msiofficedata %2
 
 echo:
 echo Processing Office...                    [MSI ^| %_version% ^| %_oArch%]
-
-if not defined _oBranding (
-set error=1
-call :dk_color %Red% "Checking BRANDING.XML                   [Not Found. Aborting activation...]"
-exit /b
-)
 
 if not defined _oIds (
 set error=1
@@ -5436,7 +13487,12 @@ set _tserror=
 set winbuild=1
 set "nul=>nul 2>&1"
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
-set psc=powershell.exe
+set psc=powershell.exe -nop -c
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set run_once=
 set t_name=Renewal Task
@@ -5449,6 +13505,7 @@ set _wmic=0
 for %%# in (wmic.exe) do @if not "%%~$PATH:#"=="" (
 cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" 2>nul | find /i "computersystem" 1>nul && set _wmic=1
 )
+if %winbuild% LSS 9200 set _wmic=1
 
 setlocal EnableDelayedExpansion
 if exist "%ProgramFiles%\Activation-Renewal\" call :_taskstart>>"%ProgramFiles%\Activation-Renewal\Logs.txt"
@@ -5501,7 +13558,7 @@ call :_taskclear-cache
 ::  Check WMI and sppsvc Errors
 
 set applist=
-net start sppsvc /y %nul%
+net start %_slser% /y %nul%
 if %_wmic% EQU 1 set "chkapp=for /f "tokens=2 delims==" %%a in ('"wmic path %slp% where (ApplicationID='%_wApp%') get ID /VALUE" 2^>nul')"
 if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT ID FROM %slp% WHERE ApplicationID=''%_wApp%''').Get()).ID ^| %% {echo ('ID='+$_)}" 2^>nul')"
 %chkapp% do (if defined applist (call set "applist=!applist! %%a") else (call set "applist=%%a"))
@@ -5651,8 +13708,7 @@ if defined t_name (
 echo %prodname% cannot be KMS-activated on this computer due to unqualified OEM BIOS [0xC004F035].
 ) else (
 call :dk_color %Red% "%prodname% cannot be KMS-activated on this computer due to unqualified OEM BIOS [0xC004F035]."
-set fixes=%fixes% %mas%unsupported_products_activation
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%unsupported_products_activation"
+call :dk_color %Blue% "Use TSforge activation option from the main menu."
 )
 set oemerr=1
 set showfix=1
@@ -5804,12 +13860,20 @@ exit /b
 :_taskclear-cache
 
 set w=
-for %%# in (SppE%w%xtComObj.exe sppsvc.exe) do (
+for %%# in (SppE%w%xtComObj.exe sppsvc.exe SLsvc.exe) do (
 reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%
 )
 
 set "OPPk=SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform"
+
+if %winbuild% LSS 7600 (
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL" %nul% && (
+set "SPPk=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL"
+)
+)
+if not defined SPPk (
 set "SPPk=SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
+)
 
 set "slp=SoftwareLicensingProduct"
 set "ospp=OfficeSoftwareProtectionProduct"
@@ -5875,8 +13939,8 @@ set srvlist=
 set -=
 
 set "srvlist=kms.03%-%k.org kms-default.cangs%-%hui.net kms.six%-%yin.com kms.moe%-%club.org kms.cgt%-%soft.com"
-set "srvlist=%srvlist% kms.id%-%ina.cn kms.moe%-%yuuko.com xinch%-%eng213618.cn kms.lol%-%i.best kms.my%-%ds.cloud"
-set "srvlist=%srvlist% kms.0%-%t.net.cn win.k%-%ms.pub kms.wx%-%lost.com kms.moe%-%yuuko.top kms.gh%-%pym.com"
+set "srvlist=%srvlist% kms.id%-%ina.cn kms.moe%-%yuuko.com xinch%-%eng213618.cn kms.lol%-%i.best kms.mc%-%06.net"
+set "srvlist=%srvlist% kms.0%-%t.net.cn win.k%-%ms.pub kms.wx%-%lost.com kms.moe%-%yuuko.top kms.gh%-%xi.com"
 
 set n=1
 for %%a in (%srvlist%) do (set %%a=&set server!n!=%%a&set /a n+=1)
@@ -5925,10 +13989,11 @@ for /f %%G in ('%psc% "[Guid]::NewGuid().Guid"') do set "randguid=%%G"
 set "_temp=%SystemRoot%\Temp\%Random%%randguid%"
 
 set nil=
+if %winbuild% LSS 7600 (set _vista=_vista)
 if exist "%_temp%\.*" rmdir /s /q "%_temp%\" %nul%
 md "%_temp%\" %nul%
-call :ks_RenExport renewal "%_temp%\Renewal.xml" Unicode
-if not defined _int (call :ks_RenExport run_once "%_temp%\Run_Once.xml" Unicode)
+call :ks_RenExport renewal%_vista% "%_temp%\Renewal.xml" Unicode
+if not defined _int (call :ks_RenExport run_once%_vista% "%_temp%\Run_Once.xml" Unicode)
 s%nil%cht%nil%asks /cre%nil%ate /tn "Activation-Renewal" /ru "SYS%nil%TEM" /xml "%_temp%\Renewal.xml" %nul%
 if not defined _int (s%nil%cht%nil%asks /cre%nil%ate /tn "Activation-Run_Once" /ru "SYS%nil%TEM" /xml "%_temp%\Run_Once.xml" %nul%)
 if exist "%_temp%\.*" rmdir /s /q "%_temp%\" %nul%
@@ -6117,131 +14182,293 @@ exit /b
 </Task>
 :run_once:
 
+:renewal_vista:
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Date>1999-01-01T12:00:00.34375</Date>
+    <Author>WindowsAddict</Author>
+    <Description>Online K-M-S Activation-Renewal - Weekly Task</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>1999-01-01T12:00:00.34375</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByWeek>
+        <DaysOfWeek>
+          <Sunday />
+        </DaysOfWeek>
+        <WeeksInterval>1</WeeksInterval>
+      </ScheduleByWeek>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <IdleSettings>
+      <Duration>PT10M</Duration>
+      <WaitTimeout>PT1H</WaitTimeout>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>
+    <NetworkSettings />
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
+    <Priority>7</Priority>
+    <RestartOnFailure>
+      <Interval>PT5M</Interval>
+      <Count>3</Count>
+    </RestartOnFailure>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>%ProgramFiles%\Activation-Renewal\Activation_task.cmd</Command>
+      <Arguments>Task</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+:renewal_vista:
+
+:run_once_vista:
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Date>1999-01-01T12:00:00.34375</Date>
+    <Author>WindowsAddict</Author>
+    <Description>Online K-M-S Activation Run Once - Run and Delete itself on first Internet Contact</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+    </LogonTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <IdleSettings>
+      <Duration>PT10M</Duration>
+      <WaitTimeout>PT1H</WaitTimeout>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>
+    <NetworkSettings />
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
+    <Priority>7</Priority>
+    <RestartOnFailure>
+      <Interval>PT5M</Interval>
+      <Count>3</Count>
+    </RestartOnFailure>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>%ProgramFiles%\Activation-Renewal\Activation_task.cmd</Command>
+      <Arguments>Task</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+:run_once_vista:
+
 ::========================================================================================================================================
 
 ::  1st column = Office version number
 ::  2nd column = Activation ID
-::  3rd column = Edition
-::  4th column = Other Edition IDs if they are part of the same primary product (For reference only)
+::  3rd column = Product ID from branding.xml
+::  4th column = Edition
+::  5th column = Other Edition IDs if they are part of the same primary product (For reference only)
 ::  Separator  = "_"
 
-:ks_msiretaildata
+:msiofficedata
 
 for %%# in (
-:: Office 2010
-14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_AccessR
-14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_AccessRuntimeR
-14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_ExcelR
-14_7004b7f0-6407-4f45-8eac-966e5f868bde_GrooveR
-14_7b7d1f17-fdcb-4820-9789-9bec6e377821_HomeBusinessR_[HomeBusinessDemoR]
-14_19316117-30a8-4773-8fd9-7f7231f4e060_HomeBusinessSubR
-14_09e2d37e-474b-4121-8626-58ad9be5776f_HomeStudentR_[HomeStudentDemoR]
-14_c3ae020c-5a71-4cc5-a27a-2a97c2d46860_HSExcelR
-14_25fe4611-b44d-49cc-ae87-2143d299194e_HSOneNoteR
-14_d652ad8d-da5c-4358-b928-7fb1b4de7a7c_HSPowerPointR
-14_a963d7ae-7a88-41a7-94da-8bb5635a8af9_HSWordR
-14_ef1da464-01c8-43a6-91af-e4e5713744f9_InfoPathR
-14_14f5946a-debc-4716-babc-7e2c240fec08_MondoR
-14_c1ceda8b-c578-4d5d-a4aa-23626be4e234_OEM
-14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_OneNoteR
-14_fbf4ac36-31c8-4340-8666-79873129cf40_OutlookR
-14_acb51361-c0db-4895-9497-1831c41f31a6_PersonalR_[PersonalDemoR,PersonalPrepaidR]
-14_133c8359-4e93-4241-8118-30bb18737ea0_PowerPointR
-14_8b559c37-0117-413e-921b-b853aeb6e210_ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR]
-14_725714d7-d58f-4d12-9fa8-35873c6f7215_ProjectProR_[ProjectProMSDNR]
-14_4d06f72e-fd50-4bc2-a24b-d448d7f17ef2_ProjectProSubR
-14_688f6589-2bd9-424e-a152-b13f36aa6de1_ProjectStdR
-14_71af7e84-93e6-4363-9b69-699e04e74071_ProPlusR_[ProPlusAcadR,ProPlusMSDNR,Sub4R]
-14_e98ef0c0-71c4-42ce-8305-287d8721e26c_ProPlusSubR
-14_98677603-a668-4fa4-9980-3f1f05f78f69_PublisherR
-14_dbe3aee0-5183-4ff7-8142-66050173cb01_SmallBusBasicsR_[SmallBusBasicsMSDNR]
-14_b78df69e-0966-40b1-ae85-30a5134dedd0_SPDR
-14_d3422cfb-8d8b-4ead-99f9-eab0ccd990d7_StandardR
-14_2745e581-565a-4670-ae90-6bf7c57ffe43_StarterR
-14_66cad568-c2dc-459d-93ec-2f3cb967ee34_VisioSIR_Prem[Pro,Std]
-14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_WordR
+14_4d463c2c-0505-4626-8cdb-a4da82e2d8ed_0015_AccessR
+14_745fb377-0a59-4ca9-b9a9-c359557a2c4e_001C_AccessRuntimeR
+14_95ab3ec8-4106-4f9d-b632-03c019d1d23f_0015_AccessVL
+14_4eaff0d0-c6cb-4187-94f3-c7656d49a0aa_0016_ExcelR_[HSExcelR]
+14_71dc86ff-f056-40d0-8ffb-9592705c9b76_0016_ExcelVL
+14_7004b7f0-6407-4f45-8eac-966e5f868bde_00BA_GrooveR
+14_fdad0dfa-417d-4b4f-93e4-64ea8867b7fd_00BA_GrooveVL
+14_7b7d1f17-fdcb-4820-9789-9bec6e377821_0013_HomeBusinessR_[HomeBusinessDemoR]
+14_19316117-30a8-4773-8fd9-7f7231f4e060_011E_HomeBusinessSubR
+14_09e2d37e-474b-4121-8626-58ad9be5776f_002F_HomeStudentR_[HomeStudentDemoR]
+14_ef1da464-01c8-43a6-91af-e4e5713744f9_0044_InfoPathR
+14_85e22450-b741-430c-a172-a37962c938af_0044_InfoPathVL
+14_14f5946a-debc-4716-babc-7e2c240fec08_000F_MondoR
+14_533b656a-4425-480b-8e30-1a2358898350_000F_MondoVL
+14_c1ceda8b-c578-4d5d-a4aa-23626be4e234_003D_ProfessionalR_[OEM-SingleImage]Exception
+14_3f7aa693-9a7e-44fc-9309-bb3d8e604925_00A1_OneNoteR_[HSOneNoteR]
+14_6860b31f-6a67-48b8-84b9-e312b3485c4b_00A1_OneNoteVL
+14_fbf4ac36-31c8-4340-8666-79873129cf40_001A_OutlookR
+14_a9aeabd8-63b8-4079-a28e-f531807fd6b8_001A_OutlookVL
+14_acb51361-c0db-4895-9497-1831c41f31a6_0033_PersonalR_[PersonalDemoR,PersonalPrepaidR]
+14_133c8359-4e93-4241-8118-30bb18737ea0_0018_PowerPointR_[HSPowerPointR]
+14_38252940-718c-4aa6-81a4-135398e53851_0018_PowerPointVL
+14_8b559c37-0117-413e-921b-b853aeb6e210_0014_ProfessionalR_[ProfessionalAcadR,ProfessionalDemoR]
+14_725714d7-d58f-4d12-9fa8-35873c6f7215_003B_ProjectProR_[ProjectProMSDNR]
+14_4d06f72e-fd50-4bc2-a24b-d448d7f17ef2_011F_ProjectProSubR
+14_1cf57a59-c532-4e56-9a7d-ffa2fe94b474_003B_ProjectProVL
+14_688f6589-2bd9-424e-a152-b13f36aa6de1_003A_ProjectStdR
+14_11b39439-6b93-4642-9570-f2eb81be2238_003A_ProjectStdVL
+14_71af7e84-93e6-4363-9b69-699e04e74071_0011_ProPlusR_[ProPlusAcadR,ProPlusMSDNR,Sub4R]
+14_e98ef0c0-71c4-42ce-8305-287d8721e26c_011D_ProPlusSubR
+14_fdf3ecb9-b56f-43b2-a9b8-1b48b6bae1a7_0011_ProPlusVL_[ProPlusAcadVL]
+14_98677603-a668-4fa4-9980-3f1f05f78f69_0019_PublisherR
+14_3d014759-b128-4466-9018-e80f6320d9d0_0019_PublisherVL
+14_dbe3aee0-5183-4ff7-8142-66050173cb01_008B_SmallBusBasicsR_[SmallBusBasicsMSDNR]
+14_8090771e-d41a-4482-929e-de87f1f47e46_008B_SmallBusBasicsVL
+14_b78df69e-0966-40b1-ae85-30a5134dedd0_0017_SPDR
+14_d3422cfb-8d8b-4ead-99f9-eab0ccd990d7_0012_StandardR
+14_1f76e346-e0be-49bc-9954-70ec53a4fcfe_0012_StandardVL_[StandardAcadVL]
+14_2745e581-565a-4670-ae90-6bf7c57ffe43_0066_StarterR
+14_66cad568-c2dc-459d-93ec-2f3cb967ee34_0057_VisioSIR_Prem[Pro,Std]Exception
+14_36756cb8-8e69-4d11-9522-68899507cd6a_0057_VisioSIVL_Prem[Pro,Std]Exception
+14_db3bbc9c-ce52-41d1-a46f-1a1d68059119_001B_WordR_[HSWordR]
+14_98d4050e-9c98-49bf-9be1-85e12eb3ab13_001B_WordVL
 :: Office 2013
-15_ab4d047b-97cf-4126-a69f-34df08e2f254_AccessRetail
-15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_ExcelRetail
-15_cfaf5356-49e3-48a8-ab3c-e729ab791250_GrooveRetail
-15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_HomeBusinessPipcRetail
-15_a2b90e7a-a797-4713-af90-f0becf52a1dd_HomeBusinessRetail
-15_f2de350d-3028-410a-bfae-283e00b44d0e_HomeStudentRetail
-15_44984381-406e-4a35-b1c3-e54f499556e2_InfoPathRetail
-15_9103f3ce-1084-447a-827e-d6097f68c895_LyncAcademicRetail
-15_ff693bf4-0276-4ddb-bb42-74ef1a0c9f4d_LyncEntryRetail
-15_fada6658-bfc6-4c4e-825a-59a89822cda8_LyncRetail
-15_69ec9152-153b-471a-bf35-77ec88683eae_MondoRetail
-15_3391e125-f6e4-4b1e-899c-a25e6092d40d_OneNoteFreeRetail
-15_8b524bcc-67ea-4876-a509-45e46f6347e8_OneNoteRetail
-15_12004b48-e6c8-4ffa-ad5a-ac8d4467765a_OutlookRetail
-15_5aab8561-1686-43f7-9ff5-2c861da58d17_PersonalPipcRetail
-15_17e9df2d-ed91-4382-904b-4fed6a12caf0_PersonalRetail
-15_31743b82-bfbc-44b6-aa12-85d42e644d5b_PowerPointRetail
-15_064383fa-1538-491c-859b-0ecab169a0ab_ProPlusRetail
-15_4e26cac1-e15a-4467-9069-cb47b67fe191_ProfessionalPipcRetail
-15_44bc70e2-fb83-4b09-9082-e5557e0c2ede_ProfessionalRetail
-15_2f72340c-b555-418d-8b46-355944fe66b8_ProjectProRetail
-15_58d95b09-6af6-453d-a976-8ef0ae0316b1_ProjectStdRetail
-15_c3a0814a-70a4-471f-af37-2313a6331111_PublisherRetail
-15_ba3e3833-6a7e-445a-89d0-7802a9a68588_SPDRetail
-15_32255c0a-16b4-4ce2-b388-8a4267e219eb_StandardRetail
-15_a56a3b37-3a35-4bbb-a036-eee5f1898eee_VisioProRetail
-15_980f9e3e-f5a8-41c8-8596-61404addf677_VisioStdRetail
-15_191509f2-6977-456f-ab30-cf0492b1e93a_WordRetail
+15_ab4d047b-97cf-4126-a69f-34df08e2f254_0015_AccessRetail
+15_259de5be-492b-44b3-9d78-9645f848f7b0_001C_AccessRuntimeRetail
+15_4374022d-56b8-48c1-9bb7-d8f2fc726343_0015_AccessVolume
+15_1b1d9bd5-12ea-4063-964c-16e7e87d6e08_0016_ExcelRetail
+15_ac1ae7fd-b949-4e04-a330-849bc40638cf_0016_ExcelVolume
+15_cfaf5356-49e3-48a8-ab3c-e729ab791250_00BA_GrooveRetail
+15_4825ac28-ce41-45a7-9e6e-1fed74057601_00BA_GrooveVolume
+15_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_00E7_HomeBusinessPipcRetail
+15_cd256150-a898-441f-aac0-9f8f33390e45_0013_HomeBusinessRetail
+15_1fdfb4e4-f9c9-41c4-b055-c80daf00697d_00CE_HomeStudentARMRetail
+15_ebef9f05-5273-404a-9253-c5e252f50555_00DA_HomeStudentPlusARMRetail
+15_98685d21-78bd-4c62-bc4f-653344a63035_002F_HomeStudentRetail
+15_44984381-406e-4a35-b1c3-e54f499556e2_0044_InfoPathRetail
+15_9e016989-4007-42a6-8051-64eb97110cf2_0044_InfoPathVolume
+15_9103f3ce-1084-447a-827e-d6097f68c895_00EA_LyncAcademicRetail
+15_ff693bf4-0276-4ddb-bb42-74ef1a0c9f4d_012D_LyncEntryRetail
+15_fada6658-bfc6-4c4e-825a-59a89822cda8_012C_LyncRetail
+15_e1264e10-afaf-4439-a98b-256df8bb156f_012C_LyncVolume
+15_3169c8df-f659-4f95-9cc6-3115e6596e83_000F_MondoRetail
+15_f33485a0-310b-4b72-9a0e-b1d605510dbd_000F_MondoVolume
+15_3391e125-f6e4-4b1e-899c-a25e6092d40d_00A1_OneNoteFreeRetail
+15_8b524bcc-67ea-4876-a509-45e46f6347e8_00A1_OneNoteRetail
+15_b067e965-7521-455b-b9f7-c740204578a2_00A1_OneNoteVolume
+15_12004b48-e6c8-4ffa-ad5a-ac8d4467765a_001A_OutlookRetail
+15_8d577c50-ae5e-47fd-a240-24986f73d503_001A_OutlookVolume
+15_5aab8561-1686-43f7-9ff5-2c861da58d17_00E6_PersonalPipcRetail
+15_17e9df2d-ed91-4382-904b-4fed6a12caf0_0033_PersonalRetail
+15_31743b82-bfbc-44b6-aa12-85d42e644d5b_0018_PowerPointRetail
+15_e40dcb44-1d5c-4085-8e8f-943f33c4f004_0018_PowerPointVolume
+15_4e26cac1-e15a-4467-9069-cb47b67fe191_00E8_ProfessionalPipcRetail
+15_44bc70e2-fb83-4b09-9082-e5557e0c2ede_0014_ProfessionalRetail
+15_f2435de4-5fc0-4e5b-ac97-34f515ec5ee7_003B_ProjectProRetail
+15_ed34dc89-1c27-4ecd-8b2f-63d0f4cedc32_003B_ProjectProVolume
+15_5517e6a2-739b-4822-946f-7f0f1c5934b1_003A_ProjectStdRetail
+15_2b9e4a37-6230-4b42-bee2-e25ce86c8c7a_003A_ProjectStdVolume
+15_064383fa-1538-491c-859b-0ecab169a0ab_0011_ProPlusRetail
+15_2b88c4f2-ea8f-43cd-805e-4d41346e18a7_0011_ProPlusVolume
+15_c3a0814a-70a4-471f-af37-2313a6331111_0019_PublisherRetail
+15_38ea49f6-ad1d-43f1-9888-99a35d7c9409_0019_PublisherVolume
+15_ba3e3833-6a7e-445a-89d0-7802a9a68588_0017_SPDRetail
+15_32255c0a-16b4-4ce2-b388-8a4267e219eb_0012_StandardRetail
+15_a24cca51-3d54-4c41-8a76-4031f5338cb2_0012_StandardVolume
+15_15d12ad4-622d-4257-976c-5eb3282fb93d_0051_VisioProRetail
+15_3e4294dd-a765-49bc-8dbd-cf8b62a4bd3d_0051_VisioProVolume
+15_dae597ce-5823-4c77-9580-7268b93a4b23_0053_VisioStdRetail
+15_44a1f6ff-0876-4edb-9169-dbb43101ee89_0053_VisioStdVolume
+15_191509f2-6977-456f-ab30-cf0492b1e93a_001B_WordRetail
+15_9cedef15-be37-4ff0-a08a-13a045540641_001B_WordVolume
 :: Office 365 - 15.0 version
-15_6337137e-7c07-4197-8986-bece6a76fc33_O365BusinessRetail
-15_537ea5b5-7d50-4876-bd38-a53a77caca32_O365HomePremRetail
-15_149dbce7-a48e-44db-8364-a53386cd4580_O365ProPlusRetail
-15_bacd4614-5bef-4a5e-bafc-de4c788037a2_O365SmallBusPremRetail
+15_befee371-a2f5-4648-85db-a2c55fdf324c_00E9_O365BusinessRetail
+15_537ea5b5-7d50-4876-bd38-a53a77caca32_00D6_O365HomePremRetail
+15_149dbce7-a48e-44db-8364-a53386cd4580_00D4_O365ProPlusRetail
+15_bacd4614-5bef-4a5e-bafc-de4c788037a2_00D5_O365SmallBusPremRetail
 :: Office 365 - 16.0 version
-16_6337137e-7c07-4197-8986-bece6a76fc33_O365BusinessRetail
-16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_O365EduCloudRetail
-16_537ea5b5-7d50-4876-bd38-a53a77caca32_O365HomePremRetail
-16_149dbce7-a48e-44db-8364-a53386cd4580_O365ProPlusRetail
-16_bacd4614-5bef-4a5e-bafc-de4c788037a2_O365SmallBusPremRetail
+16_6337137e-7c07-4197-8986-bece6a76fc33_00E9_O365BusinessRetail
+16_2f5c71b4-5b7a-4005-bb68-f9fac26f2ea3_00D6_O365EduCloudRetail
+16_537ea5b5-7d50-4876-bd38-a53a77caca32_00D6_O365HomePremRetail
+16_149dbce7-a48e-44db-8364-a53386cd4580_00D4_O365ProPlusRetail
+16_bacd4614-5bef-4a5e-bafc-de4c788037a2_00D5_O365SmallBusPremRetail
 :: Office 2016
-16_bfa358b0-98f1-4125-842e-585fa13032e6_AccessRetail
-16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_AccessRuntimeRetail
-16_424d52ff-7ad2-4bc7-8ac6-748d767b455d_ExcelRetail
-16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_HomeBusinessPipcRetail
-16_86834d00-7896-4a38-8fae-32f20b86fa2b_HomeBusinessRetail
-16_c28acdb8-d8b3-4199-baa4-024d09e97c99_HomeStudentRetail
-16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_HomeStudentVNextRetail
-16_69ec9152-153b-471a-bf35-77ec88683eae_MondoRetail
-16_436366de-5579-4f24-96db-3893e4400030_OneNoteFreeRetail
-16_83ac4dd9-1b93-40ed-aa55-ede25bb6af38_OneNoteRetail
-16_5a670809-0983-4c2d-8aad-d3c2c5b7d5d1_OutlookRetail
-16_5aab8561-1686-43f7-9ff5-2c861da58d17_PersonalPipcRetail
-16_a9f645a1-0d6a-4978-926a-abcb363b72a6_PersonalRetail
-16_f32d1284-0792-49da-9ac6-deb2bc9c80b6_PowerPointRetail
-16_de52bd50-9564-4adc-8fcb-a345c17f84f9_ProPlusRetail
-16_4e26cac1-e15a-4467-9069-cb47b67fe191_ProfessionalPipcRetail
-16_d64edc00-7453-4301-8428-197343fafb16_ProfessionalRetail
-16_2f72340c-b555-418d-8b46-355944fe66b8_ProjectProRetail
-16_58d95b09-6af6-453d-a976-8ef0ae0316b1_ProjectStdRetail
-16_6e0c1d99-c72e-4968-bcb7-ab79e03e201e_PublisherRetail
-16_9103f3ce-1084-447a-827e-d6097f68c895_SkypeServiceBypassRetail
-16_971cd368-f2e1-49c1-aedd-330909ce18b6_SkypeforBusinessEntryRetail
-16_418d2b9f-b491-4d7f-84f1-49e27cc66597_SkypeforBusinessRetail
-16_4a31c291-3a12-4c64-b8ab-cd79212be45e_StandardRetail
-16_a56a3b37-3a35-4bbb-a036-eee5f1898eee_VisioProRetail
-16_980f9e3e-f5a8-41c8-8596-61404addf677_VisioStdRetail
-16_cacaa1bf-da53-4c3b-9700-11738ef1c2a5_WordRetail
+16_bfa358b0-98f1-4125-842e-585fa13032e6_0015_AccessRetail
+16_9d9faf9e-d345-4b49-afce-68cb0a539c7c_001C_AccessRuntimeRetail
+16_3b2fa33f-cd5a-43a5-bd95-f49f3f546b0b_0015_AccessVolume
+16_424d52ff-7ad2-4bc7-8ac6-748d767b455d_0016_ExcelRetail
+16_685062a7-6024-42e7-8c5f-6bb9e63e697f_0016_ExcelVolume
+16_c02fb62e-1cd5-4e18-ba25-e0480467ffaa_00E7_HomeBusinessPipcRetail
+16_86834d00-7896-4a38-8fae-32f20b86fa2b_0013_HomeBusinessRetail
+16_090896a0-ea98-48ac-b545-ba5da0eb0c9c_00CE_HomeStudentARMRetail
+16_6bbe2077-01a4-4269-bf15-5bf4d8efc0b2_00DA_HomeStudentPlusARMRetail
+16_c28acdb8-d8b3-4199-baa4-024d09e97c99_002F_HomeStudentRetail
+16_e2127526-b60c-43e0-bed1-3c9dc3d5a468_002F_HomeStudentVNextRetail
+16_b21367df-9545-4f02-9f24-240691da0e58_000F_MondoRetail
+16_2cd0ea7e-749f-4288-a05e-567c573b2a6c_000F_MondoVolume
+16_436366de-5579-4f24-96db-3893e4400030_00A3_OneNoteFreeRetail
+16_83ac4dd9-1b93-40ed-aa55-ede25bb6af38_00A1_OneNoteRetail
+16_23b672da-a456-4860-a8f3-e062a501d7e8_00A1_OneNoteVolume
+16_5a670809-0983-4c2d-8aad-d3c2c5b7d5d1_001A_OutlookRetail
+16_50059979-ac6f-4458-9e79-710bcb41721a_001A_OutlookVolume
+16_5aab8561-1686-43f7-9ff5-2c861da58d17_00E6_PersonalPipcRetail
+16_a9f645a1-0d6a-4978-926a-abcb363b72a6_0033_PersonalRetail
+16_f32d1284-0792-49da-9ac6-deb2bc9c80b6_0018_PowerPointRetail
+16_9b4060c9-a7f5-4a66-b732-faf248b7240f_0018_PowerPointVolume
+16_4e26cac1-e15a-4467-9069-cb47b67fe191_00E8_ProfessionalPipcRetail
+16_d64edc00-7453-4301-8428-197343fafb16_0014_ProfessionalRetail
+16_0f42f316-00b1-48c5-ada4-2f52b5720ad0_003B_ProjectProRetail
+16_82f502b5-b0b0-4349-bd2c-c560df85b248_003B_ProjectProVolume
+16_16728639-a9ab-4994-b6d8-f81051e69833_003B_ProjectProXVolume
+16_e9f0b3fc-962f-4944-ad06-05c10b6bcd5e_003A_ProjectStdRetail
+16_82e6b314-2a62-4e51-9220-61358dd230e6_003A_ProjectStdVolume
+16_431058f0-c059-44c5-b9e7-ed2dd46b6789_003A_ProjectStdXVolume
+16_de52bd50-9564-4adc-8fcb-a345c17f84f9_0011_ProPlusRetail
+16_c47456e3-265d-47b6-8ca0-c30abbd0ca36_0011_ProPlusVolume
+16_6e0c1d99-c72e-4968-bcb7-ab79e03e201e_0019_PublisherRetail
+16_fcc1757b-5d5f-486a-87cf-c4d6dedb6032_0019_PublisherVolume
+16_971cd368-f2e1-49c1-aedd-330909ce18b6_012D_SkypeforBusinessEntryRetail
+16_418d2b9f-b491-4d7f-84f1-49e27cc66597_012C_SkypeforBusinessRetail
+16_03ca3b9a-0869-4749-8988-3cbc9d9f51bb_012C_SkypeforBusinessVolume
+16_9103f3ce-1084-447a-827e-d6097f68c895_012C_SkypeServiceBypassRetail
+16_4a31c291-3a12-4c64-b8ab-cd79212be45e_0012_StandardRetail
+16_0ed94aac-2234-4309-ba29-74bdbb887083_0012_StandardVolume
+16_2dfe2075-2d04-4e43-816a-eb60bbb77574_0051_VisioProRetail
+16_295b2c03-4b1c-4221-b292-1411f468bd02_0051_VisioProVolume
+16_0594dc12-8444-4912-936a-747ca742dbdb_0051_VisioProXVolume
+16_c76dbcbc-d71b-4f45-b5b3-b7494cb4e23e_0053_VisioStdRetail
+16_44151c2d-c398-471f-946f-7660542e3369_0053_VisioStdVolume
+16_1d1c6879-39a3-47a5-9a6d-aceefa6a289d_0053_VisioStdXVolume
+16_cacaa1bf-da53-4c3b-9700-11738ef1c2a5_001B_WordRetail
+16_c3000759-551f-4f4a-bcac-a4b42cbf1de2_001B_WordVolume
 ) do (
 for /f "tokens=1-5 delims=_" %%A in ("%%#") do (
 
-if %1==getmsiret if "%oVer%"=="%%A" (
-for /f "tokens=*" %%x in ('findstr /i /c:"%%B" "%_oBranding%"') do set "prodId=%%x"
-set prodId=!prodId:"/>=!
-set prodId=!prodId:~-4!
-if "%oVer%"=="14" (
-REM Exception case for Visio because wrong primary product ID is mentioned in Branding.xml
-echo %%C | find /i "Visio" %nul% && set prodId=0057
-)
-reg query "%2\Registration\{%%B}" /v ProductCode %nul2% | find /i "-!prodId!-" %nul% && (
-reg query "%2\Common\InstalledPackages" %nul2% | find /i "-!prodId!-" %nul% && (
-if defined _oIds (set _oIds=!_oIds! %%C) else (set _oIds=%%C)
+if "%oVer%"=="%%A" (
+reg query "%1\Registration\{%%B}" /v ProductCode %nul2% | find /i "-%%C-" %nul% && (
+reg query "%1\Common\InstalledPackages" %nul2% | find /i "-%%C-" %nul% && (
+if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
+if /i 003D==%%C set SingleImage=1
 )
 )
 )
@@ -6385,7 +14612,22 @@ a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4__17_Server
 cda18cf3-c196-46ad-b289-60c072869994_TT8MH-CG224-D3D7Q-498W2-9Q%f%CTX__18_ServerHPC
 a78b8bd9-8017-4df5-b86a-09f756affa7c_6TPJF-RBVHG-WBW2R-86QPH-6R%f%TM4__29_ServerWebCore
 f772515c-0e87-48d5-a676-e6962c3e1195_736RG-XDKJK-V34PF-BHK87-J6%f%X3K__56_ServerEmbeddedSolution
-::========================================================================================================================================
+:: Windows Vista
+cfd8ff08-c0d7-452b-9f60-ef5c70c32094_VKK3X-68KWM-X2YGT-QR4M6-4B%f%WMV___4_Enterprise
+4f3d1606-3fea-4c01-be3c-8d671c401e3b_YFKBB-PQJJV-G996G-VWGXY-2V%f%3X8___6_Business
+2c682dc2-8b68-4f63-a165-ae291d4cf138_HMBQG-8H2RH-C77VX-27R82-VM%f%QBT__16_BusinessN
+d4f54950-26f2-4fb4-ba21-ffab16afcade_VTC42-BM838-43QHV-84HX6-XJ%f%XKV__27_EnterpriseN
+:: Windows Server 2008
+ad2542d4-9154-4c6d-8a44-30f11ee96989_TM24T-X9RMF-VWXK6-X8JC9-BF%f%GM2___7_ServerStandard
+68b6e220-cf09-466b-92d3-45cd964b9509_7M67G-PC374-GR742-YH8V4-TC%f%BY3___8_ServerDatacenter
+c1af4d90-d1bc-44ca-85d4-003ba33db3b9_YQGMW-MPWTJ-34KDK-48M3W-X4%f%Q6V__10_ServerEnterprise
+01ef176b-3e0d-422a-b4f8-4ea880035e8f_4DWFP-JF3DJ-B7DTH-78FJB-PD%f%RHK__15_ServerEnterpriseIA64
+ddfa9f7c-f09e-40b9-8c1a-be877a9a7f4b_WYR28-R7TFJ-3X2YQ-YCY4H-M2%f%49D__17_ServerWeb
+7afb1156-2c1d-40fc-b260-aab7442b62fe_RCTX3-KWVHP-BR6TB-RB6DM-6X%f%7HP__18_ServerComputeCluster
+2401e3d0-c50a-4b58-87b2-7e794b7d2607_W7VD6-7JFBR-RX26B-YKQ3Y-6F%f%FFJ__36_ServerStandardV
+fd09ef77-5647-4eff-809c-af2b64659a45_22XQ2-VRXRG-P8D42-K34TD-G3%f%QQC__37_ServerDatacenterV
+8198490a-add0-47b2-b3ba-316b12d647b4_39BXF-X8Q23-P2WWT-38T2F-G3%f%FPG__38_ServerEnterpriseV
+::=======================================================================================================================================
 :: Office 2010
 8ce7e872-188c-4b98-9d90-f8f90b7aad02_V7Y44-9T38C-R2VJK-666HK-T7%f%DDX__14_AccessVL
 cee5d470-6e3b-4fcc-8c2b-d17428568a9f_H62QG-HXVKF-PP4HP-66KMR-CW%f%9BM__14_ExcelVL
@@ -6405,6 +14647,7 @@ ea509e87-07a1-4a45-9edc-eba5a39f36af_D6QFG-VBYP2-XQHM7-J97RH-VV%f%RCK__14_SmallB
 2d0882e7-a4e7-423b-8ccc-70d91e0158b1_HVHB3-C6FV7-KQX9W-YQG79-CR%f%Y7T__14_WordVL
 :: Office 2013
 6ee7622c-18d8-4005-9fb7-92db644a279b_NG2JY-H4JBT-HQXYP-78QH9-4J%f%M2D__15_AccessVolume_-AccessRetail-
+259de5be-492b-44b3-9d78-9645f848f7b0_X3XNB-HJB7K-66THH-8DWQ3-XH%f%GJP__15_AccessRuntimeRetail_[Bypass]
 f7461d52-7c2b-43b2-8744-ea958e0bd09a_VGPNG-Y7HQW-9RHP7-TKPV3-BG%f%7GB__15_ExcelVolume_-ExcelRetail-
 fb4875ec-0c6b-450f-b82b-ab57d8d1677f_H7R7V-WPNXQ-WCYYC-76BGV-VT%f%7GH__15_GrooveVolume_-GrooveRetail-
 a30b8040-d68a-423f-b0b5-9ce292ea5a8f_DKT8B-N7VXH-D963P-Q4PHY-F8%f%894__15_InfoPathVolume_-InfoPathRetail-
@@ -6422,7 +14665,7 @@ efe1f3e6-aea2-4144-a208-32aa872b6545_TGN6P-8MMBC-37P2F-XHXXK-P3%f%4VW__15_OneNot
 b322da9c-a2e2-4058-9e4e-f59a6970bd69_YC7DK-G2NP3-2QQC3-J6H88-GV%f%GXT__15_ProPlusVolume_-ProPlusRetail-ProfessionalPipcRetail-ProfessionalRetail-
 00c79ff1-6850-443d-bf61-71cde0de305f_PN2WF-29XG2-T9HJ7-JQPJR-FC%f%XK4__15_PublisherVolume_-PublisherRetail-
 ba3e3833-6a7e-445a-89d0-7802a9a68588_3NY6J-WHT3F-47BDV-JHF36-23%f%43W__15_SPDRetail_[PrepidBypass]
-b13afb38-cd79-4ae5-9f7f-eed058d750ca_KBKQT-2NMXY-JJWGP-M62JB-92%f%CD4__15_StandardVolume_-StandardRetail-HomeBusinessPipcRetail-HomeBusinessRetail-HomeStudentRetail-PersonalPipcRetail-PersonalRetail-
+b13afb38-cd79-4ae5-9f7f-eed058d750ca_KBKQT-2NMXY-JJWGP-M62JB-92%f%CD4__15_StandardVolume_-StandardRetail-HomeBusinessPipcRetail-HomeBusinessRetail-HomeStudentARMRetail-HomeStudentPlusARMRetail-HomeStudentRetail-PersonalPipcRetail-PersonalRetail-
 e13ac10e-75d0-4aff-a0cd-764982cf541c_C2FG9-N6J68-H8BTJ-BW3QX-RM%f%3B3__15_VisioProVolume_-VisioProRetail-
 ac4efaf0-f81f-4f61-bdf7-ea32b02ab117_J484Y-4NKBF-W2HMG-DBMJC-PG%f%WR7__15_VisioStdVolume_-VisioStdRetail-
 d9f5b1c6-5386-495a-88f9-9ad6b41ac9b3_6Q7VD-NX8JD-WJ2VH-88V73-4G%f%BJ7__15_WordVolume_-WordRetail-
@@ -6431,7 +14674,7 @@ d9f5b1c6-5386-495a-88f9-9ad6b41ac9b3_6Q7VD-NX8JD-WJ2VH-88V73-4G%f%BJ7__15_WordVo
 67c0fc0c-deba-401b-bf8b-9c8ad8395804_GNH9Y-D2J4T-FJHGG-QRVH7-QP%f%FDW__16_AccessVolume_-AccessRetail-
 c3e65d36-141f-4d2f-a303-a842ee756a29_9C2PK-NWTVB-JMPW8-BFT28-7F%f%TBF__16_ExcelVolume_-ExcelRetail-
 e914ea6e-a5fa-4439-a394-a9bb3293ca09_DMTCJ-KNRKX-26982-JYCKT-P7%f%KB6__16_MondoRetail
-9caabccb-61b1-4b4b-8bec-d10a3c3ac2ce_HFTND-W9MK4-8B7MJ-B6C4G-XQ%f%BR2__16_MondoVolume_-O365BusinessRetail-O365EduCloudRetail-O365HomePremRetail-O365ProPlusRetail-O365SmallBusPremRetail-
+9caabccb-61b1-4b4b-8bec-d10a3c3ac2ce_HFTND-W9MK4-8B7MJ-B6C4G-XQ%f%BR2__16_MondoVolume_-O365AppsBasicRetail-O365BusinessRetail-O365EduCloudRetail-O365HomePremRetail-O365ProPlusRetail-O365SmallBusPremRetail-
 436366de-5579-4f24-96db-3893e4400030_XYNTG-R96FY-369HX-YFPHY-F9%f%CPM__16_OneNoteFreeRetail_[Bypass]
 d8cace59-33d2-4ac7-9b1b-9b72339c51c8_DR92N-9HTF2-97XKM-XW2WJ-XW%f%3J6__16_OneNoteVolume_-OneNoteRetail-OneNote2021Retail-
 ec9d9265-9d1e-4ed0-838a-cdc20f2551a1_R69KK-NTPKF-7M3Q4-QYBHW-6M%f%T9B__16_OutlookVolume_-OutlookRetail-
@@ -6445,7 +14688,7 @@ d450596f-894d-49e0-966a-fd39ed4c4c64_XQNVK-8JYDB-WJ9W3-YJ8YR-WF%f%G99__16_ProPlu
 9103f3ce-1084-447a-827e-d6097f68c895_6MDN4-WF3FV-4WH3Q-W699V-RG%f%CMY__16_SkypeServiceBypassRetail_[PrepidBypass]
 971cd368-f2e1-49c1-aedd-330909ce18b6_4N4D8-3J7Y3-YYW7C-73HD2-V8%f%RHY__16_SkypeforBusinessEntryRetail_[PrepidBypass]
 83e04ee1-fa8d-436d-8994-d31a862cab77_869NQ-FJ69K-466HW-QYCP2-DD%f%BV6__16_SkypeforBusinessVolume_-SkypeforBusinessRetail-
-dedfa23d-6ed1-45a6-85dc-63cae0546de6_JNRGM-WHDWX-FJJG3-K47QV-DR%f%TFM__16_StandardVolume_-StandardRetail-HomeBusinessPipcRetail-HomeBusinessRetail-HomeStudentRetail-HomeStudentVNextRetail-PersonalPipcRetail-PersonalRetail-
+dedfa23d-6ed1-45a6-85dc-63cae0546de6_JNRGM-WHDWX-FJJG3-K47QV-DR%f%TFM__16_StandardVolume_-StandardRetail-HomeBusinessPipcRetail-HomeBusinessRetail-HomeStudentARMRetail-HomeStudentPlusARMRetail-HomeStudentRetail-HomeStudentVNextRetail-PersonalPipcRetail-PersonalRetail-
 6bf301c1-b94a-43e9-ba31-d494598c47fb_PD3PC-RHNGV-FXJ29-8JK7D-RJ%f%RJK__16_VisioProVolume_-VisioProRetail-
 b234abe3-0857-4f9c-b05a-4dc314f85557_69WXN-MBYV6-22PQG-3WGHK-RM%f%6XC__16_VisioProXVolume
 aa2a7821-1827-4c2c-8f1d-4513a34dda97_7WHWN-4T7MP-G96JF-G33KR-W8%f%GF4__16_VisioStdVolume_-VisioStdRetail-
@@ -6463,14 +14706,17 @@ c8f8a301-19f5-4132-96ce-2de9d4adbd33_7HD7K-N4PVK-BHBCQ-YWQRW-XW%f%4VK__16_Outloo
 9d3e4cca-e172-46f1-a2f4-1d2107051444_G2KWX-3NW6P-PY93R-JXK2T-C9%f%Y9V__16_Publisher2019Volume_-Publisher2019Retail-
 734c6c6e-b0ba-4298-a891-671772b2bd1b_NCJ33-JHBBY-HTK98-MYCV8-HM%f%KHJ__16_SkypeforBusiness2019Volume_-SkypeforBusiness2019Retail-
 f88cfdec-94ce-4463-a969-037be92bc0e7_N9722-BV9H6-WTJTT-FPB93-97%f%8MK__16_SkypeforBusinessEntry2019Retail_[PrepidBypass]
-6912a74b-a5fb-401a-bfdb-2e3ab46f4b02_6NWWJ-YQWMR-QKGCB-6TMB3-9D%f%9HK__16_Standard2019Volume_-Standard2019Retail-HomeBusiness2019Retail-HomeStudent2019Retail-Personal2019Retail-
+6912a74b-a5fb-401a-bfdb-2e3ab46f4b02_6NWWJ-YQWMR-QKGCB-6TMB3-9D%f%9HK__16_Standard2019Volume_-Standard2019Retail-HomeBusiness2019Retail-HomeStudentARM2019Retail-HomeStudentPlusARM2019Retail-HomeStudent2019Retail-Personal2019Retail-
 5b5cf08f-b81a-431d-b080-3450d8620565_9BGNQ-K37YR-RQHF2-38RQ3-7V%f%CBB__16_VisioPro2019Volume_-VisioPro2019Retail-
 e06d7df3-aad0-419d-8dfb-0ac37e2bdf39_7TQNQ-K3YQQ-3PFH7-CCPPM-X4%f%VQ2__16_VisioStd2019Volume_-VisioStd2019Retail-
 059834fe-a8ea-4bff-b67b-4d006b5447d3_PBX3G-NWMT6-Q7XBW-PYJGG-WX%f%D33__16_Word2019Volume_-Word2019Retail-
 :: Office 2021
+:: OneNote2021Volume KMS license is not available
+844c36cb-851c-49e7-9079-12e62a049e2a_MNX9D-PB834-VCGY2-K2RW2-2D%f%P3D__16_AccessRuntime2021Retail_[Bypass]
 1fe429d8-3fa7-4a39-b6f0-03dded42fe14_WM8YG-YNGDD-4JHDC-PG3F4-FC%f%4T4__16_Access2021Volume_-Access2021Retail-
 ea71effc-69f1-4925-9991-2f5e319bbc24_NWG3X-87C9K-TC7YY-BC2G7-G6%f%RVC__16_Excel2021Volume_-Excel2021Retail-
 a5799e4c-f83c-4c6e-9516-dfe9b696150b_C9FM6-3N72F-HFJXB-TM3V9-T8%f%6R9__16_Outlook2021Volume_-Outlook2021Retail-
+778ccb9a-2f6a-44e5-853c-eb22b7609643_CNM3W-V94GB-QJQHH-BDQ3J-33%f%Y8H__16_OneNoteFree2021Retail_[Bypass]
 6e166cc3-495d-438a-89e7-d7c9e6fd4dea_TY7XF-NFRBR-KJ44C-G83KF-GX%f%27K__16_PowerPoint2021Volume_-PowerPoint2021Retail-
 76881159-155c-43e0-9db7-2d70a9a3a4ca_FTNWT-C6WBT-8HMGF-K9PRX-QV%f%9H8__16_ProjectPro2021Volume_-ProjectPro2021Retail-
 6dd72704-f752-4b71-94c7-11cec6bfc355_J2JDC-NJCYY-9RGQ4-YXWMH-T3%f%D4T__16_ProjectStd2021Volume_-ProjectStd2021Retail-
@@ -6513,27 +14759,12 @@ if /i "%2"=="%%D" (
 set key=%%B
 set _actid=%%A
 set _allactid=!_allactid! %%A
-) else if not defined _oBranding if %_NoEditionChange%==0 (
+) else if not defined _oMSI if %_NoEditionChange%==0 (
 echo: %%E | find /i "-%2-" %nul% && (
 set key=%%B
 set _altoffid=%%D
 set _actid=%%A
 set _allactid=!_allactid! %%A
-)
-)
-)
-
-if %1==getmsiprod if "%oVer%"=="%%C" (
-for /f "tokens=*" %%x in ('findstr /i /c:"%%A" "%_oBranding%"') do set "prodId=%%x"
-set prodId=!prodId:"/>=!
-set prodId=!prodId:~-4!
-if "%oVer%"=="14" (
-REM Exception case for Visio because wrong primary product ID is mentioned in Branding.xml
-echo %%D | find /i "Visio" %nul% && set prodId=0057
-)
-reg query "%2\Registration\{%%A}" /v ProductCode %nul2% | find /i "-!prodId!-" %nul% && (
-reg query "%2\Common\InstalledPackages" %nul2% | find /i "-!prodId!-" %nul% && (
-if defined _oIds (set _oIds=!_oIds! %%D) else (set _oIds=%%D)
 )
 )
 )
@@ -6556,20 +14787,40 @@ mode 100, 36
 goto dk_done
 
 :sppmgr:
+param (
+    [Parameter()]
+    [switch]
+    $All,
+    [Parameter()]
+    [switch]
+    $Dlv,
+    [Parameter()]
+    [switch]
+    $IID,
+    [Parameter()]
+    [switch]
+    $Pass
+)
+
+function CONOUT($strObj)
+{
+	Out-Host -Input $strObj
+}
+
 function ExitScript($ExitCode = 0)
 {
 	Exit $ExitCode
 }
 
 if (-Not $PSVersionTable) {
-	Write-Host "==== ERROR ====`r`n"
-	Write-Host 'Windows PowerShell 1.0 is not supported by this script.'
+	"==== ERROR ====`r`n"
+	"Windows PowerShell 1.0 is not supported by this script."
 	ExitScript 1
 }
 
 if ($ExecutionContext.SessionState.LanguageMode.value__ -NE 0) {
-	Write-Host "==== ERROR ====`r`n"
-	Write-Host 'Windows PowerShell is not running in Full Language Mode.'
+	"==== ERROR ====`r`n"
+	"Windows PowerShell is not running in Full Language Mode."
 	ExitScript 1
 }
 
@@ -6577,23 +14828,37 @@ $winbuild = 1
 try {
 	$winbuild = [System.Diagnostics.FileVersionInfo]::GetVersionInfo("$env:SystemRoot\System32\kernel32.dll").FileBuildPart
 } catch {
-	$winbuild = [int](Get-WmiObject Win32_OperatingSystem).BuildNumber
+	$winbuild = [int]([wmi]'Win32_OperatingSystem=@').BuildNumber
 }
 
 if ($winbuild -EQ 1) {
-	Write-Host "==== ERROR ====`r`n"
-	Write-Host 'Could not detect Windows build.'
+	"==== ERROR ====`r`n"
+	"Could not detect Windows build."
 	ExitScript 1
 }
 
 if ($winbuild -LT 2600) {
-	Write-Host "==== ERROR ====`r`n"
-	Write-Host 'This build of Windows is not supported by this script.'
+	"==== ERROR ====`r`n"
+	"This build of Windows is not supported by this script."
 	ExitScript 1
 }
 
+if ($All.IsPresent)
+{
+	$isAll = {CONOUT "`r"}
+	$noAll = {$null}
+}
+else
+{
+	$isAll = {$null}
+	$noAll = {CONOUT "`r"}
+}
+$Dlv = $Dlv.IsPresent
+$IID = $IID.IsPresent -Or $Dlv.IsPresent
+
 $NT6 = $winbuild -GE 6000
 $NT7 = $winbuild -GE 7600
+$NT8 = $winbuild -GE 9200
 $NT9 = $winbuild -GE 9600
 
 $Admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -6603,10 +14868,10 @@ $line3 = "____________________________________________________________"
 
 function echoWindows
 {
-	Write-Host "$line2"
-	Write-Host "===                   Windows Status                     ==="
-	Write-Host "$line2"
-	if (!$All.IsPresent) {Write-Host}
+	CONOUT "$line2"
+	CONOUT "===                   Windows Status                     ==="
+	CONOUT "$line2"
+	& $noAll
 }
 
 function echoOffice
@@ -6615,18 +14880,22 @@ function echoOffice
 		return
 	}
 
-	if ($All.IsPresent) {Write-Host}
-	Write-Host "$line2"
-	Write-Host "===                   Office Status                      ==="
-	Write-Host "$line2"
-	if (!$All.IsPresent) {Write-Host}
+	& $isAll
+	CONOUT "$line2"
+	CONOUT "===                   Office Status                      ==="
+	CONOUT "$line2"
+	& $noAll
 
 	$script:doMSG = 0
 }
 
 function strGetRegistry($strKey, $strName)
 {
-Get-ItemProperty -EA 0 $strKey | select -EA 0 -Expand $strName
+	try {
+		return [Microsoft.Win32.Registry]::GetValue($strKey, $strName, $null)
+	} catch {
+		return $null
+	}
 }
 
 function CheckOhook
@@ -6657,61 +14926,297 @@ function CheckOhook
 		return
 	}
 
-	if ($All.IsPresent) {Write-Host}
-	Write-Host "$line2"
-	Write-Host "===                Office Ohook Status                   ==="
-	Write-Host "$line2"
-	Write-Host
-	Write-Host -back 'Black' -fore 'Yellow' 'Ohook for permanent Office activation is installed.'
-	Write-Host -back 'Black' -fore 'Yellow' 'You can ignore the below mentioned Office activation status.'
-	if (!$All.IsPresent) {Write-Host}
+	& $isAll
+	CONOUT "$line2"
+	CONOUT "===                Office Ohook Status                   ==="
+	CONOUT "$line2"
+	$host.UI.WriteLine('Yellow', 'Black', "`r`nOhook for permanent Office activation is installed.`r`nYou can ignore the below mentioned Office activation status.")
+	& $noAll
 }
 
-#region WMI
-function DetectID($strSLP, $strAppId, [ref]$strAppVar)
-{
-	$fltr = "ApplicationID='$strAppId'"
-	if (!$All.IsPresent) {
-		$fltr = $fltr + " AND PartialProductKey <> NULL"
+#region SSSS
+function BoolToWStr($bVal) {
+	("TRUE", "FALSE")[!$bVal]
+}
+
+function InitializePInvoke($LaDll, $bOffice) {
+	$LaName = [IO.Path]::GetFileNameWithoutExtension($LaDll)
+	$SLApp = $NT7 -Or $bOffice -Or ($LaName -EQ 'sppc' -And [Diagnostics.FileVersionInfo]::GetVersionInfo("$SysPath\sppc.dll").FilePrivatePart -GE 16501)
+	$Win32 = $null
+
+	$Marshal = [System.Runtime.InteropServices.Marshal]
+	$Module = [AppDomain]::CurrentDomain.DefineDynamicAssembly(($LaName+"_Assembly"), 'Run').DefineDynamicModule(($LaName+"_Module"), $False)
+	$Class = $Module.DefineType(($LaName+"_Methods"), 'Public, Abstract, Sealed, BeforeFieldInit', [Object], 0)
+
+	$Class.DefinePInvokeMethod('SLClose', $LaDll, 22, 1, [Int32], @([IntPtr]), 1, 3).SetImplementationFlags(128)
+	$Class.DefinePInvokeMethod('SLOpen', $LaDll, 22, 1, [Int32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+	$Class.DefinePInvokeMethod('SLGenerateOfflineInstallationId', $LaDll, 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+	$Class.DefinePInvokeMethod('SLGetSLIDList', $LaDll, 22, 1, [Int32], @([IntPtr], [UInt32], [Guid].MakeByRefType(), [UInt32], [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+	$Class.DefinePInvokeMethod('SLGetLicensingStatusInformation', $LaDll, 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [Guid].MakeByRefType(), [IntPtr], [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+	$Class.DefinePInvokeMethod('SLGetPKeyInformation', $LaDll, 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+	$Class.DefinePInvokeMethod('SLGetProductSkuInformation', $LaDll, 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+	$Class.DefinePInvokeMethod('SLGetServiceInformation', $LaDll, 22, 1, [Int32], @([IntPtr], [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+	if ($SLApp) {
+		$Class.DefinePInvokeMethod('SLGetApplicationInformation', $LaDll, 22, 1, [Int32], @([IntPtr], [Guid].MakeByRefType(), [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
 	}
-	Get-WmiObject $strSLP ID -Filter $fltr -EA 0 | select ID -EA 0 | foreach {
-		$strAppVar.Value = 1
+	if ($bOffice) {
+		$Win32 = $Class.CreateType()
+		return
+	}
+	if ($NT6) {
+		$Class.DefinePInvokeMethod('SLGetWindowsInformation', 'slc.dll', 22, 1, [Int32], @([String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+		$Class.DefinePInvokeMethod('SLGetWindowsInformationDWORD', 'slc.dll', 22, 1, [Int32], @([String], [UInt32].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+		$Class.DefinePInvokeMethod('SLIsGenuineLocal', 'slwga.dll', 22, 1, [Int32], @([Guid].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr]), 1, 3).SetImplementationFlags(128)
+	}
+	if ($NT7) {
+		$Class.DefinePInvokeMethod('SLIsWindowsGenuineLocal', 'slc.dll', 'Public, Static', 'Standard', [Int32], @([UInt32].MakeByRefType()), 'Winapi', 'Unicode').SetImplementationFlags('PreserveSig')
+	}
+
+	if ($DllSubscription) {
+		$Class.DefinePInvokeMethod('ClipGetSubscriptionStatus', 'Clipc.dll', 22, 1, [Int32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
+		$Struct = $Class.DefineNestedType('SubStatus', 'NestedPublic, SequentialLayout, Sealed, BeforeFieldInit', [ValueType], 0)
+		[void]$Struct.DefineField('dwEnabled', [UInt32], 'Public')
+		[void]$Struct.DefineField('dwSku', [UInt32], 6)
+		[void]$Struct.DefineField('dwState', [UInt32], 6)
+		$SubStatus = $Struct.CreateType()
+	}
+
+	$Win32 = $Class.CreateType()
+}
+
+function SlGetInfoIID($SkuId)
+{
+	$bData = 0
+
+	if ($Win32::SLGenerateOfflineInstallationId(
+		$hSLC,
+		[ref][Guid]$SkuId,
+		[ref]$bData
+	))
+	{
+		return $null
+	}
+	else
+	{
+		return $Marshal::PtrToStringUni($bData)
 	}
 }
 
-function GetID($strSLP, $strAppId, $strProperty = "ID")
+function SlReturnData($hrRet, $tData, $cData, $bData) {
+	if ($hrRet -NE 0 -Or $cData -EQ 0)
+	{
+		return $null
+	}
+	if ($tData -EQ 1)
+	{
+		return $Marshal::PtrToStringUni($bData)
+	}
+	elseif ($tData -EQ 4)
+	{
+		return $Marshal::ReadInt32($bData)
+	}
+	elseif ($tData -EQ 3 -And $cData -EQ 8)
+	{
+		return $Marshal::ReadInt64($bData)
+	}
+	else
+	{
+		return $null
+	}
+}
+
+function SlGetInfoPKey($PkeyId, $Value)
 {
-	$NT5 = ($strSLP -EQ $wslp -And $winbuild -LT 6001)
-	$IDs = [Collections.ArrayList]@()
+	$tData = 0
+	$cData = 0
+	$bData = 0
 
-	if ($All.IsPresent) {
-		$fltr = "ApplicationID='$strAppId' AND PartialProductKey IS NULL"
-		$clause = $fltr
-		if (-Not $NT5) {
-		$clause = $fltr + " AND LicenseDependsOn <> NULL"
+	$hrRet = $Win32::SLGetPKeyInformation(
+		$hSLC,
+		[ref][Guid]$PkeyId,
+		$Value,
+		[ref]$tData,
+		[ref]$cData,
+		[ref]$bData
+	)
+
+	return SlReturnData $hrRet $tData $cData $bData
+}
+
+function SlGetInfoSku($SkuId, $Value)
+{
+	$tData = 0
+	$cData = 0
+	$bData = 0
+
+	$hrRet = $Win32::SLGetProductSkuInformation(
+		$hSLC,
+		[ref][Guid]$SkuId,
+		$Value,
+		[ref]$tData,
+		[ref]$cData,
+		[ref]$bData
+	)
+
+	return SlReturnData $hrRet $tData $cData $bData
+}
+
+function SlGetInfoApp($AppId, $Value)
+{
+	$tData = 0
+	$cData = 0
+	$bData = 0
+
+	$hrRet = $Win32::SLGetApplicationInformation(
+		$hSLC,
+		[ref][Guid]$AppId,
+		$Value,
+		[ref]$tData,
+		[ref]$cData,
+		[ref]$bData
+	)
+
+	return SlReturnData $hrRet $tData $cData $bData
+}
+
+function SlGetInfoService($Value)
+{
+	$tData = 0
+	$cData = 0
+	$bData = 0
+
+	$hrRet = $Win32::SLGetServiceInformation(
+		$hSLC,
+		$Value,
+		[ref]$tData,
+		[ref]$cData,
+		[ref]$bData
+	)
+
+	return SlReturnData $hrRet $tData $cData $bData
+}
+
+function SlGetInfoSvcApp($strApp, $Value)
+{
+	if ($SLApp)
+	{
+		return SlGetInfoApp $strApp $Value
+	}
+	else
+	{
+		return SlGetInfoService $Value
+	}
+}
+
+function SlGetInfoLicensing($AppId, $SkuId)
+{
+	$dwStatus = 0
+	$dwGrace = 0
+	$hrReason = 0
+	$qwValidity = 0
+
+	$cStatus = 0
+	$pStatus = 0
+
+	$hrRet = $Win32::SLGetLicensingStatusInformation(
+		$hSLC,
+		[ref][Guid]$AppId,
+		[ref][Guid]$SkuId,
+		0,
+		[ref]$cStatus,
+		[ref]$pStatus
+	)
+
+	if ($hrRet -NE 0 -Or $cStatus -EQ 0)
+	{
+		return
+	}
+
+	[IntPtr]$ppStatus = [Int64]$pStatus + [Int64]40 * ($cStatus - 1)
+	$dwStatus = $Marshal::ReadInt32($ppStatus, 16)
+	$dwGrace = $Marshal::ReadInt32($ppStatus, 20)
+	$hrReason = $Marshal::ReadInt32($ppStatus, 28)
+	$qwValidity = $Marshal::ReadInt64($ppStatus, 32)
+
+	if ($dwStatus -EQ 3)
+	{
+		$dwStatus = 5
+	}
+	if ($dwStatus -EQ 2)
+	{
+		if ($hrReason -EQ 0x4004F00D)
+		{
+			$dwStatus = 3
 		}
-		Get-WmiObject $strSLP $strProperty -Filter $clause -EA 0 | select -Expand $strProperty -EA 0 | foreach {$IDs += $_}
-		if (-Not $NT5) {
-		$clause = $fltr + " AND LicenseDependsOn IS NULL"
-		Get-WmiObject $strSLP $strProperty -Filter $clause -EA 0 | select -Expand $strProperty -EA 0 | foreach {$IDs += $_}
+		elseif ($hrReason -EQ 0x4004F065)
+		{
+			$dwStatus = 4
+		}
+		elseif ($hrReason -EQ 0x4004FC06)
+		{
+			$dwStatus = 6
 		}
 	}
 
-	$fltr = "ApplicationID='$strAppId' AND PartialProductKey <> NULL"
-	$clause = $fltr
-	if (-Not $NT5) {
-	$clause = $fltr + " AND LicenseDependsOn <> NULL"
-	}
-	Get-WmiObject $strSLP $strProperty -Filter $clause -EA 0 | select -Expand $strProperty -EA 0 | foreach {$IDs += $_}
-	if (-Not $NT5) {
-	$clause = $fltr + " AND LicenseDependsOn IS NULL"
-	Get-WmiObject $strSLP $strProperty -Filter $clause -EA 0 | select -Expand $strProperty -EA 0 | foreach {$IDs += $_}
+	return
+}
+
+function SlGetInfoSLID($AppId)
+{
+	$cReturnIds = 0
+	$pReturnIds = 0
+
+	$hrRet = $Win32::SLGetSLIDList(
+		$hSLC,
+		0,
+		[ref][Guid]$AppId,
+		1,
+		[ref]$cReturnIds,
+		[ref]$pReturnIds
+	)
+
+	if ($hrRet -NE 0 -Or $cReturnIds -EQ 0)
+	{
+		return
 	}
 
-	return $IDs
+	$a1List = @()
+	$a2List = @()
+	$a3List = @()
+	$a4List = @()
+
+	foreach ($i in 0..($cReturnIds - 1))
+	{
+		$bytes = New-Object byte[] 16
+		$Marshal::Copy([Int64]$pReturnIds + [Int64]16 * $i, $bytes, 0, 16)
+		$actid = ([Guid]$bytes).Guid
+		$gPPK = SlGetInfoSku $actid "pkeyId"
+		$gAdd = SlGetInfoSku $actid "DependsOn"
+		if ($All.IsPresent) {
+			if ($null -EQ $gPPK -And $null -NE $gAdd) { $a1List += @{id = $actid; pk = $null; ex = $true} }
+			if ($null -EQ $gPPK -And $null -EQ $gAdd) { $a2List += @{id = $actid; pk = $null; ex = $false} }
+		}
+		if ($null -NE $gPPK -And $null -NE $gAdd) { $a3List += @{id = $actid; pk = $gPPK; ex = $true} }
+		if ($null -NE $gPPK -And $null -EQ $gAdd) { $a4List += @{id = $actid; pk = $gPPK; ex = $false} }
+	}
+
+	return ($a1List + $a2List + $a3List + $a4List)
 }
 
 function DetectSubscription {
+	try
+	{
+		$objSvc = New-Object PSObject
+		$wmiSvc = [wmisearcher]"SELECT SubscriptionType, SubscriptionStatus, SubscriptionEdition, SubscriptionExpiry FROM SoftwareLicensingService"
+		$wmiSvc.Options.Rewindable = $false
+		$wmiSvc.Get() | select -Expand Properties -EA 0 | foreach { $objSvc | Add-Member 8 $_.Name $_.Value }
+		$wmiSvc.Dispose()
+	}
+	catch
+	{
+		return
+	}
+
 	if ($null -EQ $objSvc.SubscriptionType -Or $objSvc.SubscriptionType -EQ 120) {
 		return
 	}
@@ -6742,199 +15247,271 @@ function DetectSubscription {
 		if ($objSvc.SubscriptionEdition.Contains("UNKNOWN") -EQ $false) {$SubMsgEdition = $objSvc.SubscriptionEdition}
 	}
 
-	Write-Host
-	Write-Host "Subscription information:"
-	Write-Host "    Edition: $SubMsgEdition"
-	Write-Host "    Type   : $SubMsgType"
-	Write-Host "    Status : $SubMsgStatus"
-	Write-Host "    Expiry : $SubMsgExpiry"
+	CONOUT "`nSubscription information:"
+	CONOUT "    Type   : $SubMsgType"
+	CONOUT "    Status : $SubMsgStatus"
+	CONOUT "    Edition: $SubMsgEdition"
+	CONOUT "    Expiry : $SubMsgExpiry"
+}
+
+function DetectAdbaClient
+{
+	$propADBA | foreach { set $_ (SlGetInfoSku $licID $_) }
+	CONOUT "`nAD Activation client information:"
+	CONOUT "    Object Name: $ADActivationObjectName"
+	CONOUT "    Domain Name: $ADActivationObjectDN"
+	CONOUT "    CSVLK Extended PID: $ADActivationCsvlkPID"
+	CONOUT "    CSVLK Activation ID: $ADActivationCsvlkSkuID"
 }
 
 function DetectAvmClient
 {
-	Write-Host
-	Write-Host "Automatic VM Activation client information:"
-	if (-Not [String]::IsNullOrEmpty($IAID)) {
-		Write-Host "    Guest IAID: $IAID"
+	$propAVMA | foreach { set $_ (SlGetInfoSku $licID $_) }
+	CONOUT "`nAutomatic VM Activation client information:"
+	if (-Not [String]::IsNullOrEmpty($InheritedActivationId)) {
+		CONOUT "    Guest IAID: $InheritedActivationId"
 	} else {
-		Write-Host "    Guest IAID: Not Available"
+		CONOUT "    Guest IAID: Not Available"
 	}
-	if (-Not [String]::IsNullOrEmpty($AutomaticVMActivationHostMachineName)) {
-		Write-Host "    Host machine name: $AutomaticVMActivationHostMachineName"
+	if (-Not [String]::IsNullOrEmpty($InheritedActivationHostMachineName)) {
+		CONOUT "    Host machine name: $InheritedActivationHostMachineName"
 	} else {
-		Write-Host "    Host machine name: Not Available"
+		CONOUT "    Host machine name: Not Available"
 	}
-	if ($AutomaticVMActivationLastActivationTime.Substring(0,4) -NE "1601") {
-		$EED = [DateTime]::Parse([Management.ManagementDateTimeConverter]::ToDateTime($AutomaticVMActivationLastActivationTime),$null,48).ToString('yyyy-MM-dd hh:mm:ss tt')
-		Write-Host "    Activation time: $EED UTC"
+	if (-Not [String]::IsNullOrEmpty($InheritedActivationHostDigitalPid2)) {
+		CONOUT "    Host Digital PID2: $InheritedActivationHostDigitalPid2"
 	} else {
-		Write-Host "    Activation time: Not Available"
+		CONOUT "    Host Digital PID2: Not Available"
 	}
-	if (-Not [String]::IsNullOrEmpty($AutomaticVMActivationHostDigitalPid2)) {
-		Write-Host "    Host Digital PID2: $AutomaticVMActivationHostDigitalPid2"
+	if ($InheritedActivationActivationTime) {
+		$IAAT = [DateTime]::FromFileTime($InheritedActivationActivationTime).ToString('yyyy-MM-dd hh:mm:ss tt')
+		CONOUT "    Activation time: $IAAT"
 	} else {
-		Write-Host "    Host Digital PID2: Not Available"
+		CONOUT "    Activation time: Not Available"
 	}
 }
 
 function DetectKmsHost
 {
+	$IsKeyManagementService = SlGetInfoSvcApp $strApp 'IsKeyManagementService'
+	if (-Not $IsKeyManagementService) {
+		return
+	}
+
 	if ($Vista -Or $NT5) {
-		$KeyManagementServiceListeningPort = strGetRegistry $SLKeyPath "KeyManagementServiceListeningPort"
-		$KeyManagementServiceDnsPublishing = strGetRegistry $SLKeyPath "DisableDnsPublishing"
-		$KeyManagementServiceLowPriority = strGetRegistry $SLKeyPath "EnableKmsLowPriority"
-		if (-Not $KeyManagementServiceDnsPublishing) {$KeyManagementServiceDnsPublishing = "TRUE"}
-		if (-Not $KeyManagementServiceLowPriority) {$KeyManagementServiceLowPriority = "FALSE"}
+		$regk = $SLKeyPath
+	} elseif ($strSLP -EQ $oslp) {
+		$regk = $OPKeyPath
 	} else {
-		$KeyManagementServiceListeningPort = $objSvc.KeyManagementServiceListeningPort
-		$KeyManagementServiceDnsPublishing = $objSvc.KeyManagementServiceDnsPublishing
-		$KeyManagementServiceLowPriority = $objSvc.KeyManagementServiceLowPriority
+		$regk = $SPKeyPath
+	}
+	$KMSListening = strGetRegistry $regk "KeyManagementServiceListeningPort"
+	$KMSPublishing = strGetRegistry $regk "DisableDnsPublishing"
+	$KMSPriority = strGetRegistry $regk "EnableKmsLowPriority"
+
+	if (-Not $KMSListening) {$KMSListening = 1688}
+	if (-Not $KMSPublishing) {$KMSPublishing = "TRUE"} else {$KMSPublishing = BoolToWStr (!$KMSPublishing)}
+	if (-Not $KMSPriority) {$KMSPriority = "FALSE"} else {$KMSPriority = BoolToWStr $KMSPriority}
+
+	if ($KMSPublishing -EQ "TRUE") {$KMSPublishing = "Enabled"} else {$KMSPublishing = "Disabled"}
+	if ($KMSPriority -EQ "TRUE") {$KMSPriority = "Low"} else {$KMSPriority = "Normal"}
+
+	if ($SLApp)
+	{
+		$propKMSServer | foreach { set $_ (SlGetInfoApp $strApp $_) }
+	}
+	else
+	{
+		$propKMSServer | foreach { set $_ (SlGetInfoService $_) }
 	}
 
-	if (-Not $KeyManagementServiceListeningPort) {$KeyManagementServiceListeningPort = 1688}
-	if ($KeyManagementServiceDnsPublishing -EQ "TRUE") {
-		$KeyManagementServiceDnsPublishing = "Enabled"
-	} else {
-		$KeyManagementServiceDnsPublishing = "Disabled"
-	}
-	if ($KeyManagementServiceLowPriority -EQ "TRUE") {
-		$KeyManagementServiceLowPriority = "Low"
-	} else {
-		$KeyManagementServiceLowPriority = "Normal"
-	}
+	$KMSRequests = $KeyManagementServiceTotalRequests
+	$NoRequests = ($null -EQ $KMSRequests) -Or ($KMSRequests -EQ -1) -Or ($KMSRequests -EQ 4294967295)
 
-	Write-Host
-	Write-Host "Key Management Service host information:"
-	Write-Host "    Current count: $KeyManagementServiceCurrentCount"
-	Write-Host "    Listening on Port: $KeyManagementServiceListeningPort"
-	Write-Host "    DNS publishing: $KeyManagementServiceDnsPublishing"
-	Write-Host "    KMS priority: $KeyManagementServiceLowPriority"
-	if (-Not [String]::IsNullOrEmpty($KeyManagementServiceTotalRequests)) {
-		Write-Host
-		Write-Host "Key Management Service cumulative requests received from clients:"
-		Write-Host "    Total: $KeyManagementServiceTotalRequests"
-		Write-Host "    Failed: $KeyManagementServiceFailedRequests"
-		Write-Host "    Unlicensed: $KeyManagementServiceUnlicensedRequests"
-		Write-Host "    Licensed: $KeyManagementServiceLicensedRequests"
-		Write-Host "    Initial grace period: $KeyManagementServiceOOBGraceRequests"
-		Write-Host "    Expired or Hardware out of tolerance: $KeyManagementServiceOOTGraceRequests"
-		Write-Host "    Non-genuine grace period: $KeyManagementServiceNonGenuineGraceRequests"
-		Write-Host "    Notification: $KeyManagementServiceNotificationRequests"
+	CONOUT "`nKey Management Service host information:"
+	CONOUT "    Current count: $KeyManagementServiceCurrentCount"
+	CONOUT "    Listening on Port: $KMSListening"
+	CONOUT "    DNS publishing: $KMSPublishing"
+	CONOUT "    KMS priority: $KMSPriority"
+	if ($NoRequests) {
+		return
 	}
+	CONOUT "`nKey Management Service cumulative requests received from clients:"
+	CONOUT "    Total: $KeyManagementServiceTotalRequests"
+	CONOUT "    Failed: $KeyManagementServiceFailedRequests"
+	CONOUT "    Unlicensed: $KeyManagementServiceUnlicensedRequests"
+	CONOUT "    Licensed: $KeyManagementServiceLicensedRequests"
+	CONOUT "    Initial grace period: $KeyManagementServiceOOBGraceRequests"
+	CONOUT "    Expired or Hardware out of tolerance: $KeyManagementServiceOOTGraceRequests"
+	CONOUT "    Non-genuine grace period: $KeyManagementServiceNonGenuineGraceRequests"
+	if ($null -NE $KeyManagementServiceNotificationRequests) {CONOUT "    Notification: $KeyManagementServiceNotificationRequests"}
 }
 
 function DetectKmsClient
 {
-	if ($null -NE $VLActivationTypeEnabled) {Write-Host "Configured Activation Type: $($VLActTypes[$VLActivationTypeEnabled])"}
-	Write-Host
+	if ($win8)
+	{
+		$VLType = strGetRegistry ($SPKeyPath + '\' + $strApp + '\' + $licID) "VLActivationType"
+		if ($null -EQ $VLType) {$VLType = strGetRegistry ($SPKeyPath + '\' + $strApp) "VLActivationType"}
+		if ($null -EQ $VLType) {$VLType = strGetRegistry ($SPKeyPath) "VLActivationType"}
+		if ($null -EQ $VLType -Or $VLType -GT 3) {$VLType = 0}
+	}
+	if ($null -NE $VLType) {CONOUT "Configured Activation Type: $($VLActTypes[$VLType])"}
+
+	CONOUT "`r"
 	if ($LicenseStatus -NE 1) {
-		Write-Host "Please activate the product in order to update KMS client information values."
+		CONOUT "Please activate the product in order to update KMS client information values."
 		return
 	}
 
-	if ($Vista) {
-		$KeyManagementServicePort = strGetRegistry $SLKeyPath "KeyManagementServicePort"
-		$DiscoveredKeyManagementServiceMachineName = strGetRegistry $NSKeyPath "DiscoveredKeyManagementServiceName"
-		$DiscoveredKeyManagementServiceMachinePort = strGetRegistry $NSKeyPath "DiscoveredKeyManagementServicePort"
+	if ($NT7 -Or $strSLP -EQ $oslp) {
+		$propKMSClient | foreach { set $_ (SlGetInfoSku $licID $_) }
+		if ($strSLP -EQ $oslp) {$regk = $OPKeyPath} else {$regk = $SPKeyPath}
+		$KMSCaching = strGetRegistry $regk "DisableKeyManagementServiceHostCaching"
+		if (-Not $KMSCaching) {$KMSCaching = "TRUE"} else {$KMSCaching = BoolToWStr (!$KMSCaching)}
 	}
 
-	if ([String]::IsNullOrEmpty($KeyManagementServiceMachine)) {
+	"ClientMachineID" | foreach { set $_ (SlGetInfoService $_) }
+
+	if ($Vista) {
+		$propKMSVista | foreach { set $_ (SlGetInfoService $_) }
+		$KeyManagementServicePort = strGetRegistry $SLKeyPath "KeyManagementServicePort"
+		$DiscoveredKeyManagementServiceName = strGetRegistry $NSKeyPath "DiscoveredKeyManagementServiceName"
+		$DiscoveredKeyManagementServicePort = strGetRegistry $NSKeyPath "DiscoveredKeyManagementServicePort"
+	}
+
+	if ([String]::IsNullOrEmpty($KeyManagementServiceName)) {
 		$KmsReg = $null
 	} else {
 		if (-Not $KeyManagementServicePort) {$KeyManagementServicePort = 1688}
-		$KmsReg = "Registered KMS machine name: ${KeyManagementServiceMachine}:${KeyManagementServicePort}"
+		$KmsReg = "Registered KMS machine name: ${KeyManagementServiceName}:${KeyManagementServicePort}"
 	}
 
-	if ([String]::IsNullOrEmpty($DiscoveredKeyManagementServiceMachineName)) {
+	if ([String]::IsNullOrEmpty($DiscoveredKeyManagementServiceName)) {
 		$KmsDns = "DNS auto-discovery: KMS name not available"
 		if ($Vista -And -Not $Admin) {$KmsDns = "DNS auto-discovery: Run the script as administrator to retrieve info"}
 	} else {
-		if (-Not $DiscoveredKeyManagementServiceMachinePort) {$DiscoveredKeyManagementServiceMachinePort = 1688}
-		$KmsDns = "KMS machine name from DNS: ${DiscoveredKeyManagementServiceMachineName}:${DiscoveredKeyManagementServiceMachinePort}"
+		if (-Not $DiscoveredKeyManagementServicePort) {$DiscoveredKeyManagementServicePort = 1688}
+		$KmsDns = "KMS machine name from DNS: ${DiscoveredKeyManagementServiceName}:${DiscoveredKeyManagementServicePort}"
 	}
 
-	if ($null -NE $objSvc.KeyManagementServiceHostCaching) {
-		if ($objSvc.KeyManagementServiceHostCaching -EQ "TRUE") {
-			$KeyManagementServiceHostCaching = "Enabled"
-		} else {
-			$KeyManagementServiceHostCaching = "Disabled"
+	if ($null -NE $KMSCaching) {
+		if ($KMSCaching -EQ "TRUE") {$KMSCaching = "Enabled"} else {$KMSCaching = "Disabled"}
+	}
+
+	if ($strSLP -EQ $wslp -And $NT9) {
+		if ([String]::IsNullOrEmpty($DiscoveredKeyManagementServiceIpAddress)) {
+			$DiscoveredKeyManagementServiceIpAddress = "not available"
 		}
 	}
 
-	Write-Host "Key Management Service client information:"
-	Write-Host "    Client Machine ID (CMID): $($objSvc.ClientMachineID)"
+	CONOUT "Key Management Service client information:"
+	CONOUT "    Client Machine ID (CMID): $ClientMachineID"
 	if ($null -EQ $KmsReg) {
-		Write-Host "    $KmsDns"
-		Write-Host "    Registered KMS machine name: KMS name not available"
+		CONOUT "    $KmsDns"
+		CONOUT "    Registered KMS machine name: KMS name not available"
 	} else {
-		Write-Host "    $KmsReg"
+		CONOUT "    $KmsReg"
 	}
-	if ($null -NE $DiscoveredKeyManagementServiceMachineIpAddress) {Write-Host "    KMS machine IP address: $DiscoveredKeyManagementServiceMachineIpAddress"}
-	Write-Host "    KMS machine extended PID: $KeyManagementServiceProductKeyID"
-	Write-Host "    Activation interval: $VLActivationInterval minutes"
-	Write-Host "    Renewal interval: $VLRenewalInterval minutes"
-	if ($null -NE $KeyManagementServiceHostCaching) {Write-Host "    KMS host caching: $KeyManagementServiceHostCaching"}
-	if (-Not [String]::IsNullOrEmpty($KeyManagementServiceLookupDomain)) {Write-Host "    KMS SRV record lookup domain: $KeyManagementServiceLookupDomain"}
+	if ($null -NE $DiscoveredKeyManagementServiceIpAddress) {CONOUT "    KMS machine IP address: $DiscoveredKeyManagementServiceIpAddress"}
+	CONOUT "    KMS machine extended PID: $CustomerPID"
+	CONOUT "    Activation interval: $VLActivationInterval minutes"
+	CONOUT "    Renewal interval: $VLRenewalInterval minutes"
+	if ($null -NE $KMSCaching) {CONOUT "    KMS host caching: $KMSCaching"}
+	if (-Not [String]::IsNullOrEmpty($KeyManagementServiceLookupDomain)) {CONOUT "    KMS SRV record lookup domain: $KeyManagementServiceLookupDomain"}
 }
 
-function GetResult($strSLP, $strSLS, $strID)
+function GetResult($strSLP, $strApp, $entry)
 {
-	try {$objPrd = Get-WmiObject $strSLP -Filter "ID='$strID'" -EA 1} catch {return}
-	$objPrd | select -Expand Properties -EA 0 | foreach {
-		if (-Not [String]::IsNullOrEmpty($_.Value)) {set $_.Name $_.Value}
+	$licID = $entry.id
+	$propPrd | foreach { set $_ (SlGetInfoSku $licID $_) }
+	. SlGetInfoLicensing $strApp $licID
+	$LicenseStatus = $dwStatus
+	$LicReason = $hrReason
+	$EvaluationEndDate = $qwValidity
+	$gprMnt = $dwGrace
+
+	$pkid = $entry.pk
+	$isPPK = $null -NE $pkid
+
+	$add_on = $Name.IndexOf("add-on for", 5)
+	if ($add_on -NE -1) {
+		$Name = $Name.Substring(0, $add_on + 7)
 	}
 
-	$winID = ($ApplicationID -EQ $winApp)
-	$winPR = ($winID -And -Not $LicenseIsAddon)
+	$licPHN = "empty"
+	if ($Dlv -Or $All.IsPresent) {
+		$licPHN = SlGetInfoSku $licID "msft:sl/EUL/PHONE/PUBLIC"
+	}
+
+	if ($LicenseStatus -EQ 0 -And !$isPPK) {
+		& $isAll
+		CONOUT "Name: $Name"
+		CONOUT "Description: $Description"
+		CONOUT "Activation ID: $licID"
+		CONOUT "License Status: Unlicensed"
+		if ($licPHN -NE "empty") {
+			$gPHN = [String]::IsNullOrEmpty($licPHN) -NE $true
+			CONOUT "Phone activatable: $($gPHN.ToString())"
+		}
+		return
+	}
+
+	$winID = ($strApp -EQ $winApp)
+	$winPR = ($winID -And -Not $entry.ex)
 	$Vista = ($winID -And $NT6 -And -Not $NT7)
 	$NT5 = ($strSLP -EQ $wslp -And $winbuild -LT 6001)
+	$win8 = ($strSLP -EQ $wslp -And $NT8)
+	$reapp = ("Windows", "App")[!$winID]
+	$prmnt = ("machine", "product")[!$winPR]
 
-	if ($Description | Select-String "VOLUME_KMSCLIENT") {$cKmsClient = 1; $_mTag = "Volume"}
-	if ($Description | Select-String "TIMEBASED_") {$cTblClient = 1; $_mTag = "Timebased"}
-	if ($Description | Select-String "VIRTUAL_MACHINE_ACTIVATION") {$cAvmClient = 1; $_mTag = "Automatic VM"}
-	if ($null -EQ $cKmsClient) {
-		if ($Description | Select-String "VOLUME_KMS") {$cKmsHost = 1}
+	if ($Description.Contains("VOLUME_KMSCLIENT")) {$cKmsClient = 1; $actTag = "Volume"}
+	if ($Description.Contains("TIMEBASED_")) {$cTblClient = 1; $actTag = "Timebased"}
+	if ($Description.Contains("VIRTUAL_MACHINE_ACTIVATION")) {$cAvmClient = 1; $actTag = "Automatic VM"}
+	if ($null -EQ $cKmsClient -And $Description.Contains("VOLUME_KMS")) {$cKmsServer = 1}
+
+	$gprDay = [Math]::Round($gprMnt/1440)
+	$_xpr = ""
+	$inGrace = $false
+	if ($gprMnt -GT 0) {
+		$_xpr = [DateTime]::Now.AddMinutes($gprMnt).ToString('yyyy-MM-dd hh:mm:ss tt')
+		$inGrace = $true
 	}
 
-	$_gpr = [Math]::Round($GracePeriodRemaining/1440)
-	if ($_gpr -GT 0) {
-		$_xpr = [DateTime]::Now.addMinutes($GracePeriodRemaining).ToString('yyyy-MM-dd hh:mm:ss tt')
-	}
-
-	if ($null -EQ $LicenseStatusReason) {$LicenseStatusReason = -1}
-	$LicenseReason = '0x{0:X}' -f $LicenseStatusReason
-	$LicenseMsg = "Time remaining: $GracePeriodRemaining minute(s) ($_gpr day(s))"
+	$LicenseMsg = "Time remaining: $gprMnt minute(s) ($gprDay day(s))"
 	if ($LicenseStatus -EQ 0) {
 		$LicenseInf = "Unlicensed"
 		$LicenseMsg = $null
 	}
 	if ($LicenseStatus -EQ 1) {
 		$LicenseInf = "Licensed"
-		$LicenseMsg = $null
-		if ($GracePeriodRemaining -EQ 0) {
-			if ($winPR) {$ExpireMsg = "The machine is permanently activated."} else {$ExpireMsg = "The product is permanently activated."}
+		if ($gprMnt -EQ 0) {
+			$LicenseMsg = $null
+			$ExpireMsg = "The $prmnt is permanently activated."
 		} else {
-			$LicenseMsg = "$_mTag activation expiration: $GracePeriodRemaining minute(s) ($_gpr day(s))"
-			if ($null -NE $_xpr) {$ExpireMsg = "$_mTag activation will expire $_xpr"}
+			$LicenseMsg = "$actTag activation expiration: $gprMnt minute(s) ($gprDay day(s))"
+			if ($inGrace) {$ExpireMsg = "$actTag activation will expire $_xpr"}
 		}
 	}
 	if ($LicenseStatus -EQ 2) {
 		$LicenseInf = "Initial grace period"
-		if ($null -NE $_xpr) {$ExpireMsg = "Initial grace period ends $_xpr"}
+		if ($inGrace) {$ExpireMsg = "$LicenseInf ends $_xpr"}
 	}
 	if ($LicenseStatus -EQ 3) {
 		$LicenseInf = "Additional grace period (KMS license expired or hardware out of tolerance)"
-		if ($null -NE $_xpr) {$ExpireMsg = "Additional grace period ends $_xpr"}
+		if ($inGrace) {$ExpireMsg = "Additional grace period ends $_xpr"}
 	}
 	if ($LicenseStatus -EQ 4) {
 		$LicenseInf = "Non-genuine grace period"
-		if ($null -NE $_xpr) {$ExpireMsg = "Non-genuine grace period ends $_xpr"}
+		if ($inGrace) {$ExpireMsg = "$LicenseInf ends $_xpr"}
 	}
 	if ($LicenseStatus -EQ 5 -And -Not $NT5) {
+		$LicenseReason = '0x{0:X}' -f $LicReason
 		$LicenseInf = "Notification"
 		$LicenseMsg = "Notification Reason: $LicenseReason"
+		if ($LicenseReason -EQ "0xC004F00F") {if ($null -NE $cKmsClient) {$LicenseMsg = $LicenseMsg + " (KMS license expired)."} else {$LicenseMsg = $LicenseMsg + " (hardware out of tolerance)."}}
 		if ($LicenseReason -EQ "0xC004F200") {$LicenseMsg = $LicenseMsg + " (non-genuine)."}
-		if ($LicenseReason -EQ "0xC004F009") {$LicenseMsg = $LicenseMsg + " (grace time expired)."}
+		if ($LicenseReason -EQ "0xC004F009" -Or $LicenseReason -EQ "0xC004F064") {$LicenseMsg = $LicenseMsg + " (grace time expired)."}
 	}
 	if ($LicenseStatus -GT 5 -Or ($LicenseStatus -GT 4 -And $NT5)) {
 		$LicenseInf = "Unknown"
@@ -6942,72 +15519,132 @@ function GetResult($strSLP, $strSLS, $strID)
 	}
 	if ($LicenseStatus -EQ 6 -And -Not $Vista -And -Not $NT5) {
 		$LicenseInf = "Extended grace period"
-		if ($null -NE $_xpr) {$ExpireMsg = "Extended grace period ends $_xpr"}
+		if ($inGrace) {$ExpireMsg = "$LicenseInf ends $_xpr"}
 	}
 
-	if ($winPR -And $PartialProductKey -And -Not $NT9) {
-		$dp4 = Get-ItemProperty -EA 0 "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" | select -EA 0 -Expand DigitalProductId4
-		if ($null -NE $dp4) {
-			$ProductKeyChannel = ([System.Text.Encoding]::Unicode.GetString($dp4, 1016, 128)).Trim([char]$null)
+	if ($isPPK) {
+		$propPkey | foreach { set $_ (SlGetInfoPKey $pkid $_) }
+	}
+
+	if ($winPR -And $isPPK -And -Not $NT8) {
+		$uxd = SlGetInfoSku $licID 'UXDifferentiator'
+		$script:primary += @{
+			aid = $licID;
+			ppk = $PartialProductKey;
+			chn = $Channel;
+			lst = $LicenseStatus;
+			lcr = $LicReason;
+			ged = $gprMnt;
+			evl = $EvaluationEndDate;
+			dff = $uxd
 		}
 	}
 
-	if ($All.IsPresent) {Write-Host}
-	Write-Host "Name: $Name"
-	Write-Host "Description: $Description"
-	Write-Host "Activation ID: $ID"
-	if ($null -NE $ProductKeyID) {Write-Host "Extended PID: $ProductKeyID"}
-	if ($null -NE $OfflineInstallationId -And $IID.IsPresent) {Write-Host "Installation ID: $OfflineInstallationId"}
-	if ($null -NE $ProductKeyChannel) {Write-Host "Product Key Channel: $ProductKeyChannel"}
-	if ($null -NE $PartialProductKey) {Write-Host "Partial Product Key: $PartialProductKey"} else {Write-Host "Product Key: Not installed"}
-	Write-Host "License Status: $LicenseInf"
-	if ($null -NE $LicenseMsg) {Write-Host "$LicenseMsg"}
-	if ($LicenseStatus -NE 0 -And $EvaluationEndDate.Substring(0,4) -NE "1601") {
-		$EED = [DateTime]::Parse([Management.ManagementDateTimeConverter]::ToDateTime($EvaluationEndDate),$null,48).ToString('yyyy-MM-dd hh:mm:ss tt')
-		Write-Host "Evaluation End Date: $EED UTC"
+	if ($IID -And $isPPK) {
+		$OfflineInstallationId = SlGetInfoIID $licID
 	}
 
-	if ($winID -And $null -NE $cAvmClient -And $null -NE $PartialProductKey) {
-		DetectAvmClient
+	if ($Dlv) {
+		if ($win8)
+		{
+			$RemainingSkuReArmCount = SlGetInfoSku $licID 'RemainingRearmCount'
+			$RemainingAppReArmCount = SlGetInfoApp $strApp 'RemainingRearmCount'
+		}
+		else
+		{
+			if (($winID -And $NT7) -Or $strSLP -EQ $oslp)
+			{
+				$RemainingSLReArmCount = SlGetInfoApp $strApp 'RemainingRearmCount'
+			}
+			else
+			{
+				$RemainingSLReArmCount = SlGetInfoService 'RearmCount'
+			}
+		}
+		if ($null -EQ $TrustedTime)
+		{
+			$TrustedTime = SlGetInfoSvcApp $strApp 'TrustedTime'
+		}
 	}
 
-	$chkSub = ($winPR -And $cSub)
-
-	$chkSLS = ($null -NE $PartialProductKey) -And ($null -NE $cKmsClient -Or $null -NE $cKmsHost -Or $chkSub)
-
-	if (!$chkSLS) {
-		if ($null -NE $ExpireMsg) {Write-Host; Write-Host "    $ExpireMsg"}
+	& $isAll
+	CONOUT "Name: $Name"
+	CONOUT "Description: $Description"
+	CONOUT "Activation ID: $licID"
+	if ($null -NE $DigitalPID) {CONOUT "Extended PID: $DigitalPID"}
+	if ($null -NE $DigitalPID2 -And $Dlv) {CONOUT "Product ID: $DigitalPID2"}
+	if ($null -NE $OfflineInstallationId -And $IID) {CONOUT "Installation ID: $OfflineInstallationId"}
+	if ($null -NE $Channel) {CONOUT "Product Key Channel: $Channel"}
+	if ($null -NE $PartialProductKey) {CONOUT "Partial Product Key: $PartialProductKey"}
+	CONOUT "License Status: $LicenseInf"
+	if ($null -NE $LicenseMsg) {CONOUT "$LicenseMsg"}
+	if ($LicenseStatus -NE 0 -And $EvaluationEndDate) {
+		$EED = [DateTime]::FromFileTimeUtc($EvaluationEndDate).ToString('yyyy-MM-dd hh:mm:ss tt')
+		CONOUT "Evaluation End Date: $EED UTC"
+	}
+	if ($LicenseStatus -NE 1 -And $licPHN -NE "empty") {
+		$gPHN = [String]::IsNullOrEmpty($licPHN) -NE $true
+		CONOUT "Phone activatable: $($gPHN.ToString())"
+	}
+	if ($Dlv) {
+		if ($null -NE $RemainingSLReArmCount) {
+			CONOUT "Remaining $reapp rearm count: $RemainingSLReArmCount"
+		}
+		if ($null -NE $RemainingSkuReArmCount) {
+			CONOUT "Remaining $reapp rearm count: $RemainingAppReArmCount"
+			CONOUT "Remaining SKU rearm count: $RemainingSkuReArmCount"
+		}
+		if ($LicenseStatus -NE 0 -And $TrustedTime) {
+			$TTD = [DateTime]::FromFileTime($TrustedTime).ToString('yyyy-MM-dd hh:mm:ss tt')
+			CONOUT "Trusted time: $TTD"
+		}
+	}
+	if (!$isPPK) {
 		return
 	}
 
-	$objSvc = Get-WmiObject $strSLS -EA 0
-
-	if ($Vista) {
-		$objSvc | select -Expand Properties -EA 0 | foreach {
-			if (-Not [String]::IsNullOrEmpty($_.Value)) {set $_.Name $_.Value}
-		}
+	if ($win8 -And $VLActivationType -EQ 1) {
+		DetectAdbaClient
 	}
 
-	if ($strSLS -EQ $wsls -And $NT9) {
-		if ([String]::IsNullOrEmpty($DiscoveredKeyManagementServiceMachineIpAddress)) {
-			$DiscoveredKeyManagementServiceMachineIpAddress = "not available"
-		}
+	if ($winID -And $null -NE $cAvmClient) {
+		DetectAvmClient
 	}
 
-	if ($null -NE $cKmsHost -And $IsKeyManagementServiceMachine -GT 0) {
-		DetectKmsHost
+	$chkSub = ($winPR -And $isSub)
+
+	$chkSLS = ($null -NE $cKmsClient -Or $null -NE $cKmsServer -Or $chkSub)
+
+	if (!$chkSLS) {
+		if ($null -NE $ExpireMsg) {CONOUT "`n    $ExpireMsg"}
+		return
 	}
 
 	if ($null -NE $cKmsClient) {
 		DetectKmsClient
 	}
 
-	if ($null -NE $ExpireMsg) {Write-Host; Write-Host "    $ExpireMsg"}
+	if ($null -NE $cKmsServer) {
+		if ($null -NE $ExpireMsg) {CONOUT "`n    $ExpireMsg"}
+		DetectKmsHost
+	} else {
+		if ($null -NE $ExpireMsg) {CONOUT "`n    $ExpireMsg"}
+	}
 
 	if ($chkSub) {
 		DetectSubscription
 	}
 
+}
+
+function ParseList($strSLP, $strApp, $arrList)
+{
+	foreach ($entry in $arrList)
+	{
+		GetResult $strSLP $strApp $entry
+		CONOUT "$line3"
+		& $noAll
+	}
 }
 #endregion
 
@@ -7042,11 +15679,10 @@ function PrintModePerPridFromRegistry
 	$vNextPrids = Get-Item -Path $vNextRegkey -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'property' -ErrorAction SilentlyContinue | Where-Object -FilterScript {$_.ToLower() -like "*retail" -or $_.ToLower() -like "*volume"}
 	If ($null -Eq $vNextPrids)
 	{
-		Write-Host
-		Write-Host "No registry keys found."
+		CONOUT "`nNo registry keys found."
 		Return
 	}
-	Write-Host
+	CONOUT "`r"
 	$vNextPrids | ForEach `
 	{
 		$mode = (Get-ItemProperty -Path $vNextRegkey -Name $_).$_
@@ -7056,7 +15692,7 @@ function PrintModePerPridFromRegistry
 			3 { $mode = "Device"; Break }
 			Default { $mode = "Legacy"; Break }
 		}
-		Write-Host $_ = $mode
+		CONOUT "$_ = $mode"
 	}
 }
 
@@ -7070,8 +15706,7 @@ function PrintSharedComputerLicensing
 	$scaPolicyValue = Get-ItemProperty -Path $scaPolicyKey -ErrorAction SilentlyContinue | Select-Object -ExpandProperty "SharedComputerLicensing" -ErrorAction SilentlyContinue
 	If ($null -Eq $scaValue -And $null -Eq $scaValue2 -And $null -Eq $scaPolicyValue)
 	{
-		Write-Host
-		Write-Host "No registry keys found."
+		CONOUT "`nNo registry keys found."
 		Return
 	}
 	$scaModeValue = $scaValue -Or $scaValue2 -Or $scaPolicyValue
@@ -7083,23 +15718,17 @@ function PrintSharedComputerLicensing
 	{
 		$scaMode = "Enabled"
 	}
-	Write-Host
-	Write-Host "Status:" $scaMode
-	Write-Host
+	CONOUT "`nStatus: $scaMode"
+	CONOUT "`r"
 	$tokenFiles = $null
 	$tokenPath = "${env:LOCALAPPDATA}\Microsoft\Office\16.0\Licensing"
 	If (Test-Path $tokenPath)
 	{
 		$tokenFiles = Get-ChildItem -Path $tokenPath -Filter "*authString*" -Recurse | Where-Object { !$_.PSIsContainer }
 	}
-	If ($null -Eq $tokenFiles)
+	If ($null -Eq $tokenFiles -Or $tokenFiles.Length -Eq 0)
 	{
-		Write-Host "No tokens found."
-		Return
-	}
-	If ($tokenFiles.Length -Eq 0)
-	{
-		Write-Host "No tokens found."
+		CONOUT "No tokens found."
 		Return
 	}
 	$tokenFiles | ForEach `
@@ -7133,16 +15762,9 @@ function PrintLicensesInformation
 	{
 		$licenseFiles = Get-ChildItem -Path $licensePath -Recurse | Where-Object { !$_.PSIsContainer }
 	}
-	If ($null -Eq $licenseFiles)
+	If ($null -Eq $licenseFiles -Or $licenseFiles.Length -Eq 0)
 	{
-		Write-Host
-		Write-Host "No licenses found."
-		Return
-	}
-	If ($licenseFiles.Length -Eq 0)
-	{
-		Write-Host
-		Write-Host "No licenses found."
+		CONOUT "`nNo licenses found."
 		Return
 	}
 	$licenseFiles | ForEach `
@@ -7189,8 +15811,8 @@ function PrintLicensesInformation
 
 function vNextDiagRun
 {
-	$fNUL = ([IO.Directory]::Exists("${env:LOCALAPPDATA}\Microsoft\Office\Licenses")) -and ([IO.Directory]::GetFiles("${env:LOCALAPPDATA}\Microsoft\Office\Licenses", "*", 1).Length -GE 0)
-	$fDev = ([IO.Directory]::Exists("${env:PROGRAMDATA}\Microsoft\Office\Licenses")) -and ([IO.Directory]::GetFiles("${env:PROGRAMDATA}\Microsoft\Office\Licenses", "*", 1).Length -GE 0)
+	$fNUL = ([IO.Directory]::Exists("${env:LOCALAPPDATA}\Microsoft\Office\Licenses")) -and ([IO.Directory]::GetFiles("${env:LOCALAPPDATA}\Microsoft\Office\Licenses", "*", 1).Length -GT 0)
+	$fDev = ([IO.Directory]::Exists("${env:PROGRAMDATA}\Microsoft\Office\Licenses")) -and ([IO.Directory]::GetFiles("${env:PROGRAMDATA}\Microsoft\Office\Licenses", "*", 1).Length -GT 0)
 	$rPID = $null -NE (GP "HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Licensing\LicensingNext" -EA 0 | select -Expand 'property' -EA 0 | where -Filter {$_.ToLower() -like "*retail" -or $_.ToLower() -like "*volume"})
 	$rSCA = $null -NE (GP "HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration" -EA 0 | select -Expand "SharedComputerLicensing" -EA 0)
 	$rSCL = $null -NE (GP "HKLM:\SOFTWARE\Microsoft\Office\16.0\Common\Licensing" -EA 0 | select -Expand "SharedComputerLicensing" -EA 0)
@@ -7199,24 +15821,20 @@ function vNextDiagRun
 		Return
 	}
 
-	if ($All.IsPresent) {Write-Host}
-	Write-Host "$line2"
-	Write-Host "===                  Office vNext Status                 ==="
-	Write-Host "$line2"
-	Write-Host
-	Write-Host "========== Mode per ProductReleaseId =========="
+	& $isAll
+	CONOUT "$line2"
+	CONOUT "===                  Office vNext Status                 ==="
+	CONOUT "$line2"
+	CONOUT "`n========== Mode per ProductReleaseId =========="
 	PrintModePerPridFromRegistry
-	Write-Host
-	Write-Host "========== Shared Computer Licensing =========="
+	CONOUT "`n========== Shared Computer Licensing =========="
 	PrintSharedComputerLicensing
-	Write-Host
-	Write-Host "========== vNext licenses ==========="
+	CONOUT "`n========== vNext licenses ==========="
 	PrintLicensesInformation -Mode "NUL"
-	Write-Host
-	Write-Host "========== Device licenses =========="
+	CONOUT "`n========== Device licenses =========="
 	PrintLicensesInformation -Mode "Device"
-	Write-Host "$line3"
-	Write-Host
+	CONOUT "$line3"
+	CONOUT "`r"
 }
 #endregion
 
@@ -7246,31 +15864,6 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #>
 
-function BoolToWStr($bVal) {
-	("TRUE", "FALSE")[!$bVal]
-}
-
-function InitializePInvoke {
-	$Marshal = [System.Runtime.InteropServices.Marshal]
-	$Module = [AppDomain]::CurrentDomain.DefineDynamicAssembly((Get-Random), 'Run').DefineDynamicModule((Get-Random))
-
-	$Class = $Module.DefineType('NativeMethods', 'Public, Abstract, Sealed, BeforeFieldInit', [Object], 0)
-	$Class.DefinePInvokeMethod('SLIsWindowsGenuineLocal', 'slc.dll', 'Public, Static', 'Standard', [Int32], @([UInt32].MakeByRefType()), 'Winapi', 'Unicode').SetImplementationFlags('PreserveSig')
-	$Class.DefinePInvokeMethod('SLGetWindowsInformationDWORD', 'slc.dll', 22, 1, [Int32], @([String], [UInt32].MakeByRefType()), 1, 3).SetImplementationFlags(128)
-	$Class.DefinePInvokeMethod('SLGetWindowsInformation', 'slc.dll', 22, 1, [Int32], @([String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
-
-	if ($DllSubscription) {
-		$Class.DefinePInvokeMethod('ClipGetSubscriptionStatus', 'Clipc.dll', 22, 1, [Int32], @([IntPtr].MakeByRefType()), 1, 3).SetImplementationFlags(128)
-		$Struct = $Class.DefineNestedType('SubStatus', 'NestedPublic, SequentialLayout, Sealed, BeforeFieldInit', [ValueType], 0)
-		[void]$Struct.DefineField('dwEnabled', [UInt32], 'Public')
-		[void]$Struct.DefineField('dwSku', [UInt32], 6)
-		[void]$Struct.DefineField('dwState', [UInt32], 6)
-		$SubStatus = $Struct.CreateType()
-	}
-
-	$Win32 = $Class.CreateType()
-}
-
 function InitializeDigitalLicenseCheck {
 	$CAB = [System.Reflection.Emit.CustomAttributeBuilder]
 
@@ -7299,13 +15892,13 @@ function PrintStateData {
 	}
 
 	[string[]]$pwszStateString = $Marshal::PtrToStringUni($pwszStateData) -replace ";", "`n    "
-	Write-Host "    $pwszStateString"
+	CONOUT ("    $pwszStateString")
 
 	$Marshal::FreeHGlobal($pwszStateData)
 	return $TRUE
 }
 
-function PrintLastActivationHRresult {
+function PrintLastActivationHResult {
 	$pdwLastHResult = 0
 	$cbSize = 0
 
@@ -7318,30 +15911,45 @@ function PrintLastActivationHRresult {
 		return $FALSE
 	}
 
-	Write-Host ("    LastActivationHResult=0x{0:x8}" -f $Marshal::ReadInt32($pdwLastHResult))
+	CONOUT ("    LastActivationHResult=0x{0:x8}" -f $Marshal::ReadInt32($pdwLastHResult))
 
 	$Marshal::FreeHGlobal($pdwLastHResult)
 	return $TRUE
 }
 
+function PrintLastActivationTime {
+	$pqwLastTime = 0
+	$cbSize = 0
+
+	if ($Win32::SLGetWindowsInformation(
+		"Security-SPP-LastWindowsActivationTime",
+		[ref]$null,
+		[ref]$cbSize,
+		[ref]$pqwLastTime
+	)) {
+		return $FALSE
+	}
+
+	$actTime = $Marshal::ReadInt64($pqwLastTime)
+	if ($actTime -ne 0) {
+		CONOUT ("    LastActivationTime={0}" -f [DateTime]::FromFileTimeUtc($actTime).ToString("yyyy/MM/dd:HH:mm:ss"))
+	}
+
+	$Marshal::FreeHGlobal($pqwLastTime)
+	return $TRUE
+}
+
 function PrintIsWindowsGenuine {
 	$dwGenuine = 0
-	$ppwszGenuineStates = @(
-		"SL_GEN_STATE_IS_GENUINE",
-		"SL_GEN_STATE_INVALID_LICENSE",
-		"SL_GEN_STATE_TAMPERED",
-		"SL_GEN_STATE_OFFLINE",
-		"SL_GEN_STATE_LAST"
-	)
 
 	if ($Win32::SLIsWindowsGenuineLocal([ref]$dwGenuine)) {
 		return $FALSE
 	}
 
 	if ($dwGenuine -lt 5) {
-		Write-Host ("    IsWindowsGenuine={0}" -f $ppwszGenuineStates[$dwGenuine])
+		CONOUT ("    IsWindowsGenuine={0}" -f $ppwszGenuineStates[$dwGenuine])
 	} else {
-		Write-Host ("    IsWindowsGenuine={0}" -f $dwGenuine)
+		CONOUT ("    IsWindowsGenuine={0}" -f $dwGenuine)
 	}
 
 	return $TRUE
@@ -7365,7 +15973,7 @@ function PrintDigitalLicenseStatus {
 	[bool]$bDigitalLicense = $FALSE
 
 	$bDigitalLicense = (($dwReturnCode -ge 0) -and ($dwReturnCode -ne 1))
-	Write-Host ("    IsDigitalLicense={0}" -f (BoolToWStr $bDigitalLicense))
+	CONOUT ("    IsDigitalLicense={0}" -f (BoolToWStr $bDigitalLicense))
 
 	return $TRUE
 }
@@ -7383,7 +15991,7 @@ function PrintSubscriptionStatus {
 		return $FALSE
 	}
 
-	Write-Host ("    SubscriptionSupportedEdition={0}" -f (BoolToWStr $dwSupported))
+	CONOUT ("    SubscriptionSupportedEdition={0}" -f (BoolToWStr $dwSupported))
 
 	$pStatus = $Marshal::AllocHGlobal($Marshal::SizeOf([Type]$SubStatus))
 	if ($Win32::ClipGetSubscriptionStatus([ref]$pStatus)) {
@@ -7394,25 +16002,26 @@ function PrintSubscriptionStatus {
 	$sStatus = $Marshal::PtrToStructure($pStatus, [Type]$SubStatus)
 	$Marshal::FreeHGlobal($pStatus)
 
-	Write-Host ("    SubscriptionEnabled={0}" -f (BoolToWStr $sStatus.dwEnabled))
+	CONOUT ("    SubscriptionEnabled={0}" -f (BoolToWStr $sStatus.dwEnabled))
 
 	if ($sStatus.dwEnabled -eq 0) {
 		return $TRUE
 	}
 
-	Write-Host ("    SubscriptionSku={0}" -f $sStatus.dwSku)
-	Write-Host ("    SubscriptionState={0}" -f $sStatus.dwState)
+	CONOUT ("    SubscriptionSku={0}" -f $sStatus.dwSku)
+	CONOUT ("    SubscriptionState={0}" -f $sStatus.dwState)
 
 	return $TRUE
 }
 
 function ClicRun
 {
-	if ($All.IsPresent) {Write-Host}
-	Write-Host "Client Licensing Check information:"
+	& $isAll
+	CONOUT "Client Licensing Check information:"
 
 	$null = PrintStateData
-	$null = PrintLastActivationHRresult
+	$null = PrintLastActivationHResult
+	$null = PrintLastActivationTime
 	$null = PrintIsWindowsGenuine
 
 	if ($DllDigital) {
@@ -7423,15 +16032,135 @@ function ClicRun
 		$null = PrintSubscriptionStatus
 	}
 
-	Write-Host "$line3"
-	if (!$All.IsPresent) {Write-Host}
+	CONOUT "$line3"
+	& $noAll
+}
+#endregion
+
+#region clc
+function clcGetExpireKrn
+{
+	$tData = 0
+	$cData = 0
+	$bData = 0
+
+	$hrRet = $Win32::SLGetWindowsInformation(
+		"Kernel-ExpirationDate",
+		[ref]$tData,
+		[ref]$cData,
+		[ref]$bData
+	)
+
+	if ($hrRet -Or !$cData -Or $tData -NE 3)
+	{
+		return $null
+	}
+
+	$year = $Marshal::ReadInt16($bData, 0)
+	if ($year -EQ 0 -Or $year -EQ 1601)
+	{
+		$rData = $null
+	}
+	else
+	{
+		$rData = '{0}/{1}/{2}:{3}:{4}:{5}' -f $year, $Marshal::ReadInt16($bData, 2), $Marshal::ReadInt16($bData, 4), $Marshal::ReadInt16($bData, 6), $Marshal::ReadInt16($bData, 8), $Marshal::ReadInt16($bData, 10)
+	}
+
+	#$Marshal::FreeHGlobal($bData)
+	return $rData
+}
+
+function clcGetExpireSys
+{
+	$kuser = $Marshal::ReadInt64((New-Object IntPtr(0x7FFE02C8)))
+
+	if ($kuser -EQ 0)
+	{
+		return $null
+	}
+
+	$rData = [DateTime]::FromFileTimeUtc($kuser).ToString('yyyy/MM/dd:HH:mm:ss')
+	return $rData
+}
+
+function clcGetLicensingState($dwState)
+{
+	if ($dwState -EQ 5) {
+		$dwState = 3
+	} elseif ($dwState -EQ 3 -Or $dwState -EQ 4 -Or $dwState -EQ 6) {
+		$dwState = 2
+	} elseif ($dwState -GT 6) {
+		$dwState = 4
+	}
+
+	$rData = '{0}' -f $ppwszLicensingStates[$dwState]
+	return $rData
+}
+
+function clcGetGenuineState($AppId)
+{
+	$dwGenuine = 0
+
+	if ($NT7) {
+		$hrRet = $Win32::SLIsWindowsGenuineLocal([ref]$dwGenuine)
+	} else {
+		$hrRet = $Win32::SLIsGenuineLocal([ref][Guid]$AppId, [ref]$dwGenuine, 0)
+	}
+
+	if ($hrRet)
+	{
+		$dwGenuine = 4
+	}
+
+	if ($dwGenuine -LT 5) {
+		$rData = '{0}' -f $ppwszGenuineStates[$dwGenuine]
+	} else {
+		$rData = $dwGenuine
+	}
+	return $rData
+}
+
+function ClcRun
+{
+	$prs = $script:primary[0]
+	if ($null -EQ $prs) {
+		return
+	}
+
+	$lState = clcGetLicensingState $prs.lst
+	$uState = clcGetGenuineState $winApp
+	$TbbKrn = clcGetExpireKrn
+	$TbbSys = clcGetExpireSys
+	if ($null -NE $TbbKrn) {
+		$ked = $TbbKrn
+	} elseif ($null -NE $TbbSys) {
+		$ked = $TbbSys
+	}
+
+	& $isAll
+	CONOUT "Client Licensing Check information:"
+
+	CONOUT ("    AppId={0}" -f $winApp)
+	if ($prs.ged) { CONOUT ("    GraceEndDate={0}" -f ([DateTime]::UtcNow.AddMinutes($prs.ged).ToString('yyyy/MM/dd:HH:mm:ss'))) }
+	if ($null -NE $ked) { CONOUT ("    KernelTimebombDate={0}" -f $ked) }
+	CONOUT ("    LastConsumptionReason=0x{0:x8}" -f $prs.lcr)
+	if ($prs.evl) { CONOUT ("    LicenseExpirationDate={0}" -f ([DateTime]::FromFileTimeUtc($prs.evl).ToString('yyyy/MM/dd:HH:mm:ss'))) }
+	CONOUT ("    LicenseState={0}" -f $lState)
+	CONOUT ("    PartialProductKey={0}" -f $prs.ppk)
+	CONOUT ("    ProductKeyType={0}" -f $prs.chn)
+	CONOUT ("    SkuId={0}" -f $prs.aid)
+	CONOUT ("    uxDifferentiator={0}" -f $prs.dff)
+	CONOUT ("    IsWindowsGenuine={0}" -f $uState)
+
+	CONOUT "$line3"
+	& $noAll
 }
 #endregion
 
 $Host.UI.RawUI.WindowTitle = "Check Activation Status"
-
 if ($All.IsPresent) {
-	$B=$Host.UI.RawUI.BufferSize;$B.Height=3000;$Host.UI.RawUI.BufferSize=$B;clear;
+	$B=$Host.UI.RawUI.BufferSize;$B.Height=3000;$Host.UI.RawUI.BufferSize=$B;
+	if (!$Pass.IsPresent) {clear;}
 }
 
 $SysPath = "$env:SystemRoot\System32"
@@ -7446,97 +16175,141 @@ $osls = "OfficeSoftwareProtectionService"
 $winApp = "55c92734-d682-4d71-983e-d6ec3f16059f"
 $o14App = "59a52881-a989-479d-af46-f275c6370663"
 $o15App = "0ff1ce15-a989-479d-af46-f275c6370663"
-$cSub = ($winbuild -GE 19041) -And (Select-String -Path "$SysPath\wbem\sppwmi.mof" -Encoding unicode -Pattern "SubscriptionType")
+$isSub = ($winbuild -GE 26000) -And (Select-String -Path "$SysPath\wbem\sppwmi.mof" -Encoding unicode -Pattern "SubscriptionType")
 $DllDigital = ($winbuild -GE 14393) -And (Test-Path "$SysPath\EditionUpgradeManagerObj.dll")
 $DllSubscription = ($winbuild -GE 14393) -And (Test-Path "$SysPath\Clipc.dll")
 $VLActTypes = @("All", "AD", "KMS", "Token")
-$SLKeyPath = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL"
-$NSKeyPath = "Registry::HKEY_USERS\S-1-5-20\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL"
+$OPKeyPath = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform"
+$SPKeyPath = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
+$SLKeyPath = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL"
+$NSKeyPath = "HKEY_USERS\S-1-5-20\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SL"
+$propPrd = 'Name', 'Description', 'TrustedTime', 'VLActivationType'
+$propPkey = 'PartialProductKey', 'Channel', 'DigitalPID', 'DigitalPID2'
+$propKMSServer = 'KeyManagementServiceCurrentCount', 'KeyManagementServiceTotalRequests', 'KeyManagementServiceFailedRequests', 'KeyManagementServiceUnlicensedRequests', 'KeyManagementServiceLicensedRequests', 'KeyManagementServiceOOBGraceRequests', 'KeyManagementServiceOOTGraceRequests', 'KeyManagementServiceNonGenuineGraceRequests', 'KeyManagementServiceNotificationRequests'
+$propKMSClient = 'CustomerPID', 'KeyManagementServiceName', 'KeyManagementServicePort', 'DiscoveredKeyManagementServiceName', 'DiscoveredKeyManagementServicePort', 'DiscoveredKeyManagementServiceIpAddress', 'VLActivationInterval', 'VLRenewalInterval', 'KeyManagementServiceLookupDomain'
+$propKMSVista  = 'CustomerPID', 'KeyManagementServiceName', 'VLActivationInterval', 'VLRenewalInterval'
+$propADBA = 'ADActivationObjectName', 'ADActivationObjectDN', 'ADActivationCsvlkPID', 'ADActivationCsvlkSkuID'
+$propAVMA = 'InheritedActivationId', 'InheritedActivationHostMachineName', 'InheritedActivationHostDigitalPid2', 'InheritedActivationActivationTime'
+$primary = @()
+$ppwszGenuineStates = @(
+	"SL_GEN_STATE_IS_GENUINE",
+	"SL_GEN_STATE_INVALID_LICENSE",
+	"SL_GEN_STATE_TAMPERED",
+	"SL_GEN_STATE_OFFLINE",
+	"SL_GEN_STATE_LAST"
+)
+$ppwszLicensingStates = @(
+	"SL_LICENSING_STATUS_UNLICENSED",
+	"SL_LICENSING_STATUS_LICENSED",
+	"SL_LICENSING_STATUS_IN_GRACE_PERIOD",
+	"SL_LICENSING_STATUS_NOTIFICATION",
+	"SL_LICENSING_STATUS_LAST"
+)
 
-'cW1nd0ws', 'c0ff1ce15', 'c0ff1ce14', 'ospp14', 'ospp15' | foreach {set $_ $null}
+'cW1nd0ws', 'c0ff1ce15', 'c0ff1ce14', 'ospp14', 'ospp15' | foreach {set $_ @()}
 
-$OsppHook = 1
-try {gsv osppsvc -EA 1 | Out-Null} catch {$OsppHook = 0}
+$offsvc = "osppsvc"
+if ($NT7 -Or -Not $NT6) {$winsvc = "sppsvc"} else {$winsvc = "slsvc"}
 
-if ($NT7 -Or -Not $NT6) {
-	try {sasv sppsvc -EA 1} catch {}
+try {gsv $winsvc -EA 1 | Out-Null; $WsppHook = 1} catch {$WsppHook = 0}
+try {gsv $offsvc -EA 1 | Out-Null; $OsppHook = 1} catch {$OsppHook = 0}
+
+if (Test-Path "$SysPath\sppc.dll") {
+	$SLdll = 'sppc.dll'
+} elseif (Test-Path "$SysPath\slc.dll") {
+	$SLdll = 'slc.dll'
+} else {
+	$WsppHook = 0
 }
-else
-{
-	try {sasv slsvc -EA 1} catch {}
-}
-
-DetectID $wslp $winApp ([ref]$cW1nd0ws)
-DetectID $wslp $o15App ([ref]$c0ff1ce15)
-DetectID $wslp $o14App ([ref]$c0ff1ce14)
 
 if ($OsppHook -NE 0) {
-	try {sasv osppsvc -EA 1} catch {}
-	DetectID $oslp $o15App ([ref]$ospp15)
-	DetectID $oslp $o14App ([ref]$ospp14)
+	$OLdll = (strGetRegistry $OPKeyPath "Path") + 'osppc.dll'
+	if (!(Test-Path "$OLdll")) {$OsppHook = 0}
 }
 
-if ($null -NE $cW1nd0ws)
+if ($WsppHook -NE 0) {
+	if ($NT6 -And -Not $NT7 -And -Not $Admin) {
+		if ($null -EQ [Diagnostics.Process]::GetProcessesByName("$winsvc")[0].ProcessName) {$WsppHook = 0; CONOUT "`nError: failed to start $winsvc Service.`n"}
+	} else {
+		try {sasv $winsvc -EA 1} catch {$WsppHook = 0; CONOUT "`nError: failed to start $winsvc Service.`n"}
+	}
+}
+
+if ($WsppHook -NE 0) {
+	. InitializePInvoke $SLdll $false
+	$hSLC = 0
+	[void]$Win32::SLOpen([ref]$hSLC)
+
+	$cW1nd0ws  = SlGetInfoSLID $winApp
+	$c0ff1ce15 = SlGetInfoSLID $o15App
+	$c0ff1ce14 = SlGetInfoSLID $o14App
+}
+
+if ($cW1nd0ws.Count -GT 0)
 {
 	echoWindows
-	GetID $wslp $winApp | foreach -EA 1 {
-	GetResult $wslp $wsls $_
-	Write-Host "$line3"
-	if (!$All.IsPresent) {Write-Host}
-	}
+	ParseList $wslp $winApp $cW1nd0ws
 }
 elseif ($NT6)
 {
 	echoWindows
-	Write-Host
-	Write-Host "Error: product key not found."
+	CONOUT "Error: product key not found.`n"
 }
 
-if ($winbuild -GE 9200) {
-	. InitializePInvoke
+if ($NT6 -And -Not $NT8) {
+	ClcRun
+}
+
+if ($NT8) {
 	ClicRun
-}
-
-if ($c0ff1ce15 -Or $ospp15) {
-	CheckOhook
 }
 
 $doMSG = 1
 
-if ($null -NE $c0ff1ce15) {
+if ($c0ff1ce15.Count -GT 0)
+{
+	CheckOhook
 	echoOffice
-	GetID $wslp $o15App | foreach -EA 1 {
-	GetResult $wslp $wsls $_
-	Write-Host "$line3"
-	if (!$All.IsPresent) {Write-Host}
-	}
+	ParseList $wslp $o15App $c0ff1ce15
 }
 
-if ($null -NE $c0ff1ce14) {
+if ($c0ff1ce14.Count -GT 0)
+{
 	echoOffice
-	GetID $wslp $o14App | foreach -EA 1 {
-	GetResult $wslp $wsls $_
-	Write-Host "$line3"
-	if (!$All.IsPresent) {Write-Host}
-	}
+	ParseList $wslp $o14App $c0ff1ce14
 }
 
-if ($null -NE $ospp15) {
-	echoOffice
-	GetID $oslp $o15App | foreach -EA 1 {
-	GetResult $oslp $osls $_
-	Write-Host "$line3"
-	if (!$All.IsPresent) {Write-Host}
-	}
+if ($hSLC) {
+	[void]$Win32::SLClose($hSLC)
 }
 
-if ($null -NE $ospp14) {
+if ($OsppHook -NE 0) {
+	try {sasv $offsvc -EA 1} catch {$OsppHook = 0; CONOUT "`nError: failed to start $offsvc Service.`n"}
+}
+
+if ($OsppHook -NE 0) {
+	. InitializePInvoke "$OLdll" $true
+	$hSLC = 0
+	[void]$Win32::SLOpen([ref]$hSLC)
+
+	$ospp15 = SlGetInfoSLID $o15App
+	$ospp14 = SlGetInfoSLID $o14App
+}
+
+if ($ospp15.Count -GT 0)
+{
 	echoOffice
-	GetID $oslp $o14App | foreach -EA 1 {
-	GetResult $oslp $osls $_
-	Write-Host "$line3"
-	if (!$All.IsPresent) {Write-Host}
-	}
+	ParseList $oslp $o15App $ospp15
+}
+
+if ($ospp14.Count -GT 0)
+{
+	echoOffice
+	ParseList $oslp $o14App $ospp14
+}
+
+if ($hSLC) {
+	[void]$Win32::SLClose($hSLC)
 }
 
 if ($NT7) {
@@ -7588,7 +16361,7 @@ if %_erl%==5 goto:retokens
 if %_erl%==4 goto:fixwmi
 if %_erl%==3 goto:sfcscan
 if %_erl%==2 goto:dism_rest
-if %_erl%==1 start %mas%troubleshoot.html &goto at_menu
+if %_erl%==1 (start %selfgit% & start %github% & start %mas%troubleshoot & goto at_menu)
 goto :at_menu
 
 ::========================================================================================================================================
@@ -7733,6 +16506,13 @@ mode 125, 32
 )
 title  Fix Licensing ^(ClipSVC ^+ SPP ^+ OSPP^)
 
+if %winbuild% EQU 6001 (
+%eline%
+echo This option is not supported on Windows Vista SP1.
+echo Upgrade to Windows Vista SP2.
+goto :at_back
+)
+
 echo:
 echo %line%
 echo:   
@@ -7749,7 +16529,7 @@ echo            - Clear ClipSVC, SPP and OSPP licenses.
 echo            - Fix permissions of SPP tokens folder and registries.
 echo            - Trigger the repair option for Office.
 echo:
-call :dk_color2 %_White% "      - " %Red% "Apply this option only when it is necessary."
+call :dk_color2 %_White% "      - " %Blue% "Apply this option only when it is necessary."
 echo:
 echo %line%
 echo:
@@ -7913,21 +16693,21 @@ echo [No Error Found]
 )
 
 echo:
-echo Stopping sppsvc service...
-%psc% Stop-Service sppsvc -force %nul%
+echo Stopping %_slser% service...
+%psc% Stop-Service %_slser% -force %nul%
 
 set w=
 set _sppint=
-for %%# in (SppEx%w%tComObj.exe sppsvc.exe) do (reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (set _sppint=1))
+for %%# in (SppEx%w%tComObj.exe %_slexe%) do (reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" %nul% && (set _sppint=1))
 if defined _sppint (
 echo:
 echo Removing SPP IFEO registry keys...
-for %%# in (SppE%w%xtComObj.exe sppsvc.exe) do (reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%)
+for %%# in (SppE%w%xtComObj.exe %_slexe%) do (reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu%w%tion Options\%%#" /f %nul%)
 )
 
-if %winbuild% LSS 9200 (
+if %winbuild% LSS 9200 if not defined _vis (
 REM Fix issues caused by Update KB971033 in Windows 7
-REM https://support.microsoft.com/help/4487266
+REM https://support.microsoft.com/en-us/help/4487266
 echo:
 echo Checking Update KB971033...
 %psc% "if (Get-Hotfix -Id KB971033 -ErrorAction SilentlyContinue) {Exit 3}" %nul%
@@ -7944,6 +16724,7 @@ del /f /q %SysPath%\7B296FB0-376B-497e-B012-9C450E1B7327-*.C7483456-A289-439d-81
 
 ::  Delete registry keys that are not deleted by activation scripts
 
+if not defined _vis (
 echo:
 echo Cleaning some licensing-related registry keys...
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "ServiceSessionId" /f
@@ -7951,6 +16732,7 @@ echo Cleaning some licensing-related registry keys...
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "PolicyValuesArray" /f
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "actionlist" /f
 %nul% reg delete "HKLM\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform\data" /f
+)
 
 echo:
 call :scandat delete
@@ -7962,9 +16744,13 @@ call :dk_color %Red% "Failed to delete .dat files."
 echo:
 )
 
+if defined _vis (
+%psc% Start-Service %_slser% %nul%
+)
+
 echo:
 echo Reinstalling system licenses...
-%psc% "Stop-Service sppsvc -force; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if %errorlevel% NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
@@ -7981,7 +16767,7 @@ call :dk_color %Red% "Failed to rebuild tokens.dat file."
 echo tokens.dat file was rebuilt successfully.
 )
 
-if %winbuild% LSS 9200 (
+if %winbuild% LSS 9200 if not defined _vis (
 sc config sppuinotify start= demand
 )
 
@@ -8062,12 +16848,12 @@ set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
 reg query %_68%\14.0\CVH /f Click2run /k %nul% && (set "c2r14_68=Office 14.0 C2R x86/x64"  & set "c2r14repair68=")
 reg query %_86%\14.0\CVH /f Click2run /k %nul% && (set "c2r14_86=Office 14.0 C2R x86"      & set "c2r14repair86=")
 
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi14_86=Office 14.0 MSI x86"      & call :getrepairsetup msi14repair86 14)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi14_68=Office 14.0 MSI x86/x64"  & call :getrepairsetup msi14repair68 14)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi15_86=Office 15.0 MSI x86"      & call :getrepairsetup msi15repair86 15)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi15_68=Office 15.0 MSI x86/x64"  & call :getrepairsetup msi15repair68 15)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi16_86=Office 16.0 MSI x86"      & call :getrepairsetup msi16repair86 16)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\EntityPicker.dll" (set "msi16_68=Office 16.0 MSI x86/x64"  & call :getrepairsetup msi16repair68 16)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set "msi14_86=Office 14.0 MSI x86"      & call :getrepairsetup msi14repair86 14)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set "msi14_68=Office 14.0 MSI x86/x64"  & call :getrepairsetup msi14repair68 14)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set "msi15_86=Office 15.0 MSI x86"      & call :getrepairsetup msi15repair86 15)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set "msi15_68=Office 15.0 MSI x86/x64"  & call :getrepairsetup msi15repair68 15)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set "msi16_86=Office 16.0 MSI x86"      & call :getrepairsetup msi16repair86 16)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set "msi16_68=Office 16.0 MSI x86/x64"  & call :getrepairsetup msi16repair68 16)
 
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_86=Office 15.0 C2R x86"      & call :getc2rrepair c2r15repair86 integratedoffice.exe)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_68=Office 15.0 C2R x86/x64"  & call :getc2rrepair c2r15repair68 integratedoffice.exe)
@@ -8366,7 +17152,7 @@ goto :at_menu
 
 ::  https://stackoverflow.com/a/46268232
 
-set "ddf="%SystemRoot%\Temp\ddf""
+set "ddf="%SystemRoot%\Temp\%Random%%Random%%Random%%Random%""
 %nul% del /q /f %ddf%
 echo/.New Cabinet>%ddf%
 echo/.set Cabinet=ON>>%ddf%
@@ -8418,7 +17204,7 @@ set "permerror=Error Found In SPP Registries"
 )
 )
 
-REM  https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
+REM  https://learn.microsoft.com/en-us/office/troubleshoot/activation/license-issue-when-start-office-application
 
 if not defined permerror (
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% && (
@@ -8464,7 +17250,7 @@ if ($env:permerror -eq 'Error Found In SPP Registries') {
 }
 
 # Fix perms for SPP in HKU\S-1-5-20
-# https://learn.microsoft.com/office/troubleshoot/activation/license-issue-when-start-office-application
+# https://learn.microsoft.com/en-us/office/troubleshoot/activation/license-issue-when-start-office-application
 
 if ($env:permerror -ne 'Error Found In S-1-5-20 SPP') {
     exit
@@ -8540,6 +17326,7 @@ for %%# in (
 %SysPath%\spp\store\
 %SysPath%\spp\store\2.0\
 %Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform\
+%Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareLicensing\
 ) do (
 
 if %1==check (
@@ -8626,6 +17413,13 @@ cls
 if not defined terminal mode 98, 30
 title  Change Windows Edition %masver%
 
+if %winbuild% LSS 7600 (
+%eline%
+echo Unsupported OS version detected [%winbuild%].
+echo This option is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+goto dk_done
+)
+
 echo:
 echo Initializing...
 echo:
@@ -8638,8 +17432,11 @@ if not exist %SysPath%\%%# (
 %eline%
 echo [%SysPath%\%%#] file is missing, aborting...
 echo:
+call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
+call :dk_color %Blue% "After that, restart system and try activation again."
+echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 )
@@ -8671,8 +17468,7 @@ if not defined allapps (
 %eline%
 echo Failed to find activation IDs. Aborting...
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Blue% "To fix this issue, activate Windows from the main menu."
 goto dk_done
 )
 
@@ -8694,8 +17490,7 @@ if not defined osedition (
 %eline%
 echo Failed to detect OS edition, aborting...
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Blue% "To fix this issue, activate Windows from the main menu."
 goto dk_done
 )
 
@@ -8721,7 +17516,7 @@ if %winbuild% GEQ 10240 for /f "tokens=4" %%a in ('dism /online /english /Get-Ta
 if %winbuild% LSS 10240 for /f "tokens=4" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':cbsxml\:.*';& ([ScriptBlock]::Create($f[1])) -GetTargetEditions;" ^| findstr /i /c:"Target Edition : "') do (if defined _ptarget (set "_ptarget= !_ptarget! %%a ") else (set "_ptarget= %%a "))
 
 if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
-call :ced_edilist
+if %winbuild% GEQ 17063 call :ced_edilist
 if /i "%osedition:~0,4%"=="Core" set _pro=Professional
 if /i "%osedition%"=="CoreN" set _pro=ProfessionalN
 set "_dtarget= %_dtarget% !_wtarget! !_pro! "
@@ -8834,7 +17629,7 @@ set _dismapi=0
 
 ::  Check if DISM API or slmgr.vbs is required for edition upgrade
 
-if not exist "%SysPath%\spp\tokens\skus\%targetedition%\" (
+if not exist "%SysPath%\spp\tokens\skus\%targetedition%\%targetedition%*.xrm-ms" (
 echo %_wtarget% | find /i " %targetedition% " || (
 set _dismapi=1
 )
@@ -8857,7 +17652,7 @@ echo [%targetedition% ^| %winbuild%]
 echo Failed to get product key from pkeyhelper.dll.
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -8912,7 +17707,7 @@ call :dk_color %Gray% "Reboot is required to fully change the edition."
 call :dk_color %Red% "[Unsuccessful] [Error Code: !keyerror!]"
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 )
 
@@ -8993,7 +17788,7 @@ echo [%targetedition% ^| %winbuild%]
 echo Failed to get product key from pkeyhelper.dll.
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -9069,7 +17864,7 @@ echo:
 call :dk_color %Blue% "In case there are errors, you should restart the system before trying again."
 echo:
 set fixes=%fixes% %mas%change_edition_issues
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%change_edition_issues"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%change_edition_issues"
 exit /b
 
 ::========================================================================================================================================
@@ -9483,18 +18278,16 @@ cls
 if not defined terminal mode 98, 30
 title  Change Office Edition %masver%
 
+if %winbuild% LSS 7600 (
+%eline%
+echo Unsupported OS version detected [%winbuild%].
+echo This option is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+goto dk_done
+)
+
 echo:
 echo Initializing...
 echo:
-
-if not exist %SysPath%\sppsvc.exe (
-%eline%
-echo [%SysPath%\sppsvc.exe] file is missing. Aborting...
-echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
-goto dk_done
-)
 
 ::========================================================================================================================================
 
@@ -9529,8 +18322,7 @@ if %osedition%==0 (
 %eline%
 echo Failed to detect OS Edition. Aborting...
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Blue% "To fix this issue, activate Windows from the main menu."
 goto dk_done
 )
 
@@ -9579,6 +18371,7 @@ _updch
 _lang
 _clversion
 _version
+_AudienceData
 _oIds
 _c2rXml
 _c2rExe
@@ -9603,7 +18396,7 @@ echo which is not officially supported on your Windows build version %winbuild%.
 echo Aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -9617,7 +18410,7 @@ echo Unsupported Office %verchk% is installed on your Windows build version %win
 echo Aborting...
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
@@ -9723,7 +18516,7 @@ if not exist %SystemRoot%\Temp\%list%.txt (
 echo Failed to generate available editions list.
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto :oe_goback
 )
 
@@ -9788,7 +18581,7 @@ if not exist %SystemRoot%\Temp\getAppIds.txt (
 echo Failed to generate available apps list.
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto :oe_goback
 )
 )
@@ -9966,11 +18759,43 @@ set errorcode=%errorlevel%
 timeout /t 10 %nul%
 
 echo:
+set suggestchannel=
+
 if %errorcode% EQU 0 (
-call :dk_color %Gray% "Now run the Office activation option from the main menu."
+if %change%==1 (
+echo %targetedition% | find /i "2019Volume" %nul% && (
+if not defined ltsc19 set suggestchannel=Production::LTSC
+if /i not %_AudienceData%==Production::LTSC set suggestchannel=Production::LTSC
+if /i not %_updch%==F2E724C1-748F-4B47-8FB8-8E0D210E9208 set suggestchannel=Production::LTSC
+)
+
+echo %targetedition% | find /i "2021Volume" %nul% && (
+if not defined ltsc21 set suggestchannel=Production::LTSC2021
+if /i not %_AudienceData%==Production::LTSC2021 set suggestchannel=Production::LTSC2021
+if /i not %_updch%==5030841D-C919-4594-8D2D-84AE4F96E58E set suggestchannel=Production::LTSC2021
+)
+
+echo %targetedition% | find /i "2024Volume" %nul% && (
+if not defined ltsc24 set suggestchannel=Production::LTSC2024
+if /i not %_AudienceData%==Production::LTSC2024 set suggestchannel=Production::LTSC2024
+if /i not %_updch%==7983BAC0-E531-40CF-BE00-FD24FE66619C set suggestchannel=Production::LTSC2024
+)
+
+echo %targetedition% | findstr /R "20.*Volume" %nul% || (
+if defined ltscfound set suggestchannel=Production::CC
+echo %_AudienceData% | find /i "LTSC" %nul% && set suggestchannel=Production::CC
+)
+
+if defined suggestchannel (
+call :dk_color %Gray% "Mismatch found in update channel and installed product."
+call :dk_color %Blue% "It is recommended to change the update channel to [!suggestchannel!] from the previous menu."
+)
+echo:
+)
+call :dk_color %Gray% "To activate Office, run the activation option from the main menu."
 ) else (
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 call :oe_tempcleanup
@@ -10113,7 +18938,7 @@ echo %c2rcommand%
 if %errorlevel% NEQ 0 (
 echo:
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
 
 goto :oe_goback
@@ -10144,6 +18969,12 @@ echo Installed Office editions: %_oIds%
 echo Unsupported Office edition is installed on your Windows build version %winbuild%.
 goto :oe_goback
 )
+if defined ltscfound (
+%eline%
+echo Installed Office update channel: %ltsc19%%ltsc21%%ltsc24%
+echo Unsupported Office update channel is installed on your Windows build version %winbuild%.
+goto :oe_goback
+)
 )
 
 ::===============
@@ -10152,49 +18983,52 @@ set inpt=
 set counter=0
 set verified=0
 set targetFFN=
+set bypassFFN=
 set targetchannel=
 
 %line%
 echo:
 call :dk_color %Gray% "Installed update channel: %_AudienceData%, %_version%, Client: %_clversion%"
-call :dk_color %Gray% "Unsupported update channels are excluded from this list."
+call :dk_color %Gray% "Installed Office editions: %_oIds%"
 %line%
 echo:
 
 for %%# in (
-"5440FD1F-7ECB-4221-8110-145EFAA6372F_Insider Fast [Beta]  -    Insiders::DevMain"
-"64256AFE-F5D9-4F86-8936-8840A6A4F5BE_Monthly Preview      -    Insiders::CC"
-"492350F6-3A01-4F97-B9C0-C7C6DDF67D60_Monthly [Current]    -  Production::CC"
-"55336B82-A18D-4DD6-B5F6-9E5095C314A6_Monthly Enterprise   -  Production::MEC"
-"B8F9B850-328D-4355-9145-C59439A0C4CF_Semi Annual Preview  -    Insiders::FRDC"
-"7FFBC6BF-BC32-4F92-8982-F9DD17FD3114_Semi Annual          -  Production::DC"
-"EA4A4090-DE26-49D7-93C1-91BFF9E53FC3_DevMain Channel      -     Dogfood::DevMain"
-"B61285DD-D9F7-41F2-9757-8F61CBA4E9C8_Microsoft Elite      -   Microsoft::DevMain"
-"F2E724C1-748F-4B47-8FB8-8E0D210E9208_Perpetual2019 VL     -  Production::LTSC"
-"1D2D2EA6-1680-4C56-AC58-A441C8C24FF9_Microsoft2019 VL     -   Microsoft::LTSC"
-"5030841D-C919-4594-8D2D-84AE4F96E58E_Perpetual2021 VL     -  Production::LTSC2021"
-"86752282-5841-4120-AC80-DB03AE6B5FDB_Microsoft2021 VL     -   Microsoft::LTSC2021"
-"7983BAC0-E531-40CF-BE00-FD24FE66619C_Perpetual2024 VL     -  Production::LTSC2024"
-"C02D8FE6-5242-4DA8-972F-82EE55E00671_Microsoft2024 VL     -   Microsoft::LTSC2024"
+"5440fd1f-7ecb-4221-8110-145efaa6372f_Insider Fast [Beta]  -    Insiders::DevMain   -"
+"64256afe-f5d9-4f86-8936-8840a6a4f5be_Monthly Preview      -    Insiders::CC        -"
+"492350f6-3a01-4f97-b9c0-c7c6ddf67d60_Monthly [Current]    -  Production::CC        -"
+"55336b82-a18d-4dd6-b5f6-9e5095c314a6_Monthly Enterprise   -  Production::MEC       -"
+"b8f9b850-328d-4355-9145-c59439a0c4cf_Semi Annual Preview  -    Insiders::FRDC      -"
+"7ffbc6bf-bc32-4f92-8982-f9dd17fd3114_Semi Annual          -  Production::DC        -"
+"ea4a4090-de26-49d7-93c1-91bff9e53fc3_DevMain Channel      -     Dogfood::DevMain   -"
+"b61285dd-d9f7-41f2-9757-8f61cba4e9c8_Microsoft Elite      -   Microsoft::DevMain   -"
+"f2e724c1-748f-4b47-8fb8-8e0d210e9208_Perpetual2019 VL     -  Production::LTSC      -"
+"1d2d2ea6-1680-4c56-ac58-a441c8c24ff9_Microsoft2019 VL     -   Microsoft::LTSC      -"
+"5030841d-c919-4594-8d2d-84ae4f96e58e_Perpetual2021 VL     -  Production::LTSC2021  -"
+"86752282-5841-4120-ac80-db03ae6b5fdb_Microsoft2021 VL     -   Microsoft::LTSC2021  -"
+"7983bac0-e531-40cf-be00-fd24fe66619c_Perpetual2024 VL     -  Production::LTSC2024  -"
+"c02d8fe6-5242-4da8-972f-82ee55e00671_Microsoft2024 VL     -   Microsoft::LTSC2024  -"
 ) do (
 for /f "tokens=1-2 delims=_" %%A in ("%%~#") do (
+set bypass=
 set supported=
 if %winbuild% LSS 10240 (echo %%B | findstr /i "LTSC DevMain" %nul% || set supported=1) else (set supported=1)
 if %winbuild% GEQ 10240 (
-if defined ltsc19 echo %%B | find /i "2019 VL" %nul% || set supported=
-if defined ltsc21 echo %%B | find /i "2021 VL" %nul% || set supported=
-if defined ltsc24 echo %%B | find /i "2024 VL" %nul% || set supported=
-if not defined ltscfound echo %%B | find /i "LTSC" %nul% && set supported=
+if defined ltsc19 echo %%B | find /i "2019 VL" %nul% || set bypass=1
+if defined ltsc21 echo %%B | find /i "2021 VL" %nul% || set bypass=1
+if defined ltsc24 echo %%B | find /i "2024 VL" %nul% || set bypass=1
+if not defined ltscfound echo %%B | find /i "LTSC" %nul% && set bypass=1
 )
 if defined supported (
 set /a counter+=1
 if !counter! LSS 10 (
-echo [!counter!]  %%B
+if defined bypass (echo [!counter!]  %%B  Unofficial change method will be used) else (echo [!counter!]  %%B)
 ) else (
-echo [!counter!] %%B
+if defined bypass (echo [!counter!] %%B  Unofficial change method will be used) else (echo [!counter!] %%B)
 )
 set targetFFN!counter!=%%A
 set targetchannel!counter!=%%B
+if defined bypass set bypassFFN=!bypassFFN!%%A
 )
 )
 )
@@ -10208,7 +19042,7 @@ call :dk_color %_Green% "Enter an option number using your keyboard and press En
 set /p inpt=
 if "%inpt%"=="" goto :oe_changeupdchnl
 if "%inpt%"=="0" goto :oemenu
-if /i "%inpt%"=="R" start https://learn.microsoft.com/microsoft-365-apps/updates/overview-update-channels & goto :oe_changeupdchnl
+if /i "%inpt%"=="R" start https://learn.microsoft.com/en-us/microsoft-365-apps/updates/overview-update-channels & goto :oe_changeupdchnl
 for /l %%i in (1,1,%counter%) do (if "%inpt%"=="%%i" set verified=1)
 set targetFFN=!targetFFN%inpt%!
 set targetchannel=!targetchannel%inpt%!
@@ -10225,15 +19059,133 @@ set build=
 for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':getbuild\:.*';iex ($f[1])" %nul6%') do (set build=%%a)
 echo "%build%" | find /i "16." %nul% || set build=
 
+echo:
+for /f "tokens=1 delims=-" %%A in ("%targetchannel%") do (echo Target update channel: %%A)
+echo Target build number: %build%
+echo: %bypassFFN% | find /i "%targetFFN%" %nul% && goto :oe_changeunoff
+
+call :oe_cleanupreg
+
+if not defined build (
+if %winbuild% GEQ 9200 call :dk_color %Gray% "Failed to detect build number for the target FFN."
+set "updcommand="%_c2rCexe%" /update user"
+) else (
+set "updcommand="%_c2rCexe%" /update user updatetoversion=%build%"
+)
+echo Running the below command to trigger updates...
+echo:
+echo %updcommand%
+%updcommand%
+echo:
+echo Check this webpage for help - %mas%troubleshoot
+goto :oe_goback
+
+::=======================
+
+::  Unofficial method to change channel
+
+:oe_changeunoff
+
+set abortchange=
+echo %targetchannel% | find /i "2019 VL" %nul% && (for %%A in (%_oIds%) do (echo %%A | find /i "2019Volume" %nul% || set abortchange=1))
+echo %targetchannel% | find /i "2021 VL" %nul% && (for %%A in (%_oIds%) do (echo %%A | find /i "2021Volume" %nul% || set abortchange=1))
+echo %targetchannel% | find /i "2024 VL" %nul% && (for %%A in (%_oIds%) do (echo %%A | find /i "2024Volume" %nul% || set abortchange=1))
+
+if defined abortchange (
+%eline%
+echo Mismatch found in installed Office products and target update channel. Aborting...
+echo Non-perpetual Office products are not suppported with Perpetual VL update channels.
+goto :oe_goback
+)
+
+if not defined build (
+%eline%
+call :dk_color %Red% "Failed to detect build number for the target FFN."
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto :oe_goback
+)
+
+set buildchk=0
+for /f "tokens=3 delims=." %%a in ("%build%") do set "buildchk=%%a"
+
+set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%_firstoId%.16_%_lang%_x-none cdnbaseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% baseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% version.16=%build% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%targetFFN% %_firstoId%.excludedapps.16=%_firstoIdExcludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
+set "c2rclientupdate=!c2rcommand! scenario=CLIENTUPDATE"
+
+if %clverchk% LSS %buildchk% (
+echo:
+call :dk_color %Blue% "Do not terminate the operation before it completes..."
+echo:
+echo Updating Office C2R client with the command below, please wait...
+echo:
+echo %c2rclientupdate%
+%c2rclientupdate%
+for /l %%i in (1,1,30) do (if !clverchk! LSS %buildchk% (call :ch_getinfo&timeout /t 10 %nul%))
+)
+
+if %clverchk% LSS %buildchk% (
+echo:
+call :dk_color %Red% "Failed to update Office C2R client. Aborting..."
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto :oe_goback
+)
+
+call :oe_cleanupreg
+
+echo Running the below command to change update channel, please wait...
+echo:
+echo %c2rcommand%
+%c2rcommand%
+set errorcode=%errorlevel%
+timeout /t 10 %nul%
+
+echo:
+if %errorcode% EQU 0 (
+call :dk_color %Gray% "Now run the Office activation option from the main menu."
+) else (
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
+
+::========================================================================================================================================
+
+:oe_goback
+
+call :oe_tempcleanup
+
+echo:
+if defined fixes (
+call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
+call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
+choice /C:10 /N
+if !errorlevel!==2 goto :oemenu
+if !errorlevel!==1 (start %selfgit% & start %github% & for %%# in (%fixes%) do (start %%#))
+)
+
+if defined terminal (
+call :dk_color %_Yellow% "Press [0] key to go back..."
+choice /c 0 /n
+) else (
+call :dk_color %_Yellow% "Press any key to go back..."
+pause %nul1%
+)
+goto :oemenu
+
+::========================================================================================================================================
+
+:oe_cleanupreg
+
 ::  Cleanup Office update related registries, thanks to @abbodi1406
 ::  https://techcommunity.microsoft.com/t5/office-365-blog/how-to-manage-office-365-proplus-channels-for-it-pros/ba-p/795813
 ::  https://learn.microsoft.com/en-us/microsoft-365-apps/updates/change-update-channels#considerations-when-changing-channels
 
 echo:
-for /f "tokens=1 delims=-" %%A in ("%targetchannel%") do (echo Target update channel: %%A)
-echo:
 echo Cleaning Office update registry keys...
 echo Adding new update channel to registry keys...
+echo:
 
 %nul% reg add %o16c2r_reg%\Configuration /v CDNBaseUrl /t REG_SZ /d "https://officecdn.microsoft.com/pr/%targetFFN%" /f
 %nul% reg add %o16c2r_reg%\Configuration /v UpdateChannel /t REG_SZ /d "https://officecdn.microsoft.com/pr/%targetFFN%" /f
@@ -10250,42 +19202,7 @@ echo Adding new update channel to registry keys...
 %nul% reg delete HKLM\SOFTWARE\Policies\Microsoft\cloud\office\16.0\Common\officeupdate /f /reg:32
 %nul% reg delete HKCU\Software\Policies\Microsoft\cloud\office\16.0\Common\officeupdate /f
 
-if not defined build (
-if %winbuild% GEQ 9200 call :dk_color %Gray% "Failed to detect build number for the target FFN."
-set "updcommand="%_c2rCexe%" /update user"
-) else (
-set "updcommand="%_c2rCexe%" /update user updatetoversion=%build%"
-)
-echo Running the below command to trigger updates...
-echo:
-echo %updcommand%
-%updcommand%
-echo:
-echo Help - %mas%troubleshoot
-goto :oe_goback
-
-::========================================================================================================================================
-
-:oe_goback
-
-call :oe_tempcleanup
-
-echo:
-if defined fixes (
-call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
-call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
-choice /C:10 /N
-if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
-)
-
-if defined terminal (
-call :dk_color %_Yellow% "Press [0] key to go back..."
-choice /c 0 /n
-) else (
-call :dk_color %_Yellow% "Press any key to go back..."
-pause %nul1%
-)
-goto :oemenu
+exit /b
 
 ::========================================================================================================================================
 
@@ -10308,6 +19225,7 @@ set _oRoot=
 set _oArch=
 set _updch=
 set _oIds=
+set _firstoId=
 set _lang=
 set _cfolder=
 set _version=
@@ -10338,9 +19256,13 @@ for /f "tokens=%_tok% delims=\" %%a in ('reg query "%o16c2r_reg%\ProductReleaseI
 if defined _oIds (set "_oIds=!_oIds! %%a") else (set "_oIds=%%a")
 )
 set _oIds=%_oIds:.16=%
+for /f "tokens=1" %%A in ("%_oIds%") do set _firstoId=%%A
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\Configuration /v %_firstoId%.ExcludedApps" %nul6%') do (set "_firstoIdExcludelist=%%b")
 
 set verchk=0
+set clverchk=0
 for /f "tokens=3 delims=." %%a in ("%_version%") do set "verchk=%%a"
+for /f "tokens=3 delims=." %%a in ("%_clversion%") do set "clverchk=%%a"
 
 if exist "%_oRoot%\Licenses16\c2rpridslicensefiles_auto.xml" set "_c2rXml=%_oRoot%\Licenses16\c2rpridslicensefiles_auto.xml"
 
@@ -10356,16 +19278,13 @@ if exist "%_cfolder%\OfficeC2RClient.exe" (
 set "_c2rCexe=%_cfolder%\OfficeC2RClient.exe"
 )
 
-set "audidata4=%_AudienceData:~-4%"
+::  Check LTSC version files
 
-if /i "%audidata4%"=="LTSC" set ltsc19=LTSC
-echo %_clversion% %_version% | findstr "16.0.103 16.0.104 16.0.105" %nul% && set ltsc19=LTSC
-
-if /i "%audidata4%"=="2021" set ltsc21=LTSC2021
-echo %_clversion% %_version% | findstr "16.0.14332" %nul% && set ltsc21=LTSC2021
-
-if /i "%audidata4%"=="2024" set ltsc24=LTSC2024
-::  LTSC 2024 build is not fixed yet
+for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg%\ProductReleaseIDs\%_actconfig%" /s %nul6%') do (
+echo "%%b" %nul2% | findstr "16.0.103 16.0.104 16.0.105" %nul% && set ltsc19=LTSC
+echo "%%b" %nul2% | findstr "16.0.14332" %nul% && set ltsc21=LTSC2021
+echo "%%b" %nul2% | findstr "16.0.17932" %nul% && set ltsc24=LTSC2024
+)
 
 if not "%ltsc19%%ltsc21%%ltsc24%"=="" set ltscfound=1
 

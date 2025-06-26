@@ -1,4 +1,4 @@
-@set masver=2.9
+@set masver=3.4
 @echo off
 
 
@@ -60,6 +60,8 @@ exit /b
 
 set "blank="
 set "mas=ht%blank%tps%blank%://mass%blank%grave.dev/"
+set "github=ht%blank%tps%blank%://github.com/massgra%blank%vel/Micro%blank%soft-Acti%blank%vation-Scripts"
+set "selfgit=ht%blank%tps%blank%://git.acti%blank%vated.win/massg%blank%rave/Micr%blank%osoft-Act%blank%ivation-Scripts"
 
 ::  Check if Null service is working, it's important for the batch script
 
@@ -69,7 +71,7 @@ echo:
 echo Null service is not running, script may crash...
 echo:
 echo:
-echo Help - %mas%fix_service
+echo Check this webpage for help - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
@@ -84,7 +86,7 @@ echo:
 echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
 echo:
 echo:
-echo Help - %mas%troubleshoot
+echo Check this webpage for help - %mas%troubleshoot
 echo:
 echo:
 ping 127.0.0.1 -n 20 >nul
@@ -122,10 +124,37 @@ call :dk_setvar
 
 ::========================================================================================================================================
 
-if %winbuild% LSS 7600 (
+if %winbuild% EQU 1 (
+%eline%
+echo Failed to detect Windows build number.
+echo:
+setlocal EnableDelayedExpansion
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+goto done2
+)
+
+if %winbuild% LSS 6001 (
 %nceline%
 echo Unsupported OS version detected [%winbuild%].
-echo Project is supported only for Windows 7/8/8.1/10/11 and their Server equivalents.
+echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
+if %winbuild% EQU 6000 (
+echo:
+echo Windows Vista RTM is not supported because Powershell cannot be installed.
+echo Upgrade to Windows Vista SP1 or SP2.
+)
+goto done2
+)
+
+if %winbuild% LSS 7600 if not exist "%SysPath%\WindowsPowerShell\v1.0\Modules" (
+%nceline%
+if not exist %ps% (
+echo PowerShell is not installed in your system.
+)
+echo Install PowerShell 2.0 using the following URL.
+echo:
+echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
+if %_unattended%==0 start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
 goto done2
 )
 
@@ -161,33 +190,6 @@ goto done2
 
 ::========================================================================================================================================
 
-::  Check PowerShell
-
-REM :PStest: $ExecutionContext.SessionState.LanguageMode :PStest:
-
-cmd /c "%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':PStest:\s*';iex ($f[1])"" | find /i "FullLanguage" %nul1% || (
-%eline%
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode""
-echo:
-cmd /c "%psc% "$ExecutionContext.SessionState.LanguageMode"" | find /i "FullLanguage" %nul1% && (
-echo Failed to run Powershell command but Powershell is working.
-echo:
-cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { if ($i.displayName -notlike '*windows*') { $n += $i.displayName } }; if ($n) { Write-Host ('Installed 3rd party Antivirus might be blocking the script - ' + ($n -join ', ')) -ForegroundColor White -BackgroundColor Blue }"""
-echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%troubleshoot"
-) || (
-echo PowerShell is not working. Aborting...
-echo If you have applied restrictions on Powershell then undo those changes.
-echo:
-set fixes=%fixes% %mas%fix_powershell
-call :dk_color2 %Blue% "Help - " %_Yellow% " %mas%fix_powershell"
-)
-goto done2
-)
-
-::========================================================================================================================================
-
 ::  Elevate script as admin and pass arguments and preventing loop
 
 %nul1% fltmc || (
@@ -195,6 +197,66 @@ if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" &&
 %eline%
 echo This script needs admin rights.
 echo Right click on this script and select 'Run as administrator'.
+goto done2
+)
+
+::========================================================================================================================================
+
+::  Check PowerShell
+
+::pstst $ExecutionContext.SessionState.LanguageMode :pstst
+
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}" %nul6%') do (set tstresult=%%a)
+
+if /i not "%tstresult%"=="FullLanguage" (
+%eline%
+for /f "delims=" %%a in ('%psc% "$ExecutionContext.SessionState.LanguageMode" %nul6%') do (set tstresult2=%%a)
+echo Test 1 - %tstresult%
+echo Test 2 - !tstresult2!
+echo:
+
+REM check LanguageMode
+
+echo: !tstresult2! | findstr /i "ConstrainedLanguage RestrictedLanguage NoLanguage" %nul1% && (
+echo FullLanguage mode not found in PowerShell. Aborting...
+echo If you have applied restrictions on Powershell then undo those changes.
+echo:
+set fixes=%fixes% %mas%fix_powershell
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_powershell"
+goto done2
+)
+
+REM check Powershell core version
+
+cmd /c "%psc% "$PSVersionTable.PSEdition"" | find /i "Core" %nul1% && (
+echo Windows Powershell is needed for MAS but it seems to be replaced with Powershell core. Aborting...
+goto done2
+)
+
+REM check for Mal-ware that may cause issues with Powershell
+
+for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
+echo "%%f"
+echo Mal%blank%ware found, PowerShell is not working properly.
+echo:
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+goto done2
+)
+
+REM check antivirus and other errors
+
+echo PowerShell is not working properly. Aborting...
+
+if /i "!tstresult2!"=="FullLanguage" (
+echo:
+echo Your antivirus software might be blocking the script, or PowerShell on your system might be corrupted.
+cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { $n += $i.displayName }; if ($n) { Write-Host ('Installed Antivirus - ' + ($n -join ', '))}"""
+)
+
+echo:
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 goto done2
 )
 
@@ -210,34 +272,33 @@ set terminal=
 
 ::  Check if script is running in Terminal app
 
-set r1=$TB = [AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);
-set r2=%r1% [void]$TB.DefinePInvokeMethod('GetConsoleWindow', 'kernel32.dll', 22, 1, [IntPtr], @(), 1, 3).SetImplementationFlags(128);
-set r3=%r2% [void]$TB.DefinePInvokeMethod('SendMessageW', 'user32.dll', 22, 1, [IntPtr], @([IntPtr], [UInt32], [IntPtr], [IntPtr]), 1, 3).SetImplementationFlags(128);
-set d1=%r3% $hIcon = $TB.CreateType(); $hWnd = $hIcon::GetConsoleWindow();
-set d2=%d1% echo $($hIcon::SendMessageW($hWnd, 127, 0, 0) -ne [IntPtr]::Zero);
-
 if defined terminal (
-%psc% "%d2%" %nul2% | find /i "True" %nul1% && set terminal=
+set lines=0
+for /f "skip=2 tokens=2 delims=: " %%A in ('mode con') do if "!lines!"=="0" set lines=%%A
+if !lines! GEQ 100 set terminal=
 )
 
-if defined ps32onArm goto :skipQE
 if %_unattended%==1 goto :skipQE
 for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
 
+::  Relaunch to disable QuickEdit in the current session and use conhost.exe instead of the Terminal app
+::  This code disables QuickEdit for the current cmd.exe session without making permanent registry changes
+::  It is included because clicking on the script window can pause execution, causing confusion that the script has stopped due to an error
+
+set resetQE=1
+reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% && set resetQE=0
+reg add HKCU\Console /v QuickEdit /t REG_DWORD /d 0 /f %nul1%
+
 if defined terminal (
-set "launchcmd=start conhost.exe %psc%"
-) else (
-set "launchcmd=%psc%"
+start conhost.exe "!_batf!" %_args% -qedit
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
+) else if %resetQE% EQU 1 (
+start cmd.exe /c ""!_batf!" %_args% -qedit"
+start reg add HKCU\Console /v QuickEdit /t REG_DWORD /d %resetQE% /f %nul1%
+exit /b
 )
 
-::  Disable QuickEdit in current session
-
-set "d1=$t=[AppDomain]::CurrentDomain.DefineDynamicAssembly(4, 1).DefineDynamicModule(2, $False).DefineType(0);"
-set "d2=$t.DefinePInvokeMethod('GetStdHandle', 'kernel32.dll', 22, 1, [IntPtr], @([Int32]), 1, 3).SetImplementationFlags(128);"
-set "d3=$t.DefinePInvokeMethod('SetConsoleMode', 'kernel32.dll', 22, 1, [Boolean], @([IntPtr], [Int32]), 1, 3).SetImplementationFlags(128);"
-set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080);"
-
-%launchcmd% "%d1% %d2% %d3% %d4% & cmd.exe '/c' '!_PSarg! -qedit'" && (exit /b) || (set terminal=1)
 :skipQE
 
 ::========================================================================================================================================
@@ -246,9 +307,19 @@ set "d4=$k=$t.CreateType(); $b=$k::SetConsoleMode($k::GetStdHandle(-10), 0x0080)
 
 set -=
 set old=
+set pingp=
+set upver=%masver:.=%
 
-for /f "delims=[] tokens=2" %%# in ('ping -4 -n 1 updatecheck.mass%-%grave.dev') do (
-if not "%%#"=="" (echo "%%#" | find "127.69" %nul1% && (echo "%%#" | find "127.69.%masver%" %nul1% || set old=1))
+for %%A in (
+activ%-%ated.win
+mass%-%grave.dev
+) do if not defined pingp (
+for /f "delims=[] tokens=2" %%B in ('ping -n 1 %%A') do (
+if not "%%B"=="" (set old=1& set pingp=1)
+for /f "delims=[] tokens=2" %%C in ('ping -n 1 updatecheck%upver%.%%A') do (
+if not "%%C"=="" set old=
+)
+)
 )
 
 if defined old (
@@ -264,7 +335,7 @@ echo:
 call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
-if !errorlevel!==1 (start ht%-%tps://github.com/mass%-%gravel/Microsoft-Acti%-%vation-Scripts & start %mas% & exit /b)
+if !errorlevel!==1 (start %selfgit% & start %github% & start %mas% & exit /b)
 )
 )
 
@@ -305,6 +376,7 @@ set HWID_Activation.cmd=Activators\HWID_Activation.cmd
 set KMS38_Activation.cmd=Activators\KMS38_Activation.cmd
 set Online_KMS_Activation.cmd=Activators\Online_KMS_Activation.cmd
 set Ohook_Activation_AIO.cmd=Activators\Ohook_Activation_AIO.cmd
+set TSforge_Activation.cmd=Activators\TSforge_Activation.cmd
 pushd "!_work!"
 
 set _nofile=
@@ -313,6 +385,7 @@ for %%# in (
 %KMS38_Activation.cmd%
 %Online_KMS_Activation.cmd%
 %Ohook_Activation_AIO.cmd%
+%TSforge_Activation.cmd%
 ) do (
 if not exist "%%#" set _nofile=1
 )
@@ -338,36 +411,34 @@ echo:
 echo:
 echo:
 echo:                     Extract $OEM$ folder on the desktop           
-echo:           ________________________________________________________
+echo:         ____________________________________________________________
 echo:
-echo:              [1] HWID
-echo:              [2] Ohook
-echo:              [3] KMS38
-echo:              [4] Online KMS
+echo:            [1] HWID             [Windows]
+echo:            [2] Ohook            [Office]
+echo:            [3] TSforge          [Windows / ESU / Office]
+echo:            [4] KMS38            [Windows]
+echo:            [5] Online KMS       [Windows / Office]
 echo:
-echo:              [5] HWID       ^(Windows^) ^+ Ohook      ^(Office^)
-echo:              [6] HWID       ^(Windows^) ^+ Online KMS ^(Office^)
-echo:              [7] KMS38      ^(Windows^) ^+ Ohook      ^(Office^)
-echo:              [8] KMS38      ^(Windows^) ^+ Online KMS ^(Office^)
-echo:              [9] Online KMS ^(Windows^) ^+ Ohook      ^(Office^)
+echo:            [6] HWID    [Windows] ^+ Ohook [Office]
+echo:            [7] HWID    [Windows] ^+ Ohook [Office] ^+ TSforge [ESU]
+echo:            [8] TSforge [Windows] ^+ Online KMS [Office]
 echo:
-call :dk_color2 %_White% "              [R] " %_Green% "ReadMe"
-echo:              [0] Exit
-echo:           ________________________________________________________
+call :dk_color2 %_White% "            [R] " %_Green% "ReadMe"
+echo:            [0] Exit
+echo:         ____________________________________________________________
 echo:  
 call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard :"
-choice /C:123456789R0 /N
+choice /C:12345678R0 /N
 set _erl=%errorlevel%
 
-if %_erl%==11 exit /b
-if %_erl%==10 start %mas%oem-folder &goto :Menu
-if %_erl%==9 goto:kms_ohook
-if %_erl%==8 goto:kms38_kms
-if %_erl%==7 goto:kms38_ohook
-if %_erl%==6 goto:hwid_kms
-if %_erl%==5 goto:hwid_ohook
-if %_erl%==4 goto:kms
-if %_erl%==3 goto:kms38
+if %_erl%==10 exit /b
+if %_erl%==9 start %mas%oem-folder &goto :Menu
+if %_erl%==8 goto:tsforge_kms
+if %_erl%==7 goto:hwid_ohook_tsforge
+if %_erl%==6 goto:hwid_ohook
+if %_erl%==5 goto:kms
+if %_erl%==4 goto:kms38
+if %_erl%==3 goto:tsforge
 if %_erl%==2 goto:ohook
 if %_erl%==1 goto:hwid
 goto :Menu
@@ -431,6 +502,36 @@ call "%~dp0Ohook_Activation_AIO.cmd" /Ohook
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
 :ohook_setup:
+
+::========================================================================================================================================
+
+:tsforge
+
+cls
+md "!desktop!\$OEM$\$$\Setup\Scripts"
+pushd "!_work!"
+copy /y /b "%TSforge_Activation.cmd%" "!_dir!\TSforge_Activation.cmd" %nul%
+popd
+call :export tsforge_setup
+
+set _error=
+if not exist "!_dir!\TSforge_Activation.cmd" set _error=1
+if not exist "!_dir!\SetupComplete.cmd" set _error=1
+if defined _error goto errorfound
+
+set oem=TSforge
+goto done
+
+:tsforge_setup:
+@echo off
+
+fltmc >nul || exit /b
+
+call "%~dp0TSforge_Activation.cmd" /Z-WindowsESUOffice
+
+cd \
+(goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
+:tsforge_setup:
 
 ::========================================================================================================================================
 
@@ -532,26 +633,28 @@ cd \
 
 ::========================================================================================================================================
 
-:hwid_kms
+:hwid_ohook_tsforge
 
 cls
 md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
 copy /y /b "%HWID_Activation.cmd%" "!_dir!\HWID_Activation.cmd" %nul%
-copy /y /b "%Online_KMS_Activation.cmd%" "!_dir!\Online_KMS_Activation.cmd" %nul%
+copy /y /b "%Ohook_Activation_AIO.cmd%" "!_dir!\Ohook_Activation_AIO.cmd" %nul%
+copy /y /b "%TSforge_Activation.cmd%" "!_dir!\TSforge_Activation.cmd" %nul%
 popd
-call :export hwid_kms_setup
+call :export hwid_ohook_tsforge_setup
 
 set _error=
 if not exist "!_dir!\HWID_Activation.cmd" set _error=1
-if not exist "!_dir!\Online_KMS_Activation.cmd" set _error=1
+if not exist "!_dir!\Ohook_Activation_AIO.cmd" set _error=1
+if not exist "!_dir!\TSforge_Activation.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
 if defined _error goto errorfound
 
-set oem=HWID [Windows] + Online KMS [Office]
+set oem=HWID [Windows] + Ohook [Office] + TSforge [ESU]
 goto done
 
-:hwid_kms_setup:
+:hwid_ohook_tsforge_setup:
 @echo off
 
 fltmc >nul || exit /b
@@ -561,79 +664,45 @@ call "%~dp0HWID_Activation.cmd" /HWID
 endlocal
 
 setlocal
-call "%~dp0Online_KMS_Activation.cmd" /K-Office
-endlocal
-
-cd \
-(goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
-:hwid_kms_setup:
-
-::========================================================================================================================================
-
-:kms38_ohook
-
-cls
-md "!desktop!\$OEM$\$$\Setup\Scripts"
-pushd "!_work!"
-copy /y /b "%KMS38_Activation.cmd%" "!_dir!\KMS38_Activation.cmd" %nul%
-copy /y /b "%Ohook_Activation_AIO.cmd%" "!_dir!\Ohook_Activation_AIO.cmd" %nul%
-popd
-call :export kms38_ohook_setup
-
-set _error=
-if not exist "!_dir!\KMS38_Activation.cmd" set _error=1
-if not exist "!_dir!\Ohook_Activation_AIO.cmd" set _error=1
-if not exist "!_dir!\SetupComplete.cmd" set _error=1
-if defined _error goto errorfound
-
-set oem=KMS38 [Windows] + Ohook [Office]
-goto done
-
-:kms38_ohook_setup:
-@echo off
-
-fltmc >nul || exit /b
-
-setlocal
-call "%~dp0KMS38_Activation.cmd" /KMS38
-endlocal
-
-setlocal
 call "%~dp0Ohook_Activation_AIO.cmd" /Ohook
 endlocal
 
+setlocal
+call "%~dp0TSforge_Activation.cmd" /Z-ESU
+endlocal
+
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
-:kms38_ohook_setup:
+:hwid_ohook_tsforge_setup:
 
 ::========================================================================================================================================
 
-:kms38_kms
+:tsforge_kms
 
 cls
 md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
-copy /y /b "%KMS38_Activation.cmd%" "!_dir!\KMS38_Activation.cmd" %nul%
+copy /y /b "%TSforge_Activation.cmd%" "!_dir!\TSforge_Activation.cmd" %nul%
 copy /y /b "%Online_KMS_Activation.cmd%" "!_dir!\Online_KMS_Activation.cmd" %nul%
 popd
-call :export kms38_kms_setup
+call :export tsforge_kms_setup
 
 set _error=
-if not exist "!_dir!\KMS38_Activation.cmd" set _error=1
+if not exist "!_dir!\TSforge_Activation.cmd" set _error=1
 if not exist "!_dir!\Online_KMS_Activation.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
 if defined _error goto errorfound
 
-set oem=KMS38 [Windows] + Online KMS [Office]
+set oem=TSforge [Windows] + Online KMS [Office]
 goto done
 
-:kms38_kms_setup:
+:tsforge_kms_setup:
 @echo off
 
 fltmc >nul || exit /b
 
 setlocal
-call "%~dp0KMS38_Activation.cmd" /KMS38
+call "%~dp0TSforge_Activation.cmd" /Z-Windows
 endlocal
 
 setlocal
@@ -642,45 +711,7 @@ endlocal
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
-:kms38_kms_setup:
-
-::========================================================================================================================================
-
-:kms_ohook
-
-cls
-md "!desktop!\$OEM$\$$\Setup\Scripts"
-pushd "!_work!"
-copy /y /b "%Online_KMS_Activation.cmd%" "!_dir!\Online_KMS_Activation.cmd" %nul%
-copy /y /b "%Ohook_Activation_AIO.cmd%" "!_dir!\Ohook_Activation_AIO.cmd" %nul%
-popd
-call :export kms_ohook_setup
-
-set _error=
-if not exist "!_dir!\Online_KMS_Activation.cmd" set _error=1
-if not exist "!_dir!\Ohook_Activation_AIO.cmd" set _error=1
-if not exist "!_dir!\SetupComplete.cmd" set _error=1
-if defined _error goto errorfound
-
-set oem=Online KMS [Windows] + Ohook [Office]
-goto done
-
-:kms_ohook_setup:
-@echo off
-
-fltmc >nul || exit /b
-
-setlocal
-call "%~dp0Online_KMS_Activation.cmd" /K-Windows
-endlocal
-
-setlocal
-call "%~dp0Ohook_Activation_AIO.cmd" /Ohook
-endlocal
-
-cd \
-(goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
-:kms_ohook_setup:
+:tsforge_kms_setup:
 
 ::========================================================================================================================================
 
@@ -698,7 +729,7 @@ call :dk_color %Blue% "%oem%"
 call :dk_color %Green% "$OEM$ folder was successfully created on your Desktop."
 echo "%oem%" | find /i "38" %nul% && (
 echo:
-echo To KMS38 activate Server Cor/Acor editions ^(No GUI Versions^),
+echo To KMS38 activate Server Cor/Acor editions [No GUI Versions],
 echo Check this page %mas%oem-folder
 )
 echo ______________________________________________________________
@@ -710,7 +741,8 @@ if defined fixes (
 call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
 call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
 choice /C:10 /N
-if !errorlevel!==1 (for %%# in (%fixes%) do (start %%#))
+if !errorlevel!==2 exit /b
+if !errorlevel!==1 (start %selfgit% & start %github% & for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
@@ -728,9 +760,15 @@ exit /b
 
 :dk_setvar
 
-set psc=powershell.exe
+set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
+set psc=%ps% -nop -c
 set winbuild=1
 for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+
+set _slexe=sppsvc.exe& set _slser=sppsvc
+if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %winbuild% LSS 7600 if exist "%SysPath%\SLsvc.exe" (set _slexe=SLsvc.exe& set _slser=SLsvc)
+if %_slexe%==SLsvc.exe set _vis=1
 
 set _NCS=1
 if %winbuild% LSS 10586 set _NCS=0
@@ -787,8 +825,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3'
+) else if not exist %ps% (
+echo %~3
 )
 exit /b
 
@@ -796,8 +836,10 @@ exit /b
 
 if %_NCS% EQU 1 (
 echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
+) else if exist %ps% (
 %psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
+) else if not exist %ps% (
+echo %~3 %~6
 )
 exit /b
 
