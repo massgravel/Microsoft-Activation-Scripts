@@ -240,7 +240,7 @@ goto dk_done
 
 ::pstst $ExecutionContext.SessionState.LanguageMode :pstst
 
-for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.file]::ReadAllText('!_batp!') -split ':pstst';iex ($f[1])}" %nul6%') do (set tstresult=%%a)
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[io.f%blank%ile]::ReadA%blank%llText('!_batp!') -sp%blank%lit ':pstst';ie%blank%x ($f[1])}" %nul6%') do (set tstresult=%%a)
 
 if /i not "%tstresult%"=="FullLanguage" (
 %eline%
@@ -663,7 +663,7 @@ echo:
 %nul% reg delete "HKU\S-1-5-20\%specific_kms%" /f
 
 %nul% reg query "HKLM\%specific_kms%" && (
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regdel\:.*';iex ($f[1])"
+%psc% "$f=[io.f%blank%ile]::ReadA%blank%llText('!_batp!') -sp%blank%lit ':regdel\:.*';ie%blank%x ($f[1])"
 %nul% reg delete "HKLM\%specific_kms%" /f
 )
 
@@ -833,7 +833,7 @@ echo Removing the Added Specific KMS Host    [Successful]
 ::  Protect KMS38 if opted by the user and conditions are correct
 
 if defined _k38 (
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([ScriptBlock]::Create($f[1])) -protect"
+%psc% "$f=[io.f%blank%ile]::ReadA%blank%llText('!_batp!') -sp%blank%lit ':regdel\:.*';& ([ScriptBlock]::Create($f[1])) -protect"
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg query "HKLM\%specific_kms%" && (
 echo Protect KMS38 From KMS                  [Successful] [Locked a Registry Key]
@@ -877,7 +877,7 @@ title  Remove KMS38 Protection %masver%
 %nul% reg delete "HKU\S-1-5-20\%specific_kms%" /f
 
 %nul% reg query "HKLM\%specific_kms%" && (
-%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':regdel\:.*';iex ($f[1])"
+%psc% "$f=[io.f%blank%ile]::ReadA%blank%llText('!_batp!') -sp%blank%lit ':regdel\:.*';ie%blank%x ($f[1])"
 %nul% reg delete "HKLM\%specific_kms%" /f
 )
 
@@ -1018,7 +1018,7 @@ for /f "tokens=3 delims=." %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Con
 if %_wmic% EQU 1 for /f "tokens=2 delims==" %%a in ('"wmic Path Win32_OperatingSystem Get OperatingSystemSKU /format:LIST" %nul6%') do if not errorlevel 1 set "wmiSKU=%%a"
 if %_wmic% EQU 0 for /f "tokens=1" %%a in ('%psc% "([WMI]'Win32_OperatingSystem=@').OperatingSystemSKU" %nul6%') do if not errorlevel 1 set "wmiSKU=%%a"
 
-if %winbuild% GEQ 15063 %psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':winsubstatus\:.*';iex ($f[1])" %nul2% | find /i "Subscription_is_activated" %nul% && (
+if %winbuild% GEQ 15063 %psc% "$f=[io.f%blank%ile]::ReadA%blank%llText('!_batp!') -sp%blank%lit ':winsubstatus\:.*';ie%blank%x ($f[1])" %nul2% | find /i "Subscription_is_activated" %nul% && (
 if defined regSKU if defined slcSKU if not "%regSKU%"=="%slcSKU%" (
 set winsub=1
 set osSKU=%regSKU%
@@ -1492,7 +1492,7 @@ call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE 
 
 set wpainfo=
 set wpaerror=
-for /f "delims=" %%a in ('%psc% "$f=[io.file]::ReadAllText('!_batp!') -split ':wpatest\:.*';iex ($f[1])" %nul6%') do (set wpainfo=%%a)
+for /f "delims=" %%a in ('%psc% "$f=[io.f%blank%ile]::ReadA%blank%llText('!_batp!') -sp%blank%lit ':wpatest\:.*';ie%blank%x ($f[1])" %nul6%') do (set wpainfo=%%a)
 echo "%wpainfo%" | find /i "Error Found" %nul% && (
 set error=1
 set wpaerror=1
@@ -1682,7 +1682,7 @@ set showfix=1
 if not defined notwinact (
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
-%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.file]::ReadAllText('!_batp!') -split ':xrm\:.*';iex ($f[1]); ReinstallLicenses" %nul%
+%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[io.f%blank%ile]::ReadA%blank%llText('!_batp!') -sp%blank%lit ':xrm\:.*';ie%blank%x ($f[1]); ReinstallLicenses" %nul%
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"

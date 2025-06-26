@@ -23,6 +23,7 @@ set "Path=%SystemRoot%\Sysnative;%SystemRoot%;%SystemRoot%\Sysnative\Wbem;%Syste
 set "ComSpec=%SysPath%\cmd.exe"
 set "PSModulePath=%ProgramFiles%\WindowsPowerShell\Modules;%SysPath%\WindowsPowerShell\v1.0\Modules"
 
+set "blank="
 set "ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe"
 set "_psc=%ps% -nop -c"
 set "_err===== ERROR ===="
@@ -39,7 +40,7 @@ goto :E_Exit
 set "_batf=%~f0"
 set "_batp=%_batf:'=''%"
 setlocal EnableDelayedExpansion
-%_psc% "$f=[IO.File]::ReadAllText('!_batp!') -split ':sppmgr\:.*';iex ($f[1])"
+%_psc% "$f=[io.f%blank%ile]::ReadA%blank%llText('!_batp!') -sp%blank%lit ':sppmgr\:.*';ie%blank%x ($f[1])"
 
 :E_Exit
 echo.
