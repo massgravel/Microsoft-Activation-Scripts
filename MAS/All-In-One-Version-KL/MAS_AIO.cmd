@@ -260,6 +260,10 @@ echo PowerShell is not working properly. Aborting...
 if /i "!tstresult2!"=="FullLanguage" (
 echo:
 echo Your antivirus software might be blocking the script, or PowerShell on your system might be corrupted.
+echo:
+sc query sense | find /i "RUNNING" %nul% && (
+echo Installed Antivirus - Microsoft Defender for Endpoint
+)
 cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { $n += $i.displayName }; if ($n) { Write-Host ('Installed Antivirus - ' + ($n -join ', '))}"""
 )
 
