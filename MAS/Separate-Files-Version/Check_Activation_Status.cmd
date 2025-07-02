@@ -39,7 +39,7 @@ goto :E_Exit
 set "_batf=%~f0"
 set "_batp=%_batf:'=''%"
 setlocal EnableDelayedExpansion
-%_psc% "$f=[IO.File]::ReadAllText('!_batp!') -split ':sppmgr\:.*';iex ($f[1])"
+%_psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':sppmgr\:.*';& ([scriptblock]::Create($f[1]))"
 
 :E_Exit
 echo.
