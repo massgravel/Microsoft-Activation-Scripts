@@ -569,12 +569,15 @@ call :dk_inskey "[%key%]"
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKCU\Control Panel\International\Geo" /v Name %nul6%') do set "name=%%b"
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKCU\Control Panel\International\Geo" /v Nation %nul6%') do set "nation=%%b"
 
-set regionchange=
-if not "%name%"=="US" (
+::  Skip changing region in top countries
+
 set regionchange=1
+for %%# in (IN CN US ID PK NG BR BD RU MX ET JP PH EG CD VN TR DE TH GB FR IT KR ES CA SA AU NL CH) do if /i "%name%"=="%%#" set regionchange=
+
+if defined regionchange (
 %psc% "Set-WinHomeLocation -GeoId 244" %nul%
 if !errorlevel! EQU 0 (
-echo Changing Windows Region To USA          [Successful]
+echo Changing Windows Region To USA          [Successful] [Script will change it back]
 ) else (
 call :dk_color %Red% "Changing Windows Region To USA          [Failed]"
 )
