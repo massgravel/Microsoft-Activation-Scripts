@@ -572,7 +572,7 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKCU\Control Panel\International\G
 ::  Skip changing region in top countries
 
 set regionchange=1
-for %%# in (IN CN US ID PK NG BR BD RU MX ET JP PH EG CD VN TR DE TH GB FR IT KR ES CA SA AU NL CH) do if /i "%name%"=="%%#" set regionchange=
+for %%# in (US CN IN BR DE JP GB FR MX ID IT PK TR KR CA ES AU NG VN PL PH NL EG AR TH CO SA TW MY CL) do if /i "%name%"=="%%#" set regionchange=
 
 if defined regionchange (
 %psc% "Set-WinHomeLocation -GeoId 244" %nul%
