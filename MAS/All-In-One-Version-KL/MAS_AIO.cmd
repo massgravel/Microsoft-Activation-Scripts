@@ -415,6 +415,8 @@ if %winbuild% GEQ 19041 if %winbuild% LEQ 19045 set _ohookgo=
 if defined _serexist set _ohookgo=
 if defined _evalexist set _ohookgo=
 if defined _ltscexist set _ohookgo=
+reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun\Configuration /v ProductReleaseIds %nul2% | find /i "O365" %nul% && set _ohookgo=1
+reg query HKLM\SOFTWARE\Wow6432Node\Microsoft\Office\ClickToRun\Configuration /v ProductReleaseIds %nul2% | find /i "O365" %nul% && set _ohookgo=1
 )
 if not defined _ohookgo set _tsforgego=1
 
