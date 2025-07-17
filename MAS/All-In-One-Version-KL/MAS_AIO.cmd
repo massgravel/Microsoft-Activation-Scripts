@@ -4706,6 +4706,14 @@ if exist "%SystemRoot%\Servicing\Packages\WinEmb-Branding-Embedded-Standard-Pack
 )
 if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
 
+set w10EsuEditions=Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh
+
+set /a UBR=0
+for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
+if %winbuild% EQU 19045 if %UBR% GEQ 6156 (
+set w10EsuEditionsLaterAdded=Core-CoreN-CoreCountrySpecific-CoreSingleLanguage-IoTEnterprise-
+)
+
 if not defined isThinpc if not defined isltsc for %%# in (
 REM Windows7
 4220f546-f522-46df-8202-4d07afd26454_Client-ESU-Year3[1-3y]_-Enterprise-EnterpriseE-EnterpriseN-Professional-ProfessionalE-ProfessionalN-Ultimate-UltimateE-UltimateN-
@@ -4722,10 +4730,10 @@ REM Windows8.1
 REM WindowsServer2012/2012R2
 55b1dd2d-2209-4ea0-a805-06298bad25b3_Server-ESU-Year3[1-3y]_-ServerDatacenter-ServerDatacenterCore-ServerDatacenterV-ServerDatacenterVCore-ServerStandard-ServerStandardCore-ServerStandardV-ServerStandardVCore-
 REM Windows10
-f520e45e-7413-4a34-a497-d2765967d094_Client-ESU-Year1_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
-1043add5-23b1-4afb-9a0f-64343c8f3f8d_Client-ESU-Year2_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
-83d49986-add3-41d7-ba33-87c7bfb5c0fb_Client-ESU-Year3_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
-0b533b5e-08b6-44f9-b885-c2de291ba456_Client-ESU-Year6[4-6y]_-Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh-
+f520e45e-7413-4a34-a497-d2765967d094_Client-ESU-Year1_-%w10EsuEditions%-%w10EsuEditionsLaterAdded%
+1043add5-23b1-4afb-9a0f-64343c8f3f8d_Client-ESU-Year2_-%w10EsuEditions%-%w10EsuEditionsLaterAdded%
+83d49986-add3-41d7-ba33-87c7bfb5c0fb_Client-ESU-Year3_-%w10EsuEditions%-%w10EsuEditionsLaterAdded%
+0b533b5e-08b6-44f9-b885-c2de291ba456_Client-ESU-Year6[4-6y]_-%w10EsuEditions%-%w10EsuEditionsLaterAdded%
 b8527af1-5389-447c-9a88-2d1691ea33d3_Client-IoT-ESU-Year1_-IoTEnterprise-
 7b76ee02-0a75-4f08-85d5-bd0feadad0c0_Client-IoT-ESU-Year2_-IoTEnterprise-
 4dac5a0c-5709-4595-a32c-14a56a4a6b31_Client-IoT-ESU-Year3_-IoTEnterprise-
@@ -4771,13 +4779,14 @@ goto :ts_off
 )
 
 if defined esuexistbutnosup (
-call :dk_color %Red% "Checking Activation ID                  [Commercial ESU is not supported for %tsedition%]"
-echo %esueditionlist% | find /i "Professional" %nul1% && (
-call :dk_color %Blue% "Go back to Main Menu, select Change Windows Edition option, and change it to [Professional] or any non-Home edition."
-) || (
+call :dk_color %Red% "Checking Activation ID                  [Currently installed ESU License is not supported for %tsedition%]"
+echo:
+if %winbuild% EQU 19045 if not defined w10EsuEditionsLaterAdded (
+call :dk_color %Blue% "To get latest version, go to Windows settings and run the Windows Update. After that, try the script again."
+goto :ts_off
+)
 call :dk_color %Blue% "Go back to Main Menu, select Change Windows Edition option and change to any of the below listed editions."
 echo [%esueditionlist%]
-)
 goto :ts_off
 )
 
