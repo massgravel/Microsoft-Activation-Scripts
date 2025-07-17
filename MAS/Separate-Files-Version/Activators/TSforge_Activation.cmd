@@ -675,7 +675,7 @@ echo Checking Internet Connection            [Connected!ping_f!]
 if /i %_actmethod%==Auto if not %_actman%==1 set tsmethod=KMS4k
 if /i !tsmethod!==KMS4k (
 call :dk_color %Gray% "Checking Internet Connection            [Not Connected]"
-call :dk_color %Blue% "Switching To KMS4k Activation Method because Internet is needed for StaticCID method."
+call :dk_color %Blue% "Switching To KMS4k activation because Internet is needed for StaticCID method."
 ) else (
 set error=1
 call :dk_color %Red% "Checking Internet Connection            [Not Connected]"
@@ -1162,7 +1162,7 @@ if defined esuexistbutnosup (
 call :dk_color %Red% "Checking Activation ID                  [Currently installed ESU License is not supported for %tsedition%]"
 echo:
 if %winbuild% EQU 19045 if not defined w10EsuEditionsLaterAdded (
-call :dk_color %Blue% "To get latest version, go to Windows settings and run the Windows Update. After that, try the script again."
+call :dk_color %Blue% "To get latest version, go to Windows settings and run Windows Update. After that, try the script again."
 goto :ts_off
 )
 call :dk_color %Blue% "Go back to Main Menu, select Change Windows Edition option and change to any of the below listed editions."
