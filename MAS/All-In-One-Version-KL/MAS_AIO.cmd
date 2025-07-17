@@ -399,23 +399,31 @@ color 07
 title  Microsoft %blank%Activation %blank%Scripts %masver%
 if not defined terminal mode 76, 34
 
-if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" set _hwidgo=1
-if %winbuild% GTR 14393 if exist "%SysPath%\spp\tokens\skus\EnterpriseSN\" set _hwidgo=
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" set _serexist=1
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" set _evalexist=1
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-EnterpriseS*dition~*.mum" set _ltscexist=1
+if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-EnterpriseSN*dition~*.mum" set _ltscnexist=1
+
+if %winbuild% GEQ 10240 if not defined _serexist if not defined _evalexist set _hwidgo=1
+if %winbuild% GTR 14393 if defined _ltscnexist set _hwidgo=
 if not defined _hwidgo set _tsforgego=1
 
 set _ohookgo=1
 if %winbuild% GEQ 9200 (
 if %winbuild% LSS 10240 set _ohookgo=
 if %winbuild% GEQ 19041 if %winbuild% LEQ 19045 set _ohookgo=
-if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" set _ohookgo=
-if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" set _ohookgo=
-if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-EnterpriseS*dition~*.mum" set _ohookgo=
+if defined _serexist set _ohookgo=
+if defined _evalexist set _ohookgo=
+if defined _ltscexist set _ohookgo=
 )
 if not defined _ohookgo set _tsforgego=1
 
 echo:
 echo:
 echo:
+if %winbuild% GEQ 10240 if %winbuild% LEQ 19045 if not defined _serexist if not defined _evalexist if not defined _ltscexist (
+call :dk_color2 %_Green% "       Tip:" %_White% " To activate ESU updates after W10 EOL, use TSforge option."
+)
 echo:
 echo:       ______________________________________________________________
 echo:
