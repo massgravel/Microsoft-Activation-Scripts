@@ -2764,8 +2764,15 @@ exit /b
 
 :oh_expiredpreview
 
+echo %_oIds% | find /i "Volume" %nul% || exit /b
+
 for %%# in (%*) do (
-if exist "!_oLPath!\ProPlus%%#PreviewVL_*.xrm-ms" if not exist "!_oLPath!\ProPlus%%#VL_*.xrm-ms" (
+if %%#==2013 set _offver=
+if %%#==2016 set _offver=
+if %%#==2019 set _offver=2019
+if %%#==2021 set _offver=2021
+if %%#==2024 set _offver=2024
+if exist "!_oLPath!\ProPlus!_offver!PreviewVL_*.xrm-ms" if not exist "!_oLPath!\ProPlus!_offver!VL_*.xrm-ms" (
 set error=1
 set showfix=1
 call :dk_color %Red% "Checking Expired Preview Products       [Office %%# Preview Found]"
