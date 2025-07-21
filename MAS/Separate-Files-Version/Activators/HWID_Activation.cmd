@@ -237,7 +237,7 @@ goto dk_done
 
 ::pstst $ExecutionContext.SessionState.LanguageMode :pstst
 
-for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[System.IO.File]::ReadAllText('!_batp!') -split ':pstst';& ([scriptblock]::Create($f[1]))}" %nul6%') do (set tstresult=%%a)
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[System.IO.File]::ReadAllText('!_batp!') -split ':pstst';. ([scriptblock]::Create($f[1]))}" %nul6%') do (set tstresult=%%a)
 
 if /i not "%tstresult%"=="FullLanguage" (
 %eline%
@@ -511,7 +511,7 @@ set notworking=
 call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
 if defined allapps call :hwiddata key
 if not defined key (
-for /f "delims=" %%a in ('%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':getactivationid\:.*';& ([scriptblock]::Create($f[1]))"') do (set altapplist=%%a)
+for /f "delims=" %%a in ('%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':getactivationid\:.*';. ([scriptblock]::Create($f[1]))"') do (set altapplist=%%a)
 if defined altapplist call :hwiddata key
 )
 
@@ -925,7 +925,7 @@ for /f "tokens=3 delims=." %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Con
 if %_wmic% EQU 1 for /f "tokens=2 delims==" %%a in ('"wmic Path Win32_OperatingSystem Get OperatingSystemSKU /format:LIST" %nul6%') do if not errorlevel 1 set "wmiSKU=%%a"
 if %_wmic% EQU 0 for /f "tokens=1" %%a in ('%psc% "([WMI]'Win32_OperatingSystem=@').OperatingSystemSKU" %nul6%') do if not errorlevel 1 set "wmiSKU=%%a"
 
-if %winbuild% GEQ 15063 %psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':winsubstatus\:.*';& ([scriptblock]::Create($f[1]))" %nul2% | find /i "Subscription_is_activated" %nul% && (
+if %winbuild% GEQ 15063 %psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':winsubstatus\:.*';. ([scriptblock]::Create($f[1]))" %nul2% | find /i "Subscription_is_activated" %nul% && (
 if defined regSKU if defined slcSKU if not "%regSKU%"=="%slcSKU%" (
 set winsub=1
 set osSKU=%regSKU%
@@ -1356,7 +1356,7 @@ call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE 
 
 set wpainfo=
 set wpaerror=
-for /f "delims=" %%a in ('%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':wpatest\:.*';& ([scriptblock]::Create($f[1]))" %nul6%') do (set wpainfo=%%a)
+for /f "delims=" %%a in ('%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':wpatest\:.*';. ([scriptblock]::Create($f[1]))" %nul6%') do (set wpainfo=%%a)
 echo "%wpainfo%" | find /i "Error Found" %nul% && (
 set error=1
 set wpaerror=1
@@ -1452,7 +1452,7 @@ call :dk_color %Gray% "Checking SLC/WMI SKU                    [Difference Found
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking Rearm                          [System is ReArmed]"
+call :dk_color %Red% "Checking Rearm                          [System is Rearmed]"
 call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
 )
 
@@ -1548,7 +1548,7 @@ set showfix=1
 if not defined notwinact (
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
-%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';& ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
+%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';. ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"

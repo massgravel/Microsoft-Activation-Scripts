@@ -245,7 +245,7 @@ goto dk_done
 
 ::pstst $ExecutionContext.SessionState.LanguageMode :pstst
 
-for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[System.IO.File]::ReadAllText('!_batp!') -split ':pstst';& ([scriptblock]::Create($f[1]))}" %nul6%') do (set tstresult=%%a)
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[System.IO.File]::ReadAllText('!_batp!') -split ':pstst';. ([scriptblock]::Create($f[1]))}" %nul6%') do (set tstresult=%%a)
 
 if /i not "%tstresult%"=="FullLanguage" (
 %eline%
@@ -1074,7 +1074,7 @@ for %%# in ("!_oLPath!\%_License%*.xrm-ms") do (
 if defined _arr (set "_arr=!_arr!;"!_oLPath!\%%~nx#"") else (set "_arr="!_oLPath!\%%~nx#"")
 )
 
-%psc% "$sls = Get-WmiObject %sps%; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';& ([scriptblock]::Create($f[1])); InstallLicenseArr '!_arr!'; InstallLicenseFile '"!_oLPath!\pkeyconfig-office.xrm-ms"'" %nul%
+%psc% "$sls = Get-WmiObject %sps%; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';. ([scriptblock]::Create($f[1])); InstallLicenseArr '!_arr!'; InstallLicenseFile '"!_oLPath!\pkeyconfig-office.xrm-ms"'" %nul%
 
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
 echo "!allapps!" | find /i "!_actid!" %nul1% || (
@@ -1586,8 +1586,8 @@ exit /b
 :oh_licrefresh
 
 if exist "%SysPath%\spp\store_test\2.0\tokens.dat" (
-%psc% "Stop-Service sppsvc -force; $sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';& ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
-if !errorlevel! NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';& ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
+%psc% "Stop-Service sppsvc -force; $sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';. ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
+if !errorlevel! NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';. ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
 )
 exit /b
 
@@ -2038,7 +2038,7 @@ call :dk_color2 %Red% "Checking WinPE                          " %Blue% "[WinPE 
 
 set wpainfo=
 set wpaerror=
-for /f "delims=" %%a in ('%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':wpatest\:.*';& ([scriptblock]::Create($f[1]))" %nul6%') do (set wpainfo=%%a)
+for /f "delims=" %%a in ('%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':wpatest\:.*';. ([scriptblock]::Create($f[1]))" %nul6%') do (set wpainfo=%%a)
 echo "%wpainfo%" | find /i "Error Found" %nul% && (
 set error=1
 set wpaerror=1
@@ -2134,7 +2134,7 @@ call :dk_color %Gray% "Checking SLC/WMI SKU                    [Difference Found
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking Rearm                          [System is ReArmed]"
+call :dk_color %Red% "Checking Rearm                          [System is Rearmed]"
 call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
 )
 
@@ -2230,7 +2230,7 @@ set showfix=1
 if not defined notwinact (
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
-%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';& ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
+%psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';. ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps (
 set "_notfoundids=Key Not Installed / Act ID Not Found"
@@ -2905,7 +2905,7 @@ exit /b
 :oh_extractdll
 
 set b=
-%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$encoded = ($f[1]) -replace '-', 'A' -replace '_', 'a';$bytes = [Con%b%vert]::FromBas%b%e64String($encoded); $PePath='%1'; $offset='%2'; $m=[System.IO.File]::ReadAllText('!_batp!') -split ':hexedit\:.*';& ([scriptblock]::Create($m[1]))" %nul2% | find /i "Error found" %nul1% && set hasherror=1
+%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':%_hook%\:.*';$encoded = ($f[1]) -replace '-', 'A' -replace '_', 'a';$bytes = [Con%b%vert]::FromBas%b%e64String($encoded); $PePath='%1'; $offset='%2'; $m=[System.IO.File]::ReadAllText('!_batp!') -split ':hexedit\:.*';. ([scriptblock]::Create($m[1]))" %nul2% | find /i "Error found" %nul1% && set hasherror=1
 exit /b
 
 :hexedit:

@@ -207,7 +207,7 @@ goto dk_done
 
 ::pstst $ExecutionContext.SessionState.LanguageMode :pstst
 
-for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[System.IO.File]::ReadAllText('!_batp!') -split ':pstst';& ([scriptblock]::Create($f[1]))}" %nul6%') do (set tstresult=%%a)
+for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[System.IO.File]::ReadAllText('!_batp!') -split ':pstst';. ([scriptblock]::Create($f[1]))}" %nul6%') do (set tstresult=%%a)
 
 if /i not "%tstresult%"=="FullLanguage" (
 %eline%
@@ -703,7 +703,7 @@ call :_taskclear-cache
 
 %nul% reg query "HKLM\%SPPk%\%_wApp%" && (
 echo Removing KMS38 protection...
-%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([scriptblock]::Create($f[1]))"
+%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':regdel\:.*';. ([scriptblock]::Create($f[1]))"
 %nul% reg delete "HKLM\%SPPk%\%_wApp%" /f
 %nul% reg query "HKLM\%SPPk%\%_wApp%" && (
 call :dk_color %Red% "Failed to remove KMS38 protection."
@@ -741,7 +741,7 @@ echo Checking SPP permission related issues...
 call :checkperms
 if defined permerror (
 call :dk_color %Red% "[!permerror!]"
-%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':fixsppperms\:.*';& ([scriptblock]::Create($f[1]))" %nul%
+%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':fixsppperms\:.*';. ([scriptblock]::Create($f[1]))" %nul%
 call :checkperms
 if defined permerror (
 call :dk_color %Red% "[!permerror!] [Failed To Fix]"
@@ -811,8 +811,8 @@ if defined _vis (
 
 echo:
 echo Reinstalling system licenses...
-%psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';& ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
-if %errorlevel% NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';& ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
+%psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';. ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
+if %errorlevel% NEQ 0 %psc% "$sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';. ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
 if %errorlevel% EQU 0 (
 echo [Successful]
 ) else (
@@ -1511,7 +1511,7 @@ exit /b
 
 :regownstart
 
-%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':regown\:.*';& ([scriptblock]::Create($f[1]));"
+%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':regown\:.*';. ([scriptblock]::Create($f[1]));"
 exit /b
 
 ::  Below code takes ownership of a volatile registry key and deletes it
