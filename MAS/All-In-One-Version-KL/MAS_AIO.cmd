@@ -18772,7 +18772,9 @@ goto :oe_goback
 ::  OfficeClickToRun.exe with productstoadd method is used here to add editions
 ::  It uses delta updates, meaning that since it's using same installed build, it will consume very less Internet
 
-set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%targetedition%.16_%_lang%_x-none cdnbaseurl.16=http://officecdn.microsoft.com/pr/%_updch% baseurl.16=http://officecdn.microsoft.com/pr/%_updch% version.16=%_version% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%_updch% %targetedition%.excludedapps.16=groove%excludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
+call :oe_getlangs
+
+set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%targetedition%.16_%_allLangs% cdnbaseurl.16=http://officecdn.microsoft.com/pr/%_updch% baseurl.16=http://officecdn.microsoft.com/pr/%_updch% version.16=%_version% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%_updch% %targetedition%.excludedapps.16=groove%excludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
 
 if %change%==1 (
 set "c2rcommand=!c2rcommand! productstoremove=AllProducts"
@@ -18949,13 +18951,8 @@ if %verified%==0 goto :oe_removeedition
 cls
 if not defined terminal mode 105, 32
 
-set _lang=
-echo "%o16c2r_reg%" | find /i "Wow6432Node" %nul1% && (set _tok=10) || (set _tok=9)
-for /f "tokens=%_tok% delims=\" %%a in ('reg query "%o16c2r_reg%\ProductReleaseIDs\%_actconfig%\%targetedition%.16" /f "-" /k ^| findstr /i ".*16\\.*-.*"') do (
-if defined _lang (set "_lang=!_lang!_%%a") else (set "_lang=_%%a")
-)
-
-set "c2rcommand="%_c2rExe%" platform=%_oArch% productstoremove=%targetedition%.16%_lang%"
+call :oe_getlangs %targetedition%
+set "c2rcommand="%_c2rExe%" platform=%_oArch% productstoremove=%targetedition%.16_%_allLangs%"
 
 echo:
 echo Running the below command, please wait...
@@ -19138,7 +19135,8 @@ goto :oe_goback
 set buildchk=0
 for /f "tokens=3 delims=." %%a in ("%build%") do set "buildchk=%%a"
 
-set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%_firstoId%.16_%_lang%_x-none cdnbaseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% baseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% version.16=%build% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%targetFFN% %_firstoId%.excludedapps.16=%_firstoIdExcludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
+call :oe_getlangs %_firstoId%
+set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%_firstoId%.16_%_allLangs% cdnbaseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% baseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% version.16=%build% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%targetFFN% %_firstoId%.excludedapps.16=%_firstoIdExcludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
 set "c2rclientupdate=!c2rcommand! scenario=CLIENTUPDATE"
 
 if %clverchk% LSS %buildchk% (
@@ -19316,6 +19314,27 @@ echo "%%b" %nul2% | findstr "16.0.17932" %nul% && set ltsc24=LTSC2024
 
 if not "%ltsc19%%ltsc21%%ltsc24%"=="" set ltscfound=1
 
+exit /b
+
+::========================================================================================================================================
+
+::  Check all the installed languages
+
+:oe_getlangs
+
+if "%1"=="" (
+set langreg=culture
+) else (
+set langreg=%1.16
+)
+
+set _allLangs=
+echo "%o16c2r_reg%" | find /i "Wow6432Node" %nul1% && (set _tok=10) || (set _tok=9)
+for /f "tokens=%_tok% delims=\" %%a in ('reg query "%o16c2r_reg%\ProductReleaseIDs\%_actconfig%\%langreg%" /f "-" /k ^| findstr /i "%langreg%\\.*-.*"') do (
+if defined _allLangs (set "_allLangs=!_allLangs!_%%a") else (set "_allLangs=%%a")
+)
+
+set _allLangs=%_allLangs:.16=%
 exit /b
 
 ::========================================================================================================================================
