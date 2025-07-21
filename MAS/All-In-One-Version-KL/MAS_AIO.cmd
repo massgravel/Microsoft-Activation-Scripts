@@ -11706,9 +11706,6 @@ exit /b
 ::  To activate, run the script with "/KMS38" parameter or change 0 to 1 in below line
 set _act=0
 
-::  To remove KMS38 protection, run the script with /KMS38-RemoveProtection parameter or change 0 to 1 in below line
-set _rem=0
-
 ::  To disable changing edition if current edition doesn't support KMS38 activation, change the value to 1 from 0 or run the script with "/KMS38-NoEditionChange" parameter
 set _NoEditionChange=0
 
@@ -11729,13 +11726,12 @@ if defined _args set _args=%_args:"=%
 if defined _args (
 for %%A in (%_args%) do (
 if /i "%%A"=="/KMS38"                  set _act=1
-if /i "%%A"=="/KMS38-RemoveProtection" set _rem=1
 if /i "%%A"=="/KMS38-NoEditionChange"  set _NoEditionChange=1
 if /i "%%A"=="-el"                     set _elev=1
 )
 )
 
-for %%A in (%_act% %_rem% %_NoEditionChange%) do (if "%%A"=="1" set _unattended=1)
+for %%A in (%_act% %_NoEditionChange%) do (if "%%A"=="1" set _unattended=1)
 
 ::========================================================================================================================================
 
@@ -11758,8 +11754,6 @@ goto dk_done
 
 ::========================================================================================================================================
 
-if %_rem%==1 goto :k_uninstall
-
 :k_menu
 
 if %_unattended%==0 (
@@ -11776,7 +11770,7 @@ echo:
 echo                 [1] KMS38 Activation
 echo                 ____________________________________________
 echo:
-echo                 [2] Remove KM38 Protection
+echo                 [2] Remove KMS38 Activation
 echo:
 echo                 [0] %_exitmsg%
 echo:           ______________________________________________________
@@ -12043,8 +12037,7 @@ echo:
 %nul% reg delete "HKU\S-1-5-20\%specific_kms%" /f
 
 %nul% reg query "HKLM\%specific_kms%" && (
-%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([scriptblock]::Create($f[1]))"
-%nul% reg delete "HKLM\%specific_kms%" /f
+call :dk_color %Blue% "Specific KMS registry is locked. %_fixmsg%"
 )
 
 set k_error=
@@ -12210,18 +12203,6 @@ echo Removing the Added Specific KMS Host    [Successful]
 )
 )
 
-::  Protect KMS38 if opted by the user and conditions are correct
-
-if defined _k38 (
-%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([ScriptBlock]::Create($f[1])) -protect"
-%nul% reg delete "HKLM\%specific_kms%" /f
-%nul% reg query "HKLM\%specific_kms%" && (
-echo Protect KMS38 From KMS                  [Successful] [Locked a Registry Key]
-) || (
-call :dk_color %Red% "Protect KMS38 From KMS                  [Failed to Lock a Registry Key]"
-)
-)
-
 ::  clipup.exe does not exist in server cor and acor editions by default, it was copied there with this script
 
 if defined a_cor if exist "%_clipup%" del /f /q "%_clipup%" %nul%
@@ -12251,54 +12232,27 @@ goto :dk_done
 
 cls
 if not defined terminal mode 99, 28
-title  Remove KMS38 Protection %masver%
+title  Remove KMS38 Activation %masver%
 
 %nul% reg delete "HKLM\%specific_kms%" /f
 %nul% reg delete "HKU\S-1-5-20\%specific_kms%" /f
 
+echo:
 %nul% reg query "HKLM\%specific_kms%" && (
-%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([scriptblock]::Create($f[1]))"
-%nul% reg delete "HKLM\%specific_kms%" /f
+call :dk_color %Red% "Failed to remove specific KMS Host."
+call :dk_color %Blue% "%_fixmsg%"
+) || (
+echo Successfully removed specific KMS Host.
 )
 
 echo:
-%nul% reg query "HKLM\%specific_kms%" && (
-call :dk_color %Red% "Removing Specific KMS Host              [Failed]"
-) || (
-echo Removing Specific KMS Host              [Successful]
-)
+echo KMS38 activation doesn't modify any Windows components and doesn't install any new files.
+echo:
+call :dk_color %Gray% "If you want to reset the activation status,"
+call :dk_color %Blue% "%_fixmsg%"
+echo:
 
 goto :dk_done
-
-::========================================================================================================================================
-
-::  This code runs to protect/undo below registry key for KMS38 protection
-::  HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\55c92734-d682-4d71-983e-d6ec3f16059f
-
-::  KMS38 protection stops 180 days KMS Activation from replacing KMS38 activation
-
-:regdel:
-param (
-    [switch]$protect
-)
-
-$SID = New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')
-$Admin = ($SID.Translate([System.Security.Principal.NTAccount])).Value
-
-if($protect) {
-$ruleArgs = @("$Admin", "Delete, SetValue", "ContainerInherit", "None", "Deny")
-} else {
-$ruleArgs = @("$Admin", "FullControl", "Allow")
-}
-
-$path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\55c92734-d682-4d71-983e-d6ec3f16059f'
-$key = [Microsoft.Win32.RegistryKey]::OpenBaseKey('LocalMachine', 'Registry64').OpenSubKey($path, 'ReadWriteSubTree', 'ChangePermissions')
-$acl = $key.GetAccessControl()
-
-$rule = [System.Security.AccessControl.RegistryAccessRule]::new.Invoke($ruleArgs)
-$acl.ResetAccessRule($rule)
-$key.SetAccessControl($acl)
-:regdel:
 
 ::========================================================================================================================================
 
@@ -16692,6 +16646,25 @@ echo:
 call :dk_color %Blue% "Rebuilding SPP licensing tokens..."
 echo:
 
+echo Clearing KMS Cache...
+echo:
+call :_taskclear-cache
+
+%nul% reg query "HKLM\%SPPk%\%_wApp%" && (
+echo Removing KMS38 protection...
+%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':regdel\:.*';& ([scriptblock]::Create($f[1]))"
+%nul% reg delete "HKLM\%SPPk%\%_wApp%" /f
+%nul% reg query "HKLM\%SPPk%\%_wApp%" && (
+call :dk_color %Red% "Failed to remove KMS38 protection."
+) || (
+echo Successfully removed KMS38 protection.
+echo Successfully cleared KMS Cache.
+)
+) || (
+echo Successfully cleared KMS Cache.
+)
+echo:
+
 call :scandat check
 
 if not defined token (
@@ -17436,6 +17409,36 @@ $rule = New-Object System.Security.AccessControl.RegistryAccessRule($Admin,"Full
 $acl.SetAccessRule($rule)
 $key.SetAccessControl($acl)
 :regown:
+
+::========================================================================================================================================
+
+::  This code runs to undo below registry key KMS38 protection
+::  HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\55c92734-d682-4d71-983e-d6ec3f16059f
+
+::  This option is not used in KMS38 anymore, it's here only to remove previous versions protection.
+
+:regdel:
+param (
+    [switch]$protect
+)
+
+$SID = New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')
+$Admin = ($SID.Translate([System.Security.Principal.NTAccount])).Value
+
+if($protect) {
+$ruleArgs = @("$Admin", "Delete, SetValue", "ContainerInherit", "None", "Deny")
+} else {
+$ruleArgs = @("$Admin", "FullControl", "Allow")
+}
+
+$path = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\55c92734-d682-4d71-983e-d6ec3f16059f'
+$key = [Microsoft.Win32.RegistryKey]::OpenBaseKey('LocalMachine', 'Registry64').OpenSubKey($path, 'ReadWriteSubTree', 'ChangePermissions')
+$acl = $key.GetAccessControl()
+
+$rule = [System.Security.AccessControl.RegistryAccessRule]::new.Invoke($ruleArgs)
+$acl.ResetAccessRule($rule)
+$key.SetAccessControl($acl)
+:regdel:
 
 :+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
