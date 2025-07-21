@@ -549,6 +549,7 @@ goto :oe_edition
 :oe_editionchangepre
 
 cls
+set editedition=
 call :ch_getinfo
 call :oe_tempcleanup
 %psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':getlist\:.*';. ([scriptblock]::Create($f[1]))"
@@ -667,7 +668,8 @@ if not defined terminal mode 98, 32
 %line%
 echo:
 call :dk_color %Gray% "Target edition: %targetedition%"
-call :dk_color %Gray% "You can exclude the below apps from installation."
+call :dk_color %Gray% "To exclude the apps listed below from installation, toggle them from On to Off."
+if defined editedition call :dk_color %Gray% "Note: The On/Off status below does not reflect the current status of the installed apps."
 %line%
 if defined suites echo:
 if defined Access_st     echo [A] Access           : %Access_st%
@@ -868,6 +870,7 @@ goto :oe_goback
 )
 
 set change=0
+set editedition=1
 call :ch_getinfo
 cls
 
