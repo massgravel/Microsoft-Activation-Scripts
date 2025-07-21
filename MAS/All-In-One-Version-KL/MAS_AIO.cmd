@@ -19136,6 +19136,17 @@ set buildchk=0
 for /f "tokens=3 delims=." %%a in ("%build%") do set "buildchk=%%a"
 
 call :oe_getlangs %_firstoId%
+
+echo %targetchannel% | find /i "2019 VL" %nul% && (
+for %%A in (en-gb es-mx fr-ca) do (
+echo %_allLangs% | find /i "%%A" %nul% && (
+%eline%
+echo [%%A] language is not supported on the Office 2019 Perpetual VL update channel. Aborting...
+goto :oe_goback
+)
+)
+)
+
 set "c2rcommand="%_c2rExe%" platform=%_oArch% culture=%_lang% productstoadd=%_firstoId%.16_%_allLangs% cdnbaseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% baseurl.16=http://officecdn.microsoft.com/pr/%targetFFN% version.16=%build% mediatype.16=CDN sourcetype.16=CDN deliverymechanism=%targetFFN% %_firstoId%.excludedapps.16=%_firstoIdExcludelist% flt.useteamsaddon=disabled flt.usebingaddononinstall=disabled flt.usebingaddononupdate=disabled"
 set "c2rclientupdate=!c2rcommand! scenario=CLIENTUPDATE"
 
