@@ -5,7 +5,7 @@
 
 ::============================================================================
 ::
-::   Homepage: mass grave[.]dev
+::   Homepage: mass<>grave<.>dev
 ::      Email: mas.help@outlook.com
 ::
 ::============================================================================
@@ -1443,7 +1443,7 @@ call :ts_process
 
 ::========================================================================================================================================
 
-::  mass grave[.]dev/office-license-is-not-genuine
+::  mass<>grave<.>dev/office-license-is-not-genuine
 ::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
 
 set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"

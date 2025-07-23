@@ -6,7 +6,7 @@
 
 
 ::  For command line switches, check mass<>grave<.>dev/command_line_switches
-::  If you want to better understand script, read from MAS separate files version. 
+::  If you want to better understand script, read from separate files version. 
 
 
 
@@ -2063,7 +2063,7 @@ exit /b
 ::  2nd column = Generic Retail/OEM/MAK Key
 ::  3rd column = SKU ID
 ::  4th column = Key part number
-::  5th column = Ticket signature value. It's as it is, it's not encoded. (Check mass grave[.]dev/hwid#manual-activation to see how it's generated)
+::  5th column = Ticket signature value. It's as it is, it's not encoded. (Check mass<>grave<.>dev/hwid#manual-activation to see how it's generated)
 ::  6th column = 1 = activation is not working (at the time of writing this), 0 = activation is working
 ::  7th column = Key Type
 ::  8th column = WMI Edition ID (For reference only)
@@ -2525,7 +2525,7 @@ call :dk_color %Gray% "Checking Old Office With Sub License    [Found. Update Of
 
 ::========================================================================================================================================
 
-::  mass grave[.]dev/office-license-is-not-genuine
+::  mass<>grave<.>dev/office-license-is-not-genuine
 ::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
 ::  Script already is using MAK instead of GVLK so it won't appear anyway, but registry keys are added incase Office installs default GVLK grace key for volume products
 
@@ -3830,13 +3830,13 @@ $MemoryStream.Close()
 ::
 ::  The files are encoded in base64 to make AIO version.
 ::
-::  mass grave[.]dev/ohook
+::  mass<>grave<.>dev/ohook
 ::  Here you can find the files source code and info on how to rebuild the identical sppc.dll files
 ::
 ::  stackoverflow.com/a/35335273
 ::  Here you can check how to extract sppc.dll files from base64
 ::
-::  For any further question, feel free to contact us on mass grave[.]dev/contactus
+::  For any further question, feel free to contact us on mass<>grave<.>dev/contactus
 ::
 ::========================================================================================================================================
 ::
@@ -5082,7 +5082,7 @@ call :ts_process
 
 ::========================================================================================================================================
 
-::  mass grave[.]dev/office-license-is-not-genuine
+::  mass<>grave<.>dev/office-license-is-not-genuine
 ::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
 
 set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
@@ -13098,7 +13098,7 @@ if %winbuild% GEQ 9200 (
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath /reg:32" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
 if defined _C16R (
-REM  mass grave[.]dev/office-license-is-not-genuine
+REM  mass<>grave<.>dev/office-license-is-not-genuine
 set _server=10.0.0.10
 call :_taskregserv
 echo Keeping the non-existent IP address 10.0.0.10 as %KS% Server.
@@ -13436,7 +13436,7 @@ exit /b
 
 ::============================================================================
 ::
-::   Homepage: mass grave[.]dev
+::   Homepage: mass<>grave<.>dev
 ::      Email: mas.help@outlook.com
 ::
 ::============================================================================
@@ -14045,7 +14045,7 @@ echo ___________________________________________________________________________
 echo:
 echo   This Script is a part of MAS project.
 echo:   
-echo   Homepage: mass grave[.]dev
+echo   Homepage: mass%w%grave%w%.dev
 echo      Email: mas.help@outlook.com
 )>"%_dest%\Info.txt"
 exit /b
@@ -18244,55 +18244,55 @@ if %winbuild% GEQ 22000 exit /b
 )
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*CorEdition~*.mum" (set Cor=Cor) else (set Cor=)
 
-set h=
+set w=
 for %%# in (
-XGVPP-NMH47-7TTHJ-W3FW7-8HV%h%2C__OEM:NONSLP_Enterprise
-D6RD9-D4N8T-RT9QX-YW6YT-FCW%h%WJ______Retail_Starter
-3V6Q6-NQXCX-V8YXR-9QCYV-QPF%h%CT__Volume:MAK_EnterpriseN
-3NFXW-2T27M-2BDW6-4GHRV-68X%h%RX______Retail_StarterN
-VK7JG-NPHTM-C97JM-9MPGT-3V6%h%6T______Retail_Professional
-2B87N-8KFHP-DKV6R-Y2C8J-PKC%h%KT______Retail_ProfessionalN
-4CPRK-NM3K3-X6XXQ-RXX86-WXC%h%HW______Retail_CoreN
-N2434-X9D7W-8PF6X-8DV9T-8TY%h%MD______Retail_CoreCountrySpecific
-BT79Q-G7N6G-PGBYW-4YWX6-6F4%h%BT______Retail_CoreSingleLanguage
-YTMG3-N6DKC-DKB77-7M9GH-8HV%h%X7______Retail_Core
-XKCNC-J26Q9-KFHD2-FKTHY-KD7%h%2Y__OEM:NONSLP_PPIPro
-YNMGQ-8RYV3-4PGQ3-C8XTP-7CF%h%BY______Retail_Education
-84NGF-MHBT6-FXBX8-QWJK7-DRR%h%8H______Retail_EducationN
-KCNVH-YKWX8-GJJB9-H9FDT-6F7%h%W2__Volume:MAK_EnterpriseS_VB
-43TBQ-NH92J-XKTM7-KT3KK-P39%h%PB__OEM:NONSLP_EnterpriseS_RS5
-NK96Y-D9CD8-W44CQ-R8YTK-DYJ%h%WX__OEM:NONSLP_EnterpriseS_RS1
-FWN7H-PF93Q-4GGP8-M8RF3-MDW%h%WW__OEM:NONSLP_EnterpriseS_TH
-RQFNW-9TPM3-JQ73T-QV4VQ-DV9%h%PT__Volume:MAK_EnterpriseSN_VB
-M33WV-NHY3C-R7FPM-BQGPT-239%h%PG__Volume:MAK_EnterpriseSN_RS5
-2DBW3-N2PJG-MVHW3-G7TDK-9HK%h%R4__Volume:MAK_EnterpriseSN_RS1
-NTX6B-BRYC2-K6786-F6MVQ-M7V%h%2X__Volume:MAK_EnterpriseSN_TH
-G3KNM-CHG6T-R36X3-9QDG6-8M8%h%K9______Retail_ProfessionalSingleLanguage
-HNGCC-Y38KG-QVK8D-WMWRK-X86%h%VK______Retail_ProfessionalCountrySpecific
-DXG7C-N36C4-C4HTG-X4T3X-2YV%h%77______Retail_ProfessionalWorkstation
-WYPNQ-8C467-V2W6J-TX4WX-WT2%h%RQ______Retail_ProfessionalWorkstationN
-8PTT6-RNW4C-6V7J2-C2D3X-MHB%h%PB______Retail_ProfessionalEducation
-GJTYN-HDMQY-FRR76-HVGC7-QPF%h%8P______Retail_ProfessionalEducationN
-C4NTJ-CX6Q2-VXDMR-XVKGM-F9D%h%JC__Volume:MAK_EnterpriseG
-46PN6-R9BK9-CVHKB-HWQ9V-MBJ%h%Y8__Volume:MAK_EnterpriseGN
-NJCF7-PW8QT-3324D-688JX-2YV%h%66______Retail_ServerRdsh
-XQQYW-NFFMW-XJPBH-K8732-CKF%h%FD______OEM:DM_IoTEnterprise
-QPM6N-7J2WJ-P88HH-P3YRH-YY7%h%4H__OEM:NONSLP_IoTEnterpriseS
-K9VKN-3BGWV-Y624W-MCRMQ-BHD%h%CD______Retail_CloudEditionN
-KY7PN-VR6RX-83W6Y-6DDYQ-T6R%h%4W______Retail_CloudEdition
-V3WVW-N2PV2-CGWC3-34QGF-VMJ%h%2C______Retail_Cloud
-NH9J3-68WK7-6FB93-4K3DF-DJ4%h%F6______Retail_CloudN
-2HN6V-HGTM8-6C97C-RK67V-JQP%h%FD______Retail_CloudE
-WC2BQ-8NRM3-FDDYY-2BFGV-KHK%h%QY_Volume:GVLK_ServerStandard%Cor%_RS1
-CB7KF-BWN84-R7R2Y-793K2-8XD%h%DG_Volume:GVLK_ServerDatacenter%Cor%_RS1
-JCKRF-N37P4-C2D82-9YXRT-4M6%h%3B_Volume:GVLK_ServerSolution_RS1
-QN4C6-GBJD2-FB422-GHWJK-GJG%h%2R_Volume:GVLK_ServerCloudStorage_RS1
-VP34G-4NPPG-79JTQ-864T4-R3M%h%QX_Volume:GVLK_ServerAzureCor_RS1
-9JQNQ-V8HQ6-PKB8H-GGHRY-R62%h%H6______Retail_ServerAzureNano_RS1
-VN8D3-PR82H-DB6BJ-J9P4M-92F%h%6J______Retail_ServerStorageStandard_RS1
-48TQX-NVK3R-D8QR3-GTHHM-8FH%h%XC______Retail_ServerStorageWorkgroup_RS1
-2HXDN-KRXHB-GPYC7-YCKFJ-7FV%h%DG_Volume:GVLK_ServerDatacenterACor_RS3
-PTXN8-JFHJM-4WC78-MPCBR-9W4%h%KR_Volume:GVLK_ServerStandardACor_RS3
+XGVPP-NMH47-7TTHJ-W3FW7-8HV%w%2C__OEM:NONSLP_Enterprise
+D6RD9-D4N8T-RT9QX-YW6YT-FCW%w%WJ______Retail_Starter
+3V6Q6-NQXCX-V8YXR-9QCYV-QPF%w%CT__Volume:MAK_EnterpriseN
+3NFXW-2T27M-2BDW6-4GHRV-68X%w%RX______Retail_StarterN
+VK7JG-NPHTM-C97JM-9MPGT-3V6%w%6T______Retail_Professional
+2B87N-8KFHP-DKV6R-Y2C8J-PKC%w%KT______Retail_ProfessionalN
+4CPRK-NM3K3-X6XXQ-RXX86-WXC%w%HW______Retail_CoreN
+N2434-X9D7W-8PF6X-8DV9T-8TY%w%MD______Retail_CoreCountrySpecific
+BT79Q-G7N6G-PGBYW-4YWX6-6F4%w%BT______Retail_CoreSingleLanguage
+YTMG3-N6DKC-DKB77-7M9GH-8HV%w%X7______Retail_Core
+XKCNC-J26Q9-KFHD2-FKTHY-KD7%w%2Y__OEM:NONSLP_PPIPro
+YNMGQ-8RYV3-4PGQ3-C8XTP-7CF%w%BY______Retail_Education
+84NGF-MHBT6-FXBX8-QWJK7-DRR%w%8H______Retail_EducationN
+KCNVH-YKWX8-GJJB9-H9FDT-6F7%w%W2__Volume:MAK_EnterpriseS_VB
+43TBQ-NH92J-XKTM7-KT3KK-P39%w%PB__OEM:NONSLP_EnterpriseS_RS5
+NK96Y-D9CD8-W44CQ-R8YTK-DYJ%w%WX__OEM:NONSLP_EnterpriseS_RS1
+FWN7H-PF93Q-4GGP8-M8RF3-MDW%w%WW__OEM:NONSLP_EnterpriseS_TH
+RQFNW-9TPM3-JQ73T-QV4VQ-DV9%w%PT__Volume:MAK_EnterpriseSN_VB
+M33WV-NHY3C-R7FPM-BQGPT-239%w%PG__Volume:MAK_EnterpriseSN_RS5
+2DBW3-N2PJG-MVHW3-G7TDK-9HK%w%R4__Volume:MAK_EnterpriseSN_RS1
+NTX6B-BRYC2-K6786-F6MVQ-M7V%w%2X__Volume:MAK_EnterpriseSN_TH
+G3KNM-CHG6T-R36X3-9QDG6-8M8%w%K9______Retail_ProfessionalSingleLanguage
+HNGCC-Y38KG-QVK8D-WMWRK-X86%w%VK______Retail_ProfessionalCountrySpecific
+DXG7C-N36C4-C4HTG-X4T3X-2YV%w%77______Retail_ProfessionalWorkstation
+WYPNQ-8C467-V2W6J-TX4WX-WT2%w%RQ______Retail_ProfessionalWorkstationN
+8PTT6-RNW4C-6V7J2-C2D3X-MHB%w%PB______Retail_ProfessionalEducation
+GJTYN-HDMQY-FRR76-HVGC7-QPF%w%8P______Retail_ProfessionalEducationN
+C4NTJ-CX6Q2-VXDMR-XVKGM-F9D%w%JC__Volume:MAK_EnterpriseG
+46PN6-R9BK9-CVHKB-HWQ9V-MBJ%w%Y8__Volume:MAK_EnterpriseGN
+NJCF7-PW8QT-3324D-688JX-2YV%w%66______Retail_ServerRdsh
+XQQYW-NFFMW-XJPBH-K8732-CKF%w%FD______OEM:DM_IoTEnterprise
+QPM6N-7J2WJ-P88HH-P3YRH-YY7%w%4H__OEM:NONSLP_IoTEnterpriseS
+K9VKN-3BGWV-Y624W-MCRMQ-BHD%w%CD______Retail_CloudEditionN
+KY7PN-VR6RX-83W6Y-6DDYQ-T6R%w%4W______Retail_CloudEdition
+V3WVW-N2PV2-CGWC3-34QGF-VMJ%w%2C______Retail_Cloud
+NH9J3-68WK7-6FB93-4K3DF-DJ4%w%F6______Retail_CloudN
+2HN6V-HGTM8-6C97C-RK67V-JQP%w%FD______Retail_CloudE
+WC2BQ-8NRM3-FDDYY-2BFGV-KHK%w%QY_Volume:GVLK_ServerStandard%Cor%_RS1
+CB7KF-BWN84-R7R2Y-793K2-8XD%w%DG_Volume:GVLK_ServerDatacenter%Cor%_RS1
+JCKRF-N37P4-C2D82-9YXRT-4M6%w%3B_Volume:GVLK_ServerSolution_RS1
+QN4C6-GBJD2-FB422-GHWJK-GJG%w%2R_Volume:GVLK_ServerCloudStorage_RS1
+VP34G-4NPPG-79JTQ-864T4-R3M%w%QX_Volume:GVLK_ServerAzureCor_RS1
+9JQNQ-V8HQ6-PKB8H-GGHRY-R62%w%H6______Retail_ServerAzureNano_RS1
+VN8D3-PR82H-DB6BJ-J9P4M-92F%w%6J______Retail_ServerStorageStandard_RS1
+48TQX-NVK3R-D8QR3-GTHHM-8FH%w%XC______Retail_ServerStorageWorkgroup_RS1
+2HXDN-KRXHB-GPYC7-YCKFJ-7FV%w%DG_Volume:GVLK_ServerDatacenterACor_RS3
+PTXN8-JFHJM-4WC78-MPCBR-9W4%w%KR_Volume:GVLK_ServerStandardACor_RS3
 ) do (
 for /f "tokens=1-4 delims=_" %%A in ("%%#") do if /i %targetedition%==%%C (
 

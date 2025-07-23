@@ -5,7 +5,7 @@
 
 ::============================================================================
 ::
-::   Homepage: mass grave[.]dev
+::   Homepage: mass<>grave<.>dev
 ::      Email: mas.help@outlook.com
 ::
 ::============================================================================
@@ -701,7 +701,7 @@ call :dk_color %Gray% "Checking Old Office With Sub License    [Found. Update Of
 
 ::========================================================================================================================================
 
-::  mass grave[.]dev/office-license-is-not-genuine
+::  mass<>grave<.>dev/office-license-is-not-genuine
 ::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
 ::  Script already is using MAK instead of GVLK so it won't appear anyway, but registry keys are added incase Office installs default GVLK grace key for volume products
 
@@ -2988,13 +2988,13 @@ $MemoryStream.Close()
 ::
 ::  The files are encoded in base64 to make AIO version.
 ::
-::  mass grave[.]dev/ohook
+::  mass<>grave<.>dev/ohook
 ::  Here you can find the files source code and info on how to rebuild the identical sppc.dll files
 ::
 ::  stackoverflow.com/a/35335273
 ::  Here you can check how to extract sppc.dll files from base64
 ::
-::  For any further question, feel free to contact us on mass grave[.]dev/contactus
+::  For any further question, feel free to contact us on mass<>grave<.>dev/contactus
 ::
 ::========================================================================================================================================
 ::
