@@ -134,7 +134,7 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%trouble
 goto done2
 )
 
-if not exist "%SysPath%\logoff.exe" (
+if exist "%Systemdrive%\Users\WDAGUtilityAccount" (
 sc query gcs | find /i "RUNNING" %nul% && (
 %eline%
 echo Windows Sandbox detected.
