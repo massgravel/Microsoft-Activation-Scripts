@@ -837,6 +837,11 @@ echo Removing the Added Specific KMS Host    [Successful]
 )
 )
 
+if defined _k38 if %winbuild% GEQ 26200 (
+call :dk_color %Gray% "In Windows settings, you may see a renewal notification for activation that can be ignored."
+call :dk_color %Gray% "To avoid this notification, please use the HWID or TSforge activation options in the main menu."
+)
+
 ::  clipup.exe does not exist in server cor and acor editions by default, it was copied there with this script
 
 if defined a_cor if exist "%_clipup%" del /f /q "%_clipup%" %nul%

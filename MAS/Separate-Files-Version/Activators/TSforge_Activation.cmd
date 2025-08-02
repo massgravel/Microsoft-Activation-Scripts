@@ -684,7 +684,7 @@ echo Checking Internet Connection            [Connected!ping_f!]
 ) else (
 if /i %_actmethod%==Auto if not %_actman%==1 set tsmethod=KMS4k
 if /i !tsmethod!==KMS4k (
-call :dk_color %Gray% "Checking Internet Connection            [Not Connected]"
+call :dk_color %Red% "Checking Internet Connection            [Not Connected]"
 call :dk_color %Blue% "Switching To KMS4k activation because Internet is needed for StaticCID method."
 ) else (
 set error=1
@@ -1931,6 +1931,11 @@ if %_actman%==0 (if not defined error call :dk_color %Blue% "%_fixmsg%")
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 ) else (
+if /i %tsmethod%==KMS4k if %winbuild% GEQ 26200 (
+echo:
+call :dk_color %Gray% "In Windows settings, you may see a renewal notification for activation that can be ignored."
+if /i %_actmethod%==Auto call :dk_color %Gray% "To avoid this notification, run the script with an internet connection to use the StaticCID method."
+)
 echo "%tsids%" | find /i "7e94be23-b161-4956-a682-146ab291774c" %nul1% && (
 call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 years ESU is not officially supported, but you can manually install updates."
 )
