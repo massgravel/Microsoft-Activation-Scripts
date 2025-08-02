@@ -143,7 +143,7 @@ goto dk_done
 if not exist "%SysPath%\logoff.exe" (
 sc query gcs | find /i "RUNNING" %nul% && (
 %eline%
-echo Windows Sandbox detected; activation is not required.
+echo Windows Sandbox detected.
 echo The script cannot run due to missing licensing components. Aborting...
 echo:
 goto dk_done
