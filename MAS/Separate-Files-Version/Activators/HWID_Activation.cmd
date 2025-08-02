@@ -173,6 +173,16 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%trouble
 goto dk_done
 )
 
+if not exist "%SysPath%\logoff.exe" (
+sc query gcs | find /i "RUNNING" %nul% && (
+%eline%
+echo Windows Sandbox detected; activation is not required.
+echo The script cannot run due to missing licensing components. Aborting...
+echo:
+goto dk_done
+)
+)
+
 if %winbuild% LSS 10240 (
 %eline%
 echo Unsupported OS version detected [%winbuild%].
