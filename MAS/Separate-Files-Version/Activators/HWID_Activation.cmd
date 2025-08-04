@@ -277,6 +277,17 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-plac
 goto dk_done
 )
 
+REM check for Mal-ware that may cause issues with Powershell
+
+for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
+echo "%%f"
+echo Mal%blank%ware found, PowerShell is not working properly.
+echo:
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+goto dk_done
+)
+
 REM check if .NET is working properly
 
 if /i "!tstresult2!"=="FullLanguage" (
@@ -288,17 +299,6 @@ set fixes=%fixes% %mas%in-place_repair_upgrade
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
 goto dk_done
 )
-)
-
-REM check for Mal-ware that may cause issues with Powershell
-
-for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
-echo "%%f"
-echo Mal%blank%ware found, PowerShell is not working properly.
-echo:
-set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
-goto dk_done
 )
 
 REM check antivirus and other errors
@@ -674,7 +674,9 @@ call :dk_color %Red% "Checking Ticket Migration               [Failed]"
 
 if not defined altapplist if not defined showfix if defined rebuildinfo (
 set showfix=1
+echo:
 call :dk_color %Blue% "%_fixmsg%"
+echo:
 )
 
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
@@ -744,8 +746,10 @@ licensing.mp.microsoft.com
 findstr /i "%%#" "%SysPath%\drivers\etc\hosts" %nul1% && set "hosfail= [%%# Blocked in Hosts]"
 )
 call :dk_color %Red% "Checking Licensing Servers              [Failed to Connect]!hosfail!"
+echo:
 set fixes=%fixes% %mas%licensing-servers-issue
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%licensing-servers-issue"
+echo:
 )
 
 ::==========================================================================================================================================
@@ -758,13 +762,17 @@ reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DisableWin
 reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DoNotConnectToWindowsUpdateInternetLocations %nul2% | find /i "0x1" %nul% && set wublock=1
 if defined wublock (
 call :dk_color %Red% "Checking Update Blocker In Registry     [Found]"
+echo:
 call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
+echo:
 )
 
 reg query "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v DisableStoreApps %nul2% | find /i "0x1" %nul% && (
 set storeblock=1
 call :dk_color %Red% "Checking Store Blocker In Registry      [Found]"
+echo:
 call :dk_color %Blue% "If you have used any tool to block Store, undo it."
+echo:
 )
 
 set wcount=0
@@ -781,10 +789,14 @@ set error=1
 call :dk_color %Red% "Checking Windows Update Registry        [Corruption Found]"
 if !wcount! GTR 2 (
 call :dk_color %Red% "Windows seems to be infected with Mal%w%ware."
+echo:
 set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+echo:
 ) else (
+echo:
 call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
+echo:
 )
 ) else (
 %psc% "Start-Job { Start-Service wuauserv } | Wait-Job -Timeout 20 | Out-Null"
@@ -793,7 +805,9 @@ set error=1
 set wuerror=1
 sc start wuauserv %nul%
 call :dk_color %Red% "Starting Windows Update Service         [Failed] [!errorlevel!]"
+echo:
 call :dk_color %Blue% "HWID activation needs working Windows updates, if you have used any tool to block updates, undo it."
+echo:
 )
 )
 )
@@ -806,8 +820,10 @@ if %keyerror% EQU 0 if not defined _perm if defined _int (
 if not defined wucorrupt if not defined wublock if not defined wuerror if not defined storeblock if not defined resfail (
 echo "%error_code%" | findstr /i "0x80072e 0x80072f 0x800704cf 0x87e10bcf 0x800705b4" %nul% && (
 call :dk_color %Red% "Checking Internet Issues                [Found] %error_code%"
+echo:
 set fixes=%fixes% %mas%licensing-servers-issue
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%licensing-servers-issue"
+echo:
 )
 )
 )
@@ -1014,9 +1030,11 @@ if %sps%==SoftwareLicensingService call :dk_refresh
 echo %keyecho% %~1 [Successful]
 ) else (
 call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
-if not defined error (
+if not defined showfix (
 if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
+echo:
 call :dk_color %Blue% "%_fixmsg%"
+echo:
 set showfix=1
 )
 set error=1
@@ -1217,6 +1235,7 @@ if not "%results%%pupfound%"=="" (
 if defined pupfound call :dk_color %Gray% "Checking PUP Activators                 [Found%pupfound%]"
 if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection..."
 if defined results (call :dk_color %Red% "%results%"&set showfix=1)
+echo:
 set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:

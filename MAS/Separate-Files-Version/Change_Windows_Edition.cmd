@@ -235,6 +235,17 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-plac
 goto dk_done
 )
 
+REM check for Mal-ware that may cause issues with Powershell
+
+for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
+echo "%%f"
+echo Mal%blank%ware found, PowerShell is not working properly.
+echo:
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+goto dk_done
+)
+
 REM check if .NET is working properly
 
 if /i "!tstresult2!"=="FullLanguage" (
@@ -246,17 +257,6 @@ set fixes=%fixes% %mas%in-place_repair_upgrade
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
 goto dk_done
 )
-)
-
-REM check for Mal-ware that may cause issues with Powershell
-
-for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
-echo "%%f"
-echo Mal%blank%ware found, PowerShell is not working properly.
-echo:
-set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
-goto dk_done
 )
 
 REM check antivirus and other errors

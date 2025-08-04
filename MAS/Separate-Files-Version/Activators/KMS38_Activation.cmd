@@ -276,6 +276,17 @@ call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-plac
 goto dk_done
 )
 
+REM check for Mal-ware that may cause issues with Powershell
+
+for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
+echo "%%f"
+echo Mal%blank%ware found, PowerShell is not working properly.
+echo:
+set fixes=%fixes% %mas%remove_mal%w%ware
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+goto dk_done
+)
+
 REM check if .NET is working properly
 
 if /i "!tstresult2!"=="FullLanguage" (
@@ -287,17 +298,6 @@ set fixes=%fixes% %mas%in-place_repair_upgrade
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
 goto dk_done
 )
-)
-
-REM check for Mal-ware that may cause issues with Powershell
-
-for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
-echo "%%f"
-echo Mal%blank%ware found, PowerShell is not working properly.
-echo:
-set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
-goto dk_done
 )
 
 REM check antivirus and other errors
@@ -695,9 +695,9 @@ set k_error=
 %nul% reg add "HKLM\%specific_kms%\%app%" /f /v KeyManagementServicePort /t REG_SZ /d "1688" || set k_error=1
 
 if not defined k_error (
-echo Adding Specific KMS Host                [LocalHost 127.0.0.2] [Successful]
+echo Adding Specific KMS Host                [LocalHost] [Successful]
 ) else (
-call :dk_color %Red% "Adding Specific KMS Host                [LocalHost 127.0.0.2] [Failed]"
+call :dk_color %Red% "Adding Specific KMS Host                [LocalHost] [Failed]"
 )
 
 ::========================================================================================================================================
@@ -793,7 +793,9 @@ call :dk_color %Red% "Checking Ticket Migration               [Failed]"
 
 if not defined showfix if defined rebuildinfo (
 set showfix=1
+echo:
 call :dk_color %Blue% "%_fixmsg%"
+echo:
 )
 
 if exist "%tdir%\Genuine*" del /f /q "%tdir%\Genuine*" %nul%
@@ -1089,9 +1091,11 @@ if %sps%==SoftwareLicensingService call :dk_refresh
 echo %keyecho% %~1 [Successful]
 ) else (
 call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
-if not defined error (
+if not defined showfix (
 if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
+echo:
 call :dk_color %Blue% "%_fixmsg%"
+echo:
 set showfix=1
 )
 set error=1
@@ -1316,6 +1320,7 @@ if not "%results%%pupfound%"=="" (
 if defined pupfound call :dk_color %Gray% "Checking PUP Activators                 [Found%pupfound%]"
 if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection..."
 if defined results (call :dk_color %Red% "%results%"&set showfix=1)
+echo:
 set fixes=%fixes% %mas%remove_mal%w%ware
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
