@@ -1927,6 +1927,7 @@ call :dk_color %Gray% "To activate, check your internet connection and ensure th
 ) else (
 call :dk_color %Blue% "This Windows version is known to not activate due to MS Windows/Server issues."
 )
+if not defined showfix call :dk_color %Blue% "%_fixmsg%"
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 )
@@ -1943,7 +1944,7 @@ if /i %tsmethod%==StaticCID (echo Depositing Static Confirmation ID...) else (ec
 echo:
 %psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -split ':tsforge\:.*';. ([scriptblock]::Create($f[1])) %tsids%"
 if !errorlevel!==3 (
-if %_actman%==0 (if not defined error call :dk_color %Blue% "%_fixmsg%")
+if %_actman%==0 (if not defined showfix call :dk_color %Blue% "%_fixmsg%")
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 ) else (
@@ -2537,7 +2538,15 @@ set upk_result=2
 
 if defined ohookact if not %upk_result%==0 echo:
 if %upk_result%==1 echo Uninstalling Other/Grace Keys           [Successful]
-if %upk_result%==2 call :dk_color %Red% "Uninstalling Other/Grace Keys           [Failed]"
+if %upk_result%==2 (
+call :dk_color %Red% "Uninstalling Other/Grace Keys           [Failed]"
+if not defined showfix (
+echo:
+call :dk_color %Blue% "%_fixmsg%"
+echo:
+set showfix=1
+)
+)
 exit /b
 
 ::========================================================================================================================================

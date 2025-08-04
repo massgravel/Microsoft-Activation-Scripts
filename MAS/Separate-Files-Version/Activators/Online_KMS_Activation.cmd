@@ -1579,7 +1579,15 @@ set upk_result=2
 
 if defined ohookact if not %upk_result%==0 echo:
 if %upk_result%==1 echo Uninstalling Other/Grace Keys           [Successful]
-if %upk_result%==2 call :dk_color %Red% "Uninstalling Other/Grace Keys           [Failed]"
+if %upk_result%==2 (
+call :dk_color %Red% "Uninstalling Other/Grace Keys           [Failed]"
+if not defined showfix (
+echo:
+call :dk_color %Blue% "%_fixmsg%"
+echo:
+set showfix=1
+)
+)
 exit /b
 
 ::========================================================================================================================================
@@ -1628,6 +1636,9 @@ call :ks_clearstuff
 set error_=9
 echo Failed to completely clear %KS% Cache.
 reg query "HKLM\%SPPk%\%_wApp%" /s %nul2% | findstr /i "127.0.0.2" %nul1% && echo KMS38 activation is locked.
+echo:
+call :dk_color %Blue% "%_fixmsg%"
+echo:
 ) || (
 echo Cleared %KS% Cache successfully.
 )
@@ -1643,6 +1654,10 @@ echo %uline%
 echo %uline%
 echo:
 call :dk_color %Green% "Online %KS% has been successfully uninstalled."
+echo:
+call :dk_color %Gray% "If you want to reset the activation status,"
+call :dk_color %Blue% "%_fixmsg%"
+echo:
 echo %uline%
 )
 

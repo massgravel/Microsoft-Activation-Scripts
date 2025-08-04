@@ -1601,7 +1601,15 @@ set upk_result=2
 
 if defined ohookact if not %upk_result%==0 echo:
 if %upk_result%==1 echo Uninstalling Other/Grace Keys           [Successful]
-if %upk_result%==2 call :dk_color %Red% "Uninstalling Other/Grace Keys           [Failed]"
+if %upk_result%==2 (
+call :dk_color %Red% "Uninstalling Other/Grace Keys           [Failed]"
+if not defined showfix (
+echo:
+call :dk_color %Blue% "%_fixmsg%"
+echo:
+set showfix=1
+)
+)
 exit /b
 
 ::========================================================================================================================================
