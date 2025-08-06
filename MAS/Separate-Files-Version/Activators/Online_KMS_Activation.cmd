@@ -1767,7 +1767,7 @@ set "PSModulePath=%ProgramFiles%\WindowsPowerShell\Modules;%SysPath%\WindowsPowe
 set _tserror=
 set winbuild=1
 set "nul=>nul 2>&1"
-for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+for /f "tokens=2 delims=[]" %%G in ('ver') do for /f "tokens=2,3,4 delims=. " %%H in ("%%~G") do set "winbuild=%%J"
 set psc=powershell.exe -nop -c
 
 set _slexe=sppsvc.exe& set _slser=sppsvc
@@ -2587,7 +2587,7 @@ exit /b
 set ps=%SysPath%\WindowsPowerShell\v1.0\powershell.exe
 set psc=%ps% -nop -c
 set winbuild=1
-for /f "tokens=6 delims=[]. " %%G in ('ver') do set winbuild=%%G
+for /f "tokens=2 delims=[]" %%G in ('ver') do for /f "tokens=2,3,4 delims=. " %%H in ("%%~G") do set "winbuild=%%J"
 
 set _slexe=sppsvc.exe& set _slser=sppsvc
 if %winbuild% LEQ 6300 (set _slexe=SLsvc.exe& set _slser=SLsvc)
