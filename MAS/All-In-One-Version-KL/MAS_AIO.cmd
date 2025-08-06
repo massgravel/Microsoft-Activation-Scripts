@@ -2003,6 +2003,7 @@ call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 
 if not defined apps (
 %psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';. ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
+if not defined _vis if !errorlevel! NEQ 0 set rlicfailed=1
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 )
 
@@ -2022,6 +2023,13 @@ echo:
 )
 set error=1
 set showfix=1
+)
+
+if not defined showfix if defined rlicfailed (
+echo:
+call :dk_color %Blue% "%_fixmsg%"
+call :dk_color %Blue% "If activation still fails then run Fix WPA Registry option."
+echo:
 )
 
 if %winbuild% GEQ 7600 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
@@ -2796,7 +2804,7 @@ if defined ohub call :dk_color %Gray% "Office apps such as Word, Excel are activ
 echo Help: %mas%troubleshoot
 ) else (
 call :dk_color %Red% "Some errors were detected."
-if not defined ierror if not defined showfix if not defined serv_cor if not defined serv_cste call :dk_color %Blue% "%_fixmsg%"
+if not defined ierror if not defined showfix call :dk_color %Blue% "%_fixmsg%"
 echo:
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
@@ -3501,10 +3509,12 @@ call :dk_color %Gray% "Checking Total User Accounts            [%counter%]"
 
 ::  Clear the vNext/shared/device license blocks which may prevent ohook activation
 
+set vnextexist=
 rmdir /s /q "%ProgramData%\Microsoft\Office\Licenses\" %nul%
 
 for %%x in (15 16) do (
 for %%# in (%_sidlist%) do (
+reg query HKU\%%#\Software\Microsoft\Office\%%x.0\Common\Licensing /s %nul2% | findstr /i "CIDToLicenseIdsMapping LicenseIdToEmailMapping @" %nul% && set vnextexist=1
 reg delete HKU\%%#\Software\Microsoft\Office\%%x.0\Common\Licensing /f %nul%
 
 for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\%%#" /v ProfileImagePath" %nul6%') do (
@@ -3527,11 +3537,21 @@ rmdir /s /q "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\L
 if exist "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\SystemAppData\Helium\User.dat" (
 set defname=DEFTEMP-%%#
 reg load HKU\!defname! "%%b\AppData\Local\Packages\Microsoft.Office.Desktop_8wekyb3d8bbwe\SystemAppData\Helium\User.dat" %nul%
+reg query HKU\!defname!\Software\Microsoft\Office\16.0\Common\Licensing /s %nul2% | findstr /i "CIDToLicenseIdsMapping LicenseIdToEmailMapping @" %nul% && set vnextexist=1
 reg delete HKU\!defname!\Software\Microsoft\Office\16.0\Common\Licensing /f %nul%
 reg unload HKU\!defname! %nul%
 )
 )
 )
+)
+
+if defined vnextexist (
+echo:
+call :dk_color %Gray% "Office vNext subscription detected:"
+call :dk_color %Blue% "If active, this license overrides other activation methods."
+call :dk_color %Blue% "If expiring soon, rerun the script after expiration."
+call :dk_color2 %Blue% "If expired and script activation fails, get help - " %_Yellow% " %mas%troubleshoot"
+echo:
 )
 
 ::  Clear SharedComputerLicensing for office

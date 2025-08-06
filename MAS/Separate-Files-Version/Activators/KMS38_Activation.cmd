@@ -1772,6 +1772,7 @@ call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 
 if not defined apps (
 %psc% "if (-not $env:_vis) {Start-Job { Stop-Service %_slser% -force } | Wait-Job -Timeout 20 | Out-Null}; $sls = Get-WmiObject SoftwareLicensingService; $f=[System.IO.File]::ReadAllText('!_batp!') -split ':xrm\:.*';. ([scriptblock]::Create($f[1])); ReinstallLicenses" %nul%
+if not defined _vis if !errorlevel! NEQ 0 set rlicfailed=1
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 )
 
@@ -1791,6 +1792,13 @@ echo:
 )
 set error=1
 set showfix=1
+)
+
+if not defined showfix if defined rlicfailed (
+echo:
+call :dk_color %Blue% "%_fixmsg%"
+call :dk_color %Blue% "If activation still fails then run Fix WPA Registry option."
+echo:
 )
 
 if %winbuild% GEQ 7600 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
