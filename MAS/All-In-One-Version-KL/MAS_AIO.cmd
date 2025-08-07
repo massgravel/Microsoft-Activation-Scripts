@@ -11215,6 +11215,7 @@ else {
 if ($env:_debug -eq '0') {
     [LibTSforge.Logger]::HideOutput = $true
 }
+[void][LibTSforge.Utils]::Wow64EnableWow64FsRedirection($false)
 $ver = [LibTSforge.Utils]::DetectVersion()
 $prod = [LibTSforge.SPP.SPPUtils]::DetectCurrentKey()
 $tsactids = @($args)
