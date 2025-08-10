@@ -6,25 +6,42 @@
 
 <hr>
   
-## How to Activate Windows / Office?
+## How to Activate Windows / Office / Extended Updates (ESU)?
 
-### Method 1 - PowerShell (Windows 8 and later) ❤️
+### Method 1 - PowerShell ❤️
 
-1.   **Open PowerShell**  
-	To do that, press the Windows key + X, then select PowerShell or Terminal.
+1. **Open PowerShell**  
+   Click the **Start Menu**, type `PowerShell`, then open it.
 
-2.   **Copy and paste the code below, then press enter.**  
-```
-irm https://get.activated.win | iex
-```
-Alternatively, you can use the following (this will be deprecated in the future):  
-```
-irm https://massgrave.dev/get | iex
-```
+2. **Copy and paste the code below, then press enter.**  
+   - For **Windows 8, 10, 11**: 📌
+     ```
+     irm https://get.activated.win | iex
+     ```
+   - For **Windows 7** and later:
+     ```
+     iex ((New-Object Net.WebClient).DownloadString('https://get.activated.win'))
+     ```
 
-3.   You will see the activation options. Choose the activation options highlighted in green. 
+<details>
 
-4.   That's all
+<summary>Script not launching❓Click here for info.</summary>
+
+---
+
+- If the above is blocked (by ISP/DNS), try this (needs **updated Windows 10 or 11**):
+  ```
+  iex (curl.exe -s --doh-url https://1.1.1.1/dns-query https://get.activated.win | Out-String)
+  ```
+- If that fails or you have an older Windows, use the below-listed Method 2.
+
+---
+
+</details>
+
+3. The activation menu will appear. **Choose the green-highlighted options** to activate Windows or Office.
+
+4. **Done!**
 
 ---
 
@@ -47,16 +64,14 @@ or
 
 ---
 
-- To activate additional products such as **Office for macOS, Visual Studio, RDS CALs, and Windows XP**, check [here](https://massgrave.dev/unsupported_products_activation).
-- To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches).
+> [!TIP]
+> - Some ISPs/DNS block access to our domains. You can bypass this by enabling [DNS-over-HTTPS (DoH)](https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/encrypted-dns-browsers/) in your browser.  
+> - **Having trouble**❓Visit our [troubleshooting page](https://massgrave.dev/troubleshoot) or raise an issue on [GitHub](https://github.com/massgravel/Microsoft-Activation-Scripts/issues).
 
 ---
 
-### Not working ❓
-
-- If you are **unable to launch MAS** using the PowerShell method, please refer to **Method 2** listed above.
-- If MAS is launched and the script shows any errors, check for any troubleshooting steps mentioned in blue color and try to follow those.
-- If you have any issues, please feel free to reach out to us [here](https://massgrave.dev/troubleshoot).
+- To activate additional products such as **Office for macOS, Visual Studio, RDS CALs, and Windows XP**, check [here](https://massgrave.dev/unsupported_products_activation).
+- To run the scripts in unattended mode, check [here](https://massgrave.dev/command_line_switches).
 
 ---
 

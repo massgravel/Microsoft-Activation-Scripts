@@ -50,6 +50,7 @@ set "_cmdf=%~f0"
 for %%# in (%*) do (
 if /i "%%#"=="re1" set re1=1
 if /i "%%#"=="re2" set re2=1
+if "%%#"=="/" (set re1=1&set re2=1)
 )
 
 :: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
@@ -1668,7 +1669,7 @@ cmd /c exit /b %error_code%
 if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
 
 if %error_code% NEQ 0 (
-call :dk_color %Red% "Checking SoftwareLicensingService       [Not Working] %error_code%"
+call :dk_color %Red% "Checking SoftwareLicensingService       [Not Working] [%error_code%]"
 if not defined showfix (
 echo:
 call :dk_color %Blue% "%_fixmsg%"
