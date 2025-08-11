@@ -1,5 +1,9 @@
 <p align="center"><img src="https://massgrave.dev/img/logo_small.png" alt="MAS Logo"></p>
 
+<div align="right">
+  <a href="README-zh_CN.md">🇨🇳 中文</a> | <strong>🇺🇸 English</strong>
+</div>
+
 <h1 align="center">Microsoft  Activation  Scripts (MAS)</h1>
 
 <p align="center">Open-source Windows and Office activator featuring HWID, Ohook, TSforge, KMS38, and Online KMS activation methods, along with advanced troubleshooting.</p>
