@@ -1,8 +1,8 @@
-<div align="right">
-  <strong>🇨🇳 中文</strong> | <a href="README.md">🇺🇸 English</a>
-</div>
-
 <p align="center"><img src="https://massgrave.dev/img/logo_small.png" alt="MAS Logo"></p>
+
+<div align="right">
+  <a href="README-zh_TW.md">🇹🇼 繁體中文</a> | <strong>🇨🇳 简体中文</strong> | <a href="README.md">🇺🇸 English</a>
+</div>
 
 <h1 align="center">Microsoft  Activation  Scripts (MAS)</h1>
 
