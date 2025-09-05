@@ -1,18 +1,18 @@
-@::hr47hf7-random
+@::r45f3r3-random
 @set masver=3.5
 @setlocal DisableDelayedExpansion
 @echo off
 
 
 
-::  For command line switches, check mass<>grave<.>dev/command_line_switches
+::  For command line switches, check mass()grave(dot)dev/command_line_switches
 ::  If you want to better understand script, read from separate files version. 
 
 
 
 ::============================================================================
 ::
-::   Homepage: mass<>grave<.>dev
+::   Homepage: mass()grave(dot)dev
 ::      Email: mas.help@outlook.com
 ::
 ::============================================================================
@@ -2301,7 +2301,7 @@ exit /b
 ::  2nd column = Generic Retail/OEM/MAK Key
 ::  3rd column = SKU ID
 ::  4th column = Key part number
-::  5th column = Ticket signature value. It's as it is, it's not encoded. (Check mass<>grave<.>dev/hwid#manual-activation to see how it's generated)
+::  5th column = Ticket signature value. It's as it is, it's not encoded. (Check mass()grave(dot)dev/hwid#manual-activation to see how it's generated)
 ::  6th column = 1 = activation is not working (at the time of writing this), 0 = activation is working
 ::  7th column = Key Type
 ::  8th column = WMI Edition ID (For reference only)
@@ -2763,7 +2763,7 @@ call :dk_color %Gray% "Checking Old Office With Sub License    [Found. Update Of
 
 ::========================================================================================================================================
 
-::  mass<>grave<.>dev/office-license-is-not-genuine
+::  mass()grave(dot)dev/office-license-is-not-genuine
 ::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
 ::  Script already is using MAK instead of GVLK so it won't appear anyway, but registry keys are added incase Office installs default GVLK grace key for volume products
 
@@ -4088,13 +4088,13 @@ $MemoryStream.Close()
 ::
 ::  The files are encoded in base64 to make AIO version.
 ::
-::  mass<>grave<.>dev/ohook
+::  mass()grave(dot)dev/ohook
 ::  Here you can find the files source code and info on how to rebuild the identical sppc.dll files
 ::
 ::  stackoverflow.com/a/35335273
 ::  Here you can check how to extract sppc.dll files from base64
 ::
-::  For any further question, feel free to contact us on mass<>grave<.>dev/contactus
+::  For any further question, feel free to contact us on mass()grave(dot)dev/contactus
 ::
 ::========================================================================================================================================
 ::
@@ -5340,7 +5340,7 @@ call :ts_process
 
 ::========================================================================================================================================
 
-::  mass<>grave<.>dev/office-license-is-not-genuine
+::  mass()grave(dot)dev/office-license-is-not-genuine
 ::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
 
 set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
@@ -13370,7 +13370,7 @@ if %winbuild% GEQ 9200 (
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath /reg:32" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
 if defined _C16R (
-REM  mass<>grave<.>dev/office-license-is-not-genuine
+REM  mass()grave(dot)dev/office-license-is-not-genuine
 set _server=10.0.0.10
 call :_taskregserv
 echo Keeping the non-existent IP address 10.0.0.10 as %KS% Server.
@@ -13715,7 +13715,7 @@ exit /b
 
 ::============================================================================
 ::
-::   Homepage: mass<>grave<.>dev
+::   Homepage: mass()grave(dot)dev
 ::      Email: mas.help@outlook.com
 ::
 ::============================================================================
