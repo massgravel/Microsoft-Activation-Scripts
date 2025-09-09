@@ -46,7 +46,7 @@ set tsids=
 set _resall=0
 
 ::  Choose activation method:
-::  In builds 19041 and later, the script will auto select StaticCID (requires internet). If no internet is detected, it will then auto select the KMS4k method. For builds lower than 19041, the script will auto select ZeroCID.
+::  In builds 26100 and later, the script will auto select StaticCID (requires internet). If no internet is detected, it will then auto select the KMS4k method. For builds lower than 26100, the script will auto select ZeroCID.
 ::  To change the activation method, run the script with the parameters "/Z-SCID", "/Z-ZCID", or "/Z-KMS4k", or modify the option from Auto to SCID, ZCID, or KMS4k in the line below.
 set _actmethod=Auto
 
@@ -545,8 +545,8 @@ echo:
 echo        ______________________________________________________________
 echo: 
 call :dk_color2 %_White% "             [1] " %_Green% "Auto"
-echo                  Builds ^>= 19041 - StaticCID (KMS4k if offline)
-echo                  Builds ^<  19041 - ZeroCID
+echo                  Builds ^>= 26100 - StaticCID (KMS4k if offline)
+echo                  Builds ^<  26100 - ZeroCID
 echo              __________________________________________________
 echo: 
 echo              [2] StaticCID
@@ -555,8 +555,7 @@ echo                  Not for Windows 7 or older
 echo              __________________________________________________
 echo:
 echo              [3] ZeroCID
-echo                  Works reliably on builds below 19041
-echo                  May break on builds between 19041-26100
+echo                  Works reliably on builds below 26100
 echo                  Does not work on builds above 26100.4188
 echo              __________________________________________________
 echo:
@@ -668,7 +667,7 @@ if /i %_actmethod%==ZCID set tsmethod=ZeroCID
 if /i %_actmethod%==KMS4k set tsmethod=KMS4k
 
 if /i %_actmethod%==Auto (
-if %winbuild% GEQ 19041 (
+if %winbuild% GEQ 26100 (
 set tsmethod=StaticCID
 ) else (
 set tsmethod=ZeroCID
