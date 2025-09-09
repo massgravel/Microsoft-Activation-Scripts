@@ -3954,7 +3954,7 @@ using System.Xml.Linq;
 }
 #endif
 
-// Common.cs
+// LibTSforge/Common.cs
 namespace LibTSforge
 {
     using System;
@@ -4196,7 +4196,7 @@ namespace LibTSforge
 }
 
 
-// SPP/PKeyConfig.cs
+// LibTSforge/SPP/PKeyConfig.cs
 namespace LibTSforge.SPP
 {
     using System;
@@ -4222,7 +4222,7 @@ namespace LibTSforge.SPP
 
         public bool Contains(int n)
         {
-            return Start <= n && End <= n;
+            return Start <= n && n <= End;
         }
     }
 
@@ -4352,10 +4352,19 @@ namespace LibTSforge.SPP
                     string refActIdStr = configNode.SelectSingleNode("./p:ActConfigId", nsmgr).InnerText;
                     Guid refActId = new Guid(refActIdStr);
                     int group = int.Parse(configNode.SelectSingleNode("./p:RefGroupId", nsmgr).InnerText);
-                    List<KeyRange> keyRanges = ranges[refActIdStr];
+                    List<KeyRange> keyRanges;
+                    ranges.TryGetValue(refActIdStr, out keyRanges);
+
+                    if (keyRanges == null) 
+                    {
+                        continue;
+                    }
 
                     if (keyRanges.Count > 0 && !Products.ContainsKey(refActId))
                     {
+                        PKeyAlgorithm algorithm;
+                        algorithms.TryGetValue(group, out algorithm);
+
                         ProductConfig productConfig = new ProductConfig
                         {
                             GroupId = group,
@@ -4363,7 +4372,7 @@ namespace LibTSforge.SPP
                             Description = configNode.SelectSingleNode("./p:ProductDescription", nsmgr).InnerText,
                             Channel = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText,
                             Randomized = configNode.SelectSingleNode("./p:ProductKeyType", nsmgr).InnerText.ToLower() == "true",
-                            Algorithm = algorithms[group],
+                            Algorithm = algorithm,
                             Ranges = keyRanges,
                             ActivationId = refActId
                         };
@@ -4413,7 +4422,7 @@ namespace LibTSforge.SPP
 }
 
 
-// SPP/ProductKey.cs
+// LibTSforge/SPP/ProductKey.cs
 namespace LibTSforge.SPP
 {
     using System;
@@ -4729,7 +4738,7 @@ namespace LibTSforge.SPP
 }
 
 
-// SPP/SLAPI.cs
+// LibTSforge/SPP/SLAPI.cs
 namespace LibTSforge.SPP
 {
     using System;
@@ -5142,7 +5151,7 @@ namespace LibTSforge.SPP
 }
 
 
-// SPP/SPPUtils.cs
+// LibTSforge/SPP/SPPUtils.cs
 namespace LibTSforge.SPP
 {
     using Microsoft.Win32;
@@ -5479,7 +5488,7 @@ namespace LibTSforge.SPP
 }
 
 
-// SPP/SPSys.cs
+// LibTSforge/SPP/SPSys.cs
 namespace LibTSforge.SPP
 {
     using Microsoft.Win32.SafeHandles;
@@ -5526,7 +5535,7 @@ namespace LibTSforge.SPP
 }
 
 
-// Crypto/CryptoUtils.cs
+// LibTSforge/Crypto/CryptoUtils.cs
 namespace LibTSforge.Crypto
 {
     using System;
@@ -5661,7 +5670,7 @@ namespace LibTSforge.Crypto
 }
 
 
-// Crypto/Keys.cs
+// LibTSforge/Crypto/Keys.cs
 namespace LibTSforge.Crypto
 {
     public static class Keys
@@ -5751,7 +5760,7 @@ namespace LibTSforge.Crypto
 }
 
 
-// Crypto/PhysStoreCrypto.cs
+// LibTSforge/Crypto/PhysStoreCrypto.cs
 namespace LibTSforge.Crypto
 {
     using System;
@@ -5836,7 +5845,7 @@ namespace LibTSforge.Crypto
 }
 
 
-// Modifiers/GenPKeyInstall.cs
+// LibTSforge/Modifiers/GenPKeyInstall.cs
 namespace LibTSforge.Modifiers
 {
     using System;
@@ -6047,7 +6056,7 @@ namespace LibTSforge.Modifiers
 }
 
 
-// Modifiers/GracePeriodReset.cs
+// LibTSforge/Modifiers/GracePeriodReset.cs
 namespace LibTSforge.Modifiers
 {
     using System.Collections.Generic;
@@ -6080,7 +6089,7 @@ namespace LibTSforge.Modifiers
 }
 
 
-// Modifiers/KeyChangeLockDelete.cs
+// LibTSforge/Modifiers/KeyChangeLockDelete.cs
 namespace LibTSforge.Modifiers
 {
     using System.Collections.Generic;
@@ -6120,7 +6129,7 @@ namespace LibTSforge.Modifiers
 }
 
 
-// Modifiers/KMSHostCharge.cs
+// LibTSforge/Modifiers/KMSHostCharge.cs
 namespace LibTSforge.Modifiers
 {
     using System;
@@ -6281,7 +6290,7 @@ namespace LibTSforge.Modifiers
 }
 
 
-// Modifiers/RearmReset.cs
+// LibTSforge/Modifiers/RearmReset.cs
 namespace LibTSforge.Modifiers
 {
     using System.Collections.Generic;
@@ -6337,7 +6346,7 @@ namespace LibTSforge.Modifiers
 }
 
 
-// Modifiers/SetIIDParams.cs
+// LibTSforge/Modifiers/SetIIDParams.cs
 namespace LibTSforge.Modifiers
 {
     using PhysicalStore;
@@ -6406,7 +6415,7 @@ namespace LibTSforge.Modifiers
 }
 
 
-// Modifiers/TamperedFlagsDelete.cs
+// LibTSforge/Modifiers/TamperedFlagsDelete.cs
 namespace LibTSforge.Modifiers
 {
     using System.Linq;
@@ -6456,7 +6465,7 @@ namespace LibTSforge.Modifiers
 }
 
 
-// Modifiers/UniqueIdDelete.cs
+// LibTSforge/Modifiers/UniqueIdDelete.cs
 namespace LibTSforge.Modifiers
 {
     using System;
@@ -6515,7 +6524,7 @@ namespace LibTSforge.Modifiers
 }
 
 
-// Activators/KMS4K.cs
+// LibTSforge/Activators/KMS4K.cs
 namespace LibTSforge.Activators
 {
     using System;
@@ -6726,7 +6735,7 @@ namespace LibTSforge.Activators
 }
 
 
-// Activators/ZeroCID.cs
+// LibTSforge/Activators/ZeroCID.cs
 namespace LibTSforge.Activators
 {
     using System;
@@ -6915,7 +6924,7 @@ namespace LibTSforge.Activators
 }
 
 
-// TokenStore/Common.cs
+// LibTSforge/TokenStore/Common.cs
 namespace LibTSforge.TokenStore
 {
     using System.Collections.Generic;
@@ -6985,7 +6994,7 @@ namespace LibTSforge.TokenStore
 }
 
 
-// TokenStore/ITokenStore.cs
+// LibTSforge/TokenStore/ITokenStore.cs
 namespace LibTSforge.TokenStore
 {
     using System;
@@ -7005,7 +7014,7 @@ namespace LibTSforge.TokenStore
 }
 
 
-// TokenStore/TokenStoreModern.cs
+// LibTSforge/TokenStore/TokenStoreModern.cs
 namespace LibTSforge.TokenStore
 {
     using System;
@@ -7291,7 +7300,7 @@ namespace LibTSforge.TokenStore
 }
 
 
-// PhysicalStore/Common.cs
+// LibTSforge/PhysicalStore/Common.cs
 namespace LibTSforge.PhysicalStore
 {
     using System.Runtime.InteropServices;
@@ -7322,7 +7331,7 @@ namespace LibTSforge.PhysicalStore
 }
 
 
-// PhysicalStore/IPhysicalStore.cs
+// LibTSforge/PhysicalStore/IPhysicalStore.cs
 namespace LibTSforge.PhysicalStore
 {
     using System;
@@ -7417,7 +7426,7 @@ namespace LibTSforge.PhysicalStore
 }
 
 
-// PhysicalStore/PhysicalStoreModern.cs
+// LibTSforge/PhysicalStore/PhysicalStoreModern.cs
 namespace LibTSforge.PhysicalStore
 {
     using System;
@@ -7835,7 +7844,7 @@ namespace LibTSforge.PhysicalStore
 }
 
 
-// PhysicalStore/PhysicalStoreVista.cs
+// LibTSforge/PhysicalStore/PhysicalStoreVista.cs
 namespace LibTSforge.PhysicalStore
 {
     using System;
@@ -8194,7 +8203,7 @@ namespace LibTSforge.PhysicalStore
 }
 
 
-// PhysicalStore/PhysicalStoreWin7.cs
+// LibTSforge/PhysicalStore/PhysicalStoreWin7.cs
 namespace LibTSforge.PhysicalStore
 {
     using System;
@@ -8571,7 +8580,7 @@ namespace LibTSforge.PhysicalStore
 }
 
 
-// PhysicalStore/VariableBag.cs
+// LibTSforge/PhysicalStore/VariableBag.cs
 namespace LibTSforge.PhysicalStore
 {
     using System;
