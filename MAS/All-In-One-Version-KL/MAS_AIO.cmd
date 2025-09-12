@@ -1,5 +1,5 @@
 @::r45f3r3-random
-@set masver=3.6
+@set masver=3.7
 @setlocal DisableDelayedExpansion
 @echo off
 
