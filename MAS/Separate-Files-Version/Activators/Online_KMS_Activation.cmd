@@ -140,7 +140,7 @@ echo:
 echo Check this webpage for help - %mas%fix_service
 echo:
 echo:
-ping 127.0.0.1 -n 20
+timeout /t 20 /nobreak >nul
 )
 cls
 
@@ -155,7 +155,7 @@ echo:
 echo Check this webpage for help - %mas%troubleshoot
 echo:
 echo:
-ping 127.0.0.1 -n 20 >nul
+timeout /t 20 /nobreak >nul
 popd
 exit /b
 )
@@ -1851,7 +1851,7 @@ if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value 2>n
 if %_wmic% EQU 0 %psc% "Get-CIMInstance -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" 2>nul | find /i "computersystem" 1>nul
 if !errorlevel! NEQ 0 (set e_wmispp=WMI, SPP) else (set e_wmispp=SPP)
 echo:
-echo Error: Not Respoding- !e_wmispp!
+echo Error: Not Responding - !e_wmispp!
 echo:
 )
 

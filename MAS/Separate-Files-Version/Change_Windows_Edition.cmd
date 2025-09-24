@@ -80,7 +80,7 @@ echo:
 echo Check this webpage for help - %mas%fix_service
 echo:
 echo:
-ping 127.0.0.1 -n 20
+timeout /t 20 /nobreak >nul
 )
 cls
 
@@ -95,7 +95,7 @@ echo:
 echo Check this webpage for help - %mas%troubleshoot
 echo:
 echo:
-ping 127.0.0.1 -n 20 >nul
+timeout /t 20 /nobreak >nul
 popd
 exit /b
 )

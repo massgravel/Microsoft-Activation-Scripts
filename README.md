@@ -4,6 +4,24 @@
 
 <p align="center">Open-source Windows and Office activator featuring HWID, Ohook, TSforge, KMS38, and Online KMS activation methods, along with advanced troubleshooting.</p>
 
+<p align="center">
+  <img src="https://img.shields.io/github/downloads/massgravel/Microsoft-Activation-Scripts/total?style=for-the-badge&color=green" alt="Downloads">
+  <img src="https://img.shields.io/github/last-commit/massgravel/Microsoft-Activation-Scripts?style=for-the-badge&color=blue" alt="Last Commit">
+  <img src="https://img.shields.io/github/license/massgravel/Microsoft-Activation-Scripts?style=for-the-badge&color=orange" alt="License">
+</p>
+
+<hr>
+
+## ✨ Key Features
+
+- **🚀 Multiple Activation Methods**: HWID, Ohook, TSforge, KMS38, and Online KMS
+- **🛡️ Safe & Open Source**: Transparent code, no hidden malware or backdoors
+- **💻 Wide Compatibility**: Supports Windows 7/8/8.1/10/11 and Server editions
+- **📱 Office Support**: Activates Office 2010-2021 and Office 365
+- **🔧 Advanced Troubleshooting**: Built-in diagnostic and repair tools
+- **⚡ Easy to Use**: Simple GUI and PowerShell one-liner execution
+- **🔄 Automatic Updates**: Always uses the latest activation methods
+
 <hr>
   
 ## How to Activate Windows / Office / Extended Updates (ESU)?
@@ -55,7 +73,7 @@
 or  
 `https://git.activated.win/massgrave/Microsoft-Activation-Scripts/archive/master.zip`
 2.   Right-click on the downloaded zip file and extract it.
-3.   In the extracted folder, find the folder named `All-In-One-Version`.
+3.   In the extracted folder, navigate to `MAS` → `All-In-One-Version-KL`
 4.   Run the file named `MAS_AIO.cmd`.
 5.   You will see the activation options. Follow the on-screen instructions.
 6.   That's all.
@@ -80,6 +98,84 @@ or
 > - The IRM command in PowerShell downloads a script from a specified URL, and the IEX command executes it.
 > - Always double-check the URL before executing the command and verify the source if manually downloading files.
 > - Be cautious, as some spread malware disguised as MAS by using different URLs in the IRM command.
+
+---
+
+## ⚠️ Important Safety Information
+
+- **Official Sources Only**: Always download MAS from official repositories to avoid malware
+- **Verify Commands**: Double-check PowerShell commands before execution
+- **Antivirus Warnings**: Some antivirus software may flag activation tools - this is normal for this type of software
+- **Backup Recommended**: Create a system backup before making activation changes
+- **Educational Purpose**: This tool is for educational and testing purposes
+
+> [!CAUTION]
+> Beware of fake MAS versions distributed with malware. Only use official sources listed in this repository.
+
+---
+
+## 🔧 Development & Contributing
+
+Interested in contributing to MAS? We welcome improvements that enhance reliability and user experience!
+
+**Quick Guidelines:**
+- Use modern batch scripting practices (e.g., `timeout` instead of `ping` for delays)
+- Test changes on multiple Windows versions (10, 11, Server)
+- Maintain backward compatibility
+- Follow existing code formatting and conventions
+
+**Report Issues:** [GitHub Issues](https://github.com/massgravel/Microsoft-Activation-Scripts/issues) | **Get Help:** [Discord](https://discord.gg/j2yFsV5ZVC)
+
+---
+
+## 📋 Supported Activation Methods
+
+| Method | Supported Products | Duration | Notes |
+|--------|-------------------|----------|--------|
+| **HWID** | Windows 10-11 | Permanent | Hardware-based activation |
+| **Ohook** | Office | Permanent | Office hook method |
+| **TSforge** | Windows / ESU / Office | Permanent | Enhanced activation |
+| **KMS38** | Windows 10-11-Server | Until 2038 | Extended KMS activation |
+| **Online KMS** | Windows / Office | 180 Days | Renewable with task |
+
+For detailed compatibility, visit: [https://massgrave.dev/chart](https://massgrave.dev/chart)
+
+---
+
+## ❓ Frequently Asked Questions
+
+<details>
+<summary><b>Is MAS safe to use?</b></summary>
+
+Yes, MAS is completely open-source and safe. The code is transparent and can be reviewed by anyone. Some antivirus programs may flag it due to the nature of activation tools, but this is a false positive.
+</details>
+
+<details>
+<summary><b>Will this harm my computer?</b></summary>
+
+No, MAS only modifies Windows licensing components and doesn't install any malware or unwanted software. It's used by millions of people worldwide.
+</details>
+
+<details>
+<summary><b>Can I get banned or in trouble for using this?</b></summary>
+
+MAS is for educational and testing purposes. The legal implications vary by jurisdiction and use case. Please review your local laws and Microsoft's terms of service.
+</details>
+
+<details>
+<summary><b>Which activation method should I use?</b></summary>
+
+- **HWID**: Best for Windows 10/11 (permanent activation)
+- **KMS38**: Good for Windows 10/11/Server (activates until 2038)
+- **Ohook**: Perfect for Office (permanent activation)
+- **Online KMS**: Universal method for Windows/Office (180-day renewable)
+</details>
+
+<details>
+<summary><b>My antivirus is blocking MAS, what should I do?</b></summary>
+
+This is normal for activation tools. You can temporarily disable your antivirus or add MAS to the exclusion list. Always download from official sources to ensure safety.
+</details>
 
 ---
 
