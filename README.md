@@ -36,8 +36,8 @@
 
 ### Method 2 - Traditional (Windows Vista and later)
 
-1.   Download the ZIP file from [GitHub](https://codeload.github.com/massgravel/Microsoft-Activation-Scripts/legacy.zip/master) or [Azure DevOps](http://dev.azure.com/massgrave/Microsoft-Activation-Scripts/_apis/git/repositories/Microsoft-Activation-Scripts/items?$format=zip).
-2.   Right-click on the downloaded zip file and extract it.
+1.   Download the ZIP file from this [Azure DevOps](https://dev.azure.com/massgrave/Microsoft-Activation-Scripts/_apis/git/repositories/Microsoft-Activation-Scripts/items?$format=zip) link.
+2.   Right-click on the downloaded ZIP file and extract it.
 3.   In the extracted folder, find the folder named `All-In-One-Version`.
 4.   Run the file named `MAS_AIO.cmd`.
 5.   You will see the activation options. Follow the on-screen instructions.
