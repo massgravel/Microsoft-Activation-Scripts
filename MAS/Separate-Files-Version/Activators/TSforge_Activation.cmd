@@ -2917,6 +2917,11 @@ set spperror=%errorlevel%
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
 echo sc start %_slser% [Error Code: %spperror%]
+if %spperror% EQU 1053 (
+echo:
+call :dk_color %Blue% "Reboot your machine using the restart option and try again."
+call :dk_color %Blue% "If it still does not work, go back to Main Menu, select Troubleshoot and run Fix WPA Registry option."
+)
 )
 
 echo:
