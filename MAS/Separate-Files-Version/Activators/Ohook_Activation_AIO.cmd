@@ -2160,6 +2160,13 @@ if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value %nu
 if %_wmic% EQU 0 %psc% "Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" %nul2% | find /i "computersystem" %nul1%
 
 if %errorlevel% NEQ 0 set wmifailed=1
+
+if %_wmic% EQU 1 wmic path %sps% get Version %nul%
+if %_wmic% EQU 0 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
+set error_code=%errorlevel%
+cmd /c exit /b %error_code%
+if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
+
 echo "%error_code%" | findstr /i "0x800410 0x800440 0x80131501" %nul1% && set wmifailed=1& ::  https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
 
 if defined wmifailed (
@@ -2352,12 +2359,6 @@ set showfix=1
 ::==============================
 
 ::  Check SoftwareLicensingService
-
-if %_wmic% EQU 1 wmic path %sps% get Version %nul%
-if %_wmic% EQU 0 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
-set error_code=%errorlevel%
-cmd /c exit /b %error_code%
-if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
 
 if %error_code% NEQ 0 (
 call :dk_color %Red% "Checking SoftwareLicensingService       [Not Working] [%error_code%]"
