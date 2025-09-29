@@ -5052,12 +5052,17 @@ if exist "%SystemRoot%\Servicing\Packages\WinEmb-Branding-Embedded-Standard-Pack
 )
 if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
 
-set w10EsuEditions=Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh
+set w10EsuEditions=Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN
+
+set minbuild=0
+if /i %tsedition%==ServerRdsh set minbuild=5552
+for %%# in (Core CoreN CoreCountrySpecific CoreSingleLanguage) do (if /i %tsedition%==%%# set minbuild=6156)
+if /i %tsedition%==PPIPro set minbuild=6388
 
 set /a UBR=0
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
-if %winbuild% EQU 19045 if %UBR% GEQ 6156 (
-set w10EsuEditionsLaterAdded=Core-CoreN-CoreCountrySpecific-CoreSingleLanguage-IoTEnterprise-
+if %winbuild% EQU 19045 if %minbuild% GTR 0 if %UBR% GEQ %minbuild% (
+set w10EsuEditionsLaterAdded=%tsedition%-
 )
 
 if not defined isThinpc if not defined isltsc for %%# in (
