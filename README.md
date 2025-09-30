@@ -36,12 +36,10 @@
 
 ### Method 2 - Traditional (Windows Vista and later)
 
-1.   Download the ZIP file from this [Azure DevOps](https://dev.azure.com/massgrave/Microsoft-Activation-Scripts/_apis/git/repositories/Microsoft-Activation-Scripts/items?$format=zip) link.
-2.   Right-click on the downloaded ZIP file and extract it.
-3.   In the extracted folder, find the folder named `All-In-One-Version`.
-4.   Run the file named `MAS_AIO.cmd`.
-5.   You will see the activation options. Follow the on-screen instructions.
-6.   That's all.
+1.   Download the script: [**MAS_AIO.cmd**](https://dev.azure.com/massgrave/Microsoft-Activation-Scripts/_apis/git/repositories/Microsoft-Activation-Scripts/items?path=/MAS/All-In-One-Version-KL/MAS_AIO.cmd&download=true) or the [full ZIP](https://dev.azure.com/massgrave/Microsoft-Activation-Scripts/_apis/git/repositories/Microsoft-Activation-Scripts/items?$format=zip).
+2.   Run the file named `MAS_AIO.cmd`.
+3.   You will see the activation options. Follow the on-screen instructions.
+4.   That's all.
 
 ---
 
