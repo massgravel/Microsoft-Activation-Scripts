@@ -655,7 +655,7 @@ set altedition=
 call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
 if defined allapps call :ksdata winkey
 if not defined key call :k_gvlk %nul%
-if defined allapps if not defined key call :kms38fallback
+if defined allapps if not defined key call :kmsfallback
 
 if defined altkey (set key=%altkey%&set changekey=1)
 
@@ -4226,7 +4226,7 @@ exit /b
 ::  Separator  = _
 
 
-:kms38fallback
+:kmsfallback
 
 set notfoundaltactID=
 if %_NoEditionChange%==1 exit /b
