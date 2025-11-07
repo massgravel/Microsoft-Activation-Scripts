@@ -444,14 +444,14 @@ echo:
 echo:                     Extract $OEM$ folder on the desktop           
 echo:         ____________________________________________________________
 echo:
-echo:            [1] HWID             [Windows]
-echo:            [2] Ohook            [Office]
-echo:            [3] TSforge          [Windows / ESU / Office]
-echo:            [4] Online KMS       [Windows / Office]
+echo:            [1] HWID       [Windows]
+echo:            [2] Ohook      [Office]
+echo:            [3] TSforge    [Windows / ESU / Office]
+echo:            [4] Online KMS [Windows / Office]
 echo:
-echo:            [5] HWID    [Windows] ^+ Ohook [Office]
-echo:            [6] HWID    [Windows] ^+ Ohook [Office] ^+ TSforge [ESU]
-echo:            [7] TSforge [Windows] ^+ Online KMS [Office]
+echo:            [5] HWID       [Windows] ^+ Ohook [Office]
+echo:            [6] HWID       [Windows] ^+ Ohook [Office] ^+ TSforge [ESU]
+echo:            [7] TSforge    [Windows / ESU] ^+ Ohook [Office]
 echo:
 call :dk_color2 %_White% "            [R] " %_Green% "ReadMe"
 echo:            [0] Exit
@@ -463,7 +463,7 @@ set _erl=%errorlevel%
 
 if %_erl%==9 exit /b
 if %_erl%==8 start %mas%oem-folder &goto :Menu
-if %_erl%==7 goto:tsforge_kms
+if %_erl%==7 goto:tsforge_ohook
 if %_erl%==6 goto:hwid_ohook_tsforge
 if %_erl%==5 goto:hwid_ohook
 if %_erl%==4 goto:kms
@@ -676,41 +676,41 @@ cd \
 
 ::========================================================================================================================================
 
-:tsforge_kms
+:tsforge_ohook
 
 cls
 md "!desktop!\$OEM$\$$\Setup\Scripts"
 pushd "!_work!"
 copy /y /b "%TSforge_Activation.cmd%" "!_dir!\TSforge_Activation.cmd" %nul%
-copy /y /b "%Online_KMS_Activation.cmd%" "!_dir!\Online_KMS_Activation.cmd" %nul%
+copy /y /b "%Ohook_Activation_AIO.cmd%" "!_dir!\Ohook_Activation_AIO.cmd" %nul%
 popd
-call :export tsforge_kms_setup
+call :export tsforge_ohook_setup
 
 set _error=
 if not exist "!_dir!\TSforge_Activation.cmd" set _error=1
-if not exist "!_dir!\Online_KMS_Activation.cmd" set _error=1
+if not exist "!_dir!\Ohook_Activation_AIO.cmd" set _error=1
 if not exist "!_dir!\SetupComplete.cmd" set _error=1
 if defined _error goto errorfound
 
-set oem=TSforge [Windows] + Online KMS [Office]
+set oem=TSforge [Windows / ESU] + Ohook [Office]
 goto done
 
-:tsforge_kms_setup:
+:tsforge_ohook_setup:
 @echo off
 
 fltmc >nul || exit /b
 
 setlocal
-call "%~dp0TSforge_Activation.cmd" /Z-Windows
+call "%~dp0TSforge_Activation.cmd" /Z-Windows /Z-ESU
 endlocal
 
 setlocal
-call "%~dp0Online_KMS_Activation.cmd" /K-Office
+call "%~dp0Ohook_Activation_AIO.cmd" /Ohook
 endlocal
 
 cd \
 (goto) 2>nul & (if "%~dp0"=="%SystemRoot%\Setup\Scripts\" rd /s /q "%~dp0")
-:tsforge_kms_setup:
+:tsforge_ohook_setup:
 
 ::========================================================================================================================================
 
