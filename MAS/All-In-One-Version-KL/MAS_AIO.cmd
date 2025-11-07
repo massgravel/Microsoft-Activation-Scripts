@@ -5809,14 +5809,14 @@ $filteredResults = $results | Where-Object {
         $true
     }
     else {
-        $_.Name -notlike "*CountrySpecific*"
+        $_.Name -like "*ESU*" -or $_.Name -notlike "*CountrySpecific*"
     }
 } | Where-Object {
     if ($env:tsedition -like "*CloudEdition*") {
         $true
     }
     else {
-        $_.Name -notlike "*CloudEdition*"
+        $_.Name -like "*ESU*" -or $_.Name -notlike "*CloudEdition*"
     }
 } | Where-Object {
     $_.Name -like "*CountrySpecific*" -or (IsMuiNotLocked $_.ID)
