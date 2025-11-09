@@ -11374,7 +11374,12 @@ if (-not $env:resetstuff) {
             }
             if ($env:tsmethod -eq "KMS4k") {
                 $GracePeriodStatus = Get-WmiInfo -tsactid $tsactid -property "GracePeriodRemaining"
-                if ((($build -ge 26100 -and $GracePeriodStatus -ge 259200) -or ($build -lt 26100 -and $GracePeriodStatus -gt 259200))) { $activated = 1 }
+                if ($GracePeriodStatus -eq 259200 -or ([datetime]::Now.AddMinutes($GracePeriodStatus)).Year -gt 2038) {
+                    if ((($build -ge 26100 -and $GracePeriodStatus -ge 259200) -or 
+                            ($build -lt 26100 -and $GracePeriodStatus -gt 259200))) {
+                        $activated = 1
+                    }
+                }
             }
             else {
                 $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
@@ -11388,9 +11393,12 @@ if (-not $env:resetstuff) {
                 }
                 else {
                     if ($env:tsmethod -eq "KMS4k") {
-                        Write-Host "[$prodName] is activated till $([DateTime]::Now.AddMinutes($GracePeriodStatus).ToString('yyyy-MM-dd HH:mm:ss')) with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
                         if ($build -ge 26100) {
-                            Write-Host "From build 26100.7019, Windows shows 180-day max, but activation lasts over 4,000 years, so it always stays at 180." -ForegroundColor White -BackgroundColor Darkgray
+                            Write-Host "[$prodName] is activated with KMS4k for over 4,000 years." -ForegroundColor White -BackgroundColor DarkGreen
+                            Write-Host "From build 26100.7019, Windows will always display and stay at 180 days remaining if the actual period is longer." -ForegroundColor White -BackgroundColor Darkgray
+                        }
+                        else {
+                            Write-Host "[$prodName] is activated till $([DateTime]::Now.AddMinutes($GracePeriodStatus).ToString('yyyy-MM-dd HH:mm:ss')) with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
                         }
                     }
                     else {
