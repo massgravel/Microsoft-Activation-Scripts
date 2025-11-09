@@ -5891,7 +5891,7 @@ if %_actman%==0 (if not defined showfix call :dk_color %Blue% "%_fixmsg%")
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 ) else (
-if /i %tsmethod%==KMS4k if %winbuild% GEQ 26200 (
+if /i %tsmethod%==KMS4k if %winbuild% GEQ 26100 (
 echo:
 call :dk_color %Gray% "In Windows settings, you may see a renewal notification for activation that can be ignored."
 if /i %_actmethod%==Auto call :dk_color %Gray% "To avoid this notification, run the script with an internet connection to use the StaticCID method."
@@ -11275,6 +11275,7 @@ namespace LibTSforge.PhysicalStore
 $ErrorActionPreference = 'Stop'
 $binPath = "$env:_work\BIN\LibTSforge.dll"
 $psMajorVer = (Get-Host).Version.Major
+$build = [System.Environment]::OSVersion.Version.Build
 
 if (Test-Path -LiteralPath $binPath) {
     Write-Host "LibTSforge.dll found in BIN folder. Loading the DLL..."
@@ -11373,7 +11374,7 @@ if (-not $env:resetstuff) {
             }
             if ($env:tsmethod -eq "KMS4k") {
                 $GracePeriodStatus = Get-WmiInfo -tsactid $tsactid -property "GracePeriodRemaining"
-                if ($GracePeriodStatus -gt 259200) { $activated = 1 }
+                if ((($build -ge 26100 -and $GracePeriodStatus -ge 259200) -or ($build -lt 26100 -and $GracePeriodStatus -gt 259200))) { $activated = 1 }
             }
             else {
                 $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
@@ -11388,6 +11389,9 @@ if (-not $env:resetstuff) {
                 else {
                     if ($env:tsmethod -eq "KMS4k") {
                         Write-Host "[$prodName] is activated till $([DateTime]::Now.AddMinutes($GracePeriodStatus).ToString('yyyy-MM-dd HH:mm:ss')) with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
+                        if ($build -ge 26100) {
+                            Write-Host "From build 26100.7019, Windows shows 180-day max, but activation lasts over 4,000 years, so it always stays at 180." -ForegroundColor White -BackgroundColor Darkgray
+                        }
                     }
                     else {
                         Write-Host "[$prodName] is permanently activated with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
