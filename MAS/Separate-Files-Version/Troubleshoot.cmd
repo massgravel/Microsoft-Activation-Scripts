@@ -945,8 +945,8 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v P
 
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_86=Office 15.0 C2R x86"      & call :getc2rrepair c2r15repair86 integratedoffice.exe)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_68=Office 15.0 C2R x86/x64"  & call :getc2rrepair c2r15repair68 integratedoffice.exe)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_86=Office 16.0 C2R x86"      & call :getc2rrepair c2r16repair86 OfficeClickToRun.exe)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_68=Office 16.0 C2R x86/x64"  & call :getc2rrepair c2r16repair68 OfficeClickToRun.exe)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_86=Office 16.0 C2R x86"      & call :getc2r16repair c2r16repair86 OfficeClickToRun.exe)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_68=Office 16.0 C2R x86/x64"  & call :getc2r16repair c2r16repair68 OfficeClickToRun.exe)
 
 set uwp16=
 if %winbuild% GEQ 10240 (
@@ -988,13 +988,11 @@ echo ________________________________________________________________
 echo:
 )
 
-if %counter% EQU 0 (
 echo:
+if %counter% EQU 0 (
 echo Office ^(2010 and later^) is not installed.
 goto :repairend
-echo:
-) else (
-echo:
+) else if not defined c2r16_68 if not defined c2r16_86 (
 call :dk_color %_Yellow% "A new window will appear, in that window you need to select [Quick Repair] option."
 if defined terminal (
 call :dk_color %_Yellow% "Press [0] to continue..."
@@ -1021,16 +1019,16 @@ echo Skipping repair for Office 14.0 C2R...
 echo:
 )
 
-if defined msi14_68 if exist "%msi14repair68%" echo Running - "%msi14repair68%"                    & "%msi14repair68%"
-if defined msi14_86 if exist "%msi14repair86%" echo Running - "%msi14repair86%"                    & "%msi14repair86%"
-if defined msi15_68 if exist "%msi15repair68%" echo Running - "%msi15repair68%"                    & "%msi15repair68%"
-if defined msi15_86 if exist "%msi15repair86%" echo Running - "%msi15repair86%"                    & "%msi15repair86%"
-if defined msi16_68 if exist "%msi16repair68%" echo Running - "%msi16repair68%"                    & "%msi16repair68%"
-if defined msi16_86 if exist "%msi16repair86%" echo Running - "%msi16repair86%"                    & "%msi16repair86%"
-if defined c2r15_68 if exist "%c2r15repair68%" echo Running - "%c2r15repair68%" REPAIRUI RERUNMODE & "%c2r15repair68%" REPAIRUI RERUNMODE
-if defined c2r15_86 if exist "%c2r15repair86%" echo Running - "%c2r15repair86%" REPAIRUI RERUNMODE & "%c2r15repair86%" REPAIRUI RERUNMODE
-if defined c2r16_68 if exist "%c2r16repair68%" echo Running - "%c2r16repair68%" scenario=Repair    & "%c2r16repair68%" scenario=Repair
-if defined c2r16_86 if exist "%c2r16repair86%" echo Running - "%c2r16repair86%" scenario=Repair    & "%c2r16repair86%" scenario=Repair
+if defined msi14_68 if exist "%msi14repair68%" echo Running - "%msi14repair68%"                                        & "%msi14repair68%"
+if defined msi14_86 if exist "%msi14repair86%" echo Running - "%msi14repair86%"                                        & "%msi14repair86%"
+if defined msi15_68 if exist "%msi15repair68%" echo Running - "%msi15repair68%"                                        & "%msi15repair68%"
+if defined msi15_86 if exist "%msi15repair86%" echo Running - "%msi15repair86%"                                        & "%msi15repair86%"
+if defined msi16_68 if exist "%msi16repair68%" echo Running - "%msi16repair68%"                                        & "%msi16repair68%"
+if defined msi16_86 if exist "%msi16repair86%" echo Running - "%msi16repair86%"                                        & "%msi16repair86%"
+if defined c2r15_68 if exist "%c2r15repair68%" echo Running - "%c2r15repair68%" REPAIRUI RERUNMODE                     & "%c2r15repair68%" REPAIRUI RERUNMODE
+if defined c2r15_86 if exist "%c2r15repair86%" echo Running - "%c2r15repair86%" REPAIRUI RERUNMODE                     & "%c2r15repair86%" REPAIRUI RERUNMODE
+if defined c2r16_68 if exist "%c2r16repair68%" echo Running - "%c2r16repair68%" Scenario=Repair RepairType=QuickRepair & "%c2r16repair68%" Scenario=Repair RepairType=QuickRepair
+if defined c2r16_86 if exist "%c2r16repair86%" echo Running - "%c2r16repair86%" Scenario=Repair RepairType=QuickRepair & "%c2r16repair86%" Scenario=Repair RepairType=QuickRepair
 
 :repairend
 
@@ -1047,6 +1045,13 @@ for %%# in (X86 X64) do (
 if exist "%systemdrive%\Program Files\Microsoft Office 15\Client%%#\%2" (
 set "%1=%systemdrive%\Program Files\Microsoft Office 15\Client%%#\%2"
 )
+)
+exit /b
+
+:getc2r16repair
+
+for %%# in (%_68% %_86%) do (
+for /f "skip=2 tokens=2*" %%a in ('"reg query %%#\ClickToRun\Configuration /v ClientFolder" %nul6%') do if exist "%%b\%2" (set "%1=%%b\%2")
 )
 exit /b
 
