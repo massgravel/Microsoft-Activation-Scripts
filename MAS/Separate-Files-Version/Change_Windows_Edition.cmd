@@ -604,7 +604,7 @@ set _dismapi=1
 )
 )
 
-set "keyflow=Retail Volume:GVLK Volume:MAK OEM:NONSLP OEM:DM PGS:TB Retail:TB:Eval"
+set "keyflow=Retail OEM:NONSLP OEM:DM Volume:MAK Volume:GVLK PGS:TB Retail:TB:Eval"
 
 call :ced_targetSKU %targetedition%
 if defined targetSKU call :ced_windowskey
