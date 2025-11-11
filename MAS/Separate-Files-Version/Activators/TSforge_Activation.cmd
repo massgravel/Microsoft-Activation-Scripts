@@ -1,4 +1,4 @@
-@set masver=3.7
+@set masver=3.8
 @echo off
 
 
@@ -1967,6 +1967,7 @@ call :dk_color %Gray% "ESU is not officially supported on Windows 8.1, but updat
 echo "%tsids%" | findstr /i "0b533b5e-08b6-44f9-b885-c2de291ba456 f69e2d51-3bbd-4ddf-8da7-a145e9dca597" %nul1% && (
 call :dk_color %Gray% "Windows Update gets 1-3 years of ESU; 4-6 are unofficial but may let you install LTSC updates manually."
 if exist %SysPath%\ClipESUConsumer.exe (%SysPath%\ClipESUConsumer.exe -evaluateEligibility)
+if exist %SysPath%\ClipESU.exe (%SysPath%\ClipESU.exe %nul%)
 )
 )
 
