@@ -1,4 +1,4 @@
-@set masver=3.7
+@set masver=3.8
 @echo off
 
 
@@ -606,8 +606,8 @@ if not defined results (
 call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
 call :dk_color %Blue% "After that, restart system and try activation again."
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+set fixes=%fixes% %mas%in-place_repair_upgrade
+call :dk_color2 %Blue% "If it still shows the same error, do this - " %_Yellow% " %mas%in-place_repair_upgrade"
 )
 goto dk_done
 )
@@ -1112,12 +1112,17 @@ if exist "%SystemRoot%\Servicing\Packages\WinEmb-Branding-Embedded-Standard-Pack
 )
 if not defined allapps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
 
-set w10EsuEditions=Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN-ServerRdsh
+set w10EsuEditions=Education-EducationN-Enterprise-EnterpriseN-Professional-ProfessionalEducation-ProfessionalEducationN-ProfessionalN-ProfessionalWorkstation-ProfessionalWorkstationN
+
+set minbuild=0
+if /i %tsedition%==ServerRdsh set minbuild=5552
+for %%# in (Core CoreN CoreCountrySpecific CoreSingleLanguage) do (if /i %tsedition%==%%# set minbuild=6156)
+if /i %tsedition%==PPIPro set minbuild=6388
 
 set /a UBR=0
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
-if %winbuild% EQU 19045 if %UBR% GEQ 6156 (
-set w10EsuEditionsLaterAdded=Core-CoreN-CoreCountrySpecific-CoreSingleLanguage-IoTEnterprise-
+if %winbuild% EQU 19045 if %minbuild% GTR 0 if %UBR% GEQ %minbuild% (
+set w10EsuEditionsLaterAdded=%tsedition%-
 )
 
 if not defined isThinpc if not defined isltsc for %%# in (
@@ -1867,14 +1872,14 @@ $filteredResults = $results | Where-Object {
         $true
     }
     else {
-        $_.Name -notlike "*CountrySpecific*"
+        $_.Name -like "*ESU*" -or $_.Name -notlike "*CountrySpecific*"
     }
 } | Where-Object {
     if ($env:tsedition -like "*CloudEdition*") {
         $true
     }
     else {
-        $_.Name -notlike "*CloudEdition*"
+        $_.Name -like "*ESU*" -or $_.Name -notlike "*CloudEdition*"
     }
 } | Where-Object {
     $_.Name -like "*CountrySpecific*" -or (IsMuiNotLocked $_.ID)
@@ -1948,21 +1953,25 @@ if %_actman%==0 (if not defined showfix call :dk_color %Blue% "%_fixmsg%")
 set fixes=%fixes% %mas%troubleshoot
 call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
 ) else (
-if /i %tsmethod%==KMS4k if %winbuild% GEQ 26200 (
+if /i %tsmethod%==KMS4k if %winbuild% GEQ 26100 (
 echo:
 call :dk_color %Gray% "In Windows settings, you may see a renewal notification for activation that can be ignored."
 if /i %_actmethod%==Auto call :dk_color %Gray% "To avoid this notification, run the script with an internet connection to use the StaticCID method."
 )
 echo "%tsids%" | find /i "7e94be23-b161-4956-a682-146ab291774c" %nul1% && (
-call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 years ESU is not officially supported, but you can manually install updates."
+call :dk_color %Gray% "Windows Update gets 1-3 years of ESU; 4-6 are unofficial but let you install Server 2008 R2 updates manually."
 )
 echo "%tsids%" | findstr /i "4afc620f-12a4-48ad-8015-2aebfbd6e47c 11be7019-a309-4763-9a09-091d1722ffe3" %nul1% && (
-call :dk_color %Gray% "ESU is not officially supported on Windows 8.1, but you can manually install updates until Jan-2024."
+call :dk_color %Gray% "ESU is not officially supported on Windows 8.1, but updates can be installed manually until January 2024."
 )
 echo "%tsids%" | findstr /i "0b533b5e-08b6-44f9-b885-c2de291ba456 f69e2d51-3bbd-4ddf-8da7-a145e9dca597" %nul1% && (
-call :dk_color %Gray% "Windows Update can receive 1-3 years of ESU. 4-6 years ESU is not officially supported, but it might be useful."
+call :dk_color %Gray% "Windows Update gets 1-3 years of ESU; 4-6 are unofficial but may let you install LTSC updates manually."
+if exist %SysPath%\ClipESUConsumer.exe (%SysPath%\ClipESUConsumer.exe -evaluateEligibility)
+if exist %SysPath%\ClipESU.exe (%SysPath%\ClipESU.exe %nul%)
 )
 )
+
+if defined esuexistsup echo Help: %mas%tsforge#windows-esu
 
 if %_actwin%==1 for %%# in (407) do if %osSKU%==%%# (
 call :dk_color %Red% "%winos% does not support activation on non-azure platforms."
@@ -2449,10 +2458,10 @@ reg unload HKU\!defname! %nul%
 
 if defined vnextexist (
 echo:
-call :dk_color %Gray% "Office vNext subscription detected:"
-call :dk_color %Blue% "If active, this license overrides other activation methods."
-call :dk_color %Blue% "If expiring soon, rerun the script after expiration."
-call :dk_color2 %Blue% "If expired and script activation fails, get help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Gray% "The logged-in Office account has a subscription license."
+call :dk_color %Blue% "If the subscription is active, it overrides other activation methods."
+call :dk_color %Blue% "If it is expiring soon, rerun the activation script after it expires."
+call :dk_color2 %Blue% "If it has already expired and activation fails, get help here - " %_Yellow% " %mas%troubleshoot"
 echo:
 )
 
@@ -2912,6 +2921,11 @@ set spperror=%errorlevel%
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
 echo sc start %_slser% [Error Code: %spperror%]
+if %spperror% EQU 1053 (
+echo:
+call :dk_color %Blue% "Reboot your machine using the restart option and try again."
+call :dk_color %Blue% "If it still does not work, go back to Main Menu, select Troubleshoot and run Fix WPA Registry option."
+)
 )
 
 echo:
@@ -3223,6 +3237,13 @@ if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value %nu
 if %_wmic% EQU 0 %psc% "Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property CreationClassName" %nul2% | find /i "computersystem" %nul1%
 
 if %errorlevel% NEQ 0 set wmifailed=1
+
+if %_wmic% EQU 1 wmic path %sps% get Version %nul%
+if %_wmic% EQU 0 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
+set error_code=%errorlevel%
+cmd /c exit /b %error_code%
+if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
+
 echo "%error_code%" | findstr /i "0x800410 0x800440 0x80131501" %nul1% && set wmifailed=1& ::  https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
 
 if defined wmifailed (
@@ -3416,12 +3437,6 @@ set showfix=1
 
 ::  Check SoftwareLicensingService
 
-if %_wmic% EQU 1 wmic path %sps% get Version %nul%
-if %_wmic% EQU 0 %psc% "try { $null=([WMISEARCHER]'SELECT * FROM %sps%').Get().Version; exit 0 } catch { exit $_.Exception.InnerException.HResult }" %nul%
-set error_code=%errorlevel%
-cmd /c exit /b %error_code%
-if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
-
 if %error_code% NEQ 0 (
 call :dk_color %Red% "Checking SoftwareLicensingService       [Not Working] [%error_code%]"
 if not defined showfix (
@@ -3568,7 +3583,9 @@ call :dk_color %Gray% "Checking SLC/WMI SKU                    [Difference Found
 
 ::  This "WLMS" service was included in previous Eval editions (which were activable) to automatically shut down the system every hour after the evaluation period expired and prevent SPPSVC from stopping.
 
-if exist "%SysPath%\wlms\wlms.exe" (
+sc query wlms %nul%
+
+if %errorlevel% NEQ 1060 (
 echo Checking Eval WLMS Service              [Found]
 )
 
@@ -8837,6 +8854,7 @@ namespace LibTSforge.PhysicalStore
 $ErrorActionPreference = 'Stop'
 $binPath = "$env:_work\BIN\LibTSforge.dll"
 $psMajorVer = (Get-Host).Version.Major
+$build = [System.Environment]::OSVersion.Version.Build
 
 if (Test-Path -LiteralPath $binPath) {
     Write-Host "LibTSforge.dll found in BIN folder. Loading the DLL..."
@@ -8935,7 +8953,12 @@ if (-not $env:resetstuff) {
             }
             if ($env:tsmethod -eq "KMS4k") {
                 $GracePeriodStatus = Get-WmiInfo -tsactid $tsactid -property "GracePeriodRemaining"
-                if ($GracePeriodStatus -gt 259200) { $activated = 1 }
+                if ($GracePeriodStatus -eq 259200 -or ([datetime]::Now.AddMinutes($GracePeriodStatus)).Year -gt 2038) {
+                    if ((($build -ge 26100 -and $GracePeriodStatus -ge 259200) -or 
+                            ($build -lt 26100 -and $GracePeriodStatus -gt 259200))) {
+                        $activated = 1
+                    }
+                }
             }
             else {
                 $licenseStatus = Get-WmiInfo -tsactid $tsactid -property "LicenseStatus"
@@ -8949,7 +8972,13 @@ if (-not $env:resetstuff) {
                 }
                 else {
                     if ($env:tsmethod -eq "KMS4k") {
-                        Write-Host "[$prodName] is activated till $([DateTime]::Now.AddMinutes($GracePeriodStatus).ToString('yyyy-MM-dd HH:mm:ss')) with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
+                        if ($build -ge 26100) {
+                            Write-Host "[$prodName] is activated with KMS4k for over 4,000 years." -ForegroundColor White -BackgroundColor DarkGreen
+                            Write-Host "From build 26100.7019, Windows will always display and stay at 180 days remaining if the actual period is longer." -ForegroundColor White -BackgroundColor Darkgray
+                        }
+                        else {
+                            Write-Host "[$prodName] is activated till $([DateTime]::Now.AddMinutes($GracePeriodStatus).ToString('yyyy-MM-dd HH:mm:ss')) with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen
+                        }
                     }
                     else {
                         Write-Host "[$prodName] is permanently activated with $env:tsmethod." -ForegroundColor White -BackgroundColor DarkGreen

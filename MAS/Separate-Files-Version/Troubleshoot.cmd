@@ -1,4 +1,4 @@
-@set masver=3.7
+@set masver=3.8
 @echo off
 
 
@@ -619,13 +619,47 @@ call :dk_color %Blue% "Rebuilding ClipSVC Licenses..."
 echo:
 
 if %winbuild% LSS 10240 (
-echo ClipSVC license rebuilding is supported only on Windows 10/11 and their Server equivalents.
+echo ClipSVC license rebuilding is supported only on Windows 10/11.
 echo Skipping...
 goto :rebuildspptok
 )
 
 %psc% "(([WMISEARCHER]'SELECT Name FROM SoftwareLicensingProduct WHERE LicenseStatus=1 AND GracePeriodRemaining=0 AND PartialProductKey IS NOT NULL AND LicenseDependsOn is NULL').Get()).Name" %nul2% | findstr /i "Windows" %nul1% && (
 echo Windows is permanently activated.
+echo Skipping...
+goto :rebuildspptok
+)
+
+set _partial=
+set _keymatch=
+for /f "tokens=2 delims==" %%# in ('%psc% "(([WMISEARCHER]'SELECT PartialProductKey FROM SoftwareLicensingProduct WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn is NULL').Get()).PartialProductKey | %% {echo ('PartialProductKey='+$_)}" %nul6%') do set "_partial=%%#"
+for %%# in (8HV2C QPFCT 3V66T PKCKT WXCHW 8TYMD 6F4BT 8HVX7 KD72Y 7CFBY DRR8H P39PB DYJWX MDWWW 9HKR4 M7V2X 2YV77 WT2RQ MHBPB QPF8P 2YV66 VMJ2C DJ4F6 CKFFD YY74H J8JXD BHDCD T6R4W D32MH RRK69 3PJBP) do if /i "%_partial%"=="%%#" set _keymatch=1
+
+if not defined _keymatch (
+echo HWID activation key is not installed.
+echo Skipping...
+goto :rebuildspptok
+)
+
+%psc% "If([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]'{DCB00C01-570F-4A9B-8D69-199FDBA5723B}')).IsConnectedToInternet){Exit 0}Else{Exit 1}"
+if errorlevel 1 (
+echo Internet is not connected.
+echo Skipping...
+goto :rebuildspptok
+)
+
+set resfail=
+for %%# in (
+licensing.mp.microsoft.com/v7.0/licenses/content
+login.live.com/ppsecure/deviceaddcredential.srf
+purchase.mp.microsoft.com/v7.0/users/me/orders
+) do if not defined resfail (
+%psc% "try { [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://%%# -Method POST } catch { if ($_.Exception.Response -eq $null) { Write-Host """"[%%#] $($_.Exception.Message)"""" -ForegroundColor Red -BackgroundColor Black; exit 3 } }"
+if !errorlevel!==3 set resfail=1
+)
+
+if defined resfail (
+echo Failed to connect to licensing servers.
 echo Skipping...
 goto :rebuildspptok
 )
@@ -945,8 +979,8 @@ for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\16.0\Common\InstallRoot /v P
 
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_86=Office 15.0 C2R x86"      & call :getc2rrepair c2r15repair86 integratedoffice.exe)
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\15.0\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses\ProPlus*.xrm-ms" (set "c2r15_68=Office 15.0 C2R x86/x64"  & call :getc2rrepair c2r15repair68 integratedoffice.exe)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_86=Office 16.0 C2R x86"      & call :getc2rrepair c2r16repair86 OfficeClickToRun.exe)
-for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_68=Office 16.0 C2R x86/x64"  & call :getc2rrepair c2r16repair68 OfficeClickToRun.exe)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_86=Office 16.0 C2R x86"      & call :getc2r16repair c2r16repair86 OfficeClickToRun.exe)
+for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms"    (set "c2r16_68=Office 16.0 C2R x86/x64"  & call :getc2r16repair c2r16repair68 OfficeClickToRun.exe)
 
 set uwp16=
 if %winbuild% GEQ 10240 (
@@ -988,13 +1022,11 @@ echo ________________________________________________________________
 echo:
 )
 
-if %counter% EQU 0 (
 echo:
+if %counter% EQU 0 (
 echo Office ^(2010 and later^) is not installed.
 goto :repairend
-echo:
-) else (
-echo:
+) else if not defined c2r16_68 if not defined c2r16_86 (
 call :dk_color %_Yellow% "A new window will appear, in that window you need to select [Quick Repair] option."
 if defined terminal (
 call :dk_color %_Yellow% "Press [0] to continue..."
@@ -1021,16 +1053,16 @@ echo Skipping repair for Office 14.0 C2R...
 echo:
 )
 
-if defined msi14_68 if exist "%msi14repair68%" echo Running - "%msi14repair68%"                    & "%msi14repair68%"
-if defined msi14_86 if exist "%msi14repair86%" echo Running - "%msi14repair86%"                    & "%msi14repair86%"
-if defined msi15_68 if exist "%msi15repair68%" echo Running - "%msi15repair68%"                    & "%msi15repair68%"
-if defined msi15_86 if exist "%msi15repair86%" echo Running - "%msi15repair86%"                    & "%msi15repair86%"
-if defined msi16_68 if exist "%msi16repair68%" echo Running - "%msi16repair68%"                    & "%msi16repair68%"
-if defined msi16_86 if exist "%msi16repair86%" echo Running - "%msi16repair86%"                    & "%msi16repair86%"
-if defined c2r15_68 if exist "%c2r15repair68%" echo Running - "%c2r15repair68%" REPAIRUI RERUNMODE & "%c2r15repair68%" REPAIRUI RERUNMODE
-if defined c2r15_86 if exist "%c2r15repair86%" echo Running - "%c2r15repair86%" REPAIRUI RERUNMODE & "%c2r15repair86%" REPAIRUI RERUNMODE
-if defined c2r16_68 if exist "%c2r16repair68%" echo Running - "%c2r16repair68%" scenario=Repair    & "%c2r16repair68%" scenario=Repair
-if defined c2r16_86 if exist "%c2r16repair86%" echo Running - "%c2r16repair86%" scenario=Repair    & "%c2r16repair86%" scenario=Repair
+if defined msi14_68 if exist "%msi14repair68%" echo Running - "%msi14repair68%"                                        & "%msi14repair68%"
+if defined msi14_86 if exist "%msi14repair86%" echo Running - "%msi14repair86%"                                        & "%msi14repair86%"
+if defined msi15_68 if exist "%msi15repair68%" echo Running - "%msi15repair68%"                                        & "%msi15repair68%"
+if defined msi15_86 if exist "%msi15repair86%" echo Running - "%msi15repair86%"                                        & "%msi15repair86%"
+if defined msi16_68 if exist "%msi16repair68%" echo Running - "%msi16repair68%"                                        & "%msi16repair68%"
+if defined msi16_86 if exist "%msi16repair86%" echo Running - "%msi16repair86%"                                        & "%msi16repair86%"
+if defined c2r15_68 if exist "%c2r15repair68%" echo Running - "%c2r15repair68%" REPAIRUI RERUNMODE                     & "%c2r15repair68%" REPAIRUI RERUNMODE
+if defined c2r15_86 if exist "%c2r15repair86%" echo Running - "%c2r15repair86%" REPAIRUI RERUNMODE                     & "%c2r15repair86%" REPAIRUI RERUNMODE
+if defined c2r16_68 if exist "%c2r16repair68%" echo Running - "%c2r16repair68%" Scenario=Repair RepairType=QuickRepair & "%c2r16repair68%" Scenario=Repair RepairType=QuickRepair
+if defined c2r16_86 if exist "%c2r16repair86%" echo Running - "%c2r16repair86%" Scenario=Repair RepairType=QuickRepair & "%c2r16repair86%" Scenario=Repair RepairType=QuickRepair
 
 :repairend
 
@@ -1047,6 +1079,13 @@ for %%# in (X86 X64) do (
 if exist "%systemdrive%\Program Files\Microsoft Office 15\Client%%#\%2" (
 set "%1=%systemdrive%\Program Files\Microsoft Office 15\Client%%#\%2"
 )
+)
+exit /b
+
+:getc2r16repair
+
+for %%# in (%_68% %_86%) do (
+for /f "skip=2 tokens=2*" %%a in ('"reg query %%#\ClickToRun\Configuration /v ClientFolder" %nul6%') do if exist "%%b\%2" (set "%1=%%b\%2")
 )
 exit /b
 

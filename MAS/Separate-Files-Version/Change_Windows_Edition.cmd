@@ -1,4 +1,4 @@
-@set masver=3.7
+@set masver=3.8
 @echo off
 
 
@@ -400,8 +400,8 @@ echo:
 call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
 call :dk_color %Blue% "After that, restart system and try activation again."
 echo:
-set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+set fixes=%fixes% %mas%in-place_repair_upgrade
+call :dk_color2 %Blue% "If it still shows the same error, do this - " %_Yellow% " %mas%in-place_repair_upgrade"
 goto dk_done
 )
 )
@@ -547,7 +547,11 @@ echo:
 
 for %%A in (%_ntarget%) do (
 set /a counter+=1
+if /i %%A==IoTEnterprise (
+echo [!counter!]  %%A [GAC, not LTSC]
+) else (
 echo [!counter!]  %%A
+)
 set targetedition!counter!=%%A
 )
 
@@ -600,7 +604,7 @@ set _dismapi=1
 )
 )
 
-set "keyflow=Retail Volume:GVLK Volume:MAK OEM:NONSLP OEM:DM PGS:TB Retail:TB:Eval"
+set "keyflow=Retail OEM:NONSLP OEM:DM Volume:MAK Volume:GVLK PGS:TB Retail:TB:Eval"
 
 call :ced_targetSKU %targetedition%
 if defined targetSKU call :ced_windowskey
@@ -968,6 +972,11 @@ set spperror=%errorlevel%
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
 echo sc start %_slser% [Error Code: %spperror%]
+if %spperror% EQU 1053 (
+echo:
+call :dk_color %Blue% "Reboot your machine using the restart option and try again."
+call :dk_color %Blue% "If it still does not work, go back to Main Menu, select Troubleshoot and run Fix WPA Registry option."
+)
 )
 
 echo:
