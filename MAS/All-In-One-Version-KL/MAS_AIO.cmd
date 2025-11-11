@@ -2127,7 +2127,9 @@ call :dk_color %Gray% "Checking SLC/WMI SKU                    [Difference Found
 
 ::  This "WLMS" service was included in previous Eval editions (which were activable) to automatically shut down the system every hour after the evaluation period expired and prevent SPPSVC from stopping.
 
-if exist "%SysPath%\wlms\wlms.exe" (
+sc query wlms %nul%
+
+if %errorlevel% NEQ 1060 (
 echo Checking Eval WLMS Service              [Found]
 )
 
