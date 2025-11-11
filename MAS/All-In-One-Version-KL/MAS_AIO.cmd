@@ -16263,13 +16263,47 @@ call :dk_color %Blue% "Rebuilding ClipSVC Licenses..."
 echo:
 
 if %winbuild% LSS 10240 (
-echo ClipSVC license rebuilding is supported only on Windows 10/11 and their Server equivalents.
+echo ClipSVC license rebuilding is supported only on Windows 10/11.
 echo Skipping...
 goto :rebuildspptok
 )
 
 %psc% "(([WMISEARCHER]'SELECT Name FROM SoftwareLicensingProduct WHERE LicenseStatus=1 AND GracePeriodRemaining=0 AND PartialProductKey IS NOT NULL AND LicenseDependsOn is NULL').Get()).Name" %nul2% | findstr /i "Windows" %nul1% && (
 echo Windows is permanently activated.
+echo Skipping...
+goto :rebuildspptok
+)
+
+set _partial=
+set _keymatch=
+for /f "tokens=2 delims==" %%# in ('%psc% "(([WMISEARCHER]'SELECT PartialProductKey FROM SoftwareLicensingProduct WHERE ApplicationID=''55c92734-d682-4d71-983e-d6ec3f16059f'' AND PartialProductKey IS NOT NULL AND LicenseDependsOn is NULL').Get()).PartialProductKey | %% {echo ('PartialProductKey='+$_)}" %nul6%') do set "_partial=%%#"
+for %%# in (8HV2C QPFCT 3V66T PKCKT WXCHW 8TYMD 6F4BT 8HVX7 KD72Y 7CFBY DRR8H P39PB DYJWX MDWWW 9HKR4 M7V2X 2YV77 WT2RQ MHBPB QPF8P 2YV66 VMJ2C DJ4F6 CKFFD YY74H J8JXD BHDCD T6R4W D32MH RRK69 3PJBP) do if /i "%_partial%"=="%%#" set _keymatch=1
+
+if not defined _keymatch (
+echo HWID activation key is not installed.
+echo Skipping...
+goto :rebuildspptok
+)
+
+%psc% "If([Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]'{DCB00C01-570F-4A9B-8D69-199FDBA5723B}')).IsConnectedToInternet){Exit 0}Else{Exit 1}"
+if errorlevel 1 (
+echo Internet is not connected.
+echo Skipping...
+goto :rebuildspptok
+)
+
+set resfail=
+for %%# in (
+licensing.mp.microsoft.com/v7.0/licenses/content
+login.live.com/ppsecure/deviceaddcredential.srf
+purchase.mp.microsoft.com/v7.0/users/me/orders
+) do if not defined resfail (
+%psc% "try { [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://%%# -Method POST } catch { if ($_.Exception.Response -eq $null) { Write-Host """"[%%#] $($_.Exception.Message)"""" -ForegroundColor Red -BackgroundColor Black; exit 3 } }"
+if !errorlevel!==3 set resfail=1
+)
+
+if defined resfail (
+echo Failed to connect to licensing servers.
 echo Skipping...
 goto :rebuildspptok
 )
