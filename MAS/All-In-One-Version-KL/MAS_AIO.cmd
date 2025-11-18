@@ -18799,20 +18799,19 @@ call :dk_color %Gray% "Installed Office editions: %_oIds%"
 echo:
 
 for %%# in (
-"5440fd1f-7ecb-4221-8110-145efaa6372f_Insider Fast [Beta]  -    Insiders::DevMain   -"
-"64256afe-f5d9-4f86-8936-8840a6a4f5be_Monthly Preview      -    Insiders::CC        -"
-"492350f6-3a01-4f97-b9c0-c7c6ddf67d60_Monthly [Current]    -  Production::CC        -"
-"55336b82-a18d-4dd6-b5f6-9e5095c314a6_Monthly Enterprise   -  Production::MEC       -"
-"b8f9b850-328d-4355-9145-c59439a0c4cf_Semi Annual Preview  -    Insiders::FRDC      -"
-"7ffbc6bf-bc32-4f92-8982-f9dd17fd3114_Semi Annual          -  Production::DC        -"
-"ea4a4090-de26-49d7-93c1-91bff9e53fc3_DevMain Channel      -     Dogfood::DevMain   -"
-"b61285dd-d9f7-41f2-9757-8f61cba4e9c8_Microsoft Elite      -   Microsoft::DevMain   -"
-"f2e724c1-748f-4b47-8fb8-8e0d210e9208_Perpetual2019 VL     -  Production::LTSC      -"
-"1d2d2ea6-1680-4c56-ac58-a441c8c24ff9_Microsoft2019 VL     -   Microsoft::LTSC      -"
-"5030841d-c919-4594-8d2d-84ae4f96e58e_Perpetual2021 VL     -  Production::LTSC2021  -"
-"86752282-5841-4120-ac80-db03ae6b5fdb_Microsoft2021 VL     -   Microsoft::LTSC2021  -"
-"7983bac0-e531-40cf-be00-fd24fe66619c_Perpetual2024 VL     -  Production::LTSC2024  -"
-"c02d8fe6-5242-4da8-972f-82ee55e00671_Microsoft2024 VL     -   Microsoft::LTSC2024  -"
+"5440fd1f-7ecb-4221-8110-145efaa6372f_Beta    / Insider Fast    -   Insiders::DevMain  -"
+"64256afe-f5d9-4f86-8936-8840a6a4f5be_Current / Monthly Preview -   Insiders::CC       -"
+"492350f6-3a01-4f97-b9c0-c7c6ddf67d60_Current / Monthly         - Production::CC       -"
+"55336b82-a18d-4dd6-b5f6-9e5095c314a6_Monthly Enterprise        - Production::MEC      -"
+"7ffbc6bf-bc32-4f92-8982-f9dd17fd3114_Semi Annual Enterprise    - Production::DC       -"
+"ea4a4090-de26-49d7-93c1-91bff9e53fc3_DevMain Channel           -    Dogfood::DevMain  -"
+"b61285dd-d9f7-41f2-9757-8f61cba4e9c8_Microsoft Elite           -  Microsoft::DevMain  -"
+"f2e724c1-748f-4b47-8fb8-8e0d210e9208_Perpetual2019 VL          - Production::LTSC     -"
+"1d2d2ea6-1680-4c56-ac58-a441c8c24ff9_Microsoft2019 VL          -  Microsoft::LTSC     -"
+"5030841d-c919-4594-8d2d-84ae4f96e58e_Perpetual2021 VL          - Production::LTSC2021 -"
+"86752282-5841-4120-ac80-db03ae6b5fdb_Microsoft2021 VL          -  Microsoft::LTSC2021 -"
+"7983bac0-e531-40cf-be00-fd24fe66619c_Perpetual2024 VL          - Production::LTSC2024 -"
+"c02d8fe6-5242-4da8-972f-82ee55e00671_Microsoft2024 VL          -  Microsoft::LTSC2024 -"
 ) do (
 for /f "tokens=1-2 delims=_" %%A in ("%%~#") do (
 set bypass=
