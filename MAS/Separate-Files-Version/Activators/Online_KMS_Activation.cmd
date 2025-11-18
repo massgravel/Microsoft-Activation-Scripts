@@ -5,7 +5,7 @@
 
 ::============================================================================
 ::
-::   Homepage: mass()grave(dot)dev
+::   Homepage: mass{}grave{dot}dev
 ::      Email: mas.help@outlook.com
 ::
 ::============================================================================
@@ -1031,7 +1031,7 @@ if %winbuild% GEQ 9200 (
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
 for /f "skip=2 tokens=2*" %%a in ('"reg query HKLM\SOFTWARE\Microsoft\Office\ClickToRun /v InstallPath /reg:32" %nul6%') do if exist "%%b\root\Licenses16\ProPlus*.xrm-ms" set "_C16R=1"
 if defined _C16R (
-REM  mass()grave(dot)dev/office-license-is-not-genuine
+REM  mass{}grave{dot}dev/office-license-is-not-genuine
 set _server=10.0.0.10
 call :_taskregserv
 echo Keeping the non-existent IP address 10.0.0.10 as %KS% Server.
@@ -1727,7 +1727,7 @@ exit /b
 
 ::============================================================================
 ::
-::   Homepage: mass()grave(dot)dev
+::   Homepage: mass{}grave{dot}dev
 ::      Email: mas.help@outlook.com
 ::
 ::============================================================================
