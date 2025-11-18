@@ -63,8 +63,8 @@
 ---
 
 ```
-Latest Version: 3.8
-Release date: 11-Nov-2025
+Latest Version: 3.9
+Release date: 19-Nov-2025
 ```
 
 ### [Troubleshooting / Help](https://massgrave.dev/troubleshoot)

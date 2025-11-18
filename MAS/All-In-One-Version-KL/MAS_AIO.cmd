@@ -1,5 +1,5 @@
 @::sfh437frandom
-@set masver=3.8
+@set masver=3.9
 @setlocal DisableDelayedExpansion
 @echo off
 
