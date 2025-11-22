@@ -13,7 +13,6 @@
 ::============================================================================
 ::
 ::   Homepage: mass{}grave{dot}dev
-::      Email: mas.help@outlook.com
 ::
 ::============================================================================
 
@@ -13058,7 +13057,6 @@ exit /b
 ::============================================================================
 ::
 ::   Homepage: mass{}grave{dot}dev
-::      Email: mas.help@outlook.com
 ::
 ::============================================================================
 
@@ -13667,7 +13665,6 @@ echo:
 echo   This Script is a part of MAS project.
 echo:   
 echo   Homepage: mass%w%grave%w%.dev
-echo      Email: mas.help@outlook.com
 )>"%_dest%\Info.txt"
 exit /b
 
