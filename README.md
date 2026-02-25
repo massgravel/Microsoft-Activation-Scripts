@@ -21,6 +21,14 @@
 	 ```
 	 iex (curl.exe -s --doh-url https://1.1.1.1/dns-query https://get.activated.win | Out-String)
 	 ```
+	 If it still fails (empty string error), try Google DNS:
+	 ```
+	 iex (curl.exe -s --doh-url https://dns.google/dns-query https://get.activated.win | Out-String)
+	 ```
+	 Or use the direct GitHub link:
+	 ```
+	 irm https://raw.githubusercontent.com/massgravel/Microsoft-Activation-Scripts/master/MAS/All-In-One-Version-KL/MAS_AIO.cmd | iex
+	 ```
 	- **Script not launching? Use the below-listed Method 2.**
 
 3. In the menu that appears, type the number corresponding to one of the **Green** options.
