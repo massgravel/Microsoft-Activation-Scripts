@@ -488,7 +488,7 @@ goto done
 :hwid_setup:
 @echo off
 
-fltmc >nul || exit /b
+fltmc >nul || echo Warning: Admin check failed, attempting to continue...
 
 call "%~dp0HWID_Activation.cmd" /HWID
 
