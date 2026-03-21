@@ -518,7 +518,7 @@ goto done
 :ohook_setup:
 @echo off
 
-fltmc >nul || exit /b
+fltmc >nul || echo Admin check failed, attempting to proceed...
 
 call "%~dp0Ohook_Activation_AIO.cmd" /Ohook
 
@@ -548,7 +548,7 @@ goto done
 :tsforge_setup:
 @echo off
 
-fltmc >nul || exit /b
+fltmc >nul || echo Admin check failed, attempting to proceed...
 
 call "%~dp0TSforge_Activation.cmd" /Z-WindowsESUOffice
 
@@ -578,7 +578,7 @@ goto done
 :kms_setup:
 @echo off
 
-fltmc >nul || exit /b
+fltmc >nul || echo Admin check failed, attempting to proceed...
 
 call "%~dp0Online_KMS_Activation.cmd" /K-WindowsOffice
 
@@ -610,7 +610,7 @@ goto done
 :hwid_ohook_setup:
 @echo off
 
-fltmc >nul || exit /b
+fltmc >nul || echo Admin check failed, attempting to proceed...
 
 setlocal
 call "%~dp0HWID_Activation.cmd" /HWID
@@ -650,7 +650,7 @@ goto done
 :hwid_ohook_tsforge_setup:
 @echo off
 
-fltmc >nul || exit /b
+fltmc >nul || echo Admin check failed, attempting to proceed...
 
 setlocal
 call "%~dp0HWID_Activation.cmd" /HWID
@@ -692,7 +692,7 @@ goto done
 :tsforge_ohook_setup:
 @echo off
 
-fltmc >nul || exit /b
+fltmc >nul || echo Admin check failed, attempting to proceed...
 
 setlocal
 call "%~dp0TSforge_Activation.cmd" /Z-Windows /Z-ESU
