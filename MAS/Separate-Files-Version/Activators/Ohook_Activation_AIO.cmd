@@ -11,22 +11,22 @@
 
 
 
-::  To activate Office with Ohook activation, run the script with "/Ohook" parameter or change 0 to 1 in below line
+::  Untuk mengaktifkan Office dengan aktivasi Ohook, jalankan skrip dengan parameter "/Ohook" atau ubah 0 menjadi 1 di baris berikut
 set _act=0
 
-::  To remove Ohook activation, run the script with /Ohook-Uninstall parameter or change 0 to 1 in below line
+::  Untuk menghapus aktivasi Ohook, jalankan skrip dengan parameter /Ohook-Uninstall atau ubah 0 menjadi 1 di baris berikut
 set _rem=0
 
-::  To run the script in debug mode, change 0 to "/Ohook" in below line
+::  Untuk menjalankan skrip dalam mode debug, ubah 0 menjadi "/Ohook" di baris berikut
 set "_debug=0"
 
-::  If value is changed in above lines or parameter is used then script will run in unattended mode
+::  Jika nilai diubah pada baris di atas atau parameter digunakan, skrip akan berjalan dalam mode tanpa interaksi
 
 
 
 ::========================================================================================================================================
 
-::  Set environment variables, it helps if they are misconfigured in the system
+::  Mengatur variabel lingkungan, membantu jika konfigurasi sistem tidak tepat
 
 setlocal EnableExtensions
 setlocal DisableDelayedExpansion
@@ -52,8 +52,8 @@ if /i "%%#"=="re2" set re2=1
 if /i "%%#"=="-qedit" (set re1=1&set re2=1)
 )
 
-:: Re-launch the script with x64 process if it was initiated by x86 process on x64 bit Windows
-:: or with ARM64 process if it was initiated by x86/ARM32 process on ARM64 Windows
+:: Meluncurkan ulang skrip dengan proses x64 jika dimulai oleh proses x86 pada Windows 64-bit
+:: atau dengan proses ARM64 jika dimulai oleh proses x86/ARM32 pada Windows ARM64
 
 if exist %SystemRoot%\Sysnative\cmd.exe if not defined re1 (
 setlocal EnableDelayedExpansion
@@ -61,7 +61,7 @@ start %SystemRoot%\Sysnative\cmd.exe /c ""!_cmdf!" %* re1"
 exit /b
 )
 
-:: Re-launch the script with ARM32 process if it was initiated by x64 process on ARM64 Windows
+:: Meluncurkan ulang skrip dengan proses ARM32 jika dimulai oleh proses x64 pada Windows ARM64
 
 if exist %SystemRoot%\SysArm32\cmd.exe if %PROCESSOR_ARCHITECTURE%==AMD64 if not defined re2 (
 setlocal EnableDelayedExpansion
@@ -71,7 +71,7 @@ exit /b
 
 ::========================================================================================================================================
 
-::  Debug code
+::  Kode debug
 
 if "%_debug%" EQU "0" (
 set "nul1=1>nul"
@@ -103,30 +103,30 @@ set "mas=ht%blank%tps%blank%://m%blank%ass%blank%grave.dev/"
 set "github=ht%blank%tps%blank%://github.com/m%blank%assgra%blank%vel/Micro%blank%soft-Acti%blank%vation-Scripts"
 set "selfgit=ht%blank%tps%blank%://git.acti%blank%vated.win/Micr%blank%osoft-Act%blank%ivation-Scripts"
 
-::  Check if Null service is working, it's important for the batch script
+::  Memeriksa apakah layanan Null berjalan, penting untuk skrip batch ini
 
 sc query Null | find /i "RUNNING"
 if %errorlevel% NEQ 0 (
 echo:
-echo Null service is not running, script may crash...
+echo Layanan Null tidak berjalan, skrip mungkin akan crash...
 echo:
 echo:
-echo Check this webpage for help - %mas%fix_service
+echo Kunjungi halaman ini untuk bantuan - %mas%fix_service
 echo:
 echo:
 ping 127.0.0.1 -n 20
 )
 cls
 
-::  Check LF line ending
+::  Memeriksa akhiran baris LF
 
 pushd "%~dp0"
 >nul findstr /v "$" "%~nx0" && (
 echo:
-echo Error - Script either has LF line ending issue or an empty line at the end of the script is missing.
+echo Kesalahan - Skrip memiliki masalah akhiran baris LF atau baris kosong di akhir skrip tidak ada.
 echo:
 echo:
-echo Check this webpage for help - %mas%troubleshoot
+echo Kunjungi halaman ini untuk bantuan - %mas%troubleshoot
 echo:
 echo:
 ping 127.0.0.1 -n 20 >nul
@@ -165,19 +165,19 @@ call :dk_setvar
 
 if %winbuild% EQU 1 (
 %eline%
-echo Failed to detect Windows build number.
+echo Gagal mendeteksi nomor build Windows.
 echo:
 setlocal EnableDelayedExpansion
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
 if exist "%Systemdrive%\Users\WDAGUtilityAccount" (
 sc query gcs | find /i "RUNNING" %nul% && (
 %eline%
-echo Windows Sandbox detected; activation is not supported.
-echo The script cannot run due to missing licensing components. Aborting...
+echo Windows Sandbox terdeteksi; aktivasi tidak didukung.
+echo Skrip tidak dapat berjalan karena komponen lisensi tidak ada. Membatalkan...
 echo:
 goto dk_done
 )
@@ -185,12 +185,12 @@ goto dk_done
 
 if %winbuild% LSS 6001 (
 %nceline%
-echo Unsupported OS version detected [%winbuild%].
-echo MAS only supports Windows Vista/7/8/8.1/10/11 and their Server equivalents.
+echo Versi OS yang tidak didukung terdeteksi [%winbuild%].
+echo MAS hanya mendukung Windows Vista/7/8/8.1/10/11 dan padanan Server-nya.
 if %winbuild% EQU 6000 (
 echo:
-echo Windows Vista RTM is not supported because Powershell cannot be installed.
-echo Upgrade to Windows Vista SP1 or SP2.
+echo Windows Vista RTM tidak didukung karena PowerShell tidak dapat diinstal.
+echo Perbarui ke Windows Vista SP1 atau SP2.
 )
 goto dk_done
 )
@@ -198,9 +198,9 @@ goto dk_done
 if %winbuild% LSS 7600 if not exist "%SysPath%\WindowsPowerShell\v1.0\Modules" (
 %nceline%
 if not exist %ps% (
-echo PowerShell is not installed in your system.
+echo PowerShell tidak terinstal di sistem Anda.
 )
-echo Install PowerShell 2.0 using the following URL.
+echo Instal PowerShell 2.0 menggunakan URL berikut.
 echo:
 echo https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
 if %_unattended%==0 start https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930
@@ -209,7 +209,7 @@ goto dk_done
 
 ::========================================================================================================================================
 
-::  Fix special character limitations in path name
+::  Memperbaiki keterbatasan karakter khusus dalam nama jalur
 
 set "_work=%~dp0"
 if "%_work:~-1%"=="\" set "_work=%_work:~0,-1%"
@@ -229,29 +229,29 @@ setlocal EnableDelayedExpansion
 echo "!_batf!" | find /i "!_ttemp!" %nul1% && (
 if /i not "!_work!"=="!_ttemp!" (
 %eline%
-echo The script was launched from the temp folder.
-echo You are most likely running the script directly from the archive file.
+echo Skrip dijalankan dari folder temp.
+echo Kemungkinan besar Anda menjalankan skrip langsung dari file arsip.
 echo:
-echo Extract the archive file and launch the script from the extracted folder.
+echo Ekstrak file arsip dan jalankan skrip dari folder hasil ekstraksi.
 goto dk_done
 )
 )
 
 ::========================================================================================================================================
 
-::  Elevate script as admin and pass arguments and preventing loop
+::  Menjalankan skrip sebagai admin dan meneruskan argumen serta mencegah perulangan
 
 %nul1% fltmc || (
 if not defined _elev %psc% "start cmd.exe -arg '/c \"!_PSarg!\"' -verb runas" && exit /b
 %eline%
-echo This script needs admin rights.
-echo Right click on this script and select 'Run as administrator'.
+echo Skrip ini memerlukan hak administrator.
+echo Klik kanan pada skrip ini dan pilih 'Jalankan sebagai administrator'.
 goto dk_done
 )
 
 ::========================================================================================================================================
 
-::  Check PowerShell
+::  Memeriksa PowerShell
 
 ::pstst $ExecutionContext.SessionState.LanguageMode :pstst
 
@@ -260,73 +260,73 @@ for /f "delims=" %%a in ('%psc% "if ($PSVersionTable.PSEdition -ne 'Core') {$f=[
 if /i not "%tstresult%"=="FullLanguage" (
 %eline%
 for /f "delims=" %%a in ('%psc% "$ExecutionContext.SessionState.LanguageMode" %nul6%') do (set tstresult2=%%a)
-echo Test 1 - %tstresult%
-echo Test 2 - !tstresult2!
+echo Uji 1 - %tstresult%
+echo Uji 2 - !tstresult2!
 echo:
 
 REM check LanguageMode
 
 echo: !tstresult2! | findstr /i "ConstrainedLanguage RestrictedLanguage NoLanguage" %nul1% && (
-echo FullLanguage mode not found in PowerShell. Aborting...
-echo If you have applied restrictions on Powershell then undo those changes.
+echo Mode FullLanguage tidak ditemukan di PowerShell. Membatalkan...
+echo Jika Anda telah menerapkan pembatasan pada PowerShell, batalkan perubahan tersebut.
 set fixes=%fixes% %mas%fix_powershell
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_powershell"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%fix_powershell"
 goto dk_done
 )
 
 REM check Powershell core version
 
 cmd /c "%psc% "$PSVersionTable.PSEdition"" | find /i "Core" %nul1% && (
-echo Windows Powershell is needed for MAS but it seems to be replaced with Powershell core. Aborting...
+echo Windows PowerShell diperlukan untuk MAS tetapi tampaknya telah diganti dengan PowerShell Core. Membatalkan...
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%in-place_repair_upgrade"
 goto dk_done
 )
 
-REM check for Mal-ware that may cause issues with Powershell
+REM periksa Mal-ware yang mungkin menyebabkan masalah pada PowerShell
 
 for /r "%ProgramFiles%\" %%f in (secureboot.exe) do if exist "%%f" (
 echo "%%f"
-echo Mal%blank%ware found, PowerShell is not working properly.
+echo Mal%blank%ware ditemukan, PowerShell tidak bekerja dengan benar.
 set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%remove_mal%w%ware"
 goto dk_done
 )
 
-REM check if .NET is working properly
+REM periksa apakah .NET bekerja dengan benar
 
 if /i "!tstresult2!"=="FullLanguage" (
 cmd /c "%psc% ""try {[System.AppDomain]::CurrentDomain.GetAssemblies(); [System.Math]::Sqrt(144)} catch {Exit 3}""" %nul%
 if !errorlevel!==3 (
-echo Windows Powershell failed to load .NET command. Aborting...
+echo Windows PowerShell gagal memuat perintah .NET. Membatalkan...
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%in-place_repair_upgrade"
 goto dk_done
 )
 )
 
-REM check antivirus and other errors
+REM periksa antivirus dan kesalahan lainnya
 
-echo PowerShell is not working properly. Aborting...
+echo PowerShell tidak bekerja dengan benar. Membatalkan...
 
 if /i "!tstresult2!"=="FullLanguage" (
 echo:
-echo Your antivirus software might be blocking the script.
+echo Perangkat lunak antivirus Anda mungkin memblokir skrip ini.
 echo:
 sc query sense | find /i "RUNNING" %nul% && (
-echo Installed Antivirus - Microsoft Defender for Endpoint
+echo Antivirus Terinstal - Microsoft Defender for Endpoint
 )
 cmd /c "%psc% ""$av = Get-WmiObject -Namespace root\SecurityCenter2 -Class AntiVirusProduct; $n = @(); foreach ($i in $av) { $n += $i.displayName }; if ($n) { Write-Host ('Installed Antivirus - ' + ($n -join ', '))}"""
 )
 
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%troubleshoot"
 goto dk_done
 )
 
 ::========================================================================================================================================
 
-::  Disable QuickEdit and launch from conhost.exe to avoid Terminal app
+::  Menonaktifkan QuickEdit dan meluncurkan dari conhost.exe untuk menghindari aplikasi Terminal
 
 if %winbuild% GEQ 17763 (
 set terminal=1
@@ -334,7 +334,7 @@ set terminal=1
 set terminal=
 )
 
-::  Check if script is running in Terminal app
+::  Memeriksa apakah skrip berjalan di aplikasi Terminal
 
 if defined terminal (
 set lines=0
@@ -347,9 +347,9 @@ if !lines! GEQ 100 set terminal=
 if %_unattended%==1 goto :skipQE
 for %%# in (%_args%) do (if /i "%%#"=="-qedit" goto :skipQE)
 
-::  Relaunch to disable QuickEdit in the current session and use conhost.exe instead of the Terminal app
-::  This code disables QuickEdit for the current cmd.exe session without making permanent registry changes
-::  It is included because clicking on the script window can pause execution, causing confusion that the script has stopped due to an error
+::  Meluncurkan ulang untuk menonaktifkan QuickEdit pada sesi saat ini dan menggunakan conhost.exe, bukan aplikasi Terminal
+::  Kode ini menonaktifkan QuickEdit untuk sesi cmd.exe saat ini tanpa membuat perubahan registri permanen
+::  Disertakan karena mengklik jendela skrip dapat menghentikan eksekusi, menimbulkan kebingungan bahwa skrip berhenti karena kesalahan
 
 set resetQE=1
 reg query HKCU\Console /v QuickEdit %nul2% | find /i "0x0" %nul1% && set resetQE=0
@@ -369,7 +369,7 @@ exit /b
 
 ::========================================================================================================================================
 
-::  Check for updates
+::  Memeriksa pembaruan
 
 set -=
 set old=
@@ -391,14 +391,14 @@ if not "%%C"=="" set old=
 if defined old (
 echo ________________________________________________
 %eline%
-echo Your version of MAS [%masver%] is outdated.
+echo Versi MAS Anda [%masver%] sudah usang.
 echo ________________________________________________
 echo:
 if not %_unattended%==1 (
-echo [1] Get Latest MAS
-echo [0] Continue Anyway
+echo [1] Dapatkan MAS Terbaru
+echo [0] Lanjutkan Saja
 echo:
-call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
+call :dk_color %_Green% "Pilih opsi menu menggunakan keyboard Anda [1,0] :"
 choice /C:10 /N
 if !errorlevel!==2 rem
 if !errorlevel!==1 (start %selfgit% & start %github% & start %mas% & exit /b)
@@ -421,20 +421,20 @@ echo:
 echo:
 echo:
 echo:
-if defined checknames (call :dk_color %_Yellow% "                Close [!checknames!] before proceeding...")
+if defined checknames (call :dk_color %_Yellow% "                Tutup [!checknames!] sebelum melanjutkan...")
 echo         ____________________________________________________________
 echo:
-echo                 [1] Install Ohook Office Activation
+echo                 [1] Instal Aktivasi Office Ohook
 echo:
-echo                 [2] Uninstall Ohook
+echo                 [2] Hapus Instalasi Ohook
 echo                 ____________________________________________
 echo:
-echo                 [3] Download Office
+echo                 [3] Unduh Office
 echo:
 echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
 echo: 
-call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard [1,2,3,0]"
+call :dk_color2 %_White% "             " %_Green% "Pilih opsi menu menggunakan keyboard Anda [1,2,3,0]"
 choice /C:1230 /N
 set _el=!errorlevel!
 if !_el!==4  exit /b
@@ -456,18 +456,18 @@ mode 140, 32
 title  Ohook Activation %masver%
 
 echo:
-echo Initializing...
+echo Menginisialisasi...
 call :dk_chkmal
 
 if not exist %SysPath%\%_slexe% (
 %eline%
-echo [%SysPath%\%_slexe%] file is missing, aborting...
+echo File [%SysPath%\%_slexe%] tidak ada, membatalkan...
 echo:
 if not defined results (
-call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run DISM Restore and SFC Scan options."
-call :dk_color %Blue% "After that, restart system and try activation again."
+call :dk_color %Blue% "Kembali ke Menu Utama, pilih Troubleshoot dan jalankan opsi DISM Restore dan SFC Scan."
+call :dk_color %Blue% "Setelah itu, mulai ulang sistem dan coba aktivasi lagi."
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "If it still shows the same error, do this - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Jika masih menampilkan kesalahan yang sama, lakukan ini - " %_Yellow% " %mas%in-place_repair_upgrade"
 )
 goto dk_done
 )
@@ -492,11 +492,11 @@ call :dk_showosinfo
 
 ::========================================================================================================================================
 
-echo Initiating Diagnostic Tests...
+echo Memulai Uji Diagnostik...
 
 set "_serv=%_slser% Winmgmt"
 
-::  Software Protection
+::  Perlindungan Perangkat Lunak
 ::  Windows Management Instrumentation
 
 set notwinact=1
@@ -505,7 +505,7 @@ call :dk_errorcheck
 
 call :oh_setspp
 
-::  Check unsupported office versions
+::  Memeriksa versi Office yang tidak didukung
 
 set o14c2r=
 set o16uwp=
@@ -521,8 +521,8 @@ for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Deskto
 
 if not "%o14c2r%%o16uwp%"=="" (
 echo:
-call :dk_color %Red% "Checking Unsupported Office Install     [ %o14c2r%%o16uwp%]"
-if not "%o16uwp%"=="" call :dk_color %Blue% "Use TSforge option to activate it."
+call :dk_color %Red% "Memeriksa Instalasi Office Tidak Didukung  [ %o14c2r%%o16uwp%]"
+if not "%o16uwp%"=="" call :dk_color %Blue% "Gunakan opsi TSforge untuk mengaktifkannya."
 )
 
 if %winbuild% GEQ 10240 %psc% "Get-AppxPackage -name "Microsoft.MicrosoftOfficeHub"" | find /i "Office" %nul1% && (
@@ -539,7 +539,7 @@ sc query ClickToRunSvc %nul%
 set error1=%errorlevel%
 
 if defined o16c2r if %error1% EQU 1060 (
-call :dk_color %Red% "Checking ClickToRun Service             [Not found, Office 16.0 files found]"
+call :dk_color %Red% "Memeriksa Layanan ClickToRun             [Tidak ditemukan, file Office 16.0 ditemukan]"
 set o16c2r=
 set error=1
 )
@@ -548,7 +548,7 @@ sc query OfficeSvc %nul%
 set error2=%errorlevel%
 
 if defined o15c2r if %error1% EQU 1060 if %error2% EQU 1060 (
-call :dk_color %Red% "Checking ClickToRun Service             [Not found, Office 15.0 files found]"
+call :dk_color %Red% "Memeriksa Layanan ClickToRun             [Tidak ditemukan, file Office 15.0 ditemukan]"
 set o15c2r=
 set error=1
 )
@@ -557,16 +557,16 @@ if "%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="" (
 set error=1
 echo:
 if not "%o14c2r%%o16uwp%"=="" (
-call :dk_color %Red% "Checking Supported Office Install       [Not Found]"
+call :dk_color %Red% "Memeriksa Instalasi Office Didukung      [Tidak Ditemukan]"
 ) else (
-call :dk_color %Red% "Checking Installed Office               [Not Found]"
+call :dk_color %Red% "Memeriksa Office Terinstal               [Tidak Ditemukan]"
 )
 
 if defined ohub (
 echo:
-echo You only have the Office Dashboard app installed; you need to install the full version of Office.
+echo Anda hanya menginstal aplikasi Dashboard Office; Anda perlu menginstal versi lengkap Office.
 )
-call :dk_color %Blue% "Download and install Office from the URL below, then try again."
+call :dk_color %Blue% "Unduh dan instal Office dari URL di bawah, lalu coba lagi."
 set fixes=%fixes% %mas%genuine-installation-media
 call :dk_color %_Yellow% "%mas%genuine-installation-media"
 goto dk_done
@@ -577,12 +577,12 @@ if not "%o16c2r%%o15c2r%%o16msi%%o15msi%%o14msi%"=="1" set multioffice=1
 if not "%o14c2r%%o16uwp%"=="" set multioffice=1
 
 if defined multioffice (
-call :dk_color %Gray% "Checking Multiple Office Install        [Found, its recommended to install only one version]"
+call :dk_color %Gray% "Memeriksa Instalasi Office Ganda        [Ditemukan, disarankan hanya instal satu versi]"
 )
 
 ::========================================================================================================================================
 
-::  Check Windows Server
+::  Memeriksa Windows Server
 
 set winserver=
 reg query "HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions" /v ProductType %nul2% | find /i "WinNT" %nul1% || set winserver=1
@@ -592,7 +592,7 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2
 
 ::========================================================================================================================================
 
-:: Check Smart App Control
+:: Memeriksa Smart App Control
 
 set "sacstate="
 if %winbuild% GEQ 22621 (
@@ -600,19 +600,19 @@ for /f "tokens=3" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\CI\P
 )
 if defined sacstate (
 if "%sacstate%"=="0x1" (
-call :dk_color %Gray% "Checking Smart App Control State        [Enabled]"
-call :dk_color %Blue% "Smart App Control may prevent you from opening Office after Ohook activation."
-call :dk_color %Blue% "You will need to disable it from the Windows Defender settings if it does."
+call :dk_color %Gray% "Memeriksa Status Smart App Control      [Aktif]"
+call :dk_color %Blue% "Smart App Control mungkin mencegah Anda membuka Office setelah aktivasi Ohook."
+call :dk_color %Blue% "Anda perlu menonaktifkannya dari pengaturan Windows Defender jika hal itu terjadi."
 ) else if "%sacstate%"=="0x2" (
-call :dk_color %Gray% "Checking Smart App Control State        [Evaluation]"
-call :dk_color %Blue% "Smart App Control may prevent you from opening Office in the future if it enables itself after the evaluation period."
-call :dk_color %Blue% "It is recommended that you disable it from the Windows Defender settings."
+call :dk_color %Gray% "Memeriksa Status Smart App Control      [Evaluasi]"
+call :dk_color %Blue% "Smart App Control mungkin mencegah Anda membuka Office di masa depan jika diaktifkan sendiri setelah masa evaluasi."
+call :dk_color %Blue% "Disarankan untuk menonaktifkannya dari pengaturan Windows Defender."
 )
 )
 
 ::========================================================================================================================================
 
-::  Process Office 15.0 C2R
+::  Memproses Office 15.0 C2R
 
 if not defined o15c2r goto :starto16c2r
 
@@ -642,16 +642,16 @@ if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=spp
 call :oh_ppcpath
 
 echo:
-echo Activating Office...                    [C2R ^| %_version% ^| %_oArch%]
+echo Mengaktifkan Office...                  [C2R ^| %_version% ^| %_oArch%]
 
 if not defined _oIds (
-call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+call :dk_color %Red% "Memeriksa Produk Terinstal              [ID Produk tidak ditemukan. Membatalkan aktivasi...]"
 set error=1
 goto :starto16c2r
 )
 
 if defined noOsppc (
-call :dk_color %Red% "Checking OSPPC.DLL                      [Not found. Aborting activation...]"
+call :dk_color %Red% "Memeriksa OSPPC.DLL                     [Tidak ditemukan. Membatalkan aktivasi...]"
 call :dk_color %Blue% "%_fixmsg%"
 set error=1
 goto :starto16c2r
@@ -670,7 +670,7 @@ call :oh_hookinstall
 
 :starto16c2r
 
-::  Process Office 16.0 C2R
+::  Memproses Office 16.0 C2R
 
 if not defined o16c2r goto :startmsi
 
@@ -700,16 +700,16 @@ if /i "%_oArch%"=="x86" (set "_hookPath=%_oRoot%\vfs\SystemX86" & set "_hook=spp
 call :oh_ppcpath
 
 echo:
-echo Activating Office...                    [C2R ^| %_version% %_AudienceData%^| %_oArch%]
+echo Mengaktifkan Office...                  [C2R ^| %_version% %_AudienceData%^| %_oArch%]
 
 if not defined _oIds (
-call :dk_color %Red% "Checking Installed Products             [Product IDs not found. Aborting activation...]"
+call :dk_color %Red% "Memeriksa Produk Terinstal              [ID Produk tidak ditemukan. Membatalkan aktivasi...]"
 set error=1
 goto :startmsi
 )
 
 if defined noOsppc (
-call :dk_color %Red% "Checking OSPPC.DLL                      [Not found. Aborting activation...]"
+call :dk_color %Red% "Memeriksa OSPPC.DLL                     [Tidak ditemukan. Membatalkan aktivasi...]"
 call :dk_color %Blue% "%_fixmsg%"
 set error=1
 goto :startmsi
@@ -732,7 +732,7 @@ call :oh_hookinstall
 
 if defined _sublic (
 if not exist "%_oLPath%\Word2021VL_KMS_Client_AE*.xrm-ms" (
-call :dk_color %Gray% "Checking Old Office With Sub License    [Found. Update Office, otherwise, it may show a licensing issue-related banner.]"
+call :dk_color %Gray% "Memeriksa Office Lama Dengan Lisensi Sub [Ditemukan. Perbarui Office, jika tidak, mungkin akan muncul banner terkait masalah lisensi.]"
 )
 )
 
@@ -751,7 +751,7 @@ reg add "%kmskey%" /f /v KeyManagementServiceName /t REG_SZ /d "10.0.0.10" /reg:
 )
 reg delete "%kmskey%" /f %nul%
 reg add "%kmskey%" /f /v KeyManagementServiceName /t REG_SZ /d "10.0.0.10" %nul%
-echo Adding a Registry to Prevent Banner     [Successful]
+echo Menambahkan Registri untuk Mencegah Banner [Berhasil]
 )
 )
 
@@ -775,14 +775,14 @@ call :oh_licrefresh
 
 echo:
 if not defined error (
-call :dk_color %Green% "Office is permanently activated."
-if defined ohub call :dk_color %Gray% "Office apps such as Word, Excel are activated, use them directly. Ignore 'Buy' button in Office dashboard app."
-echo Help: %mas%troubleshoot
+call :dk_color %Green% "Office telah diaktifkan secara permanen."
+if defined ohub call :dk_color %Gray% "Aplikasi Office seperti Word, Excel sudah aktif, gunakan langsung. Abaikan tombol 'Beli' di aplikasi dashboard Office."
+echo Bantuan: %mas%troubleshoot
 ) else (
-call :dk_color %Red% "Some errors were detected."
+call :dk_color %Red% "Beberapa kesalahan terdeteksi."
 if not defined ierror if not defined showfix call :dk_color %Blue% "%_fixmsg%"
 set fixes=%fixes% %mas%troubleshoot
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%troubleshoot"
 )
 
 goto :dk_done
@@ -793,7 +793,7 @@ goto :dk_done
 
 cls
 if not defined terminal mode 145, 32
-title  Uninstall Ohook Activation %masver%
+title  Menghapus Instalasi Aktivasi Ohook %masver%
 
 set _present=
 set _unerror=
@@ -801,7 +801,7 @@ call :oh_reset
 call :oh_getpath
 
 echo:
-echo Uninstalling Ohook activation...
+echo Menghapus instalasi aktivasi Ohook...
 echo:
 
 if defined o16c2r_reg (for /f "skip=2 tokens=2*" %%a in ('"reg query %o16c2r_reg% /v InstallPath" %nul6%') do (set "_16CHook=%%b\root\vfs"))
@@ -843,13 +843,13 @@ if !size! GEQ 1 if !size! LSS 100000 (
 set _present=1
 del /f /q "%%~G"
 if exist "%%~G" (move /y "%%~G" "!_ttemp!\needsToBeDeleted%random%" %nul%)
-if exist "%%~G" (set _unerror=1) else (echo Deleted file - %%~G)
+if exist "%%~G" (set _unerror=1) else (echo File dihapus - %%~G)
 )
 if /i sppcs.dll==%%# if !size! GEQ 100000 (
 move /y "%%~G" "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL" %nul%
 if exist "%%~G" (move /y "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL" "!_ttemp!\needsToBeDeleted%random%" %nul%)
 move /y "%%~G" "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL" %nul%
-if exist "%%~G" (set _unerror=1&echo Failed to rename sppcs.dll back to "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL") else (echo Renamed sppcs.dll back to "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL")
+if exist "%%~G" (set _unerror=1&echo Gagal mengganti nama sppcs.dll kembali ke "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL") else (echo Berhasil mengganti nama sppcs.dll kembali ke "%%~A\Microsoft Shared\OfficeSoftwareProtectionPlatform\OSPPC.DLL")
 )
 )
 )
@@ -859,7 +859,7 @@ if exist "%%~G" (set _unerror=1&echo Failed to rename sppcs.dll back to "%%~A\Mi
 
 reg query HKCU\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency %nul% && (
 echo:
-echo Deleting - Registry keys for skipping license check
+echo Menghapus - Kunci registri untuk melewati pemeriksaan lisensi
 
 reg load HKU\DEF_TEMP %SystemDrive%\Users\Default\NTUSER.DAT %nul%
 reg query HKU\DEF_TEMP\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency %nul% && reg delete HKU\DEF_TEMP\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f
@@ -891,7 +891,7 @@ reg unload HKU\%%# %nul%
 set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
 reg query "%kmskey%" %nul% && (
 echo:
-echo Deleting - Registry keys for preventing non-genuine banner
+echo Menghapus - Kunci registri untuk mencegah banner tidak asli
 reg delete "%kmskey%" /f
 )
 
@@ -903,19 +903,19 @@ echo ___________________________________________________________________________
 echo:
 
 if not defined _present (
-echo Ohook activation is not installed.
+echo Aktivasi Ohook tidak terinstal.
 ) else (
 if defined _unerror (
-call :dk_color %Red% "Failed to uninstall Ohook activation."
+call :dk_color %Red% "Gagal menghapus instalasi aktivasi Ohook."
 call :oh_checkapps
 if defined checknames (
-call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If it is still not fixed, reboot your machine using the restart option and try again."
+call :dk_color %Blue% "Tutup [!checknames!] dan coba lagi."
+call :dk_color %Blue% "Jika masih belum berhasil, mulai ulang komputer Anda menggunakan opsi restart dan coba lagi."
 ) else (
-call :dk_color %Blue% "Reboot your machine using the restart option and try again."
+call :dk_color %Blue% "Mulai ulang komputer Anda menggunakan opsi restart dan coba lagi."
 )
 ) else (
-call :dk_color %Green% "Successfully uninstalled Ohook activation."
+call :dk_color %Green% "Aktivasi Ohook berhasil dihapus."
 )
 )
 echo __________________________________________________________________________________________
@@ -987,8 +987,8 @@ if %%#==2024 set _offver=2024
 if exist "!_oLPath!\ProPlus!_offver!PreviewVL_*.xrm-ms" if not exist "!_oLPath!\ProPlus!_offver!VL_*.xrm-ms" (
 set error=1
 set showfix=1
-call :dk_color %Red% "Checking Expired Preview Products       [Office %%# Preview Found]"
-call :dk_color %Blue% "Please run the Office updates first, and then attempt to activate it again."
+call :dk_color %Red% "Memeriksa Produk Preview Kadaluarsa      [Office %%# Preview Ditemukan]"
+call :dk_color %Blue% "Jalankan pembaruan Office terlebih dahulu, kemudian coba aktifkan kembali."
 )
 )
 
@@ -1045,7 +1045,7 @@ exit /b
 :oh_fixprids
 
 if not defined _prids (
-call :dk_color %Gray% "Checking ProductReleaseIds In Registry  [Not Found]"
+call :dk_color %Gray% "Memeriksa ProductReleaseIds Di Registri  [Tidak Ditemukan]"
 exit /b
 )
 
@@ -1086,7 +1086,7 @@ call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
 echo "!allapps!" | find /i "!_actid!" %nul1% && exit /b
 )
 
-::  Fallback to manual method to install licenses incase integrator.exe is not working
+::  Metode fallback manual untuk menginstal lisensi jika integrator.exe tidak bekerja
 
 set _License=%_License:XVolume=XC2RVL_%
 
@@ -1115,7 +1115,7 @@ if defined _arr (set "_arr=!_arr!;"!_oLPath!\%%~nx#"") else (set "_arr="!_oLPath
 call :dk_actids 0ff1ce15-a989-479d-af46-f275c6370663
 echo "!allapps!" | find /i "!_actid!" %nul1% || (
 set error=1
-call :dk_color %Red% "Installing Missing License Files        [Office %oVer%.0 %_prod%] [Failed]"
+call :dk_color %Red% "Menginstal File Lisensi yang Hilang      [Office %oVer%.0 %_prod%] [Gagal]"
 )
 
 exit /b
@@ -1132,12 +1132,12 @@ if %_hook%==sppc64.dll set offset=3076
 
 ::======================================
 
-::  Remove previous Install
+::  Menghapus instalasi sebelumnya
 
 for %%# in (sppcs.dll sppc.dll) do (
 del /f /q "%_hookPath%\%%#" %nul%
 if exist "%_hookPath%\%%#" (move /y "%_hookPath%\%%#" "!_ttemp!\needsToBeDeleted%random%" %nul%)
-if exist "%_hookPath%\%%#" (set "ierror=Remove Previous Ohook Install [%%#]")
+if exist "%_hookPath%\%%#" (set "ierror=Hapus Instalasi Ohook Sebelumnya [%%#]")
 )
 
 if defined ierror goto :oh_hookinstall_error
@@ -1146,7 +1146,7 @@ if defined ierror goto :oh_hookinstall_error
 
 mklink "%_hookPath%\sppcs.dll" "%_sppcPath%" %nul%
 if not exist "%_hookPath%\sppcs.dll" (
-set ierror=mklink sppcs.dll
+set ierror=buat symlink sppcs.dll
 goto :oh_hookinstall_error
 )
 
@@ -1168,11 +1168,11 @@ goto :oh_hookinstall_error
 )
 
 echo:
-echo Symlinking System's sppc.dll            ["%_hookPath%\sppcs.dll"] [Successful]
+echo Membuat Symlink sppc.dll sistem          ["%_hookPath%\sppcs.dll"] [Berhasil]
 if defined exhook (
-echo Copying Custom %_hook% to            ["%_hookPath%\sppc.dll"] [Successful]
+echo Menyalin %_hook% Kustom ke            ["%_hookPath%\sppc.dll"] [Berhasil]
 ) else (
-echo Extracting Custom %_hook% to         ["%_hookPath%\sppc.dll"] [Successful]
+echo Mengekstrak %_hook% Kustom ke         ["%_hookPath%\sppc.dll"] [Berhasil]
 )
 
 goto :oh_hookinstall_error
@@ -1189,7 +1189,7 @@ if defined _hook68 set offset68=3076
 
 ::======================================
 
-::  Remove previous Install
+::  Menghapus instalasi sebelumnya
 
 for %%# in (OSPPC.DLL sppcs.dll) do (
 for %%A in ("%_osppPath68%\%%#" "%_osppPath86%\%%#") do (
@@ -1198,7 +1198,7 @@ set size=%%~zA
 if !size! GEQ 1 if !size! LSS 100000 (
 del /f /q "%%~A" %nul%
 if exist "%%~A" (move /y "%%~A" "!_ttemp!\needsToBeDeleted%random%" %nul%)
-if exist "%%~A" (set "ierror=Remove Previous Ohook Install [%%#]")
+if exist "%%~A" (set "ierror=Hapus Instalasi Ohook Sebelumnya [%%#]")
 )
 )
 )
@@ -1211,12 +1211,12 @@ if exist "%%~A\sppcs.dll" (
 move /y "%%~A\OSPPC.DLL" "!_ttemp!\needsToBeDeleted%random%" %nul%
 move /y "%%~A\sppcs.dll" "%%~A\OSPPC.DLL" %nul%
 )
-if exist "%%~A\sppcs.dll" (set "ierror=Move sppcs.dll back to OSPPC.DLL")
+if exist "%%~A\sppcs.dll" (set "ierror=Pindahkan sppcs.dll kembali ke OSPPC.DLL")
 )
 
 del /f /q "%_hookPath%\sppcs.dll" %nul%
 if exist "%_hookPath%\sppcs.dll" (move /y "%_hookPath%\sppcs.dll" "!_ttemp!\needsToBeDeleted%random%" %nul%)
-if exist "%_hookPath%\sppcs.dll" (set "ierror=Remove Previous Ohook mklink sppcs.dll")
+if exist "%_hookPath%\sppcs.dll" (set "ierror=Hapus symlink mklink sppcs.dll Ohook Sebelumnya")
 
 if defined ierror goto :oh_hookinstall_error
 
@@ -1226,7 +1226,7 @@ if defined _osppPath68 (move /y "%_osppPath68%\OSPPC.DLL" "%_osppPath68%\sppcs.d
 if defined _osppPath86 (move /y "%_osppPath86%\OSPPC.DLL" "%_osppPath86%\sppcs.dll" %nul% & if not exist "%_osppPath86%\sppcs.dll" set ierror=1)
 
 if defined ierror (
-set "ierror=Rename OSPPC.DLL"
+set "ierror=Ganti Nama OSPPC.DLL"
 goto :oh_hookinstall_error
 )
 
@@ -1256,22 +1256,22 @@ if defined _osppPath68 (if not exist "%_osppPath68%\OSPPC.DLL" set ierror=1)
 if defined _osppPath86 (if not exist "%_osppPath86%\OSPPC.DLL" set ierror=1)
 
 if defined ierror (
-set ierror=Copy
+set ierror=Salin
 goto :oh_hookinstall_error
 )
 
 echo:
-if defined _osppPath68 (echo Renaming OSPPC.DLL to sppcs.dll         ["%_osppPath68%\sppcs.dll"])
-if defined _osppPath86 (echo Renaming OSPPC.DLL to sppcs.dll         ["%_osppPath86%\sppcs.dll"])
+if defined _osppPath68 (echo Mengganti nama OSPPC.DLL menjadi sppcs.dll  ["%_osppPath68%\sppcs.dll"])
+if defined _osppPath86 (echo Mengganti nama OSPPC.DLL menjadi sppcs.dll  ["%_osppPath86%\sppcs.dll"])
 if defined exhook (
-if defined _osppPath68 (echo Copying Custom %_hook68% to            ["%_osppPath68%\OSPPC.DLL"])
-if defined _osppPath86 (echo Copying Custom %_hook86% to            ["%_osppPath86%\OSPPC.DLL"])
+if defined _osppPath68 (echo Menyalin %_hook68% Kustom ke            ["%_osppPath68%\OSPPC.DLL"])
+if defined _osppPath86 (echo Menyalin %_hook86% Kustom ke            ["%_osppPath86%\OSPPC.DLL"])
 ) else (
-if defined _osppPath68 (echo Extracting Custom %_hook68% to         ["%_osppPath68%\OSPPC.DLL"])
-if defined _osppPath86 (echo Extracting Custom %_hook86% to         ["%_osppPath86%\OSPPC.DLL"])
+if defined _osppPath68 (echo Mengekstrak %_hook68% Kustom ke         ["%_osppPath68%\OSPPC.DLL"])
+if defined _osppPath86 (echo Mengekstrak %_hook86% Kustom ke         ["%_osppPath86%\OSPPC.DLL"])
 )
 
-echo Symlinking Renamed sppcs.dll            ["%_hookPath%\sppcs.dll"]
+echo Membuat Symlink sppcs.dll yang diganti nama ["%_hookPath%\sppcs.dll"]
 
 ::========================================================================================================================================
 
@@ -1279,15 +1279,15 @@ echo Symlinking Renamed sppcs.dll            ["%_hookPath%\sppcs.dll"]
 
 if defined ierror (
 set error=1
-call :dk_color %Red% "Installing Ohook                        [Failed to %ierror%]"
+call :dk_color %Red% "Menginstal Ohook                        [Gagal melakukan %ierror%]"
 echo:
 call :oh_checkapps
 if defined checknames (
-call :dk_color %Blue% "Close [!checknames!] and try again."
-call :dk_color %Blue% "If it is still not fixed, reboot your machine using the restart option and try again."
+call :dk_color %Blue% "Tutup [!checknames!] dan coba lagi."
+call :dk_color %Blue% "Jika masih belum berhasil, mulai ulang komputer Anda menggunakan opsi restart dan coba lagi."
 ) else (
-if /i not "%ierror%"=="Copy" call :dk_color %Blue% "Reboot your machine using the restart option and try again."
-if /i "%ierror%"=="Copy" call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
+if /i not "%ierror%"=="Salin" call :dk_color %Blue% "Mulai ulang komputer Anda menggunakan opsi restart dan coba lagi."
+if /i "%ierror%"=="Salin" call :dk_color %Blue% "Jika Anda menggunakan antivirus pihak ketiga, periksa apakah antivirus tersebut memblokir skrip."
 )
 echo:
 )
@@ -1296,9 +1296,9 @@ if not defined exhook if not defined ierror (
 if defined hasherror (
 set error=1
 set ierror=1
-call :dk_color %Red% "Modifying Hash of Custom sppcs.dll      [Failed]"
+call :dk_color %Red% "Memodifikasi Hash sppcs.dll Kustom      [Gagal]"
 ) else (
-echo Modifying Hash of Custom sppcs.dll      [Successful]
+echo Memodifikasi Hash sppcs.dll Kustom      [Berhasil]
 )
 )
 
@@ -1349,8 +1349,8 @@ if not %oVer%==14 set generickey=1
 call :dk_inskey "[!key!] [!_prod!] [!_lic!]"
 ) else (
 set error=1
-call :dk_color %Red% "Checking Product In Script              [Office %oVer%.0 !_prod! key not found in script]"
-call :dk_color %Blue% "Make sure you are using the latest version of MAS."
+call :dk_color %Red% "Memeriksa Produk Dalam Skrip            [Office %oVer%.0 !_prod! kunci tidak ditemukan dalam skrip]"
+call :dk_color %Blue% "Pastikan Anda menggunakan versi terbaru MAS."
 set fixes=%fixes% %mas%
 call :dk_color %_Yellow% "%mas%"
 )
@@ -1363,7 +1363,7 @@ if defined winserver if defined _config if exist "%_oLPath%\Word2019VL_KMS_Clien
 echo %_oIds% | find /i "Retail" %nul1% && (
 set scaIsNeeded=1
 reg add %_config% /v SharedComputerLicensing /t REG_SZ /d "1" /f %nul1%
-echo Adding SharedComputerLicensing Reg      [Successful] [Needed on Server With Retail Office]"
+echo Menambahkan SharedComputerLicensing Reg [Berhasil] [Diperlukan di Server Dengan Office Retail]"
 )
 )
 
@@ -1373,7 +1373,7 @@ exit /b
 
 :oh_processmsi
 
-::  Process Office MSI Version
+::  Memproses Versi MSI Office
 
 call :oh_reset
 if "%1"=="14" (
@@ -1399,23 +1399,23 @@ call :oh_ppcpath
 call :msiofficedata %2
 
 echo:
-echo Activating Office...                    [MSI ^| %_version% ^| %_oArch%]
+echo Mengaktifkan Office...                  [MSI ^| %_version% ^| %_oArch%]
 
 if not defined _oIds (
 set error=1
-call :dk_color %Red% "Checking Installed Products             [Product IDs not found, aborting activation...]"
+call :dk_color %Red% "Memeriksa Produk Terinstal              [ID Produk tidak ditemukan, membatalkan aktivasi...]"
 exit /b
 )
 
 if defined noOsppc (
-call :dk_color %Red% "Checking OSPPC.DLL                      [Not found. Aborting activation...]"
+call :dk_color %Red% "Memeriksa OSPPC.DLL                     [Tidak ditemukan. Membatalkan aktivasi...]"
 call :dk_color %Blue% "%_fixmsg%"
 set error=1
 exit /b
 )
 
 if %oVer%==14 if defined SingleImage (
-echo Checking Installed Products             [SingleImage product found, Professional Retail key will be used for activation]
+echo Memeriksa Produk Terinstal              [Produk SingleImage ditemukan, kunci Professional Retail akan digunakan untuk aktivasi]
 )
 
 call :oh_process
@@ -1431,7 +1431,7 @@ exit /b
 
 :oh_clearblock
 
-::  Find remnants of Office vNext/shared/device license block and remove it because it stops other licenses from appearing
+::  Menemukan sisa lisensi Office vNext/shared/device dan menghapusnya karena mencegah lisensi lain muncul
 ::  https://learn.microsoft.com/en-us/office/troubleshoot/activation/reset-office-365-proplus-activation-state
 
 set _sidlist=
@@ -1443,7 +1443,7 @@ for /f "delims=" %%a in ('%psc% "$explorerProc = Get-Process -Name explorer | Wh
 
 ::==========================
 
-::  Load the unloaded useraccounts registry
+::  Memuat registri akun pengguna yang belum dimuat
 
 set loadedsids=
 set alrloadedsids=
@@ -1472,17 +1472,17 @@ for %%# in (%_sidlist%) do set /a counter+=1
 
 if %counter% EQU 0 (
 set error=1
-call :dk_color %Red% "Checking User Accounts SID              [Not Found]"
+call :dk_color %Red% "Memeriksa SID Akun Pengguna              [Tidak Ditemukan]"
 exit /b
 )
 
 if %counter% GTR 10 (
-call :dk_color %Gray% "Checking Total User Accounts            [%counter%]"
+call :dk_color %Gray% "Memeriksa Total Akun Pengguna           [%counter%]"
 )
 
 ::==========================
 
-::  Clear the vNext/shared/device license blocks which may prevent ohook activation
+::  Menghapus blok lisensi vNext/shared/device yang mungkin mencegah aktivasi ohook
 
 set vnextexist=
 rmdir /s /q "%ProgramData%\Microsoft\Office\Licenses\" %nul%
@@ -1522,10 +1522,10 @@ reg unload HKU\!defname! %nul%
 
 if defined vnextexist (
 echo:
-call :dk_color %Gray% "The logged-in Office account has a subscription license."
-call :dk_color %Blue% "If the subscription is active, it overrides other activation methods."
-call :dk_color %Blue% "If it is expiring soon, rerun the activation script after it expires."
-call :dk_color2 %Blue% "If it has already expired and activation fails, get help here - " %_Yellow% " %mas%troubleshoot"
+call :dk_color %Gray% "Akun Office yang masuk memiliki lisensi berlangganan."
+call :dk_color %Blue% "Jika langganan aktif, langganan akan mengesampingkan metode aktivasi lainnya."
+call :dk_color %Blue% "Jika segera berakhir, jalankan kembali skrip aktivasi setelah masa berlakunya habis."
+call :dk_color2 %Blue% "Jika sudah habis masa berlakunya dan aktivasi gagal, dapatkan bantuan di sini - " %_Yellow% " %mas%troubleshoot"
 echo:
 )
 
@@ -1556,12 +1556,12 @@ reg delete "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwarePr
 reg delete "HKU\S-1-5-20\Software\Microsoft\OfficeSoftwareProtectionPlatform\Policies\0ff1ce15-a989-479d-af46-f275c6370663" /f %nul%
 reg delete "HKU\S-1-5-20\Software\Microsoft\OfficeSoftwareProtectionPlatform\Policies\59a52881-a989-479d-af46-f275c6370663" /f %nul%
 
-echo Clearing Office License Blocks          [Successfully cleared from all %counter% user accounts]
+echo Menghapus Blok Lisensi Office           [Berhasil dihapus dari semua %counter% akun pengguna]
 
 ::==========================
 
-::  Some retail products attempt to validate the license and may show a banner "There was a problem checking this device's license status."
-::  Resiliency registry entry can skip this check
+::  Beberapa produk retail mencoba memvalidasi lisensi dan mungkin menampilkan banner "Ada masalah saat memeriksa status lisensi perangkat ini."
+::  Entri registri Resiliency dapat melewati pemeriksaan ini
 
 set defname=DEFTEMP-%random%
 for /f "skip=2 tokens=2*" %%a in ('"reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList" /v Default" %nul6%') do call set "defdat=%%b"
@@ -1579,12 +1579,12 @@ for %%# in (%_sidlist%) do (
 reg delete HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /f %nul%
 reg add HKU\%%#\Software\Microsoft\Office\16.0\Common\Licensing\Resiliency /v "TimeOfLastHeartbeatFailure" /t REG_SZ /d "2040-01-01T00:00:00Z" /f %nul%
 )
-echo Adding Registry to Skip License Check   [Successfully added to all %counter% ^& future new user accounts]
+echo Menambahkan Registri untuk Melewati Cek Lisensi [Berhasil ditambahkan ke semua %counter% ^& akun pengguna baru]
 )
 
 ::==========================
 
-::  Unload the loaded useraccounts registry
+::  Menurunkan muat registri akun pengguna yang telah dimuat
 
 for %%# in (%loadedsids%) do (
 reg unload HKU\%%# %nul%
@@ -1594,7 +1594,7 @@ exit /b
 
 ::========================================================================================================================================
 
-::  Uninstall other / grace Keys
+::  Menghapus instalasi Kunci lainnya / grace
 
 :oh_uninstkey
 
@@ -1622,9 +1622,9 @@ set upk_result=2
 )
 
 if defined ohookact if not %upk_result%==0 echo:
-if %upk_result%==1 echo Uninstalling Other/Grace Keys           [Successful]
+if %upk_result%==1 echo Menghapus Kunci Lain/Grace              [Berhasil]
 if %upk_result%==2 (
-call :dk_color %Red% "Uninstalling Other/Grace Keys           [Failed]"
+call :dk_color %Red% "Menghapus Kunci Lain/Grace              [Gagal]"
 if not defined showfix (
 call :dk_color %Blue% "%_fixmsg%"
 echo:
@@ -1635,8 +1635,8 @@ exit /b
 
 ::========================================================================================================================================
 
-::  Refresh Windows Insider Preview Licenses
-::  It required in Insider versions otherwise office may not activate
+::  Memperbarui Lisensi Windows Insider Preview
+::  Diperlukan pada versi Insider, jika tidak, Office mungkin tidak dapat diaktifkan
 
 :oh_licrefresh
 
@@ -1648,7 +1648,7 @@ exit /b
 
 ::========================================================================================================================================
 
-::  Check running office apps and notify user
+::  Memeriksa aplikasi Office yang sedang berjalan dan memberi tahu pengguna
 
 :oh_checkapps
 
@@ -1719,18 +1719,18 @@ set  "_Green="Black" "Green""
 set "_Yellow="Black" "Yellow""
 )
 
-set "nceline=echo: &echo ==== ERROR ==== &echo:"
-set "eline=echo: &call :dk_color %Red% "==== ERROR ====" &echo:"
+set "nceline=echo: &echo ==== KESALAHAN ==== &echo:"
+set "eline=echo: &call :dk_color %Red% "==== KESALAHAN ====" &echo:"
 if %~z0 GEQ 200000 (
-set "_exitmsg=Go back"
-set "_fixmsg=Go back to Main Menu, select Troubleshoot and run Fix Licensing option."
+set "_exitmsg=Kembali"
+set "_fixmsg=Kembali ke Menu Utama, pilih Troubleshoot dan jalankan opsi Perbaiki Lisensi."
 ) else (
-set "_exitmsg=Exit"
-set "_fixmsg=In MAS folder, run Troubleshoot script and select Fix Licensing option."
+set "_exitmsg=Keluar"
+set "_fixmsg=Di folder MAS, jalankan skrip Troubleshoot dan pilih opsi Perbaiki Lisensi."
 )
 exit /b
 
-::  Show OS info
+::  Menampilkan info OS
 
 :dk_showosinfo
 
@@ -1745,10 +1745,10 @@ if defined UBR (set "fullbuild=%%G.!UBR!") else (set "fullbuild=%%G.%%H")
 )
 )
 
-echo Checking OS Info                        [%winos% ^| %fullbuild% ^| %osarch%]
+echo Memeriksa Info OS                       [%winos% ^| %fullbuild% ^| %osarch%]
 exit /b
 
-::  Refresh license status
+::  Memperbarui status lisensi
 
 :dk_refresh
 
@@ -1756,7 +1756,7 @@ if %_wmic% EQU 1 wmic path %sps% where __CLASS='%sps%' call RefreshLicenseStatus
 if %_wmic% EQU 0 %psc% "$null=(([WMICLASS]'%sps%').GetInstances()).RefreshLicenseStatus()" %nul%
 exit /b
 
-::  Install Key
+::  Menginstal Kunci
 
 :dk_inskey
 
@@ -1766,14 +1766,14 @@ set keyerror=%errorlevel%
 cmd /c exit /b %keyerror%
 if %keyerror% NEQ 0 set "keyerror=[0x%=ExitCode%]"
 
-if defined generickey (set "keyecho=Installing Generic Product Key         ") else (set "keyecho=Installing Product Key                 ")
+if defined generickey (set "keyecho=Menginstal Kunci Produk Generik         ") else (set "keyecho=Menginstal Kunci Produk                ")
 if %keyerror% EQU 0 (
 if %sps%==SoftwareLicensingService call :dk_refresh
 echo %keyecho% %~1 [Successful]
 ) else (
-call :dk_color %Red% "%keyecho% %~1 [Failed] %keyerror%"
+call :dk_color %Red% "%keyecho% %~1 [Gagal] %keyerror%"
 if not defined showfix (
-if defined altapplist call :dk_color %Red% "Activation ID not found for this key."
+if defined altapplist call :dk_color %Red% "ID Aktivasi tidak ditemukan untuk kunci ini."
 call :dk_color %Blue% "%_fixmsg%"
 echo:
 set showfix=1
@@ -1784,7 +1784,7 @@ set error=1
 set generickey=
 exit /b
 
-::  Get all products Activation IDs
+::  Mendapatkan semua ID Aktivasi produk
 
 :dk_actids
 
@@ -1793,7 +1793,7 @@ if %_wmic% EQU 1 set "chkapp=for /f "tokens=2 delims==" %%a in ('"wmic path %spp
 if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISEARCHER]'SELECT ID FROM %spp% WHERE ApplicationID=''%1''').Get()).ID ^| %% {echo ('ID='+$_)}" %nul6%')"
 %chkapp% do (if defined allapps (call set "allapps=!allapps! %%a") else (call set "allapps=%%a"))
 
-::  Check potential script crash issue when user manually installs way too many licenses for Office (length limit in variable)
+::  Memeriksa potensi crash skrip ketika pengguna secara manual menginstal terlalu banyak lisensi Office (batas panjang variabel)
 
 if defined allapps if %1==0ff1ce15-a989-479d-af46-f275c6370663 (
 set len=0
@@ -1803,14 +1803,14 @@ del "!_ttemp!\chklen" %nul%
 
 if !len! GTR 6000 (
 %eline%
-echo Too many licenses are installed, the script may crash.
+echo Terlalu banyak lisensi yang terinstal, skrip mungkin akan crash.
 call :dk_color %Blue% "%_fixmsg%"
 timeout /t 30
 )
 )
 exit /b
 
-::  Get installed products Activation IDs
+::  Mendapatkan ID Aktivasi produk yang terinstal
 
 :dk_actid
 
@@ -1820,7 +1820,7 @@ if %_wmic% EQU 0 set "chkapp=for /f "tokens=2 delims==" %%a in ('%psc% "(([WMISE
 %chkapp% do (if defined apps (call set "apps=!apps! %%a") else (call set "apps=%%a"))
 exit /b
 
-::  Install License files using Powershell/WMI instead of slmgr.vbs
+::  Menginstal file lisensi menggunakan PowerShell/WMI sebagai pengganti slmgr.vbs
 
 :xrm:
 function InstallLicenseFile($Lsc) {
@@ -1845,7 +1845,7 @@ function ReinstallLicenses() {
 }
 :xrm:
 
-::  Check wmic.exe
+::  Memeriksa wmic.exe
 
 :dk_ckeckwmic
 
@@ -1856,7 +1856,7 @@ cmd /c "wmic path Win32_ComputerSystem get CreationClassName /value" %nul2% | fi
 )
 exit /b
 
-::  Show info for potential script stuck scenario
+::  Menampilkan info untuk skenario skrip yang kemungkinan macet
 
 :dk_sppissue
 
@@ -1865,10 +1865,10 @@ set spperror=%errorlevel%
 
 if %spperror% NEQ 1056 if %spperror% NEQ 0 (
 %eline%
-echo sc start %_slser% [Error Code: %spperror%]
+echo kode sc start %_slser% [Kode Kesalahan: %spperror%]
 if %spperror% EQU 1053 (
-call :dk_color %Blue% "Reboot your machine using the restart option and try again."
-call :dk_color %Blue% "If it still does not work, go back to Main Menu, select Troubleshoot and run Fix WPA Registry option."
+call :dk_color %Blue% "Mulai ulang komputer Anda menggunakan opsi restart dan coba lagi."
+call :dk_color %Blue% "Jika masih tidak berhasil, kembali ke Menu Utama, pilih Troubleshoot dan jalankan opsi Perbaiki Registri WPA."
 )
 )
 
@@ -1876,7 +1876,7 @@ echo:
 %psc% "$job = Start-Job { (Get-WmiObject -Query 'SELECT * FROM %sps%').Version }; if (-not (Wait-Job $job -Timeout 30)) {write-host '%_slser% is not working correctly. Check this webpage for help - %mas%troubleshoot'}"
 exit /b
 
-::  Get Product name (WMI/REG methods are not reliable in all conditions, hence winbrand.dll method is used)
+::  Mendapatkan nama Produk (metode WMI/REG tidak dapat diandalkan dalam semua kondisi, sehingga metode winbrand.dll digunakan)
 
 :dk_product
 
@@ -1894,7 +1894,7 @@ set winos=!winos:Windows 10=Windows 11!
 
 exit /b
 
-::  Common lines used in PowerShell reflection code
+::  Baris umum yang digunakan dalam kode refleksi PowerShell
 
 :dk_reflection
 
@@ -1907,8 +1907,8 @@ exit /b
 
 :dk_chkmal
 
-::  Many users unknowingly download mal-ware by using activators found through Google search.
-::  This code aims to notify users that their system has been affected by mal-ware.
+::  Banyak pengguna secara tidak sadar mengunduh mal-ware menggunakan aktivator yang ditemukan melalui pencarian Google.
+::  Kode ini bertujuan untuk memberi tahu pengguna bahwa sistem mereka telah terkena mal-ware.
 
 set w=
 set results=
@@ -1930,15 +1930,15 @@ if not exist %SysPath%\%_slexe% if not exist %SysPath%\alg.exe (set "results=%re
 )
 
 if not "%results%%pupfound%"=="" (
-if defined pupfound call :dk_color %Gray% "Checking PUP Activators                 [Found%pupfound%]"
-if defined results call :dk_color %Red% "Checking Probable Mal%w%ware Infection..."
+if defined pupfound call :dk_color %Gray% "Memeriksa Aktivator PUP                 [Ditemukan%pupfound%]"
+if defined results call :dk_color %Red% "Memeriksa Kemungkinan Infeksi Mal%w%ware..."
 if defined results (call :dk_color %Red% "%results%"&set showfix=1)
 set fixes=%fixes% %mas%remove_mal%w%ware
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%remove_mal%w%ware"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%remove_mal%w%ware"
 echo:
 )
 
-::  Remove the scheduled task of R@1n-KMS (old version) that runs the activation command every minute, as it leads to high CPU usage.
+::  Menghapus tugas terjadwal R@1n-KMS (versi lama) yang menjalankan perintah aktivasi setiap menit, karena menyebabkan penggunaan CPU tinggi.
 
 if exist %SysPath%\Tasks\R@1n-KMS (
 for /f %%A in ('dir /b /a:-d %SysPath%\Tasks\R@1n-KMS %nul6%') do (schtasks /delete /tn \R@1n-KMS\%%A /f %nul%)
@@ -1955,12 +1955,12 @@ call :dk_chkmal
 
 ::==============================
 
-::  Check Sandboxing
+::  Memeriksa Sandboxing
 
 sc query Null %nul% || (
-call :dk_color %Red% "Checking Sandboxing                     [Found, script may not work properly]"
+call :dk_color %Red% "Memeriksa Sandboxing                    [Ditemukan, skrip mungkin tidak bekerja dengan benar]"
 if not defined showfix (
-call :dk_color %Blue% "If you are using any third-party antivirus, check if it is blocking the script."
+call :dk_color %Blue% "Jika Anda menggunakan antivirus pihak ketiga, periksa apakah antivirus tersebut memblokir skrip."
 echo:
 )
 set error=1
@@ -1969,13 +1969,13 @@ set showfix=1
 
 ::==============================
 
-::  Check WinPE mode
+::  Memeriksa mode WinPE
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WinPE" /v InstRoot %nul% && (
 
-call :dk_color %Red% "Checking WinPE                          [Found]"
+call :dk_color %Red% "Memeriksa WinPE                         [Ditemukan]"
 if not defined showfix (
-call :dk_color %Blue% "WinPE mode found. Reboot the system and run in normal mode."
+call :dk_color %Blue% "Mode WinPE ditemukan. Mulai ulang sistem dan jalankan dalam mode normal."
 echo:
 )
 set error=1
@@ -1984,12 +1984,12 @@ set showfix=1
 
 ::==============================
 
-::  Check Safe mode
+::  Memeriksa Mode Aman
 
 if defined safeboot_option (
-call :dk_color %Red% "Checking Boot Mode                      [%safeboot_option%]"
+call :dk_color %Red% "Memeriksa Mode Boot                     [%safeboot_option%]"
 if not defined showfix (
-call :dk_color %Blue% "Safe mode found. Reboot the system and run in normal mode."
+call :dk_color %Blue% "Mode aman ditemukan. Mulai ulang sistem dan jalankan dalam mode normal."
 echo:
 )
 set error=1
@@ -1998,16 +1998,16 @@ set showfix=1
 
 ::==============================
 
-::  Check ImageState
+::  Memeriksa ImageState
 ::  https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-states
 
 for /f "skip=2 tokens=2*" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\State" /v ImageState') do (set imagestate=%%B)
 
 if /i not "%imagestate%"=="IMAGE_STATE_COMPLETE" (
-call :dk_color %Gray% "Checking Windows Setup State            [%imagestate%]"
+call :dk_color %Gray% "Memeriksa Status Windows Setup          [%imagestate%]"
 echo "%imagestate%" | find /i "RESEAL" %nul% && (
 if not defined showfix (
-call :dk_color %Blue% "You need to run it in normal mode in case you are running it in Audit Mode."
+call :dk_color %Blue% "Anda perlu menjalankannya dalam mode normal apabila sedang menjalankannya dalam Mode Audit."
 echo:
 )
 set error=1
@@ -2016,7 +2016,7 @@ set showfix=1
 echo "%imagestate%" | find /i "UNDEPLOYABLE" %nul% && (
 if not defined showfix (
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "If the activation fails, do this - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Jika aktivasi gagal, lakukan ini - " %_Yellow% " %mas%in-place_repair_upgrade"
 echo:
 )
 )
@@ -2024,7 +2024,7 @@ echo:
 
 ::==============================
 
-::  Check corrupt services
+::  Memeriksa layanan yang rusak
 
 set serv_cor=
 for %%# in (%_serv%) do (
@@ -2041,16 +2041,16 @@ if defined _corrupt (if defined serv_cor (set "serv_cor=!serv_cor! %%#!_regcorr!
 )
 
 if defined serv_cor (
-call :dk_color %Red% "Checking Corrupt Services               [%serv_cor%]"
+call :dk_color %Red% "Memeriksa Layanan yang Rusak            [%serv_cor%]"
 
 if not defined showfix (
 echo:
 if /i "%serv_cor%"=="sppsvc-RegistryError" (
 set fixes=%fixes% %mas%fix_service
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%fix_service"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%fix_service"
 ) else (
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%in-place_repair_upgrade"
 )
 echo:
 )
@@ -2061,7 +2061,7 @@ set showfix=1
 
 ::==============================
 
-::  Check disabled services
+::  Memeriksa layanan yang dinonaktifkan
 
 set serv_ste=
 for %%# in (%_serv%) do (
@@ -2069,7 +2069,7 @@ sc start %%# %nul%
 if !errorlevel! EQU 1058 (if defined serv_ste (set "serv_ste=!serv_ste! %%#") else (set "serv_ste=%%#"))
 )
 
-::  Change disabled services startup type to default
+::  Mengubah jenis startup layanan yang dinonaktifkan ke default
 
 set serv_csts=
 set serv_cste=
@@ -2091,19 +2091,19 @@ if defined serv_cste (set "serv_cste=!serv_cste! %%#") else (set "serv_cste=%%#"
 )
 )
 
-if defined serv_csts call :dk_color %Gray% "Enabling Disabled Services              [Successful] [%serv_csts%]"
+if defined serv_csts call :dk_color %Gray% "Mengaktifkan Layanan yang Dinonaktifkan  [Berhasil] [%serv_csts%]"
 
 if defined serv_cste (
-call :dk_color %Red% "Enabling Disabled Services              [Failed] [%serv_cste%]"
+call :dk_color %Red% "Mengaktifkan Layanan yang Dinonaktifkan  [Gagal] [%serv_cste%]"
 
 if not defined showfix (
 echo:
 echo %serv_cste% | findstr /i "ClipSVC sppsvc" %nul% && (
-echo A registry fix has been applied to enable the disabled service.
-call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
+echo Perbaikan registri telah diterapkan untuk mengaktifkan layanan yang dinonaktifkan.
+call :dk_color %Blue% "Mulai ulang komputer Anda menggunakan opsi restart untuk memperbaiki kesalahan ini."
 ) || (
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%in-place_repair_upgrade"
 )
 echo:
 )
@@ -2114,8 +2114,8 @@ set showfix=1
 
 ::==============================
 
-::  Check if the services are able to run or not
-::  Workarounds are added to get correct status and error code because sc query doesn't output correct results in some conditions
+::  Memeriksa apakah layanan dapat berjalan atau tidak
+::  Solusi sementara ditambahkan untuk mendapatkan status dan kode kesalahan yang benar karena sc query tidak menghasilkan hasil yang tepat dalam beberapa kondisi
 
 set serv_e=
 for %%# in (%_serv%) do (
@@ -2134,15 +2134,15 @@ if defined checkerror if defined serv_e (set "serv_e=!serv_e!, %%#-!errorcode!")
 )
 
 if defined serv_e (
-call :dk_color %Red% "Starting Services                       [Failed] [%serv_e%]"
+call :dk_color %Red% "Memulai Layanan                         [Gagal] [%serv_e%]"
 
 if not defined showfix (
 set listwospp=%_serv:sppsvc=%
 echo %serv_e% | findstr /i "!listwospp!" %nul% && (
 set showfix=1
-call :dk_color %Blue% "Reboot your machine using the restart option and run the script again."
+call :dk_color %Blue% "Mulai ulang komputer Anda menggunakan opsi restart dan jalankan skrip lagi."
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "If service error is still not fixed, do this - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Jika kesalahan layanan masih belum diperbaiki, lakukan ini - " %_Yellow% " %mas%in-place_repair_upgrade"
 echo:
 )
 )
@@ -2151,7 +2151,7 @@ set error=1
 
 ::==============================
 
-::  Check WMI
+::  Memeriksa WMI
 
 set wmifailed=
 if %_wmic% EQU 1 wmic path Win32_ComputerSystem get CreationClassName /value %nul2% | find /i "computersystem" %nul1%
@@ -2168,10 +2168,10 @@ if %error_code% NEQ 0 set "error_code=0x%=ExitCode%"
 echo "%error_code%" | findstr /i "0x800410 0x800440 0x80131501" %nul1% && set wmifailed=1& ::  https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
 
 if defined wmifailed (
-call :dk_color %Red% "Checking WMI                            [Not Working]"
+call :dk_color %Red% "Memeriksa WMI                           [Tidak Berfungsi]"
 
 if not defined showfix (
-call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run Fix WMI option."
+call :dk_color %Blue% "Kembali ke Menu Utama, pilih Troubleshoot dan jalankan opsi Perbaiki WMI."
 echo:
 )
 set error=1
@@ -2180,13 +2180,13 @@ set showfix=1
 
 ::==============================
 
-::  Check SPP Registry Key
+::  Memeriksa Kunci Registri SPP
 
 if %winbuild% GEQ 7600 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\Plugins\Objects\msft:rm/algorithm/hwid/4.0" /f ba02fed39662 /d %nul% || (
-call :dk_color %Red% "Checking SPP Registry Key               [Incorrect ModuleId Found] [Most likely caused by gaming spoofers]"
+call :dk_color %Red% "Memeriksa Kunci Registri SPP            [ModuleId Salah Ditemukan] [Kemungkinan besar disebabkan oleh gaming spoofer]"
 if not defined showfix (
 set fixes=%fixes% %mas%issues_due_to_gaming_spoofers
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%issues_due_to_gaming_spoofers"
 echo:
 )
 set error=1
@@ -2195,7 +2195,7 @@ set showfix=1
 
 ::==============================
 
-::  Check TokenStore registry key
+::  Memeriksa kunci registri TokenStore
 
 set tokenstore=
 if %winbuild% GEQ 7600 (
@@ -2203,10 +2203,10 @@ for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT
 if %winbuild% LSS 9200 set "tokenstore=%Systemdrive%\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\SoftwareProtectionPlatform"
 
 if %winbuild% GEQ 9200 if /i not "!tokenstore!"=="%SysPath%\spp\store" if /i not "!tokenstore!"=="%SysPath%\spp\store\2.0" if /i not "!tokenstore!"=="%SysPath%\spp\store_test\2.0" (
-call :dk_color %Red% "Checking TokenStore Registry Key        [Correct Path Not Found] [!tokenstore!]"
+call :dk_color %Red% "Memeriksa Kunci Registri TokenStore     [Jalur Benar Tidak Ditemukan] [!tokenstore!]"
 if not defined showfix (
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%in-place_repair_upgrade"
 echo:
 )
 set toerr=1
@@ -2217,7 +2217,7 @@ set showfix=1
 
 ::==============================
 
-::  This code creates token folder only if it's missing and sets default permission for it
+::  Kode ini membuat folder token hanya jika tidak ada dan menetapkan izin default untuknya
 
 if %winbuild% GEQ 7600 if not defined toerr if not exist "%tokenstore%\" (
 
@@ -2231,12 +2231,12 @@ set "d=!d! Set-Acl -Path %tokenstore% -AclObject $AclObject;"
 %psc% "!d!" %nul%
 
 if exist "%tokenstore%\" (
-call :dk_color %Gray% "Checking SPP Token Folder               [Not Found, Created Now] [%tokenstore%\]"
+call :dk_color %Gray% "Memeriksa Folder Token SPP              [Tidak Ditemukan, Dibuat Sekarang] [%tokenstore%\]"
 ) else (
-call :dk_color %Red% "Checking SPP Token Folder               [Not Found, Failed to Create] [%tokenstore%\]"
+call :dk_color %Red% "Memeriksa Folder Token SPP              [Tidak Ditemukan, Gagal Dibuat] [%tokenstore%\]"
 if not defined showfix (
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%in-place_repair_upgrade"
 echo:
 )
 set error=1
@@ -2246,7 +2246,7 @@ set showfix=1
 
 ::==============================
 
-::  This code checks if SPP has permission access to tokens folder and required registry keys. It's often caused by gaming spoofers.
+::  Kode ini memeriksa apakah SPP memiliki akses izin ke folder token dan kunci registri yang diperlukan. Sering disebabkan oleh gaming spoofer.
 
 set permerror=
 if %winbuild% GEQ 9200 if not defined toerr if not defined ps32onArm if exist "%tokenstore%\" (
@@ -2258,9 +2258,9 @@ for %%# in (
 %psc% "$acl = (Get-Acl '%%A' | fl | Out-String); if (-not ($acl -match 'NT SERVICE\\sppsvc Allow  %%B') -or ($acl -match 'NT SERVICE\\sppsvc Deny')) {Exit 2}" %nul%
 if !errorlevel!==2 (
 if "%%A"=="%tokenstore%" (
-set "permerror=Error Found In Token Folder"
+set "permerror=Kesalahan Ditemukan Di Folder Token"
 ) else (
-set "permerror=Error Found In SPP Registries"
+set "permerror=Kesalahan Ditemukan Di Registri SPP"
 )
 )
 )
@@ -2277,7 +2277,7 @@ if !errorlevel!==3 set "permerror=Error Found In S-1-5-20 SPP"
 )
 
 if defined permerror (
-call :dk_color %Red% "Checking SPP Permissions                [!permerror!]"
+call :dk_color %Red% "Memeriksa Izin SPP                      [!permerror!]"
 if not defined showfix (
 call :dk_color %Blue% "%_fixmsg%"
 echo:
@@ -2289,7 +2289,7 @@ set showfix=1
 
 ::==============================
 
-::  Check WPA Registry Errors
+::  Memeriksa Kesalahan Registri WPA
 
 set chkalp=
 set wpainfo=NotFound
@@ -2297,10 +2297,10 @@ for /f "delims=" %%a in ('%psc% "$f=[System.IO.File]::ReadAllText('!_batp!') -sp
 for /f "delims=0123456789" %%i in ("%wpainfo%") do set chkalp=%%i
 
 if defined chkalp (
-call :dk_color %Red% "Checking WPA Registry Errors            [%wpainfo%]"
+call :dk_color %Red% "Memeriksa Kesalahan Registri WPA        [%wpainfo%]"
 if not defined showfix (
 echo "%wpainfo%" | find /i "Error Found" %nul% && (
-call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run Fix WPA Registry option."
+call :dk_color %Blue% "Kembali ke Menu Utama, pilih Troubleshoot dan jalankan opsi Perbaiki Registri WPA."
 echo:
 set error=1
 set showfix=1
@@ -2311,23 +2311,23 @@ set wpainfo=a
 
 if not defined chkalp (
 if %wpainfo% GEQ 5000 (
-call :dk_color %Gray% "Checking WPA Registry Count             [%wpainfo%]"
-call :dk_color %Blue% "A large number of WPA registries have been found, which may cause high CPU usage."
-call :dk_color %Blue% "Go back to Main Menu, select Troubleshoot and run Fix WPA Registry option."
+call :dk_color %Gray% "Memeriksa Jumlah Registri WPA           [%wpainfo%]"
+call :dk_color %Blue% "Registri WPA dalam jumlah besar telah ditemukan, yang dapat menyebabkan penggunaan CPU tinggi."
+call :dk_color %Blue% "Kembali ke Menu Utama, pilih Troubleshoot dan jalankan opsi Perbaiki Registri WPA."
 echo:
 ) else (
-echo Checking WPA Registry Count             [%wpainfo%]
+echo Memeriksa Jumlah Registri WPA           [%wpainfo%]
 )
 )
 
 ::==============================
 
-::  Check Rearm
+::  Memeriksa Rearm
 
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\PersistedTSReArmed" %nul% && (
-call :dk_color %Red% "Checking Rearm                          [System is Rearmed]"
+call :dk_color %Red% "Memeriksa Rearm                         [Sistem Telah Di-Rearm]"
 if not defined showfix (
-call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
+call :dk_color %Blue% "Mulai ulang komputer Anda menggunakan opsi restart untuk memperbaiki kesalahan ini."
 echo:
 )
 set error=1
@@ -2336,9 +2336,9 @@ set showfix=1
 
 
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState" %nul% && (
-call :dk_color %Red% "Checking ClipSVC PersistedSystemState   [Found]"
+call :dk_color %Red% "Memeriksa ClipSVC PersistedSystemState  [Ditemukan]"
 if not defined showfix (
-call :dk_color %Blue% "Reboot your machine using the restart option to fix this error."
+call :dk_color %Blue% "Mulai ulang komputer Anda menggunakan opsi restart untuk memperbaiki kesalahan ini."
 echo:
 )
 set error=1
@@ -2347,13 +2347,13 @@ set showfix=1
 
 ::==============================
 
-::  Check SoftwareLicensingService
+::  Memeriksa SoftwareLicensingService
 
 if %error_code% NEQ 0 (
-call :dk_color %Red% "Checking SoftwareLicensingService       [Not Working] [%error_code%]"
+call :dk_color %Red% "Memeriksa SoftwareLicensingService      [Tidak Berfungsi] [%error_code%]"
 if not defined showfix (
 call :dk_color %Blue% "%_fixmsg%"
-call :dk_color %Blue% "If activation still fails then run Fix WPA Registry option."
+call :dk_color %Blue% "Jika aktivasi masih gagal, jalankan opsi Perbaiki Registri WPA."
 echo:
 )
 set error=1
@@ -2362,7 +2362,7 @@ set showfix=1
 
 ::==============================
 
-::  Check Activation IDs
+::  Memeriksa ID Aktivasi
 
 call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 
@@ -2375,14 +2375,14 @@ call :dk_actid 55c92734-d682-4d71-983e-d6ec3f16059f
 if not defined apps call :dk_actids 55c92734-d682-4d71-983e-d6ec3f16059f
 
 if not defined apps if defined allapps if not defined notwinact (
-call :dk_color %Gray% "Checking Activation IDs                 [Key Not Installed or Act ID Not Found]"
+call :dk_color %Gray% "Memeriksa ID Aktivasi                   [Kunci Tidak Terinstal atau ID Aktivasi Tidak Ditemukan]"
 )
 
 if not defined apps if not defined allapps (
-call :dk_color %Red% "Checking Activation IDs                 [Not found]"
+call :dk_color %Red% "Memeriksa ID Aktivasi                   [Tidak ditemukan]"
 if not defined showfix (
 call :dk_color %Blue% "%_fixmsg%"
-call :dk_color %Blue% "If activation still fails then run Fix WPA Registry option."
+call :dk_color %Blue% "Jika aktivasi masih gagal, jalankan opsi Perbaiki Registri WPA."
 echo:
 )
 set error=1
@@ -2391,25 +2391,25 @@ set showfix=1
 
 if not defined showfix if defined rlicfailed (
 call :dk_color %Blue% "%_fixmsg%"
-call :dk_color %Blue% "If activation still fails then run Fix WPA Registry option."
+call :dk_color %Blue% "Jika aktivasi masih gagal, jalankan opsi Perbaiki Registri WPA."
 echo:
 )
 
 if %winbuild% GEQ 7600 if exist "%tokenstore%\" if not exist "%tokenstore%\tokens.dat" (
-call :dk_color %Red% "Checking SPP tokens.dat                 [Not Found] [%tokenstore%\]"
+call :dk_color %Red% "Memeriksa SPP tokens.dat                [Tidak Ditemukan] [%tokenstore%\]"
 )
 
 ::==============================
 
-::  Check Eval Windows
+::  Memeriksa Windows Eval
 
 if not defined notwinact if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*EvalEdition~*.mum" (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Eval" %nul1% || (
-call :dk_color %Red% "Checking Eval Packages                  [License swapping found. Non-Eval licenses are installed in Eval Windows]"
+call :dk_color %Red% "Memeriksa Paket Eval                    [Penukaran lisensi ditemukan. Lisensi Non-Eval diinstal di Windows Eval]"
 if not defined showfix (
-call :dk_color %Blue% "License swapping is not the right way to upgrade to the full version. Learn the correct method at the link below."
+call :dk_color %Blue% "Penukaran lisensi bukanlah cara yang benar untuk meningkatkan ke versi lengkap. Pelajari metode yang benar di tautan di bawah."
 set fixes=%fixes% %mas%evaluation_editions
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%evaluation_editions"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%evaluation_editions"
 echo:
 )
 set error=1
@@ -2422,10 +2422,10 @@ set showfix=1
 ::  Check HKU\S-1-5-20\Software registry, in some systems it's missing and that causes Windows activation problems
 
 reg query "HKU\S-1-5-20\Software\Microsoft\Windows NT\CurrentVersion" %nul% || (
-call :dk_color %Red% "Checking HKU\S-1-5-20 Registry          [Not Found]"
+call :dk_color %Red% "Memeriksa Registri HKU\S-1-5-20        [Tidak Ditemukan]"
 if not defined showfix (
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%in-place_repair_upgrade"
 echo:
 )
 set error=1
@@ -2452,18 +2452,18 @@ if "%osSKU%"=="165" set osedition=ProfessionalEducationN
 
 if not defined notwinact (
 if %osedition%==0 (
-call :dk_color %Red% "Checking Edition Name                   [Not Found In Registry]"
+call :dk_color %Red% "Memeriksa Nama Edisi                    [Tidak Ditemukan Di Registri]"
 ) else (
 if not exist "%SysPath%\spp\tokens\skus\%osedition%\%osedition%*.xrm-ms" if not exist "%SysPath%\spp\tokens\skus\Security-SPP-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" if not exist "%SysPath%\licensing\skus\Security-Licensing-SLC-Component-SKU-%osedition%\*-%osedition%-*.xrm-ms" (
 set skunotfound=1
-call :dk_color %Red% "Checking License Files                  [Not Found] [%osedition%]"
+call :dk_color %Red% "Memeriksa File Lisensi                  [Tidak Ditemukan] [%osedition%]"
 )
 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-*-%osedition%-*.mum" (
 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-%osedition%Edition*.mum" (
-call :dk_color %Red% "Checking Package Files                  [Not Found] [%osedition%]"
+call :dk_color %Red% "Memeriksa File Paket                    [Tidak Ditemukan] [%osedition%]"
 if not defined showfix (
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%in-place_repair_upgrade"
 echo:
 )
 set error=1
@@ -2482,13 +2482,13 @@ if %winbuild% GEQ 10240 (
 %nul% set /a "sum=%slcSKU%+%regSKU%+%wmiSKU%"
 set /a "sum/=3"
 if not "!sum!"=="%slcSKU%" (
-call :dk_color %Gray% "Checking SLC/WMI/REG SKU                [Difference Found - SLC:%slcSKU% WMI:%wmiSKU% Reg:%regSKU%]"
+call :dk_color %Gray% "Memeriksa SLC/WMI/REG SKU               [Perbedaan Ditemukan - SLC:%slcSKU% WMI:%wmiSKU% Reg:%regSKU%]"
 )
 ) else (
 %nul% set /a "sum=%slcSKU%+%wmiSKU%"
 set /a "sum/=2"
 if not "!sum!"=="%slcSKU%" (
-call :dk_color %Gray% "Checking SLC/WMI SKU                    [Difference Found - SLC:%slcSKU% WMI:%wmiSKU%]"
+call :dk_color %Gray% "Memeriksa SLC/WMI SKU                   [Perbedaan Ditemukan - SLC:%slcSKU% WMI:%wmiSKU%]"
 )
 )
 )
@@ -2500,7 +2500,7 @@ call :dk_color %Gray% "Checking SLC/WMI SKU                    [Difference Found
 sc query wlms %nul%
 
 if %errorlevel% NEQ 1060 (
-echo Checking Eval WLMS Service              [Found]
+echo Memeriksa Layanan Eval WLMS             [Ditemukan]
 )
 
 ::==============================
@@ -2512,14 +2512,14 @@ reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Ima%w%ge File Execu
 )
 if defined _sppint (
 echo %_sppint% | find /i "PerfOptions" %nul% && (
-call :dk_color %Red% "Checking SPP Interference In IFEO       [%_sppint% - System might deactivate later]"
+call :dk_color %Red% "Memeriksa Interferensi SPP Di IFEO      [%_sppint% - Sistem mungkin akan dinonaktifkan nanti]"
 if not defined showfix (
 call :dk_color %Blue% "%_fixmsg%"
 echo:
 )
 set showfix=1
 ) || (
-echo Checking SPP In IFEO                    [%_sppint%]
+echo Memeriksa SPP Di IFEO                   [%_sppint%]
 )
 )
 
@@ -2529,7 +2529,7 @@ echo Checking SPP In IFEO                    [%_sppint%]
 
 if %winbuild% GEQ 7600 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" %nul6%') do if /i %%b NEQ 0x0 (
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "SkipRearm" /t REG_DWORD /d "0" /f %nul%
-call :dk_color %Gray% "Checking SkipRearm                      [Default 0 Value Not Found. Changing To 0]"
+call :dk_color %Gray% "Memeriksa SkipRearm                     [Nilai Default 0 Tidak Ditemukan. Mengubah ke 0]"
 %psc% "Start-Job { Stop-Service sppsvc -force } | Wait-Job -Timeout 20 | Out-Null"
 )
 
@@ -2546,13 +2546,13 @@ reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Soft
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTask" %nul% || set taskinfo=Removed
 if "!taskinfo!"=="" set "taskinfo=Not Found"
 
-call :dk_color %Gray% "Checking SvcRestartTask Status          [!taskinfo!. System might deactivate later.]"
+call :dk_color %Gray% "Memeriksa Status SvcRestartTask         [!taskinfo!. Sistem mungkin akan dinonaktifkan nanti.]"
 if not defined showfix (
 echo "!taskinfo!" | findstr /i "Removed Not Found" %nul1% && (
 set fixes=%fixes% %mas%in-place_repair_upgrade
-call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%in-place_repair_upgrade"
+call :dk_color2 %Blue% "Kunjungi halaman ini untuk bantuan - " %_Yellow% " %mas%in-place_repair_upgrade"
 ) || (
-call :dk_color %Blue% "Reboot your machine using the restart option and run the script again."
+call :dk_color %Blue% "Mulai ulang komputer Anda menggunakan opsi restart dan jalankan skrip lagi."
 )
 echo:
 )
@@ -2648,18 +2648,18 @@ echo:
 if %_unattended%==1 timeout /t 2 & exit /b
 
 if defined fixes (
-call :dk_color %White% "Follow ALL the ABOVE blue lines.   "
-call :dk_color2 %Blue% "Press [1] to Open Support Webpage " %Gray% " Press [0] to Ignore"
+call :dk_color %White% "Ikuti SEMUA baris biru di ATAS.   "
+call :dk_color2 %Blue% "Tekan [1] untuk Membuka Halaman Dukungan " %Gray% " Tekan [0] untuk Mengabaikan"
 choice /C:10 /N
 if !errorlevel!==2 exit /b
 if !errorlevel!==1 (start %selfgit% & start %github% & for %%# in (%fixes%) do (start %%#))
 )
 
 if defined terminal (
-call :dk_color %_Yellow% "Press [0] key to %_exitmsg%..."
+call :dk_color %_Yellow% "Tekan tombol [0] untuk %_exitmsg%..."
 choice /c 0 /n
 ) else (
-call :dk_color %_Yellow% "Press any key to %_exitmsg%..."
+call :dk_color %_Yellow% "Tekan tombol apa saja untuk %_exitmsg%..."
 pause %nul1%
 )
 
