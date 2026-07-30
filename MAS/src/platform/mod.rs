@@ -14,13 +14,15 @@
 //!   and every privileged call returns [`Error::UnsupportedPlatform`], so the
 //!   portable core builds and tests on Linux.
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::model::{LicenseStatus, Product};
 
 #[cfg(all(windows, feature = "winapi"))]
 pub mod windows_backend;
 #[cfg(not(all(windows, feature = "winapi")))]
 pub mod stub;
+#[cfg(test)]
+pub mod test_util;
 
 /// One product entry as reported by the SPP (`SoftwareLicensingProduct` row).
 #[derive(Debug, Clone)]
@@ -83,6 +85,54 @@ pub trait Spp {
 
     /// Whether the current process is elevated (administrator).
     fn is_elevated(&self) -> bool;
+
+    // --- Digital-license / ClipSVC operations (HWID, KMS38) ------------------
+    // These drive the closed ClipSVC path: MAS itself only generates a ticket
+    // and hands it to Windows, so the port does the same behind this boundary.
+
+    /// Produce a `GenuineTicket.xml` for this machine (hardware hash + region),
+    /// returning its bytes. Windows-only (uses the SPP/ClipUp machinery).
+    fn generate_genuine_ticket(&self) -> Result<Vec<u8>> {
+        Err(Error::UnsupportedPlatform {
+            operation: "generate genuine ticket",
+        })
+    }
+
+    /// Write a genuine ticket to the ClipSVC drop path
+    /// (`%ProgramData%\Microsoft\Windows\ClipSVC\GenuineTicket\GenuineTicket.xml`).
+    fn write_genuine_ticket(&self, _xml: &[u8]) -> Result<()> {
+        Err(Error::UnsupportedPlatform {
+            operation: "write genuine ticket",
+        })
+    }
+
+    /// Restart a Windows service by name (e.g. `ClipSVC`).
+    fn restart_service(&self, _name: &str) -> Result<()> {
+        Err(Error::UnsupportedPlatform {
+            operation: "restart service",
+        })
+    }
+
+    /// Run `ClipUp.exe` with the given args (e.g. `-v -o` to apply a ticket).
+    fn run_clipup(&self, _args: &[&str]) -> Result<()> {
+        Err(Error::UnsupportedPlatform {
+            operation: "run ClipUp",
+        })
+    }
+
+    /// Whether ClipSVC has produced `tokens.dat` — the HWID success check.
+    fn clip_tokens_present(&self) -> bool {
+        false
+    }
+
+    /// Pin one Windows product's KMS host to loopback (`127.0.0.2:1688`) under
+    /// its per-activation-ID registry key, so the renewal task cannot overwrite
+    /// a KMS38 (to-2038) lease. `activation_id` is the SPP product ID.
+    fn pin_kms38(&self, _activation_id: &str) -> Result<()> {
+        Err(Error::UnsupportedPlatform {
+            operation: "pin KMS38 lock",
+        })
+    }
 }
 
 /// Construct the SPP backend appropriate for this build.

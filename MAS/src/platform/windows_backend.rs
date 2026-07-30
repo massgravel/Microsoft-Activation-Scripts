@@ -440,6 +440,88 @@ impl Spp for WindowsSpp {
             ok && elevation.TokenIsElevated != 0
         }
     }
+
+    // --- Digital-license / ClipSVC operations --------------------------------
+
+    fn write_genuine_ticket(&self, xml: &[u8]) -> Result<()> {
+        let dir = clipsvc_dir().join("GenuineTicket");
+        std::fs::create_dir_all(&dir)?;
+        // MAS writes `GenuineTicket` then copies it to `GenuineTicket.xml`;
+        // ClipSVC consumes the `.xml`.
+        std::fs::write(dir.join("GenuineTicket"), xml)?;
+        std::fs::write(dir.join("GenuineTicket.xml"), xml)?;
+        Ok(())
+    }
+
+    fn restart_service(&self, name: &str) -> Result<()> {
+        // Faithful to the script's `Restart-Service` (PowerShell handles
+        // dependent services; `net`/`sc` do not).
+        run_tool(
+            "powershell",
+            &[
+                "-NoProfile",
+                "-Command",
+                &format!("Restart-Service -Name '{name}' -Force"),
+            ],
+        )
+    }
+
+    fn run_clipup(&self, args: &[&str]) -> Result<()> {
+        // ClipUp.exe lives in System32, which is on PATH for an elevated shell.
+        run_tool("clipup", args)
+    }
+
+    fn clip_tokens_present(&self) -> bool {
+        clipsvc_dir().join("tokens.dat").exists()
+    }
+
+    fn pin_kms38(&self, activation_id: &str) -> Result<()> {
+        // Per-activation-ID key under the Windows SPP registry root.
+        let key = format!(
+            r"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\{}\{}",
+            Product::Windows.application_id(),
+            activation_id
+        );
+        run_tool(
+            "reg",
+            &[
+                "add", key.as_str(), "/v", "KeyManagementServiceName", "/t", "REG_SZ", "/d",
+                "127.0.0.2", "/f",
+            ],
+        )?;
+        run_tool(
+            "reg",
+            &[
+                "add", key.as_str(), "/v", "KeyManagementServicePort", "/t", "REG_SZ", "/d", "1688",
+                "/f",
+            ],
+        )
+    }
+}
+
+/// `%ProgramData%\Microsoft\Windows\ClipSVC`.
+fn clipsvc_dir() -> std::path::PathBuf {
+    let pd = std::env::var("ProgramData").unwrap_or_else(|_| r"C:\ProgramData".to_string());
+    std::path::Path::new(&pd).join(r"Microsoft\Windows\ClipSVC")
+}
+
+/// Spawn an external tool and map a non-zero exit to an [`Error::ExternalTool`].
+fn run_tool(tool: &str, args: &[&str]) -> Result<()> {
+    let status = std::process::Command::new(tool)
+        .args(args)
+        .status()
+        .map_err(|e| Error::ExternalTool {
+            tool: tool.to_string(),
+            detail: e.to_string(),
+        })?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(Error::ExternalTool {
+            tool: tool.to_string(),
+            detail: format!("exited with {status}"),
+        })
+    }
 }
 
 impl Drop for WindowsSpp {

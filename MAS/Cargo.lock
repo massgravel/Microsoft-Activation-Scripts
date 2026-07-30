@@ -3,9 +3,14 @@
 version = 3
 
 [[package]]
+name = "libtsforge"
+version = "0.1.0"
+
+[[package]]
 name = "mas"
 version = "0.1.0"
 dependencies = [
+ "libtsforge",
  "windows",
 ]
 

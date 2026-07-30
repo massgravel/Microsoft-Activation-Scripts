@@ -1,0 +1,18 @@
+[package]
+name = "libtsforge"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+description = "SPP trusted-store codec for TSforge activation — CRC/hash primitives, store container format, and product tables."
+license = "GPL-3.0-or-later"
+
+# Dependency-free by default so the store/CRC/hash logic and data tables are
+# unit-tested on any OS, offline. The RSA/AES layers needed to sign a real
+# ticket are the one part that should pull vetted crates (RustCrypto: `rsa`,
+# `aes`, `cbc`) behind a future `crypto` feature — see src/crypto.rs. CRC32 and
+# SHA-256 are hand-rolled here (small, standard, test-vector-verified) so the
+# store-integrity layers stay dependency-free and portable.
+
+[lib]
+name = "libtsforge"
+path = "src/lib.rs"
