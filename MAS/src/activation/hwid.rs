@@ -21,6 +21,7 @@
 //! unit-tested here.
 
 use crate::activation::Activator;
+use crate::data::hwid_keys::{entry_for_sku, fallback_for};
 use crate::error::{Error, Result};
 use crate::model::{Method, Product};
 use crate::platform::Spp;
@@ -40,6 +41,21 @@ pub fn should_change_region(current_geo_name: &str) -> bool {
     !TOP_COUNTRIES
         .iter()
         .any(|c| c.eq_ignore_ascii_case(current_geo_name.trim()))
+}
+
+/// Resolve which (activation ID, product key) to install for the running
+/// edition, applying the alternate-edition fallback when the primary key is
+/// absent or marked not-working (the script's `:dk_checksku` selection). Notes:
+/// multi-branch SKUs (e.g. EnterpriseS = 125) may need `version` refinement;
+/// this handles the common single-branch case.
+pub fn resolve_key(sku: u32, edition: &str) -> Option<(&'static str, &'static str)> {
+    if let Some(e) = entry_for_sku(sku) {
+        if e.works {
+            return Some((e.activation_id, e.product_key));
+        }
+    }
+    let f = fallback_for(sku, edition)?;
+    Some((f.alt_activation_id, f.alt_key))
 }
 
 /// Generate the ticket, drop it, and apply it via the two ClipSVC methods.
@@ -89,6 +105,19 @@ impl Activator for Hwid {
 mod tests {
     use super::*;
     use crate::platform::test_util::FakeSpp;
+
+    #[test]
+    fn resolve_key_uses_primary_then_fallback() {
+        // SKU 48 (Professional) has a working primary key.
+        let (act, key) = resolve_key(48, "Professional").unwrap();
+        assert!(!act.is_empty());
+        assert_eq!(key.split('-').count(), 5);
+        // SKU 138 (ProfessionalSingleLanguage) has no primary — falls back.
+        let (_, alt) = resolve_key(138, "ProfessionalSingleLanguage").unwrap();
+        assert_eq!(alt.split('-').count(), 5);
+        // Unknown SKU with no fallback → None.
+        assert!(resolve_key(99999, "Nope").is_none());
+    }
 
     #[test]
     fn region_switches_only_outside_top_countries() {

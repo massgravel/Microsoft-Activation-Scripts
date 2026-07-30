@@ -14,6 +14,7 @@ MAS/
     model.rs              Product / Method / LicenseStatus enums + the real SPP GUIDs
     error.rs              typed Error/Result (replaces errorlevel + colored echoes)
     data/kms_hosts.rs     ported data tables
+    data/hwid_keys.rs     34-row HWID key/edition table + 5-row fallback (verbatim)
     platform/
       mod.rs              `Spp` trait — the ONE seam to Windows; safe API over FFI
       stub.rs             non-Windows backend (read-only no-ops; privileged ops error)
@@ -38,13 +39,13 @@ MAS/
 
 Every Windows effect — WMI, ClipUp/ClipSVC, registry — lives behind
 [`platform::Spp`]. The rest of the crate is OS-independent and unit-tested
-(**48 tests**: 31 in `mas`, 17 in `libtsforge`), zero dependencies, offline.
+(**53 tests**: 36 in `mas`, 17 in `libtsforge`), zero dependencies, offline.
 
 ## Build & test
 
 ```sh
 cd MAS
-cargo test                    # 48 passing — portable core, any OS, no Windows required
+cargo test                    # 53 passing — portable core, any OS, no Windows required
 cargo clippy --workspace       # clean
 
 # Real Windows backend (WMI/COM via the `windows` crate):
@@ -64,7 +65,7 @@ Ported and tested (pure logic — the Windows effects sit behind `Spp`):
 |------------|--------------------------------------------------------------------------------------|
 | status     | Read path: SPP query → typed `LicenseStatus` → formatted report.                     |
 | online_kms | GVLK install → KMS host fallback loop → activate.                                    |
-| hwid       | Region decision (30-country skip → GeoId 244) + two-method apply (ClipSVC restart → `clipup -v -o`, success = `tokens.dat`). |
+| hwid       | Region decision (30-country skip → GeoId 244) + two-method apply (ClipSVC restart → `clipup -v -o`, success = `tokens.dat`) + the verbatim 34-row key/edition table with alternate-edition fallback resolution. |
 | kms38      | Eligibility gate (build ≥ 14393, EnterpriseG/GN excluded), KMS38-lease detection (>180 days), loopback `127.0.0.2` pin, skip-reactivate. |
 | libtsforge | CRC-32/BZIP2, SHA-256, `PsVersion` detection, alignment, UTF-16, the Vista/Win7 physical-store dialects and both VariableBag CRC dialects — all round-trip/vector tested. |
 
