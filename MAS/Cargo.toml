@@ -1,0 +1,47 @@
+[package]
+name = "mas"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+description = "Microsoft Activation Scripts, ported to Rust — HWID, KMS38, Online KMS, Ohook and TSforge activation for Windows and Office."
+license = "GPL-3.0-or-later"
+
+[[bin]]
+name = "mas"
+path = "src/main.rs"
+
+[lib]
+name = "mas"
+path = "src/lib.rs"
+
+# The real Software Protection Platform backend
+# (src/platform/windows_backend.rs) binds WMI/COM directly via the `windows`
+# crate: SoftwareLicensingService / SoftwareLicensingProduct /
+# OfficeSoftwareProtection* on ROOT\CIMV2. All FFI/`unsafe` is encapsulated
+# behind the safe `Spp` trait (constraint 3). It only compiles on a Windows
+# target, so it sits behind the `winapi` feature:
+#
+#     cargo build --release --features winapi --target x86_64-pc-windows-msvc
+#
+# Off Windows (or without the feature) a stub backend is used, so the portable
+# core — menus, model, data tables, orchestration — still `cargo test`s anywhere.
+[features]
+default = []
+winapi = ["dep:windows"]
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", optional = true, features = [
+    "Win32_Foundation",
+    "Win32_System_Com",
+    "Win32_System_Wmi",
+    "Win32_System_Ole",
+    "Win32_System_Variant",
+    "Win32_Security",
+    "Win32_System_Threading",
+] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+panic = "abort"
