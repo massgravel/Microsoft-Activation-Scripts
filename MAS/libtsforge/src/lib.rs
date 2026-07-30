@@ -27,9 +27,15 @@
 //! ([`crypto`]) and the verbatim KMS/HWID response blobs — see the module docs.
 
 pub mod common;
+pub mod constants;
 pub mod crc32;
 pub mod crypto;
+/// RSA/AES/HMAC backend for signed tickets. Feature-gated: pulls in RustCrypto
+/// (`rsa`/`aes`/`cbc`/`hmac`/`sha1`) and does not compile offline.
+#[cfg(feature = "crypto")]
+pub mod crypto_real;
 pub mod physical_store;
+pub mod product_key;
 pub mod sha256;
 pub mod store;
 pub mod tables;

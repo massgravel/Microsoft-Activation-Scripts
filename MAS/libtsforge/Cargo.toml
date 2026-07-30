@@ -16,3 +16,20 @@ license = "GPL-3.0-or-later"
 [lib]
 name = "libtsforge"
 path = "src/lib.rs"
+
+# The RSA/AES/HMAC backend (src/crypto_real.rs) that signs a real ticket. Off by
+# default so the pure store/CRC/hash core stays dependency-free and `cargo test`s
+# offline; enabling it pulls the RustCrypto crates. `sha1` needs the `oid`
+# feature for the PKCS#1 v1.5 SHA1 DigestInfo prefix; `cbc`'s `alloc` feature
+# provides the PKCS7 vec helpers. `rand` supplies OsRng for the random HMAC key
+# and RSA PKCS#1 v1.5 encryption padding.
+[features]
+crypto = ["dep:rsa", "dep:aes", "dep:cbc", "dep:hmac", "dep:sha1", "dep:rand"]
+
+[dependencies]
+rsa = { version = "0.9", optional = true }
+aes = { version = "0.8", optional = true }
+cbc = { version = "0.1", optional = true, features = ["alloc"] }
+hmac = { version = "0.12", optional = true }
+sha1 = { version = "0.10", optional = true, features = ["oid"] }
+rand = { version = "0.8", optional = true }
