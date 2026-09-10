@@ -1355,6 +1355,10 @@ if not defined winserver (
 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID %nul2% | find /i "Server" %nul1% && set winserver=1
 )
 
+set rdsh=
+for /f "tokens=3" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v TSAppCompat 2^>nul') do set "edid=%%a"
+if "%edid%"=="0x1" set "rdsh=1"
+
 ::========================================================================================================================================
 
 ::  Process Office UWP
@@ -1423,6 +1427,9 @@ set "_oLPath=%_oRoot%\Licenses"
 set "pkeypath=%_oRoot%\Office15\pkeyconfig-office.xrm-ms"
 set "_oIntegrator=%_oRoot%\integration\integrator.exe"
 
+call :ts_checkrdsh
+if defined _rdshfail goto :dk_done
+
 echo:
 echo Processing Office...                    [C2R ^| %_version% ^| %_oArch%]
 
@@ -1464,6 +1471,9 @@ set _o16c2rIds=%_oIds%
 set "_oLPath=%_oRoot%\Licenses16"
 set "pkeypath=%_oRoot%\Office16\pkeyconfig-office.xrm-ms"
 set "_oIntegrator=%_oRoot%\integration\integrator.exe"
+
+call :ts_checkrdsh
+if defined _rdshfail goto :dk_done
 
 echo:
 echo Processing Office...                    [C2R ^| %_version% %_AudienceData%^| %_oArch%]
@@ -2148,6 +2158,22 @@ exit /b
 
 ::========================================================================================================================================
 
+:ts_checkrdsh
+
+set _rdshfail=
+if /i not %tsmethod%==KMS4k if defined rdsh if defined winserver if defined _config if exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" (
+echo %_oIds% | find /i "Retail" %nul1% && (
+set error=1
+call :dk_color %Red% "Retail versions of Office cannot be activated with TSForge when running on a Remote Desktop Services host."
+call :dk_color %Blue% "Go back to Main Menu, select Change Office Edition option, and change to Volume."
+set _rdshfail=1
+)
+)
+
+exit /b
+
+::========================================================================================================================================
+
 :ts_process
 
 if not exist "%pkeypath%" (
@@ -2260,17 +2286,6 @@ if exist "!_oLPath!\ProPlus2024PreviewVL_*.xrm-ms" if not exist "!_oLPath!\ProPl
 if defined _actid (
 echo "!allapps!" | find /i "!_actid!" %nul1% || call :oh_installlic
 )
-)
-)
-
-::  Add SharedComputerLicensing registry key if Retail Office C2R is installed on Windows Server
-::  https://learn.microsoft.com/en-us/office/troubleshoot/office-suite-issues/click-to-run-office-on-terminal-server
-
-if /i not %tsmethod%==KMS4k if defined winserver if defined _config if exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" (
-echo %_oIds% | find /i "Retail" %nul1% && (
-set scaIsNeeded=1
-reg add %_config% /v SharedComputerLicensing /t REG_SZ /d "1" /f %nul1%
-echo Adding SharedComputerLicensing Reg      [Successful] [Needed on Server With Retail Office]"
 )
 )
 
