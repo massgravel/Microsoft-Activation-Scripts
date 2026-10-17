@@ -1105,7 +1105,9 @@ set esuexistsup=
 set esueditionlist=
 set esuexistbutnosup=
 
-if %winbuild% GTR 14393 for %%# in (EnterpriseS IoTEnterpriseS IoTEnterpriseSK) do (if /i %tsedition%==%%# set isltsc=1)
+if %winbuild% EQU 17763 for %%# in (EnterpriseS EnterpriseSN) do (if /i %tsedition%==%%# set isltsc=1)
+if %winbuild% GTR 19045 for %%# in (EnterpriseS EnterpriseSN) do (if /i %tsedition%==%%# set isltsc=1)
+if %winbuild% GEQ 19041 for %%# in (IoTEnterpriseS IoTEnterpriseSK) do (if /i %tsedition%==%%# set isltsc=1)
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" set isServer=1
 
 if /i %tsedition%==Embedded (
@@ -1155,6 +1157,9 @@ REM WindowsServer2016
 REM Windows10LTSB2016
 f2571710-2c24-4677-8fb5-a07d41d3c1aa_Client-ESU-Year3[1-3y]_-EnterpriseS-EnterpriseSN-
 22badfe6-7d55-4485-874b-7ec317442134_Client-ESU-Year6[4-6y]_-EnterpriseS-EnterpriseSN-
+REM Windows10LTSC2021
+aacc1401-305e-4ba2-8110-5aae1894c880_Client-LTSC-ESU-Year3[1-3y]_-EnterpriseS-EnterpriseSN-
+ab8c630c-395f-4241-b08d-736fbea0e1c8_Client-LTSC-ESU-Year6[4-6y]_-EnterpriseS-EnterpriseSN-
 ) do (
 for /f "tokens=1-3 delims=_" %%A in ("%%#") do (
 echo "%allapps%" | find /i "%%A" %nul1% && (
