@@ -1188,8 +1188,6 @@ goto :ts_off
 )
 
 echo "%allapps%" | findstr /i "14240489-7c2d-42ee-a167-4913ca4672da b705d67e-527a-4f11-b904-7be441066a22 0b533b5e-08b6-44f9-b885-c2de291ba456 4cd0ab30-73a4-4dde-972c-512f05be31df 22badfe6-7d55-4485-874b-7ec317442134" %nul1% && (
-call :dk_color %Red% "Checking Activated Licenses             [Found Year 4-6 License]"
-call :dk_color %Blue% "ESU licenses for years 4-6 prevent Windows update detection. MAS will automatically remove these licenses."
 set esuexistbutnosup=
 set esuexistsup=
 set esubadactids=1
@@ -8922,6 +8920,26 @@ if (-not $env:resetstuff) {
             "ab8c630c-395f-4241-b08d-736fbea0e1c8" # Win10 LTSC 2021 Client-LTSC-ESU-Year6
         )
         $detected = $false
+        
+        foreach ($eyactid in $badesuactids) {
+            $licenseStatus = Get-WmiInfo -tsactid $eyactid -property "LicenseStatus"
+            $prodName = Get-WmiInfo -tsactid $eyactid -property "Name"
+            if ($prodName) {
+                $nameParts = $prodName -split ',', 2
+                $prodName = if ($nameParts.Count -gt 1) { ($nameParts[1].Trim() -split '[ ,]')[0] } else { $null }
+            }
+            
+            if ($licenseStatus -eq 1) {
+                $detected = $true
+                break
+            }
+        }
+        
+        if ($detected) {
+            Write-Host "Checking Activated Licenses             [Found Year 4-6 License]" -ForegroundColor White -BackgroundColor Red
+            Write-Host "ESU licenses for years 4-6 prevent Windows update detection. MAS will automatically remove these licenses." -ForegroundColor White -BackgroundColor Blue
+            Write-Host ""
+        }
         
         foreach ($eyactid in $badesuactids) {
             $licenseStatus = Get-WmiInfo -tsactid $eyactid -property "LicenseStatus"
