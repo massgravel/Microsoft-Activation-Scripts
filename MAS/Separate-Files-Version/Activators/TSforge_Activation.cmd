@@ -1187,7 +1187,7 @@ call :dk_color %Gray% "Checking Activation ID                  [%tsedition% LTSC
 goto :ts_off
 )
 
-echo "%allapps%" | findstr /i "14240489-7c2d-42ee-a167-4913ca4672da b705d67e-527a-4f11-b904-7be441066a22 0b533b5e-08b6-44f9-b885-c2de291ba456 4cd0ab30-73a4-4dde-972c-512f05be31df 22badfe6-7d55-4485-874b-7ec317442134" %nul1% && (
+echo "%allapps%" | findstr /i "14240489-7c2d-42ee-a167-4913ca4672da b705d67e-527a-4f11-b904-7be441066a22 0b533b5e-08b6-44f9-b885-c2de291ba456 4cd0ab30-73a4-4dde-972c-512f05be31df 22badfe6-7d55-4485-874b-7ec317442134 ab8c630c-395f-4241-b08d-736fbea0e1c8" %nul1% && (
 set esuexistbutnosup=
 set esuexistsup=
 set esubadactids=1
