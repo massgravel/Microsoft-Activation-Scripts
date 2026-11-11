@@ -2690,11 +2690,11 @@ for /f "tokens=3" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\CI\P
 )
 if defined sacstate (
 if "%sacstate%"=="0x1" (
-call :dk_color %Gray% "Checking Smart App Control State        [Enabled]"
-call :dk_color %Blue% "Smart App Control may prevent you from opening Office after Ohook activation."
-call :dk_color %Blue% "You will need to disable it from the Windows Defender settings if it does."
+call :dk_color %Red% "Checking Smart App Control State        [Enabled]"
+call :dk_color %Blue% "Smart App Control may prevent Office from working after Ohook activation."
+call :dk_color %Blue% "It is recommended that you disable it from the Windows Defender settings."
 ) else if "%sacstate%"=="0x2" (
-call :dk_color %Gray% "Checking Smart App Control State        [Evaluation]"
+call :dk_color %Red% "Checking Smart App Control State        [Evaluation]"
 call :dk_color %Blue% "Smart App Control may prevent you from opening Office in the future if it enables itself after the evaluation period."
 call :dk_color %Blue% "It is recommended that you disable it from the Windows Defender settings."
 )
