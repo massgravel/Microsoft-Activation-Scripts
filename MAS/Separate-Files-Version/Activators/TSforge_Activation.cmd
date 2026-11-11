@@ -1150,16 +1150,12 @@ REM Windows10
 f520e45e-7413-4a34-a497-d2765967d094_Client-ESU-Year1_-%w10EsuEditions%-%w10EsuEditionsLaterAdded%
 1043add5-23b1-4afb-9a0f-64343c8f3f8d_Client-ESU-Year2_-%w10EsuEditions%-%w10EsuEditionsLaterAdded%
 83d49986-add3-41d7-ba33-87c7bfb5c0fb_Client-ESU-Year3_-%w10EsuEditions%-%w10EsuEditionsLaterAdded%
-0b533b5e-08b6-44f9-b885-c2de291ba456_Client-ESU-Year6[4-6y]_-%w10EsuEditions%-%w10EsuEditionsLaterAdded%
 REM WindowsServer2016
 91bcac0a-d7d3-4d2b-bd0c-72fed675f01b_Server-ESU-Year3[1-3y]_-ServerDatacenter-ServerDatacenterCore-ServerDatacenterV-ServerDatacenterVCore-ServerStandard-ServerStandardCore-ServerStandardV-ServerStandardVCore-
-4cd0ab30-73a4-4dde-972c-512f05be31df_Server-ESU-Year6[4-6y]_-ServerDatacenter-ServerDatacenterCore-ServerDatacenterV-ServerDatacenterVCore-ServerStandard-ServerStandardCore-ServerStandardV-ServerStandardVCore-
 REM Windows10LTSB2016
 f2571710-2c24-4677-8fb5-a07d41d3c1aa_Client-ESU-Year3[1-3y]_-EnterpriseS-EnterpriseSN-
-22badfe6-7d55-4485-874b-7ec317442134_Client-ESU-Year6[4-6y]_-EnterpriseS-EnterpriseSN-
 REM Windows10LTSC2021
 aacc1401-305e-4ba2-8110-5aae1894c880_Client-LTSC-ESU-Year3[1-3y]_-EnterpriseS-EnterpriseSN-
-ab8c630c-395f-4241-b08d-736fbea0e1c8_Client-LTSC-ESU-Year6[4-6y]_-EnterpriseS-EnterpriseSN-
 ) do (
 for /f "tokens=1-3 delims=_" %%A in ("%%#") do (
 echo "%allapps%" | find /i "%%A" %nul1% && (
@@ -1168,6 +1164,7 @@ echo "%%C" | find /i "-%tsedition%%subEdition%-" %nul1% && (
 set esuexistsup=1
 set esueditionlist=
 set esuexistbutnosup=
+set esubadactids=
 set tsids=!tsids! %%A
 echo Checking Activation ID                  [%%A] [%%B]
 ) || (
@@ -1185,18 +1182,17 @@ call :dk_inskey "[!key!]"
 goto :ts_off
 )
 
-if defined esuexistsup (
-echo "%tsids%" | find /i "4220f546-f522-46df-8202-4d07afd26454" %nul1% && (
-echo "%tsids%" | find /i "7e94be23-b161-4956-a682-146ab291774c" %nul1% || (
-call :dk_color %Gray% "To get Client-ESU-Year6[4-6y] license, install updates from the below URL."
-call :dk_color %Blue% "%mas%tsforge#windows-esu"
-)
-)
+if defined isltsc (
+call :dk_color %Gray% "Checking Activation ID                  [%tsedition% LTSC already has longer support, ESU is not applicable]"
 goto :ts_off
 )
 
-if defined isltsc (
-call :dk_color %Gray% "Checking Activation ID                  [%tsedition% LTSC already has longer support, ESU is not applicable]"
+echo "%allapps%" | findstr /i "14240489-7c2d-42ee-a167-4913ca4672da b705d67e-527a-4f11-b904-7be441066a22 0b533b5e-08b6-44f9-b885-c2de291ba456 4cd0ab30-73a4-4dde-972c-512f05be31df 22badfe6-7d55-4485-874b-7ec317442134" %nul1% && (
+call :dk_color %Red% "Checking Activated Licenses             [Found Year 4-6 License]"
+call :dk_color %Blue% "ESU licenses for years 4-6 prevent Windows update detection. MAS will automatically remove these licenses."
+set esuexistbutnosup=
+set esuexistsup=
+set esubadactids=1
 goto :ts_off
 )
 
@@ -1985,8 +1981,7 @@ call :dk_color %Gray% "Windows Update gets 1-3 years of ESU; 4-6 are unofficial 
 echo "%tsids%" | findstr /i "4afc620f-12a4-48ad-8015-2aebfbd6e47c 11be7019-a309-4763-9a09-091d1722ffe3" %nul1% && (
 call :dk_color %Gray% "ESU is not officially supported on Windows 8.1, but updates can be installed manually until January 2024."
 )
-echo "%tsids%" | findstr /i "83d49986-add3-41d7-ba33-87c7bfb5c0fb 0b533b5e-08b6-44f9-b885-c2de291ba456" %nul1% && (
-call :dk_color %Gray% "Windows Update gets 1-3 years of ESU; 4-6 are unofficial but may let you install LTSC updates manually."
+echo "%tsids%" | findstr /i "f520e45e-7413-4a34-a497-d2765967d094 1043add5-23b1-4afb-9a0f-64343c8f3f8d 83d49986-add3-41d7-ba33-87c7bfb5c0fb" %nul1% && (
 if exist %SysPath%\ClipESUConsumer.exe (%SysPath%\ClipESUConsumer.exe -evaluateEligibility)
 if exist %SysPath%\ClipESU.exe (%SysPath%\ClipESU.exe %nul%)
 )
@@ -8917,6 +8912,34 @@ function slGetSkuInfo($SkuId) {
 }
 
 if (-not $env:resetstuff) {
+    if ($env:esubadactids) {
+        $badesuactids = @(
+            "14240489-7c2d-42ee-a167-4913ca4672da", # Win10 22H2 Client-ESU-Year4
+            "b705d67e-527a-4f11-b904-7be441066a22", # Win10 22H2 Client-ESU-Year5
+            "0b533b5e-08b6-44f9-b885-c2de291ba456", # Win10 22H2 Client-ESU-Year6
+            "4cd0ab30-73a4-4dde-972c-512f05be31df", # Server 2016 Server-ESU-Year6
+            "22badfe6-7d55-4485-874b-7ec317442134", # LTSB 2016 Client-ESU-Year6
+            "ab8c630c-395f-4241-b08d-736fbea0e1c8" # Win10 LTSC 2021 Client-LTSC-ESU-Year6
+        )
+        $detected = $false
+        
+        foreach ($eyactid in $badesuactids) {
+            $licenseStatus = Get-WmiInfo -tsactid $eyactid -property "LicenseStatus"
+            $prodName = Get-WmiInfo -tsactid $eyactid -property "Name"
+            if ($prodName) {
+                $nameParts = $prodName -split ',', 2
+                $prodName = if ($nameParts.Count -gt 1) { ($nameParts[1].Trim() -split '[ ,]')[0] } else { $null }
+            }
+            
+            if ($licenseStatus -eq 1) {
+                $detected = $true
+                $pkeyId = [LibTSforge.SPP.SLApi]::GetInstalledPkeyID($eyactid)
+                [LibTSforge.SPP.SLApi]::UninstallProductKey($pkeyId)
+                Write-Host "Removed license for [$prodName]." -ForegroundColor White -BackgroundColor Darkgray
+            }
+        }
+    }
+    
     foreach ($tsactid in $tsactids) {
         try {
             $activated = $null
