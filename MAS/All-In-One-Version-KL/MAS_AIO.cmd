@@ -11356,6 +11356,22 @@ if (-not $env:resetstuff) {
             Write-Host "ESU licenses for years 4-6 prevent Windows update detection. MAS will automatically remove these licenses." -ForegroundColor White -BackgroundColor Blue
             Write-Host ""
         }
+        
+        foreach ($eyactid in $badesuactids) {
+            $licenseStatus = Get-WmiInfo -tsactid $eyactid -property "LicenseStatus"
+            $prodName = Get-WmiInfo -tsactid $eyactid -property "Name"
+            if ($prodName) {
+                $nameParts = $prodName -split ',', 2
+                $prodName = if ($nameParts.Count -gt 1) { ($nameParts[1].Trim() -split '[ ,]')[0] } else { $null }
+            }
+            
+            if ($licenseStatus -eq 1) {
+                $detected = $true
+                $pkeyId = [LibTSforge.SPP.SLApi]::GetInstalledPkeyID($eyactid)
+                [LibTSforge.SPP.SLApi]::UninstallProductKey($pkeyId)
+                Write-Host "Removed license for [$prodName]." -ForegroundColor White -BackgroundColor Darkgray
+            }
+        }
     }
     
     foreach ($tsactid in $tsactids) {
