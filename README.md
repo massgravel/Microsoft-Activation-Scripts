@@ -81,4 +81,4 @@
 ---
 
 Latest Version: 3.13  
-Release date: 04-Jul-2026
+Release date: 11-Nov-2026
